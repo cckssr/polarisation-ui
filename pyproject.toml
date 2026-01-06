@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Polarisation-UI"
+version = "0.0.1"
+description = "Polarisation-UI: A GUI application for polarisation experiments with manual goniometers."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "Cedric Kessler", email = "c.kessler@tu-berlin.de"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "PySide6>=6.5.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "pyqtgraph>=0.13.0",
+    "scipy>=1.10.0",
+    "pyserial>=3.5",
+    "pillow>=9.5.0",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.1.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "myst-parser>=2.0.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinxcontrib-napoleon>=0.7",
+]
+
+dev = [
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cckssr/polarisation-ui"
+Documentation = "https://polarisation-ui.readthedocs.io"
+Repository = "https://github.com/cckssr/polarisation-ui"
+Issues = "https://github.com/cckssr/polarisation-ui/issues"
+
+[project.gui-scripts]
+polarisation-ui = "polarisation-ui.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["polarisation-ui", "polarisation-ui.*"]
+
+[tool.setuptools.package-data]
+"polarisation-ui" = ["pyqt/*.ui", "config.json"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | docs/_build
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
