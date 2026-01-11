@@ -1,0 +1,6 @@
+{
+    "files": [
+        "../mock_main.py",
+        "../mainwindow.ui"
+    ]
+}

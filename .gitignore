@@ -197,3 +197,6 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+
+# Platformio specifics
+!src_arduino/lib/
