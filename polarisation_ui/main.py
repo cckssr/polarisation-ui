@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Polarisation-UI - Hauptprogramm für die Geiger-Müller Counter GUI-Anwendung.
-"""
+Polarisation-UI - Main program for Goniometer Control GUI.
 
+Entry point for the application. Sets up the Qt application,
+initializes logging, and launches the main window.
+"""
 
 import sys
 import os
@@ -12,81 +14,65 @@ import os
 # If executed as a script (package context missing), ensure the repo root is on
 # sys.path and set __package__ so relative imports below work correctly.
 if __package__ is None:
-    # src/ is the package directory; parent is repository root
+    # polarisation_ui/ is the package directory; parent is repository root
     package_dir = os.path.dirname(__file__)
     repo_root = os.path.dirname(package_dir)
     if repo_root not in sys.path:
         sys.path.insert(0, repo_root)
     # define package name to allow relative imports
-    __package__ = "src"
+    __package__ = "polarisation_ui"
+
+from PySide6.QtWidgets import QApplication
+
+from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.config import import_config
+from polarisation_ui.ui.windows.mainwindow import MainWindow
 
 
 def main():
     """
-    Haupteinstiegspunkt der Anwendung.
-    Initialisiert das Debug-System, startet die Verbindungsdialog
-    und erstellt das Hauptfenster.
+    Main entry point of the application.
+
+    Initializes:
+        - Debug/logging system
+        - Qt application
+        - Main window
     """
-    # Debug-System initialisieren
-    # match CONFIG["debug"]["level_default"]:
-    #     case "verbose":
-    #         debug_level = Debug.DEBUG_VERBOSE
-    #     case "info":
-    #         debug_level = Debug.DEBUG_INFO
-    #     case "error":
-    #         debug_level = Debug.DEBUG_ERROR
-    #     case _:
-    #         debug_level = Debug.DEBUG_OFF
+    # Load configuration
+    config = import_config()
 
-    # Debug.init(debug_level=debug_level, app_name=CONFIG["application"]["name"])
+    # Initialize debug system
+    debug_level_map = {
+        "verbose": Debug.DEBUG_VERBOSE,
+        "info": Debug.DEBUG_INFO,
+        "error": Debug.DEBUG_ERROR,
+        "off": Debug.DEBUG_OFF,
+    }
 
-    # # Globalen Exception-Handler registrieren
-    # sys.excepthook = Debug.exception_hook
+    debug_level_str = config.get("debug", {}).get("level_default", "info")
+    debug_level = debug_level_map.get(debug_level_str, Debug.DEBUG_INFO)
 
-    # Debug.info("Starte Anwendung...")
+    app_name = config.get("application", {}).get("name", "Goniometer Control")
+    Debug.init(debug_level=debug_level, app_name=app_name)
 
-    # # QApplication erstellen
-    # app = QApplication(sys.argv)
-    # app.setQuitOnLastWindowClosed(True)
+    # Register global exception handler
+    sys.excepthook = Debug.exception_hook
 
-    # # Stylesheet anwenden
-    # # apply_stylesheet(app, CONFIG.get("ui", {}).get("theme", "dark"))
-    # # Debug.debug("Stylesheet angewendet")
-    # # Verbindungsdialog anzeigen
-    # connection_dialog = ConnectionWindow(
-    #     demo_mode=CONFIG["gm_counter"]["demo_mode"],
-    #     default_device=CONFIG["gm_counter"]["default_arduino"],
-    # )
+    Debug.info("Starting application...")
 
-    # # Wenn der Dialog bestätigt wurde, Verbindung herstellen
-    # if connection_dialog.exec():
-    #     success = connection_dialog.connection_successful
-    #     device_manager = connection_dialog.device_manager
+    # Create QApplication
+    app = QApplication(sys.argv)
+    app.setApplicationName(app_name)
+    app.setQuitOnLastWindowClosed(True)
 
-    #     if success and device_manager is not None:
-    #         # Hauptfenster erstellen und anzeigen, wenn Verbindung erfolgreich
-    #         main_window = MainWindow(device_manager)
-    #         main_window.show()
+    # Create and show main window
+    main_window = MainWindow()
+    main_window.show()
 
-    #         # Timer starten, wenn vorhanden
-    #         if hasattr(main_window, "timer"):
-    #             main_window.timer.start()
+    Debug.info("Main window displayed")
 
-    #         # Anwendung ausführen
-    #         sys.exit(app.exec())
-    #     else:
-    #         # Fehlerfall: Verbindung fehlgeschlagen
-    #         msg_box = QMessageBox()
-    #         msg_box.setIcon(QMessageBox.Icon.Critical)
-    #         msg_box.setText(CONFIG["messages"]["connection_failed"])
-    #         msg_box.setWindowTitle("Verbindungsfehler")
-    #         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-    #         msg_box.exec()
-    #         sys.exit(1)
-    # else:
-    #     # Benutzer hat den Dialog abgebrochen
-    #     Debug.info("Verbindung vom Benutzer abgebrochen")
-    #     sys.exit(0)
+    # Run application
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
