@@ -20,15 +20,6 @@ bool AS5048A_SPI::evenParity16(uint16_t word)
 // true if total number of 1-bits in 'word' is even
 #if defined(__GNUC__)
     return (__builtin_popcount((unsigned)word) % 2) == 0;
-#else
-    uint16_t x = word;
-    uint8_t cnt = 0;
-    while (x)
-    {
-        cnt ^= (x & 1);
-        x >>= 1;
-    }
-    return cnt == 0;
 #endif
 }
 
@@ -65,7 +56,7 @@ AS5048A_SPI::FrameResult AS5048A_SPI::transfer16(uint16_t tx)
     _spi->endTransaction();
 
     // Small inter-frame gap; datasheet requires CSn high time >= 350ns and timing margins.
-    // 1us is conservative and avoids edge cases on slow GPIO.  [oai_citation:2‡AS5048_DS000298_4_00.pdf](sediment://file_0000000026cc71f49cd598e988add4a7)
+    // 1us is conservative and avoids edge cases on slow GPIO.
     delayMicroseconds(1);
 
     FrameResult r;
@@ -140,6 +131,16 @@ float AS5048A_SPI::readAngleDeg()
 uint16_t AS5048A_SPI::readMagnitudeRaw()
 {
     return read14(REG_MAG);
+}
+
+AS5048A_SPI::FrameResult AS5048A_SPI::readAngleRawWithDiagnostics()
+{
+    return readRegister(REG_ANGLE);
+}
+
+AS5048A_SPI::FrameResult AS5048A_SPI::readMagnitudeRawWithDiagnostics()
+{
+    return readRegister(REG_MAG);
 }
 
 AS5048A_SPI::Diagnostics AS5048A_SPI::readDiagnostics()

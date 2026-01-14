@@ -46,6 +46,11 @@ public:
     uint16_t readMagnitudeRaw();
     Diagnostics readDiagnostics();
 
+    // ---- Common readouts with diagnostics ----
+    // Returns FrameResult with parity check and error flag
+    FrameResult readAngleRawWithDiagnostics();
+    FrameResult readMagnitudeRawWithDiagnostics();
+
     // ---- Error handling ----
     // Clear Error Flag is implemented as READ from address 0x0001.
     // Returns error register content in DATA[13:0] (see datasheet), and clears EF for subsequent reads.
