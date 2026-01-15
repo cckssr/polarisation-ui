@@ -125,7 +125,13 @@ uint16_t AS5048A_SPI::readAngleRaw()
 
 float AS5048A_SPI::readAngleDeg()
 {
-    return (readAngleRaw() * 360.0f) / 16384.0f;
+    const uint16_t raw = readAngleRaw();
+    uint16_t corrected = raw;
+    if (_swZeroEnabled)
+    {
+        corrected = (uint16_t)((raw + 16384u - _swZeroOffset) & 0x3FFF);
+    }
+    return (corrected * 360.0f) / 16384.0f;
 }
 
 uint16_t AS5048A_SPI::readMagnitudeRaw()

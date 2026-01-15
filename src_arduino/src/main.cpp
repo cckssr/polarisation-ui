@@ -148,111 +148,180 @@ void setup()
 }
 
 // ============================================================================
-// ENCODER READ OPERATIONS
+// PRINTING AND DATA CONVERSION
 // ============================================================================
+
+enum DataType
+{
+  ANGLE,
+  MAGNITUDE,
+  NOP_TEST
+};
+
 float convertRawToDegrees(uint16_t raw)
 {
   // Convert 14-bit raw value to angular degrees
   return (raw & 0x3FFF) * 360.0 / 16384.0;
 }
 
-// Output format: DATA,encoderId,parityOK,errorFlag,angle_deg,angle_raw
-void readAndSendEncoder(char encoderId, AS5048A_SPI &encoder)
+// Unified output function for encoder frame data
+// Format: <dataType>,<encoderId>,<parity>,<errorFlag>,<angle_deg>,<raw>
+// Error flag only printed if debugOutput is true
+void printFrameResult(const char *dataType, char encoderId, const AS5048A_SPI::FrameResult &result, float degreesValue = -1.0)
 {
-  AS5048A_SPI::FrameResult result = encoder.readAngleRawWithDiagnostics();
+  Serial.print(dataType);
+  Serial.print(",");
+  Serial.print(encoderId);
+  Serial.print(",");
+  Serial.print(result.parityOk ? "OK" : "NO");
 
-  // Collect statistics in continuous single-encoder mode
-  if (debugOutput && (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B))
+  // Only include error flag if debug mode is enabled
+  if (debugOutput)
   {
-    stats.totalReadAttempts++;
-
-    if (!result.parityOk)
-    {
-      stats.parityErrors++;
-    }
-    if (result.errorFlag)
-    {
-      stats.errorFlagErrors++;
-    }
+    Serial.print(",");
+    Serial.print(result.errorFlag ? "SET" : "OK");
   }
 
-  // Check parity and error flag
-  if (result.parityOk)
+  Serial.print(",");
+
+  // If degrees value provided (for angle data), print it
+  if (degreesValue >= 0.0)
   {
-    Serial.print("DATA,");
-    Serial.print(encoderId);
-    Serial.print(",OK,");
+    Serial.print(degreesValue, 2);
+    Serial.print(",");
+    Serial.println(result.data14, DEC);
   }
   else
   {
-    Serial.print("DATA,");
-    Serial.print(encoderId);
-    Serial.print(",NO,");
+    // For magnitude or NOP, just print raw
+    Serial.println(result.data14, DEC);
   }
+}
 
-  if (result.errorFlag)
+// ============================================================================
+// UNIFIED ENCODER READ & SEND OPERATIONS
+// ============================================================================
+
+// Read angle from single encoder and send formatted output
+// Debug ON: raw value + parity check + deg calculation
+// Debug OFF: direct deg read (respects zero position)
+void readAndSendAngle(char encoderId, AS5048A_SPI &encoder)
+{
+  if (debugOutput)
   {
-    Serial.print("NO,");
+    // Debug mode: read raw with diagnostics
+    AS5048A_SPI::FrameResult result = encoder.readAngleRawWithDiagnostics();
+
+    // Collect statistics
+    if (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B)
+    {
+      stats.totalReadAttempts++;
+      if (!result.parityOk)
+        stats.parityErrors++;
+      if (result.errorFlag)
+        stats.errorFlagErrors++;
+    }
+
+    float angleDeg = convertRawToDegrees(result.data14);
+    printFrameResult("DATA", encoderId, result, angleDeg);
+
+    // Only count successful reads
+    if (result.parityOk && !result.errorFlag &&
+        (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B))
+    {
+      stats.dataPoints++;
+    }
   }
   else
   {
-    Serial.print("OK,");
-  }
+    // Normal mode: read deg directly (respects zero position)
+    float angleDeg = encoder.readAngleDeg();
 
-  // Only count successful reads
-  if (result.parityOk && debugOutput && (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B))
-  {
-    stats.dataPoints++;
+    // Simple output without parity/error flags
+    Serial.print("DATA,");
+    Serial.print(encoderId);
+    Serial.print(",");
+    Serial.println(angleDeg, 2);
   }
-
-  float angleDeg = convertRawToDegrees(result.data14);
-  Serial.print(angleDeg, 2); // 2 decimal places
-  Serial.print(",");
-  Serial.println(result.data14, DEC);
 }
 
-void readAndSendBoth()
+// Read angles from both encoders and send
+void readAndSendAngles()
 {
-  AS5048A_SPI::FrameResult resultA = encoderA.readAngleRawWithDiagnostics();
-  AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.readAngleRawWithDiagnostics() : AS5048A_SPI::FrameResult{0, 0, false, true};
+  if (debugOutput)
+  {
+    // Debug mode: raw values with diagnostics
+    AS5048A_SPI::FrameResult resultA = encoderA.readAngleRawWithDiagnostics();
+    AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.readAngleRawWithDiagnostics() : AS5048A_SPI::FrameResult{0, 0, false, true};
 
-  // Check parity and error flags
-  if (!resultA.parityOk)
-  {
-    Serial.println("ERRO,A,Parity check failed");
-    return;
-  }
-  if (resultA.errorFlag)
-  {
-    Serial.println("ERRO,A,Error flag set");
-    return;
-  }
-
-  if (appState.encoderBPresent)
-  {
-    if (!resultB.parityOk)
+    // Check parity and error flags
+    if (!resultA.parityOk)
     {
-      Serial.println("ERRO,B,Parity check failed");
+      Serial.println("ERRO,A,Parity check failed");
       return;
     }
-    if (resultB.errorFlag)
+    if (resultA.errorFlag)
     {
-      Serial.println("ERRO,B,Error flag set");
+      Serial.println("ERRO,A,Error flag set");
       return;
     }
+
+    if (appState.encoderBPresent)
+    {
+      if (!resultB.parityOk)
+      {
+        Serial.println("ERRO,B,Parity check failed");
+        return;
+      }
+      if (resultB.errorFlag)
+      {
+        Serial.println("ERRO,B,Error flag set");
+        return;
+      }
+    }
+
+    float angleA = convertRawToDegrees(resultA.data14);
+    float angleB = appState.encoderBPresent ? convertRawToDegrees(resultB.data14) : 0.0;
+
+    // Format: DATA_BOTH,angle_a,angle_b
+    Serial.print("DATA_BOTH,");
+    Serial.print(angleA, 2);
+    Serial.print(",");
+    Serial.println(angleB, 2);
   }
+  else
+  {
+    // Normal mode: direct deg read (respects zero position)
+    float angleA = encoderA.readAngleDeg();
+    float angleB = appState.encoderBPresent ? encoderB.readAngleDeg() : 0.0;
 
-  float angleA = convertRawToDegrees(resultA.data14);
-  float angleB = appState.encoderBPresent ? convertRawToDegrees(resultB.data14) : 0.0;
-
-  // Format: DATA_BOTH,angle_a,angle_b
-  Serial.print("DATA_BOTH,");
-  Serial.print(angleA, 2);
-  Serial.print(",");
-  Serial.println(angleB, 2);
+    // Format: DATA_BOTH,angle_a,angle_b
+    Serial.print("DATA_BOTH,");
+    Serial.print(angleA, 2);
+    Serial.print(",");
+    Serial.println(angleB, 2);
+  }
 }
 
-void readAndSendMagnitude()
+// Read magnitude from single encoder
+void readAndSendMagnitude(char encoderId, AS5048A_SPI &encoder)
+{
+  AS5048A_SPI::FrameResult result = encoder.readMagnitudeRawWithDiagnostics();
+
+  if (!result.parityOk || result.errorFlag)
+  {
+    Serial.print("ERRO,");
+    Serial.print(encoderId);
+    Serial.println(",Magnitude read failed");
+  }
+  else
+  {
+    printFrameResult("MAG", encoderId, result);
+  }
+}
+
+// Read magnitudes from both encoders
+void readAndSendMagnitudes()
 {
   AS5048A_SPI::FrameResult resultA = encoderA.readMagnitudeRawWithDiagnostics();
   AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.readMagnitudeRawWithDiagnostics() : AS5048A_SPI::FrameResult{0, 0, false, true};
@@ -275,13 +344,12 @@ void readAndSendMagnitude()
   Serial.println(resultB.data14);
 }
 
+// Send continuous NOP to check signal quality
 void sendContinuousNOP()
 {
-  // Send NOP to both encoders and check signal quality
   AS5048A_SPI::FrameResult resultA = encoderA.nop();
   AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.nop() : AS5048A_SPI::FrameResult{0, 0, false, true};
 
-  // Format: NOP,encoderA,parity,error,raw16 | encoderB,parity,error,raw16
   Serial.print("NOP,A,");
   Serial.print(resultA.parityOk ? "OK" : "FAIL");
   Serial.print(",");
@@ -347,6 +415,7 @@ void printHelp()
 void handleCommand(String cmd)
 {
   cmd.trim();
+  cmd.toUpperCase();
 
   // Mode control: Enable continuous reading
   if (cmd == "C_A1")
@@ -428,45 +497,27 @@ void handleCommand(String cmd)
   // Single read commands
   else if (cmd == "R_A")
   {
-    readAndSendEncoder('A', encoderA);
+    readAndSendAngle('A', encoderA);
   }
   else if (cmd == "R_B" && appState.encoderBPresent)
   {
-    readAndSendEncoder('B', encoderB);
+    readAndSendAngle('B', encoderB);
   }
-  else if (cmd == "R_BOTH" && appState.encoderBPresent)
+  else if (cmd == "R_BOTH")
   {
-    readAndSendBoth();
+    readAndSendAngles();
   }
   else if (cmd == "M_A")
   {
-    AS5048A_SPI::FrameResult result = encoderA.readMagnitudeRawWithDiagnostics();
-    if (!result.parityOk || result.errorFlag)
-    {
-      Serial.println("ERRO,A,Magnitude read failed");
-    }
-    else
-    {
-      Serial.print("MAG,A,");
-      Serial.println(result.data14);
-    }
+    readAndSendMagnitude('A', encoderA);
   }
   else if (cmd == "M_B" && appState.encoderBPresent)
   {
-    AS5048A_SPI::FrameResult result = encoderB.readMagnitudeRawWithDiagnostics();
-    if (!result.parityOk || result.errorFlag)
-    {
-      Serial.println("ERRO,B,Magnitude read failed");
-    }
-    else
-    {
-      Serial.print("MAG,B,");
-      Serial.println(result.data14);
-    }
+    readAndSendMagnitude('B', encoderB);
   }
   else if (cmd == "M_BOTH")
   {
-    readAndSendMagnitude();
+    readAndSendMagnitudes();
   }
 
   // Zero position commands
@@ -586,16 +637,16 @@ void loop()
     switch (appState.mode)
     {
     case MODE_CONTINUOUS_A:
-      readAndSendEncoder('A', encoderA);
+      readAndSendAngle('A', encoderA);
       break;
     case MODE_CONTINUOUS_B:
-      readAndSendEncoder('B', encoderB);
+      readAndSendAngle('B', encoderB);
       break;
     case MODE_CONTINUOUS_BOTH:
-      readAndSendBoth();
+      readAndSendAngles();
       break;
     case MODE_CONTINUOUS_MAG:
-      readAndSendMagnitude();
+      readAndSendMagnitudes();
       break;
     case MODE_CONTINUOUS_NOP:
       sendContinuousNOP();
