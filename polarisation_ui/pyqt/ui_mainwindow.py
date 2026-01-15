@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1144, 750)
+        MainWindow.resize(1144, 836)
         MainWindow.setMinimumSize(QSize(0, 750))
         font = QFont()
         font.setPointSize(13)
@@ -59,7 +59,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.live_values.sizePolicy().hasHeightForWidth())
         self.live_values.setSizePolicy(sizePolicy)
-        self.live_values.setMinimumSize(QSize(0, 50))
+        self.live_values.setMinimumSize(QSize(0, 160))
         font2 = QFont()
         font2.setPointSize(15)
         self.live_values.setFont(font2)
@@ -71,7 +71,7 @@ class Ui_MainWindow(object):
         self.formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formLayout.setLabelAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
         self.formLayout.setHorizontalSpacing(-1)
-        self.formLayout.setVerticalSpacing(8)
+        self.formLayout.setVerticalSpacing(10)
         self.label_4 = QLabel(self.live_values)
         self.label_4.setObjectName(u"label_4")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
@@ -108,6 +108,7 @@ class Ui_MainWindow(object):
 
         self.label = QLabel(self.live_values)
         self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(0, 40))
         self.label.setFont(font)
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label)
@@ -119,12 +120,15 @@ class Ui_MainWindow(object):
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.sample_angle.sizePolicy().hasHeightForWidth())
         self.sample_angle.setSizePolicy(sizePolicy2)
+        self.sample_angle.setMinimumSize(QSize(0, 40))
         self.sample_angle.setFont(font)
+        self.sample_angle.setLineWidth(2)
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.sample_angle)
 
         self.sample_zero = QPushButton(self.live_values)
         self.sample_zero.setObjectName(u"sample_zero")
+        self.sample_zero.setMinimumSize(QSize(0, 0))
         self.sample_zero.setFont(font)
 
         self.formLayout.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.sample_zero)
@@ -132,7 +136,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.live_values)
 
-        self.verticalSpacer_3 = QSpacerItem(20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        self.verticalSpacer_3 = QSpacerItem(20, 5, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
 
         self.verticalLayout_2.addItem(self.verticalSpacer_3)
 
@@ -140,7 +144,7 @@ class Ui_MainWindow(object):
         self.live_values_2.setObjectName(u"live_values_2")
         sizePolicy.setHeightForWidth(self.live_values_2.sizePolicy().hasHeightForWidth())
         self.live_values_2.setSizePolicy(sizePolicy)
-        self.live_values_2.setMinimumSize(QSize(0, 50))
+        self.live_values_2.setMinimumSize(QSize(0, 160))
         self.live_values_2.setFont(font2)
         self.live_values_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formLayout_3 = QFormLayout(self.live_values_2)
@@ -149,7 +153,7 @@ class Ui_MainWindow(object):
         self.formLayout_3.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formLayout_3.setLabelAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
         self.formLayout_3.setHorizontalSpacing(-1)
-        self.formLayout_3.setVerticalSpacing(8)
+        self.formLayout_3.setVerticalSpacing(10)
         self.label_14 = QLabel(self.live_values_2)
         self.label_14.setObjectName(u"label_14")
         sizePolicy.setHeightForWidth(self.label_14.sizePolicy().hasHeightForWidth())
@@ -183,6 +187,7 @@ class Ui_MainWindow(object):
 
         self.label_11 = QLabel(self.live_values_2)
         self.label_11.setObjectName(u"label_11")
+        self.label_11.setMinimumSize(QSize(0, 40))
         self.label_11.setFont(font)
 
         self.formLayout_3.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_11)
@@ -191,12 +196,15 @@ class Ui_MainWindow(object):
         self.dstage_angle.setObjectName(u"dstage_angle")
         sizePolicy2.setHeightForWidth(self.dstage_angle.sizePolicy().hasHeightForWidth())
         self.dstage_angle.setSizePolicy(sizePolicy2)
+        self.dstage_angle.setMinimumSize(QSize(0, 40))
         self.dstage_angle.setFont(font)
+        self.dstage_angle.setLineWidth(2)
 
         self.formLayout_3.setWidget(1, QFormLayout.ItemRole.FieldRole, self.dstage_angle)
 
         self.dstage_zero_2 = QPushButton(self.live_values_2)
         self.dstage_zero_2.setObjectName(u"dstage_zero_2")
+        self.dstage_zero_2.setMinimumSize(QSize(0, 0))
         self.dstage_zero_2.setFont(font)
 
         self.formLayout_3.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.dstage_zero_2)
@@ -212,7 +220,7 @@ class Ui_MainWindow(object):
         self.live_values_3.setObjectName(u"live_values_3")
         sizePolicy.setHeightForWidth(self.live_values_3.sizePolicy().hasHeightForWidth())
         self.live_values_3.setSizePolicy(sizePolicy)
-        self.live_values_3.setMinimumSize(QSize(0, 50))
+        self.live_values_3.setMinimumSize(QSize(0, 125))
         self.live_values_3.setFont(font2)
         self.live_values_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formLayout_4 = QFormLayout(self.live_values_3)
@@ -221,7 +229,7 @@ class Ui_MainWindow(object):
         self.formLayout_4.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formLayout_4.setLabelAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
         self.formLayout_4.setHorizontalSpacing(-1)
-        self.formLayout_4.setVerticalSpacing(8)
+        self.formLayout_4.setVerticalSpacing(10)
         self.label_18 = QLabel(self.live_values_3)
         self.label_18.setObjectName(u"label_18")
         sizePolicy1.setHeightForWidth(self.label_18.sizePolicy().hasHeightForWidth())
@@ -255,6 +263,7 @@ class Ui_MainWindow(object):
 
         self.label_19 = QLabel(self.live_values_3)
         self.label_19.setObjectName(u"label_19")
+        self.label_19.setMinimumSize(QSize(0, 40))
         self.label_19.setFont(font)
         self.label_19.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
 
@@ -264,7 +273,9 @@ class Ui_MainWindow(object):
         self.detector_voltage.setObjectName(u"detector_voltage")
         sizePolicy2.setHeightForWidth(self.detector_voltage.sizePolicy().hasHeightForWidth())
         self.detector_voltage.setSizePolicy(sizePolicy2)
+        self.detector_voltage.setMinimumSize(QSize(0, 40))
         self.detector_voltage.setFont(font)
+        self.detector_voltage.setLineWidth(2)
 
         self.formLayout_4.setWidget(1, QFormLayout.ItemRole.FieldRole, self.detector_voltage)
 
@@ -440,25 +451,25 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
         self.verticalLayout_3.setContentsMargins(-1, -1, 0, -1)
-        self.widget = QWidget(self.centralwidget)
-        self.widget.setObjectName(u"widget")
+        self.plot_detector = QWidget(self.centralwidget)
+        self.plot_detector.setObjectName(u"plot_detector")
         sizePolicy7 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
         sizePolicy7.setHorizontalStretch(0)
         sizePolicy7.setVerticalStretch(1)
-        sizePolicy7.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
-        self.widget.setSizePolicy(sizePolicy7)
+        sizePolicy7.setHeightForWidth(self.plot_detector.sizePolicy().hasHeightForWidth())
+        self.plot_detector.setSizePolicy(sizePolicy7)
 
-        self.verticalLayout_3.addWidget(self.widget)
+        self.verticalLayout_3.addWidget(self.plot_detector)
 
-        self.widget_2 = QWidget(self.centralwidget)
-        self.widget_2.setObjectName(u"widget_2")
+        self.plot_measurement = QWidget(self.centralwidget)
+        self.plot_measurement.setObjectName(u"plot_measurement")
         sizePolicy8 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy8.setHorizontalStretch(0)
         sizePolicy8.setVerticalStretch(1)
-        sizePolicy8.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
-        self.widget_2.setSizePolicy(sizePolicy8)
+        sizePolicy8.setHeightForWidth(self.plot_measurement.sizePolicy().hasHeightForWidth())
+        self.plot_measurement.setSizePolicy(sizePolicy8)
 
-        self.verticalLayout_3.addWidget(self.widget_2)
+        self.verticalLayout_3.addWidget(self.plot_measurement)
 
 
         self.gridLayout_5.addLayout(self.verticalLayout_3, 0, 2, 1, 1)

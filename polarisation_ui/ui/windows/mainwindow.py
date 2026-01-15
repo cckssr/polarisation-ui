@@ -1,30 +1,29 @@
 """
 Main Window for Goniometer Polarisation UI.
 
-Integrates all components following the 3-layer architecture:
-    - UI Layer: This window and widgets
+Uses Qt Designer UI (ui_mainwindow.py) and integrates with the 3-layer architecture:
+    - UI Layer: This window and Qt Designer UI
     - Infrastructure: Device manager, config, logging
-    - Core: Services and business logic (future)
+    - Core: Services and business logic
 
 Responsibilities:
-    - Coordinate UI components
-    - Handle user interactions
-    - Connect signals between components
-    - Manage application lifecycle
+    - Load and setup Qt Designer UI
+    - Connect UI elements to functionality
+    - Handle user interactions via signals/slots
+    - Update live displays with encoder readings
+    - Manage measurement sessions
 """
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QMainWindow
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QAction, QCloseEvent
+from PySide6.QtGui import QCloseEvent
 
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
 # UI components
-from polarisation_ui.ui.widgets.status_display import StatusDisplayWidget
-from polarisation_ui.ui.widgets.control_panel import ControlPanelWidget
-from polarisation_ui.ui.dialogs.connection import ConnectionDialog
 from polarisation_ui.ui.common.dialogs import show_info, show_error
 from polarisation_ui.ui.common.statusbar import StatusBarManager
 from polarisation_ui.ui.controllers.data_controller import DataController
@@ -37,234 +36,147 @@ class MainWindow(QMainWindow):
     """
     Main window of the Goniometer Polarisation UI.
 
-    Provides interface for:
-        - Connecting to encoder hardware
-        - Viewing live sensor readings
-        - Controlling measurement sessions
-        - Configuring system settings
-        - Saving and exporting data (future)
+    Uses Qt Designer UI and provides:
+        - Live encoder readings display (LCD)
+        - Encoder zeroing controls
+        - Measurement start/stop/reset
+        - Data saving functionality
+        - Status indicators (LEDs)
 
     Architecture:
-        - Follows 3-layer separation
-        - Uses signals/slots for component communication
+        - Uses pre-designed UI from ui_mainwindow.py
         - Delegates hardware operations to device manager
         - Delegates data acquisition to data controller
+        - Follows 3-layer separation
     """
 
-    def __init__(self, parent=None):
+    # LED colors
+    LED_GREEN = "background-color: rgb(0, 255, 0); border: 0px; padding: 4px; border-radius: 10px"
+    LED_RED = "background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px"
+    LED_GRAY = "background-color: rgb(128, 128, 128); border: 0px; padding: 4px; border-radius: 10px"
+
+    def __init__(self, device_manager: GoniometerDeviceManager, parent=None):
         """
         Initialize main window.
 
         Args:
+            device_manager: Connected device manager instance
             parent: Parent widget
         """
         super().__init__(parent)
 
-        # Window properties
-        self.setWindowTitle("Goniometer Polarisation Control")
-        self.resize(1200, 800)
+        # Setup Qt Designer UI
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
-        # Initialize infrastructure
-        self.device_manager = GoniometerDeviceManager(use_mock=False)
-
-        # Initialize UI components
-        self._setup_ui()
-        self._setup_menubar()
-        self._setup_statusbar()
+        # Store device manager
+        self.device_manager = device_manager
 
         # Initialize data controller
         self.data_controller = DataController(self.device_manager, self)
 
-        # Connect signals
+        # Initialize status bar
+        self.statusbar_manager = StatusBarManager(self.ui.statusBar)
+
+        # Measurement state
+        self._is_measuring = False
+
+        # Setup UI and connections
+        self._setup_initial_state()
         self._connect_signals()
 
-        Debug.info("MainWindow initialized")
+        # Start continuous reading
+        self.data_controller.start_continuous_reading()
+
+        Debug.info("MainWindow initialized with Qt Designer UI")
 
     # ==================== UI Setup ====================
 
-    def _setup_ui(self) -> None:
-        """Build main window UI layout."""
-        # Central widget with main content
-        central = QWidget()
-        self.setCentralWidget(central)
+    def _setup_initial_state(self) -> None:
+        """Setup initial UI state."""
+        # Set LEDs to green (connected)
+        self.ui.sample_statusLED.setStyleSheet(self.LED_GREEN)
+        self.ui.dstage_statusLED.setStyleSheet(self.LED_GREEN)
+        self.ui.detector_statusLED.setStyleSheet(self.LED_GRAY)  # Not implemented yet
 
-        main_layout = QHBoxLayout(central)
+        # Set encoder labels
+        self.ui.sample_enr.setText("Encoder A")
+        self.ui.dstage_enr.setText("Encoder B")
+        self.ui.detector_enr.setText("Not Connected")
 
-        # Left panel: Control panel
-        self.control_panel = ControlPanelWidget()
-        main_layout.addWidget(self.control_panel, stretch=1)
+        # Set initial LCD values
+        self.ui.sample_angle.display(0.00)
+        self.ui.dstage_angle.display(0.00)
+        self.ui.detector_voltage.display(0.00)
 
-        # Center: Main display area (future: plots, goniometer view)
-        center_widget = QWidget()
-        center_layout = QVBoxLayout(center_widget)
-        center_layout.addStretch()
-        main_layout.addWidget(center_widget, stretch=3)
+        # Enable controls
+        self.ui.sample_zero.setEnabled(True)
+        self.ui.dstage_zero_2.setEnabled(True)
+        self.ui.buttonStart.setEnabled(True)
+        self.ui.buttonStop.setEnabled(False)
+        self.ui.buttonReset.setEnabled(False)
 
-        # Right panel: Status display
-        self.status_display = StatusDisplayWidget()
-        main_layout.addWidget(self.status_display, stretch=1)
-
-    def _setup_menubar(self) -> None:
-        """Create menu bar with actions."""
-        menubar = self.menuBar()
-
-        # File menu
-        file_menu = menubar.addMenu("&File")
-
-        # Save action (future)
-        self.save_action = QAction("&Save Data...", self)
-        self.save_action.setShortcut("Ctrl+S")
-        self.save_action.setEnabled(False)  # Enable when measurement data exists
-        file_menu.addAction(self.save_action)
-
-        file_menu.addSeparator()
-
-        # Exit action
-        exit_action = QAction("E&xit", self)
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
-
-        # Connection menu
-        connection_menu = menubar.addMenu("&Connection")
-
-        connect_action = QAction("&Connect Devices...", self)
-        connect_action.setShortcut("Ctrl+C")
-        connect_action.triggered.connect(self._show_connection_dialog)
-        connection_menu.addAction(connect_action)
-
-        disconnect_action = QAction("&Disconnect", self)
-        disconnect_action.setShortcut("Ctrl+D")
-        disconnect_action.triggered.connect(self._disconnect_devices)
-        connection_menu.addAction(disconnect_action)
-
-        # Help menu
-        help_menu = menubar.addMenu("&Help")
-
-        about_action = QAction("&About", self)
-        about_action.triggered.connect(self._show_about)
-        help_menu.addAction(about_action)
-
-    def _setup_statusbar(self) -> None:
-        """Create status bar."""
-        statusbar = self.statusBar()
-        self.statusbar_manager = StatusBarManager(statusbar)
-        self.statusbar_manager.show_info("Ready")
+        # Show status
+        self.statusbar_manager.show_success("Encoders connected")
 
     # ==================== Signal Connections ====================
 
     def _connect_signals(self) -> None:
         """Connect all signals between components."""
-        # Control panel → Main window
-        self.control_panel.connect_requested.connect(self._show_connection_dialog)
-        self.control_panel.disconnect_requested.connect(self._disconnect_devices)
+        # Zero buttons
+        self.ui.sample_zero.clicked.connect(self._zero_sample_encoder)
+        self.ui.dstage_zero_2.clicked.connect(self._zero_detector_encoder)
 
-        # Encoder zeroing
-        self.control_panel.zero_sample_requested.connect(self._zero_sample_encoder)
-        self.control_panel.zero_detector_requested.connect(self._zero_detector_encoder)
-        self.control_panel.zero_both_requested.connect(self._zero_both_encoders)
+        # Measurement controls
+        self.ui.buttonStart.clicked.connect(self._start_measurement)
+        self.ui.buttonStop.clicked.connect(self._stop_measurement)
+        self.ui.buttonReset.clicked.connect(self._reset_measurement)
 
-        # Measurement control
-        self.control_panel.start_measurement_requested.connect(self._start_measurement)
-        self.control_panel.stop_measurement_requested.connect(self._stop_measurement)
+        # Save button
+        self.ui.buttonSave.clicked.connect(self._save_data)
 
-        # Data controller → Status display
-        self.data_controller.angles_updated.connect(self.status_display.update_angles)
+        # Data controller signals
+        self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.error_occurred.connect(self._handle_data_error)
 
         # Measurement state changes
-        self.data_controller.measurement_started.connect(
-            lambda: self.control_panel.set_measuring(True)
-        )
-        self.data_controller.measurement_stopped.connect(
-            lambda: self.control_panel.set_measuring(False)
-        )
+        self.data_controller.measurement_started.connect(self._on_measurement_started)
+        self.data_controller.measurement_stopped.connect(self._on_measurement_stopped)
 
-    # ==================== Connection Management ====================
+    # ==================== Data Display Updates ====================
 
-    @Slot()
-    def _show_connection_dialog(self) -> None:
-        """Show connection dialog and connect to devices."""
-        dialog = ConnectionDialog(self)
-
-        # Connect test signal
-        dialog.connection_requested.connect(self._test_connection)
-
-        # Show dialog
-        if dialog.exec() == ConnectionDialog.DialogCode.Accepted:
-            params = dialog.get_connection_params()
-            self._connect_devices(params)
-
-    @Slot(dict)
-    def _test_connection(self, params: dict) -> None:
+    @Slot(float, float)
+    def _update_angle_displays(
+        self, sample_angle: float, detector_angle: float
+    ) -> None:
         """
-        Test connection with given parameters.
+        Update LCD displays with encoder readings.
 
         Args:
-            params: Connection parameters from dialog
+            sample_angle: Sample stage angle in degrees
+            detector_angle: Detector stage angle in degrees
         """
-        success = self.device_manager.connect_encoders(**params)
+        # Update LCD displays
+        self.ui.sample_angle.display(f"{sample_angle:.2f}")
+        self.ui.dstage_angle.display(f"{detector_angle:.2f}")
 
-        # Find dialog and update test result
-        for widget in self.findChildren(ConnectionDialog):
-            if isinstance(widget, ConnectionDialog):
-                if success:
-                    widget.set_test_result(True, "Connection successful")
-                    # Disconnect after test
-                    self.device_manager.disconnect_encoders()
-                else:
-                    error_msg = self.device_manager.get_encoder_status().error_message
-                    widget.set_test_result(False, error_msg or "Unknown error")
-                break
+        # Validate geometry (detector should be ~2x sample)
+        expected_detector = 2.0 * sample_angle
+        difference = abs(detector_angle - expected_detector)
+        tolerance = 0.5  # degrees
 
-    def _connect_devices(self, params: dict) -> None:
-        """
-        Connect to devices with given parameters.
+        if difference > tolerance:
+            # Geometry error - show in status bar occasionally
+            if not hasattr(self, "_last_error_shown"):
+                self._last_error_shown = 0
 
-        Args:
-            params: Connection parameters
-        """
-        self.statusbar_manager.show_info("Connecting to devices...")
-
-        success = self.device_manager.connect_encoders(**params)
-
-        if success:
-            self.statusbar_manager.show_success("Devices connected")
-            self.control_panel.set_connected(True)
-            self.status_display.set_connected(True)
-
-            # Start continuous reading
-            self.data_controller.start_continuous_reading()
-
-            Debug.info("Devices connected successfully")
-        else:
-            error_msg = self.device_manager.get_encoder_status().error_message
-            self.statusbar_manager.show_error("Connection failed")
-            show_error(
-                self,
-                "Connection Error",
-                "Failed to connect to encoder device.",
-                detailed_text=error_msg,
-            )
-
-    @Slot()
-    def _disconnect_devices(self) -> None:
-        """Disconnect all devices."""
-        # Stop data acquisition
-        self.data_controller.stop_continuous_reading()
-
-        if self.data_controller.is_measuring():
-            self.data_controller.stop_measurement()
-
-        # Disconnect devices
-        self.device_manager.disconnect_all()
-
-        # Update UI
-        self.control_panel.set_connected(False)
-        self.status_display.set_connected(False)
-        self.statusbar_manager.show_info("Devices disconnected")
-
-        Debug.info("Devices disconnected")
+            # Only show every 50 updates to avoid spam
+            self._last_error_shown += 1
+            if self._last_error_shown >= 50:
+                self.statusbar_manager.show_warning(
+                    f"Geometry error: {difference:.2f}°", timeout=2000
+                )
+                self._last_error_shown = 0
 
     # ==================== Encoder Control ====================
 
@@ -275,8 +187,10 @@ class MainWindow(QMainWindow):
 
         if success:
             self.statusbar_manager.show_success("Sample encoder zeroed")
+            Debug.info("Sample encoder zeroed")
         else:
             self.statusbar_manager.show_error("Failed to zero sample encoder")
+            show_error(self, "Zero Error", "Failed to zero sample encoder.")
 
     @Slot()
     def _zero_detector_encoder(self) -> None:
@@ -285,18 +199,10 @@ class MainWindow(QMainWindow):
 
         if success:
             self.statusbar_manager.show_success("Detector encoder zeroed")
+            Debug.info("Detector encoder zeroed")
         else:
             self.statusbar_manager.show_error("Failed to zero detector encoder")
-
-    @Slot()
-    def _zero_both_encoders(self) -> None:
-        """Zero both encoders at current positions."""
-        success = self.device_manager.zero_both_encoders()
-
-        if success:
-            self.statusbar_manager.show_success("Both encoders zeroed")
-        else:
-            self.statusbar_manager.show_error("Failed to zero encoders")
+            show_error(self, "Zero Error", "Failed to zero detector encoder.")
 
     # ==================== Measurement Control ====================
 
@@ -318,6 +224,67 @@ class MainWindow(QMainWindow):
         self.statusbar_manager.show_info("Measurement stopped")
         Debug.info("Measurement session stopped")
 
+    @Slot()
+    def _reset_measurement(self) -> None:
+        """Reset measurement data."""
+        # TODO: Clear accumulated measurement data
+        self.statusbar_manager.show_info("Measurement reset")
+        Debug.info("Measurement data reset")
+
+        # Disable reset button
+        self.ui.buttonReset.setEnabled(False)
+
+    @Slot()
+    def _on_measurement_started(self) -> None:
+        """Handle measurement started event."""
+        self._is_measuring = True
+
+        # Update UI state
+        self.ui.buttonStart.setEnabled(False)
+        self.ui.buttonStop.setEnabled(True)
+        self.ui.buttonReset.setEnabled(False)
+
+        # Disable zeroing during measurement
+        self.ui.sample_zero.setEnabled(False)
+        self.ui.dstage_zero_2.setEnabled(False)
+
+        # Enable save when measurement has data
+        self.ui.buttonSave.setEnabled(False)  # Enable after first data point
+
+    @Slot()
+    def _on_measurement_stopped(self) -> None:
+        """Handle measurement stopped event."""
+        self._is_measuring = False
+
+        # Update UI state
+        self.ui.buttonStart.setEnabled(True)
+        self.ui.buttonStop.setEnabled(False)
+        self.ui.buttonReset.setEnabled(True)
+
+        # Re-enable zeroing
+        self.ui.sample_zero.setEnabled(True)
+        self.ui.dstage_zero_2.setEnabled(True)
+
+        # Enable save if we have data
+        self.ui.buttonSave.setEnabled(True)
+
+    # ==================== Data Saving ====================
+
+    @Slot()
+    def _save_data(self) -> None:
+        """Save measurement data to file."""
+        # Get save parameters from UI
+        group_letter = self.ui.groupLetter.currentText()
+        suffix = self.ui.suffix.text()
+
+        if not group_letter:
+            show_error(self, "Save Error", "Please select a group letter.")
+            return
+
+        # TODO: Implement actual data saving using save_service
+        self.statusbar_manager.show_success("Data saved (placeholder)")
+        Debug.info(f"Data save requested: Group={group_letter}, Suffix={suffix}")
+
     # ==================== Error Handling ====================
 
     @Slot(str)
@@ -331,18 +298,9 @@ class MainWindow(QMainWindow):
         self.statusbar_manager.show_error(f"Data error: {error_msg}")
         Debug.error(f"Data acquisition error: {error_msg}")
 
-    # ==================== Menu Actions ====================
-
-    @Slot()
-    def _show_about(self) -> None:
-        """Show about dialog."""
-        about_text = (
-            "<h3>Goniometer Polarisation Control</h3>"
-            "<p>Version 0.1.0 (Phase 0)</p>"
-            "<p>Manual goniometer control and data acquisition system.</p>"
-            "<p>Built with PySide6 and Python.</p>"
-        )
-        show_info(self, "About", about_text)
+        # Set LEDs to red if connection lost
+        self.ui.sample_statusLED.setStyleSheet(self.LED_RED)
+        self.ui.dstage_statusLED.setStyleSheet(self.LED_RED)
 
     # ==================== Window Lifecycle ====================
 
@@ -353,15 +311,13 @@ class MainWindow(QMainWindow):
         Args:
             event: Close event
         """
-        # Check for unsaved data (future)
-        # if self.has_unsaved_data():
-        #     if not ask_confirmation(...):
-        #         event.ignore()
-        #         return
-
-        # Clean up
         Debug.info("Closing application...")
 
+        # Stop measurement if active
+        if self._is_measuring:
+            self.data_controller.stop_measurement()
+
+        # Clean up
         self.data_controller.cleanup()
         self.device_manager.disconnect_all()
 

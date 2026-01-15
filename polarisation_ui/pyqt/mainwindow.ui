@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1144</width>
-    <height>750</height>
+    <height>836</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -78,7 +78,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>50</height>
+          <height>160</height>
          </size>
         </property>
         <property name="font">
@@ -109,7 +109,7 @@
           <number>-1</number>
          </property>
          <property name="verticalSpacing">
-          <number>8</number>
+          <number>10</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_4">
@@ -181,6 +181,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
@@ -199,15 +205,30 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
             </font>
            </property>
+           <property name="lineWidth">
+            <number>2</number>
+           </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="sample_zero">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
@@ -248,7 +269,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>50</height>
+          <height>160</height>
          </size>
         </property>
         <property name="font">
@@ -276,7 +297,7 @@
           <number>-1</number>
          </property>
          <property name="verticalSpacing">
-          <number>8</number>
+          <number>10</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_14">
@@ -348,6 +369,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_11">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
@@ -366,15 +393,30 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
             </font>
            </property>
+           <property name="lineWidth">
+            <number>2</number>
+           </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="dstage_zero_2">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
@@ -415,7 +457,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>50</height>
+          <height>125</height>
          </size>
         </property>
         <property name="font">
@@ -443,7 +485,7 @@
           <number>-1</number>
          </property>
          <property name="verticalSpacing">
-          <number>8</number>
+          <number>10</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_18">
@@ -515,6 +557,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_19">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
@@ -536,10 +584,19 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>13</pointsize>
             </font>
+           </property>
+           <property name="lineWidth">
+            <number>2</number>
            </property>
           </widget>
          </item>
@@ -1009,7 +1066,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="widget" native="true">
+       <widget class="QWidget" name="plot_detector" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
@@ -1019,7 +1076,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_2" native="true">
+       <widget class="QWidget" name="plot_measurement" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
