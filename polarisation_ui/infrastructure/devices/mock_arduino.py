@@ -21,7 +21,7 @@ import time
 import sys
 import threading
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional
 
 from ..logging import Debug
 
@@ -162,10 +162,8 @@ class MockArduino:
         """
         try:
             # Send startup info
-            self._write_response("INFO:AS5048A Dual Encoder System Ready\n")
-            self._write_response(
-                "INFO:Send commands: C_A1|C_A0|C_B1|C_B0|C_BOTH1|C_BOTH0|R_A|R_B|Z_A|Z_B|P:100\n"
-            )
+            self._write_response("DATA:INFO AS5048A MockArduino SCPI Ready\n")
+            self._write_response("DATA:INFO Send SYST:HELP? for command reference\n")
 
             last_poll_time = time.time()
             poll_interval_sec = self.poll_interval_ms / 1000.0
@@ -188,7 +186,7 @@ class MockArduino:
                         self._send_continuous_data()
                     last_poll_time = current_time
 
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             Debug.error(f"MockArduino loop error: {e}", exc_info=True)
         finally:
             self._cleanup()
@@ -214,85 +212,128 @@ class MockArduino:
             Debug.debug(f"PTY read error: {e}")
 
     def _handle_command(self, cmd: str) -> Optional[str]:
-        """Process a command and return response."""
+        """Process a SCPI command and return response (None = no response)."""
         cmd = cmd.upper().strip()
 
-        # Single read commands
-        if cmd == "R_A":
-            return self._format_encoder_a()
-        elif cmd == "R_B":
-            return self._format_encoder_b()
-        elif cmd == "R_BOTH":
-            return self._format_both_encoders()
+        # Strip trailing '?' to detect queries
+        is_query = cmd.endswith("?")
+        if is_query:
+            cmd = cmd[:-1].strip()
 
-        # Zero commands
-        elif cmd == "Z_A":
-            self.encoder_a.zero_offset = self.encoder_a.current_angle
-            return "OK:Zero set for encoder A"
-        elif cmd == "Z_B":
-            self.encoder_b.zero_offset = self.encoder_b.current_angle
-            return "OK:Zero set for encoder B"
-        elif cmd == "Z_BOTH":
-            self.encoder_a.zero_offset = self.encoder_a.current_angle
-            self.encoder_b.zero_offset = self.encoder_b.current_angle
-            return "OK:Zero set for both encoders"
+        # Split into header and parameter
+        header, _, param = cmd.partition(" ")
+        param = param.strip()
 
-        # Continuous mode commands
-        elif cmd == "C_A1":
-            self.mode = "CONTINUOUS_A"
-            self.continuous_running = True
-            self.encoder_a.poll_count = 0
-            return "OK:Mode continuous A"
-        elif cmd == "C_A0":
+        # Common commands
+        if header == "*IDN":
+            return "Polarisation-UI,AS5048A-DualEncoder,0,1.0" if is_query else None
+
+        if header == "*RST":
             self.mode = "IDLE"
             self.continuous_running = False
-            return "OK:Mode idle"
-        elif cmd == "C_B1":
-            self.mode = "CONTINUOUS_B"
-            self.continuous_running = True
-            self.encoder_b.poll_count = 0
-            return "OK:Mode continuous B"
-        elif cmd == "C_B0":
-            self.mode = "IDLE"
-            self.continuous_running = False
-            return "OK:Mode idle"
-        elif cmd == "C_BOTH1":
-            self.mode = "CONTINUOUS_BOTH"
-            self.continuous_running = True
-            self.encoder_a.poll_count = 0
-            self.encoder_b.poll_count = 0
-            return "OK:Mode continuous both"
-        elif cmd == "C_BOTH0":
-            self.mode = "IDLE"
-            self.continuous_running = False
-            return "OK:Mode idle"
+            self.poll_interval_ms = self.DEFAULT_POLL_INTERVAL
+            return None
 
-        # Poll interval
-        elif cmd.startswith("P:"):
+        if header == "*CLS":
+            return None
+
+        # MEAS:ANGL? A|B|BOTH
+        if header == "MEAS:ANGL" and is_query:
+            if param == "A" or param == "":
+                return f"{self.encoder_a.get_effective_angle():.2f}"
+            if param == "B":
+                return f"{self.encoder_b.get_effective_angle():.2f}"
+            if param == "BOTH":
+                a = self.encoder_a.get_effective_angle()
+                b = self.encoder_b.get_effective_angle()
+                return f"{a:.2f},{b:.2f}"
+
+        # MEAS:MAGN? A|B|BOTH
+        if header == "MEAS:MAGN" and is_query:
+            if param == "A" or param == "":
+                return str(self.encoder_a.get_raw_value())
+            if param == "B":
+                return str(self.encoder_b.get_raw_value())
+            if param == "BOTH":
+                return f"{self.encoder_a.get_raw_value()},{self.encoder_b.get_raw_value()}"
+
+        # CONF:ZERO A|B|BOTH
+        if header == "CONF:ZERO":
+            if param == "A" or param == "":
+                self.encoder_a.zero_offset = self.encoder_a.current_angle
+            elif param == "B":
+                self.encoder_b.zero_offset = self.encoder_b.current_angle
+            elif param == "BOTH":
+                self.encoder_a.zero_offset = self.encoder_a.current_angle
+                self.encoder_b.zero_offset = self.encoder_b.current_angle
+            return None
+
+        # INIT ON,<target> | INIT OFF
+        if header == "INIT":
+            if param.startswith("ON"):
+                target = param[2:].lstrip(",").strip() or "A"
+                if target == "A":
+                    self.mode = "CONTINUOUS_A"
+                    self.encoder_a.poll_count = 0
+                elif target == "B":
+                    self.mode = "CONTINUOUS_B"
+                    self.encoder_b.poll_count = 0
+                elif target == "BOTH":
+                    self.mode = "CONTINUOUS_BOTH"
+                    self.encoder_a.poll_count = 0
+                    self.encoder_b.poll_count = 0
+                elif target == "MAG":
+                    self.mode = "CONTINUOUS_MAG"
+                elif target == "NOP":
+                    self.mode = "CONTINUOUS_NOP"
+                self.continuous_running = True
+            elif param in ("OFF", "0"):
+                self.mode = "IDLE"
+                self.continuous_running = False
+            return None
+
+        # ABOR
+        if header == "ABOR":
+            self.mode = "IDLE"
+            self.continuous_running = False
+            return None
+
+        # SENS:INT <ms> | SENS:INT?
+        if header == "SENS:INT":
+            if is_query:
+                return str(self.poll_interval_ms)
             try:
-                interval = int(cmd[2:])
-                if 1 <= interval <= 10000:
+                interval = int(param)
+                if 1 <= interval <= 9999:
                     self.poll_interval_ms = interval
-                    return f"OK:Poll interval set to {interval} ms"
             except ValueError:
                 pass
-            return "ERROR:Invalid poll interval"
+            return None
 
-        # Diagnostics
-        elif cmd == "DIAG_A":
-            return "DIAG_A,compHigh:0,compLow:0,cof:0,ocf:0,agc:200"
-        elif cmd == "DIAG_B":
-            return "DIAG_B,compHigh:0,compLow:0,cof:0,ocf:0,agc:195"
+        # SYST:ERR?
+        if header == "SYST:ERR" and is_query:
+            return '0,"No error"'
 
-        # Help
-        elif cmd in ("?", "HELP"):
-            return "INFO:AS5048A Dual Encoder System"
+        # SYST:DIAG? A|B
+        if header == "SYST:DIAG" and is_query:
+            if param == "B":
+                return "0,0,0,1,195"
+            return "0,0,0,1,200"
 
-        else:
-            return "ERROR:Unknown command"
+        # SYST:DEB ON|OFF | SYST:DEB?
+        if header == "SYST:DEB":
+            if is_query:
+                return "0"
+            return None
+
+        # SYST:HELP?
+        if header == "SYST:HELP" and is_query:
+            return "INFO:AS5048A MockArduino SCPI interface"
+
+        return None
 
     def _send_continuous_data(self) -> None:
-        """Send data in continuous mode."""
+        """Send streaming data in continuous mode."""
         if self.mode == "CONTINUOUS_A":
             self.encoder_a.poll_count += 1
             self.encoder_a.current_angle = (
@@ -326,215 +367,20 @@ class MockArduino:
             self._write_response(response + "\n")
 
     def _format_encoder_a(self) -> str:
-        """Format encoder A response: DATA,A,angle_deg,angle_raw"""
+        """Format streaming encoder A response: DATA:ANGL A,<deg>"""
         angle = self.encoder_a.get_effective_angle()
-        raw = self.encoder_a.get_raw_value()
-        return f"DATA,A,{angle:.2f},{raw}"
+        return f"DATA:ANGL A,{angle:.2f}"
 
     def _format_encoder_b(self) -> str:
-        """Format encoder B response: DATA,B,angle_deg,angle_raw"""
+        """Format streaming encoder B response: DATA:ANGL B,<deg>"""
         angle = self.encoder_b.get_effective_angle()
-        raw = self.encoder_b.get_raw_value()
-        return f"DATA,B,{angle:.2f},{raw}"
+        return f"DATA:ANGL B,{angle:.2f}"
 
     def _format_both_encoders(self) -> str:
-        """Format both encoders response: DATA_BOTH,angle_a,angle_b"""
+        """Format streaming both-encoder response: DATA:ANGL BOTH,<a>,<b>"""
         angle_a = self.encoder_a.get_effective_angle()
         angle_b = self.encoder_b.get_effective_angle()
-        return f"DATA_BOTH,{angle_a:.2f},{angle_b:.2f}"
-
-    def _write_response(self, response: str) -> None:
-        """Write response to the PTY master."""
-        try:
-            os.write(self.pty_master, response.encode("utf-8"))
-        except OSError as e:
-            Debug.debug(f"PTY write error: {e}")
-
-    def get_state(self) -> dict:
-        """Get current state of both encoders (for debugging)."""
-        return {
-            "mode": self.mode,
-            "continuous_running": self.continuous_running,
-            "encoder_a": {
-                "current_angle": self.encoder_a.current_angle,
-                "zero_offset": self.encoder_a.zero_offset,
-                "effective_angle": self.encoder_a.get_effective_angle(),
-                "raw_value": self.encoder_a.get_raw_value(),
-                "poll_count": self.encoder_a.poll_count,
-            },
-            "encoder_b": {
-                "current_angle": self.encoder_b.current_angle,
-                "zero_offset": self.encoder_b.zero_offset,
-                "effective_angle": self.encoder_b.get_effective_angle(),
-                "raw_value": self.encoder_b.get_raw_value(),
-                "poll_count": self.encoder_b.poll_count,
-            },
-            "poll_interval_ms": self.poll_interval_ms,
-        }
-
-    def set_encoder_a_angle(self, angle: float) -> None:
-        """Manually set encoder A angle (for testing)."""
-        self.encoder_a.current_angle = angle
-        self.encoder_a.base_angle = angle
-        self.encoder_a.poll_count = 0
-        Debug.debug(f"MockArduino encoder A angle set to {angle}°")
-
-    def set_encoder_b_angle(self, angle: float) -> None:
-        """Manually set encoder B angle (for testing)."""
-        self.encoder_b.current_angle = angle
-        self.encoder_b.base_angle = angle
-        self.encoder_b.poll_count = 0
-        Debug.debug(f"MockArduino encoder B angle set to {angle}°")
-
-    def _process_incoming_data(self) -> None:
-        """Read and process incoming commands."""
-        try:
-            data = os.read(self.pty_master, 1024)
-            if not data:
-                return
-
-            text = data.decode("utf-8", errors="ignore")
-            commands = [cmd.strip() for cmd in text.split("\n") if cmd.strip()]
-
-            for cmd in commands:
-                Debug.debug(f"MockArduino received: {cmd}")
-                response = self._handle_command(cmd)
-                if response:
-                    Debug.debug(f"MockArduino sending: {response}")
-                    self._write_response(response + "\n")
-
-        except OSError as e:
-            Debug.debug(f"PTY read error: {e}")
-
-    def _handle_command(self, cmd: str) -> Optional[str]:
-        """Process a command and return response."""
-        cmd = cmd.upper().strip()
-
-        # Single read commands
-        if cmd == "R_A":
-            return self._format_encoder_a()
-        elif cmd == "R_B":
-            return self._format_encoder_b()
-        elif cmd == "R_BOTH":
-            return self._format_both_encoders()
-
-        # Zero commands
-        elif cmd == "Z_A":
-            self.encoder_a.zero_offset = self.encoder_a.current_angle
-            return "OK:Zero set for encoder A"
-        elif cmd == "Z_B":
-            self.encoder_b.zero_offset = self.encoder_b.current_angle
-            return "OK:Zero set for encoder B"
-        elif cmd == "Z_BOTH":
-            self.encoder_a.zero_offset = self.encoder_a.current_angle
-            self.encoder_b.zero_offset = self.encoder_b.current_angle
-            return "OK:Zero set for both encoders"
-
-        # Continuous mode commands
-        elif cmd == "C_A1":
-            self.mode = "CONTINUOUS_A"
-            self.continuous_running = True
-            self.encoder_a.poll_count = 0
-            return "OK:Mode continuous A"
-        elif cmd == "C_A0":
-            self.mode = "IDLE"
-            self.continuous_running = False
-            return "OK:Mode idle"
-        elif cmd == "C_B1":
-            self.mode = "CONTINUOUS_B"
-            self.continuous_running = True
-            self.encoder_b.poll_count = 0
-            return "OK:Mode continuous B"
-        elif cmd == "C_B0":
-            self.mode = "IDLE"
-            self.continuous_running = False
-            return "OK:Mode idle"
-        elif cmd == "C_BOTH1":
-            self.mode = "CONTINUOUS_BOTH"
-            self.continuous_running = True
-            self.encoder_a.poll_count = 0
-            self.encoder_b.poll_count = 0
-            return "OK:Mode continuous both"
-        elif cmd == "C_BOTH0":
-            self.mode = "IDLE"
-            self.continuous_running = False
-            return "OK:Mode idle"
-
-        # Poll interval
-        elif cmd.startswith("P:"):
-            try:
-                interval = int(cmd[2:])
-                if 1 <= interval <= 10000:
-                    self.poll_interval_ms = interval
-                    return f"OK:Poll interval set to {interval} ms"
-            except ValueError:
-                pass
-            return "ERROR:Invalid poll interval"
-
-        # Diagnostics
-        elif cmd == "DIAG_A":
-            return "DIAG_A,compHigh:0,compLow:0,cof:0,ocf:0,agc:200"
-        elif cmd == "DIAG_B":
-            return "DIAG_B,compHigh:0,compLow:0,cof:0,ocf:0,agc:195"
-
-        # Help
-        elif cmd in ("?", "HELP"):
-            return "INFO:AS5048A Dual Encoder System"
-
-        else:
-            return "ERROR:Unknown command"
-
-    def _send_continuous_data(self) -> None:
-        """Send data in continuous mode."""
-        if self.mode == "CONTINUOUS_A":
-            self.encoder_a.poll_count += 1
-            self.encoder_a.current_angle = (
-                self.encoder_a.base_angle
-                + self.encoder_a.poll_count * self.encoder_a_speed
-            )
-            response = self._format_encoder_a()
-        elif self.mode == "CONTINUOUS_B":
-            self.encoder_b.poll_count += 1
-            self.encoder_b.current_angle = (
-                self.encoder_b.base_angle
-                + self.encoder_b.poll_count * self.encoder_b_speed
-            )
-            response = self._format_encoder_b()
-        elif self.mode == "CONTINUOUS_BOTH":
-            self.encoder_a.poll_count += 1
-            self.encoder_b.poll_count += 1
-            self.encoder_a.current_angle = (
-                self.encoder_a.base_angle
-                + self.encoder_a.poll_count * self.encoder_a_speed
-            )
-            self.encoder_b.current_angle = (
-                self.encoder_b.base_angle
-                + self.encoder_b.poll_count * self.encoder_b_speed
-            )
-            response = self._format_both_encoders()
-        else:
-            return
-
-        if response:
-            self._write_response(response + "\n")
-
-    def _format_encoder_a(self) -> str:
-        """Format encoder A response: DATA,A,angle_deg,angle_raw"""
-        angle = self.encoder_a.get_effective_angle()
-        raw = self.encoder_a.get_raw_value()
-        return f"DATA,A,{angle:.2f},{raw}"
-
-    def _format_encoder_b(self) -> str:
-        """Format encoder B response: DATA,B,angle_deg,angle_raw"""
-        angle = self.encoder_b.get_effective_angle()
-        raw = self.encoder_b.get_raw_value()
-        return f"DATA,B,{angle:.2f},{raw}"
-
-    def _format_both_encoders(self) -> str:
-        """Format both encoders response: DATA_BOTH,angle_a,angle_b"""
-        angle_a = self.encoder_a.get_effective_angle()
-        angle_b = self.encoder_b.get_effective_angle()
-        return f"DATA_BOTH,{angle_a:.2f},{angle_b:.2f}"
+        return f"DATA:ANGL BOTH,{angle_a:.2f},{angle_b:.2f}"
 
     def _write_response(self, response: str) -> None:
         """Write response to the PTY master."""
@@ -662,7 +508,7 @@ def main() -> int:
         )
 
         if not args.no_startup_info:
-            print(f"MockArduino starting...")
+            print("MockArduino starting...")
 
         pty_path = mock.start()
 
@@ -671,7 +517,7 @@ def main() -> int:
         else:
             print(pty_path)
 
-    except Exception as e:
+    except RuntimeError as e:
         Debug.error(f"Failed to start MockArduino: {e}")
         return 1
 

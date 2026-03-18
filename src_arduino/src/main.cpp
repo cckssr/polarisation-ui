@@ -6,8 +6,8 @@
 // ============================================================================
 
 // SPI CS pins for encoders
-#define ENCODER_A_CS_PIN 10
-#define ENCODER_B_CS_PIN 9
+#define ENCODER_A_CS_PIN 9
+#define ENCODER_B_CS_PIN 10
 
 // Baud rate for USB communication
 #define SERIAL_BAUDRATE 115200
@@ -16,8 +16,39 @@
 #define DEFAULT_POLL_INTERVAL 50
 #define SPI_CLOCK_HZ 100000 // 100 kHz
 
-// Debugging output
-bool debugOutput = false;
+#define IDN_STRING "Polarisation-UI,AS5048A-DualEncoder,0,1.0"
+#define MAX_ERRORS 10
+
+// ============================================================================
+// ERROR QUEUE (SCPI SYST:ERR?)
+// ============================================================================
+
+struct ErrorQueue
+{
+  String messages[MAX_ERRORS];
+  int count = 0;
+
+  void push(const String &msg)
+  {
+    if (count < MAX_ERRORS)
+      messages[count++] = msg;
+  }
+
+  String pop()
+  {
+    if (count == 0)
+      return "0,\"No error\"";
+    String e = messages[0];
+    for (int i = 1; i < count; i++)
+      messages[i - 1] = messages[i];
+    count--;
+    return e;
+  }
+
+  void clear() { count = 0; }
+};
+
+ErrorQueue errorQueue;
 
 // ============================================================================
 // STATISTICS STRUCTURE
@@ -45,48 +76,10 @@ struct ContinuousStats
   void print()
   {
     unsigned long durationMs = endTime - startTime;
-    float durationSec = durationMs / 1000.0f;
-
-    Serial.println("\n=== CONTINUOUS MODE STATISTICS ===");
-    Serial.print("Duration: ");
-    Serial.print(durationMs);
-    Serial.println(" ms");
-
-    Serial.print("Data points: ");
-    Serial.println(dataPoints);
-
-    if (dataPoints > 0)
-    {
-      float avgTimePerPoint = durationMs / (float)dataPoints;
-      Serial.print("Avg time per point: ");
-      Serial.print(avgTimePerPoint, 2);
-      Serial.print(" ms (normal: ");
-      Serial.print(DEFAULT_POLL_INTERVAL);
-      Serial.println(" ms)");
-    }
-
-    Serial.print("Total read attempts: ");
-    Serial.println(totalReadAttempts);
-
-    if (totalReadAttempts > 0)
-    {
-      float parityErrorRate = (parityErrors * 100.0f) / totalReadAttempts;
-      float errorFlagRate = (errorFlagErrors * 100.0f) / totalReadAttempts;
-
-      Serial.print("Parity errors: ");
-      Serial.print(parityErrors);
-      Serial.print(" (");
-      Serial.print(parityErrorRate, 1);
-      Serial.println("%)");
-
-      Serial.print("Error flag errors: ");
-      Serial.print(errorFlagErrors);
-      Serial.print(" (");
-      Serial.print(errorFlagRate, 1);
-      Serial.println("%)");
-    }
-
-    Serial.println("==================================\n");
+    Serial.println("DATA:STAT DUR," + String(durationMs));
+    Serial.println("DATA:STAT NPTS," + String(dataPoints));
+    Serial.println("DATA:STAT PERR," + String(parityErrors));
+    Serial.println("DATA:STAT EERR," + String(errorFlagErrors));
   }
 };
 
@@ -114,7 +107,8 @@ struct AppState
   OperationMode mode = MODE_IDLE;
   unsigned long lastPoll = 0;
   unsigned long pollInterval = DEFAULT_POLL_INTERVAL;
-  bool encoderBPresent = false; // Auto-detect or manual config
+  bool encoderBPresent = false;
+  bool debugOutput = false;
 };
 
 AppState appState;
@@ -125,246 +119,140 @@ AppState appState;
 
 void initEncoders()
 {
-  // Initialize Encoder A (always present)
   encoderA.begin(SPI_CLOCK_HZ);
-
-  // Try to initialize Encoder B (optional)
-  // You can change logic here for auto-detection
   encoderB.begin(SPI_CLOCK_HZ);
-  appState.encoderBPresent = false; // Assume present for now
-
-  Serial.println("INFO:Encoders initialized");
+  appState.encoderBPresent = false;
 }
 
 void setup()
 {
   Serial.begin(SERIAL_BAUDRATE);
-  delay(500); // Allow serial port to stabilize
+  delay(500);
 
-  Serial.println("INFO:AS5048A Dual Encoder System Ready");
-  Serial.println("INFO:Send commands: C_A1|C_A0|C_B1|C_B0|C_BOTH1|C_BOTH0|C_MAG1|C_MAG0|R_A|R_B|R_BOTH|M_A|M_B|M_BOTH|Z_A|Z_B|Z_BOTH|P:100");
+  Serial.println("DATA:INFO " IDN_STRING " Ready");
+  Serial.println("DATA:INFO Send SYST:HELP? for command reference");
 
   initEncoders();
 }
 
 // ============================================================================
-// PRINTING AND DATA CONVERSION
+// DATA CONVERSION
 // ============================================================================
-
-enum DataType
-{
-  ANGLE,
-  MAGNITUDE,
-  NOP_TEST
-};
 
 float convertRawToDegrees(uint16_t raw)
 {
-  // Convert 14-bit raw value to angular degrees
   return (raw & 0x3FFF) * 360.0 / 16384.0;
 }
 
-// Unified output function for encoder frame data
-// Format: <dataType>,<encoderId>,<parity>,<errorFlag>,<angle_deg>,<raw>
-// Error flag only printed if debugOutput is true
-void printFrameResult(const char *dataType, char encoderId, const AS5048A_SPI::FrameResult &result, float degreesValue = -1.0)
-{
-  Serial.print(dataType);
-  Serial.print(",");
-  Serial.print(encoderId);
-  Serial.print(",");
-  Serial.print(result.parityOk ? "OK" : "NO");
-
-  // Only include error flag if debug mode is enabled
-  if (debugOutput)
-  {
-    Serial.print(",");
-    Serial.print(result.errorFlag ? "SET" : "OK");
-  }
-
-  Serial.print(",");
-
-  // If degrees value provided (for angle data), print it
-  if (degreesValue >= 0.0)
-  {
-    Serial.print(degreesValue, 2);
-    Serial.print(",");
-    Serial.println(result.data14, DEC);
-  }
-  else
-  {
-    // For magnitude or NOP, just print raw
-    Serial.println(result.data14, DEC);
-  }
-}
-
 // ============================================================================
-// UNIFIED ENCODER READ & SEND OPERATIONS
+// ENCODER READ & SEND OPERATIONS
 // ============================================================================
 
-// Read angle from single encoder and send formatted output
-// Debug ON: raw value + parity check + deg calculation
-// Debug OFF: direct deg read (respects zero position)
+// Streaming output for single encoder angle
+// Format: DATA:ANGL <id>,<deg>[,<raw>]
 void readAndSendAngle(char encoderId, AS5048A_SPI &encoder)
 {
-  if (debugOutput)
+  if (appState.debugOutput)
   {
-    // Debug mode: read raw with diagnostics
     AS5048A_SPI::FrameResult result = encoder.readAngleRawWithDiagnostics();
+    stats.totalReadAttempts++;
+    if (!result.parityOk)
+      stats.parityErrors++;
+    if (result.errorFlag)
+      stats.errorFlagErrors++;
 
-    // Collect statistics
-    if (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B)
-    {
-      stats.totalReadAttempts++;
-      if (!result.parityOk)
-        stats.parityErrors++;
-      if (result.errorFlag)
-        stats.errorFlagErrors++;
-    }
-
-    float angleDeg = convertRawToDegrees(result.data14);
-    printFrameResult("DATA", encoderId, result, angleDeg);
-
-    // Only count successful reads
-    if (result.parityOk && !result.errorFlag &&
-        (appState.mode == MODE_CONTINUOUS_A || appState.mode == MODE_CONTINUOUS_B))
+    if (result.parityOk && !result.errorFlag)
     {
       stats.dataPoints++;
+      float deg = convertRawToDegrees(result.data14);
+      Serial.print("DATA:ANGL ");
+      Serial.print(encoderId);
+      Serial.print(",");
+      Serial.print(deg, 2);
+      Serial.print(",");
+      Serial.println(result.data14, DEC);
+    }
+    else
+    {
+      errorQueue.push("-300,\"Hardware error encoder " + String(encoderId) + "\"");
+      Serial.print("DATA:ANGL ");
+      Serial.print(encoderId);
+      Serial.println(",NAN");
     }
   }
   else
   {
-    // Normal mode: read deg directly (respects zero position)
-    float angleDeg = encoder.readAngleDeg();
-
-    // Simple output without parity/error flags
-    Serial.print("DATA,");
+    float deg = encoder.readAngleDeg();
+    Serial.print("DATA:ANGL ");
     Serial.print(encoderId);
     Serial.print(",");
-    Serial.println(angleDeg, 2);
+    Serial.println(deg, 2);
   }
 }
 
-// Read angles from both encoders and send
+// Streaming output for both encoders
+// Format: DATA:ANGL BOTH,<deg_a>,<deg_b>
 void readAndSendAngles()
 {
-  if (debugOutput)
-  {
-    // Debug mode: raw values with diagnostics
-    AS5048A_SPI::FrameResult resultA = encoderA.readAngleRawWithDiagnostics();
-    AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.readAngleRawWithDiagnostics() : AS5048A_SPI::FrameResult{0, 0, false, true};
-
-    // Check parity and error flags
-    if (!resultA.parityOk)
-    {
-      Serial.println("ERRO,A,Parity check failed");
-      return;
-    }
-    if (resultA.errorFlag)
-    {
-      Serial.println("ERRO,A,Error flag set");
-      return;
-    }
-
-    if (appState.encoderBPresent)
-    {
-      if (!resultB.parityOk)
-      {
-        Serial.println("ERRO,B,Parity check failed");
-        return;
-      }
-      if (resultB.errorFlag)
-      {
-        Serial.println("ERRO,B,Error flag set");
-        return;
-      }
-    }
-
-    float angleA = convertRawToDegrees(resultA.data14);
-    float angleB = appState.encoderBPresent ? convertRawToDegrees(resultB.data14) : 0.0;
-
-    // Format: DATA_BOTH,angle_a,angle_b
-    Serial.print("DATA_BOTH,");
-    Serial.print(angleA, 2);
-    Serial.print(",");
-    Serial.println(angleB, 2);
-  }
-  else
-  {
-    // Normal mode: direct deg read (respects zero position)
-    float angleA = encoderA.readAngleDeg();
-    float angleB = appState.encoderBPresent ? encoderB.readAngleDeg() : 0.0;
-
-    // Format: DATA_BOTH,angle_a,angle_b
-    Serial.print("DATA_BOTH,");
-    Serial.print(angleA, 2);
-    Serial.print(",");
-    Serial.println(angleB, 2);
-  }
+  float angleA = encoderA.readAngleDeg();
+  float angleB = appState.encoderBPresent ? encoderB.readAngleDeg() : 0.0;
+  Serial.print("DATA:ANGL BOTH,");
+  Serial.print(angleA, 2);
+  Serial.print(",");
+  Serial.println(angleB, 2);
 }
 
-// Read magnitude from single encoder
+// Streaming output for single encoder magnitude
+// Format: DATA:MAGN <id>,<value>
 void readAndSendMagnitude(char encoderId, AS5048A_SPI &encoder)
 {
   AS5048A_SPI::FrameResult result = encoder.readMagnitudeRawWithDiagnostics();
-
+  Serial.print("DATA:MAGN ");
+  Serial.print(encoderId);
+  Serial.print(",");
   if (!result.parityOk || result.errorFlag)
   {
-    Serial.print("ERRO,");
-    Serial.print(encoderId);
-    Serial.println(",Magnitude read failed");
+    errorQueue.push("-300,\"Magnitude read failed encoder " + String(encoderId) + "\"");
+    Serial.println("NAN");
   }
   else
   {
-    printFrameResult("MAG", encoderId, result);
+    Serial.println(result.data14, DEC);
   }
 }
 
-// Read magnitudes from both encoders
+// Streaming output for both magnitudes
+// Format: DATA:MAGN BOTH,<val_a>,<val_b>
 void readAndSendMagnitudes()
 {
   AS5048A_SPI::FrameResult resultA = encoderA.readMagnitudeRawWithDiagnostics();
-  AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.readMagnitudeRawWithDiagnostics() : AS5048A_SPI::FrameResult{0, 0, false, true};
+  AS5048A_SPI::FrameResult resultB = appState.encoderBPresent
+                                         ? encoderB.readMagnitudeRawWithDiagnostics()
+                                         : AS5048A_SPI::FrameResult{0, 0, false, true};
 
-  // Check parity and error flags for both encoders
-  if (!resultA.parityOk || resultA.errorFlag)
-  {
-    Serial.println("ERRO,A,Magnitude read failed");
-    return;
-  }
-  if (appState.encoderBPresent && (!resultB.parityOk || resultB.errorFlag))
-  {
-    Serial.println("ERRO,B,Magnitude read failed");
-    return;
-  }
-
-  Serial.print("MAG_BOTH,");
-  Serial.print(resultA.data14);
+  Serial.print("DATA:MAGN BOTH,");
+  Serial.print((!resultA.parityOk || resultA.errorFlag) ? "NAN" : String(resultA.data14));
   Serial.print(",");
-  Serial.println(resultB.data14);
+  Serial.println((appState.encoderBPresent && (!resultB.parityOk || resultB.errorFlag)) ? "NAN" : String(resultB.data14));
 }
 
-// Send continuous NOP to check signal quality
+// Streaming NOP signal quality test
+// Format: DATA:NOP A,<parity>,0x<raw>[,B,<parity>,0x<raw>]
 void sendContinuousNOP()
 {
-  AS5048A_SPI::FrameResult resultA = encoderA.nop();
-  AS5048A_SPI::FrameResult resultB = appState.encoderBPresent ? encoderB.nop() : AS5048A_SPI::FrameResult{0, 0, false, true};
-
-  Serial.print("NOP,A,");
-  Serial.print(resultA.parityOk ? "OK" : "FAIL");
-  Serial.print(",");
-  Serial.print(resultA.errorFlag ? "SET" : "OK");
+  AS5048A_SPI::FrameResult rA = encoderA.nop();
+  Serial.print("DATA:NOP A,");
+  Serial.print(rA.parityOk ? "OK" : "FAIL");
   Serial.print(",0x");
-  Serial.print(resultA.raw16, HEX);
+  Serial.print(rA.raw16, HEX);
 
   if (appState.encoderBPresent)
   {
-    Serial.print(" | B,");
-    Serial.print(resultB.parityOk ? "OK" : "FAIL");
-    Serial.print(",");
-    Serial.print(resultB.errorFlag ? "SET" : "OK");
+    AS5048A_SPI::FrameResult rB = encoderB.nop();
+    Serial.print(",B,");
+    Serial.print(rB.parityOk ? "OK" : "FAIL");
     Serial.print(",0x");
-    Serial.println(resultB.raw16, HEX);
+    Serial.println(rB.raw16, HEX);
   }
   else
   {
@@ -373,243 +261,465 @@ void sendContinuousNOP()
 }
 
 // ============================================================================
-// COMMAND PROCESSING
+// SCPI COMMAND HANDLERS
 // ============================================================================
+
+// *IDN?
+void handleIDN()
+{
+  Serial.println(IDN_STRING);
+}
+
+// *RST
+void handleRST()
+{
+  if (appState.debugOutput && appState.mode != MODE_IDLE)
+  {
+    stats.endTime = millis();
+    stats.print();
+  }
+  appState.mode = MODE_IDLE;
+  appState.pollInterval = DEFAULT_POLL_INTERVAL;
+  appState.debugOutput = false;
+  errorQueue.clear();
+  stats.reset();
+}
+
+// *CLS
+void handleCLS()
+{
+  errorQueue.clear();
+}
+
+// MEAS:ANGL? [A|B|BOTH]
+// Response: <deg>  or  <deg_a>,<deg_b>
+void handleMeasAngl(const String &param)
+{
+  if (param == "A" || param == "")
+  {
+    Serial.println(encoderA.readAngleDeg(), 2);
+  }
+  else if (param == "B")
+  {
+    if (!appState.encoderBPresent)
+    {
+      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+      Serial.println("NAN");
+      return;
+    }
+    Serial.println(encoderB.readAngleDeg(), 2);
+  }
+  else if (param == "BOTH")
+  {
+    float degA = encoderA.readAngleDeg();
+    float degB = appState.encoderBPresent ? encoderB.readAngleDeg() : 0.0;
+    Serial.print(degA, 2);
+    Serial.print(",");
+    Serial.println(degB, 2);
+  }
+  else
+  {
+    errorQueue.push("-113,\"Undefined header; unknown encoder: " + param + "\"");
+    Serial.println("NAN");
+  }
+}
+
+// MEAS:MAGN? [A|B|BOTH]
+// Response: <raw>  or  <raw_a>,<raw_b>
+void handleMeasMagn(const String &param)
+{
+  auto readMagn = [](AS5048A_SPI &enc) -> String
+  {
+    AS5048A_SPI::FrameResult r = enc.readMagnitudeRawWithDiagnostics();
+    return (r.parityOk && !r.errorFlag) ? String(r.data14) : "NAN";
+  };
+
+  if (param == "A" || param == "")
+  {
+    Serial.println(readMagn(encoderA));
+  }
+  else if (param == "B")
+  {
+    if (!appState.encoderBPresent)
+    {
+      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+      Serial.println("NAN");
+      return;
+    }
+    Serial.println(readMagn(encoderB));
+  }
+  else if (param == "BOTH")
+  {
+    Serial.print(readMagn(encoderA));
+    Serial.print(",");
+    Serial.println(appState.encoderBPresent ? readMagn(encoderB) : "NAN");
+  }
+  else
+  {
+    errorQueue.push("-113,\"Undefined header; unknown encoder: " + param + "\"");
+    Serial.println("NAN");
+  }
+}
+
+// CONF:ZERO [A|B|BOTH]
+void handleConfZero(const String &param)
+{
+  if (param == "A" || param == "")
+  {
+    encoderA.setSoftwareZero();
+  }
+  else if (param == "B")
+  {
+    if (!appState.encoderBPresent)
+    {
+      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+      return;
+    }
+    encoderB.setSoftwareZero();
+  }
+  else if (param == "BOTH")
+  {
+    encoderA.setSoftwareZero();
+    if (appState.encoderBPresent)
+      encoderB.setSoftwareZero();
+  }
+  else
+  {
+    errorQueue.push("-113,\"Undefined header; unknown encoder: " + param + "\"");
+  }
+}
+
+// INIT ON,<target>  |  INIT OFF
+void handleInit(const String &param)
+{
+  if (param.startsWith("ON"))
+  {
+    String target = "A";
+    int comma = param.indexOf(',');
+    if (comma >= 0)
+    {
+      target = param.substring(comma + 1);
+      target.trim();
+    }
+
+    if (target == "A")
+    {
+      appState.mode = MODE_CONTINUOUS_A;
+    }
+    else if (target == "B")
+    {
+      if (!appState.encoderBPresent)
+      {
+        errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+        return;
+      }
+      appState.mode = MODE_CONTINUOUS_B;
+    }
+    else if (target == "BOTH")
+    {
+      if (!appState.encoderBPresent)
+      {
+        errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+        return;
+      }
+      appState.mode = MODE_CONTINUOUS_BOTH;
+    }
+    else if (target == "MAG")
+    {
+      appState.mode = MODE_CONTINUOUS_MAG;
+    }
+    else if (target == "NOP")
+    {
+      appState.mode = MODE_CONTINUOUS_NOP;
+    }
+    else
+    {
+      errorQueue.push("-113,\"Undefined header; unknown target: " + target + "\"");
+      return;
+    }
+
+    appState.lastPoll = millis();
+    if (appState.debugOutput)
+    {
+      stats.reset();
+      stats.startTime = millis();
+    }
+  }
+  else if (param == "OFF" || param == "0")
+  {
+    if (appState.debugOutput && appState.mode != MODE_IDLE)
+    {
+      stats.endTime = millis();
+      stats.print();
+    }
+    appState.mode = MODE_IDLE;
+  }
+  else
+  {
+    errorQueue.push("-102,\"Syntax error; expected ON,<target> or OFF\"");
+  }
+}
+
+// ABOR - stop continuous mode
+void handleAbor()
+{
+  if (appState.debugOutput && appState.mode != MODE_IDLE)
+  {
+    stats.endTime = millis();
+    stats.print();
+  }
+  appState.mode = MODE_IDLE;
+}
+
+// SENS:INT <ms>  |  SENS:INT?
+void handleSensInt(bool isQuery, const String &param)
+{
+  if (isQuery)
+  {
+    Serial.println(appState.pollInterval);
+  }
+  else
+  {
+    int interval = param.toInt();
+    if (interval > 0 && interval < 10000)
+    {
+      appState.pollInterval = (unsigned long)interval;
+    }
+    else
+    {
+      errorQueue.push("-222,\"Data out of range; interval must be 1-9999 ms\"");
+    }
+  }
+}
+
+// SYST:ERR?
+void handleSystErr()
+{
+  Serial.println(errorQueue.pop());
+}
+
+// SYST:DIAG? [A|B]
+// Response: <compHigh>,<compLow>,<cof>,<ocf>,<agc>
+void handleSystDiag(const String &param)
+{
+  AS5048A_SPI *enc = nullptr;
+  if (param == "A" || param == "")
+  {
+    enc = &encoderA;
+  }
+  else if (param == "B")
+  {
+    if (!appState.encoderBPresent)
+    {
+      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+      Serial.println("NAN,NAN,NAN,NAN,NAN");
+      return;
+    }
+    enc = &encoderB;
+  }
+  else
+  {
+    errorQueue.push("-113,\"Undefined header; unknown encoder: " + param + "\"");
+    Serial.println("NAN,NAN,NAN,NAN,NAN");
+    return;
+  }
+
+  AS5048A_SPI::Diagnostics diag = enc->readDiagnostics();
+  Serial.print(diag.compHigh);
+  Serial.print(",");
+  Serial.print(diag.compLow);
+  Serial.print(",");
+  Serial.print(diag.cof);
+  Serial.print(",");
+  Serial.print(diag.ocf);
+  Serial.print(",");
+  Serial.println(diag.agc);
+}
+
+// SYST:DEB ON|OFF|1|0  |  SYST:DEB?
+void handleSystDeb(bool isQuery, const String &param)
+{
+  if (isQuery)
+  {
+    Serial.println(appState.debugOutput ? "1" : "0");
+  }
+  else
+  {
+    if (param == "ON" || param == "1")
+      appState.debugOutput = true;
+    else if (param == "OFF" || param == "0")
+      appState.debugOutput = false;
+    else
+      errorQueue.push("-102,\"Syntax error; use ON, OFF, 1, or 0\"");
+  }
+}
+
+// SYST:HELP?
 void printHelp()
 {
-  Serial.println("\n=== AS5048A Command Reference ===");
-  Serial.println("Mode Control:");
-  Serial.println("  C_A1       - Start continuous reading encoder A");
-  Serial.println("  C_A0       - Stop continuous reading encoder A");
-  Serial.println("  C_B1       - Start continuous reading encoder B");
-  Serial.println("  C_B0       - Stop continuous reading encoder B");
-  Serial.println("  C_BOTH1    - Start continuous reading both");
-  Serial.println("  C_BOTH0    - Stop continuous reading");
-  Serial.println("Single Read:");
-  Serial.println("  R_A        - Read encoder A once");
-  Serial.println("  R_B        - Read encoder B once");
-  Serial.println("  R_BOTH     - Read both encoders once");
-  Serial.println("  M_A        - Read magnitude encoder A once");
-  Serial.println("  M_B        - Read magnitude encoder B once");
-  Serial.println("  M_BOTH     - Read magnitude of both once");
-  Serial.println("Zero Position:");
-  Serial.println("  Z_A        - Set zero for encoder A");
-  Serial.println("  Z_B        - Set zero for encoder B");
-  Serial.println("  Z_BOTH     - Set zero for both");
-  Serial.println("Settings:");
-  Serial.println("  P:100      - Set poll interval to 100 ms");
-  Serial.println("  DEBUG:1    - Enable debug output & statistics");
-  Serial.println("  DEBUG:0    - Disable debug output");
-  Serial.println("Diagnostics:");
-  Serial.println("  DIAG_A     - Read diagnostics for encoder A");
-  Serial.println("  DIAG_B     - Read diagnostics for encoder B");
-  Serial.println("Continuous Magnitude:");
-  Serial.println("  C_MAG1     - Start continuous magnitude (both)");
-  Serial.println("  C_MAG0     - Stop continuous magnitude");
-  Serial.println("Signal Quality:");
-  Serial.println("  C_NOP1     - Start continuous NOP (signal test)");
-  Serial.println("  C_NOP0     - Stop continuous NOP");
-  Serial.println("=====================================\n");
+  Serial.println("=== AS5048A SCPI Command Reference ===");
+  Serial.println("Common:");
+  Serial.println("  *IDN?                  Identification string");
+  Serial.println("  *RST                   Reset to defaults (stops streaming)");
+  Serial.println("  *CLS                   Clear error queue");
+  Serial.println("Measure (single read):");
+  Serial.println("  MEAS:ANGL? A|B|BOTH    Read angle in degrees");
+  Serial.println("  MEAS:MAGN? A|B|BOTH    Read raw magnitude (14-bit)");
+  Serial.println("Configure:");
+  Serial.println("  CONF:ZERO A|B|BOTH     Set current position as zero");
+  Serial.println("Continuous streaming:");
+  Serial.println("  INIT ON,A|B|BOTH       Start angle streaming");
+  Serial.println("  INIT ON,MAG            Start magnitude streaming");
+  Serial.println("  INIT ON,NOP            Start NOP signal quality test");
+  Serial.println("  INIT OFF               Stop streaming (= ABOR)");
+  Serial.println("  ABOR                   Abort streaming");
+  Serial.println("Sense (settings):");
+  Serial.println("  SENS:INT <ms>          Set poll interval (1-9999 ms)");
+  Serial.println("  SENS:INT?              Query poll interval");
+  Serial.println("System:");
+  Serial.println("  SYST:ERR?              Query next error from queue");
+  Serial.println("  SYST:DIAG? A|B         Read encoder diagnostics");
+  Serial.println("  SYST:DEB ON|OFF        Enable/disable debug output");
+  Serial.println("  SYST:DEB?              Query debug state");
+  Serial.println("  SYST:HELP?             This help text");
+  Serial.println("Streaming data format:");
+  Serial.println("  DATA:ANGL A,<deg>      Single encoder angle");
+  Serial.println("  DATA:ANGL BOTH,<a>,<b> Both encoder angles");
+  Serial.println("  DATA:MAGN A,<raw>      Single encoder magnitude");
+  Serial.println("======================================");
 }
+
+// ============================================================================
+// MAIN COMMAND DISPATCHER
+// ============================================================================
 
 void handleCommand(String cmd)
 {
   cmd.trim();
+  if (cmd.length() == 0)
+    return;
+
+  // SCPI is case-insensitive
   cmd.toUpperCase();
 
-  // Mode control: Enable continuous reading
-  if (cmd == "C_A1")
+  bool isQuery = cmd.endsWith("?");
+  if (isQuery)
+    cmd = cmd.substring(0, cmd.length() - 1);
+  cmd.trim();
+
+  // Split into header and parameter at first space
+  String header = cmd;
+  String param = "";
+  int space = cmd.indexOf(' ');
+  if (space >= 0)
   {
-    appState.mode = MODE_CONTINUOUS_A;
-    appState.lastPoll = millis();
-    if (debugOutput)
-    {
-      stats.reset();
-      stats.startTime = millis();
-    }
-    Serial.println("OK:Mode continuous A");
-  }
-  else if (cmd == "C_A0")
-  {
-    if (debugOutput && appState.mode == MODE_CONTINUOUS_A)
-    {
-      stats.endTime = millis();
-      stats.print();
-    }
-    appState.mode = MODE_IDLE;
-    Serial.println("OK:Mode idle");
-  }
-  else if (cmd == "C_B1" && appState.encoderBPresent)
-  {
-    appState.mode = MODE_CONTINUOUS_B;
-    appState.lastPoll = millis();
-    if (debugOutput)
-    {
-      stats.reset();
-      stats.startTime = millis();
-    }
-    Serial.println("OK:Mode continuous B");
-  }
-  else if (cmd == "C_B0")
-  {
-    if (debugOutput && appState.mode == MODE_CONTINUOUS_B)
-    {
-      stats.endTime = millis();
-      stats.print();
-    }
-    appState.mode = MODE_IDLE;
-    Serial.println("OK:Mode idle");
-  }
-  else if (cmd == "C_BOTH1" && appState.encoderBPresent)
-  {
-    appState.mode = MODE_CONTINUOUS_BOTH;
-    appState.lastPoll = millis();
-    Serial.println("OK:Mode continuous both");
-  }
-  else if (cmd == "C_BOTH0")
-  {
-    appState.mode = MODE_IDLE;
-    Serial.println("OK:Mode idle");
-  }
-  else if (cmd == "C_MAG1")
-  {
-    appState.mode = MODE_CONTINUOUS_MAG;
-    appState.lastPoll = millis();
-    Serial.println("OK:Mode continuous magnitude");
-  }
-  else if (cmd == "C_MAG0")
-  {
-    appState.mode = MODE_IDLE;
-    Serial.println("OK:Mode idle");
-  }
-  else if (cmd == "C_NOP1")
-  {
-    appState.mode = MODE_CONTINUOUS_NOP;
-    appState.lastPoll = millis();
-    Serial.println("OK:Mode continuous NOP (signal quality test)");
-  }
-  else if (cmd == "C_NOP0")
-  {
-    appState.mode = MODE_IDLE;
-    Serial.println("OK:Mode idle");
+    header = cmd.substring(0, space);
+    param = cmd.substring(space + 1);
+    param.trim();
   }
 
-  // Single read commands
-  else if (cmd == "R_A")
+  // --- Common IEEE 488.2 commands ---
+  if (header == "*IDN")
   {
-    readAndSendAngle('A', encoderA);
-  }
-  else if (cmd == "R_B" && appState.encoderBPresent)
-  {
-    readAndSendAngle('B', encoderB);
-  }
-  else if (cmd == "R_BOTH")
-  {
-    readAndSendAngles();
-  }
-  else if (cmd == "M_A")
-  {
-    readAndSendMagnitude('A', encoderA);
-  }
-  else if (cmd == "M_B" && appState.encoderBPresent)
-  {
-    readAndSendMagnitude('B', encoderB);
-  }
-  else if (cmd == "M_BOTH")
-  {
-    readAndSendMagnitudes();
-  }
-
-  // Zero position commands
-  else if (cmd == "Z_A")
-  {
-    encoderA.setSoftwareZero();
-    Serial.println("OK:Zero set for encoder A");
-  }
-  else if (cmd == "Z_B" && appState.encoderBPresent)
-  {
-    encoderB.setSoftwareZero();
-    Serial.println("OK:Zero set for encoder B");
-  }
-  else if (cmd == "Z_BOTH" && appState.encoderBPresent)
-  {
-    encoderA.setSoftwareZero();
-    encoderB.setSoftwareZero();
-    Serial.println("OK:Zero set for both encoders");
-  }
-
-  // Poll interval adjustment (e.g., "P:100")
-  else if (cmd.startsWith("P:"))
-  {
-    int interval = cmd.substring(2).toInt();
-    if (interval > 0 && interval < 10000)
-    {
-      appState.pollInterval = interval;
-      Serial.print("OK:Poll interval set to ");
-      Serial.print(interval);
-      Serial.println(" ms");
-    }
+    if (isQuery)
+      handleIDN();
     else
-    {
-      Serial.println("ERROR:Invalid poll interval");
-    }
+      errorQueue.push("-113,\"Undefined header; *IDN is query-only\"");
   }
-
-  // Debug output control
-  else if (cmd.startsWith("DEBUG:"))
+  else if (header == "*RST")
   {
-    int debugVal = cmd.substring(6).toInt();
-    if (debugVal == 1 || debugVal == 0)
-    {
-      debugOutput = (debugVal == 1);
-      Serial.print("OK:Debug output ");
-      Serial.println(debugOutput ? "enabled" : "disabled");
-    }
+    if (!isQuery)
+      handleRST();
     else
-    {
-      Serial.println("ERROR:Use DEBUG:0 or DEBUG:1");
-    }
+      errorQueue.push("-113,\"Undefined header; *RST is command-only\"");
+  }
+  else if (header == "*CLS")
+  {
+    if (!isQuery)
+      handleCLS();
+    else
+      errorQueue.push("-113,\"Undefined header; *CLS is command-only\"");
   }
 
-  // Diagnostics
-  else if (cmd == "DIAG_A")
+  // --- MEASure subsystem ---
+  else if (header == "MEAS:ANGL" || header == "MEASURE:ANGLE")
   {
-    AS5048A_SPI::Diagnostics diag = encoderA.readDiagnostics();
-    Serial.print("DIAG_A,compHigh:");
-    Serial.print(diag.compHigh);
-    Serial.print(",compLow:");
-    Serial.print(diag.compLow);
-    Serial.print(",cof:");
-    Serial.print(diag.cof);
-    Serial.print(",ocf:");
-    Serial.print(diag.ocf);
-    Serial.print(",agc:");
-    Serial.println(diag.agc);
+    if (isQuery)
+      handleMeasAngl(param);
+    else
+      errorQueue.push("-113,\"Undefined header; MEAS:ANGL is query-only\"");
   }
-  else if (cmd == "DIAG_B" && appState.encoderBPresent)
+  else if (header == "MEAS:MAGN" || header == "MEASURE:MAGNITUDE")
   {
-    AS5048A_SPI::Diagnostics diag = encoderB.readDiagnostics();
-    Serial.print("DIAG_B,compHigh:");
-    Serial.print(diag.compHigh);
-    Serial.print(",compLow:");
-    Serial.print(diag.compLow);
-    Serial.print(",cof:");
-    Serial.print(diag.cof);
-    Serial.print(",ocf:");
-    Serial.print(diag.ocf);
-    Serial.print(",agc:");
-    Serial.println(diag.agc);
+    if (isQuery)
+      handleMeasMagn(param);
+    else
+      errorQueue.push("-113,\"Undefined header; MEAS:MAGN is query-only\"");
   }
 
-  // Help
-  else if (cmd == "?" || cmd == "HELP")
+  // --- CONFigure subsystem ---
+  else if (header == "CONF:ZERO" || header == "CONFIGURE:ZERO")
   {
-    printHelp();
+    if (!isQuery)
+      handleConfZero(param);
+    else
+      errorQueue.push("-113,\"Undefined header; CONF:ZERO is command-only\"");
+  }
+
+  // --- INITiate ---
+  else if (header == "INIT" || header == "INITIATE")
+  {
+    if (!isQuery)
+      handleInit(param);
+    else
+      errorQueue.push("-113,\"Undefined header; INIT is command-only\"");
+  }
+
+  // --- ABORt ---
+  else if (header == "ABOR" || header == "ABORT")
+  {
+    if (!isQuery)
+      handleAbor();
+    else
+      errorQueue.push("-113,\"Undefined header; ABOR is command-only\"");
+  }
+
+  // --- SENSe subsystem ---
+  else if (header == "SENS:INT" || header == "SENSE:INTERVAL")
+  {
+    handleSensInt(isQuery, param);
+  }
+
+  // --- SYSTem subsystem ---
+  else if (header == "SYST:ERR" || header == "SYSTEM:ERROR")
+  {
+    if (isQuery)
+      handleSystErr();
+    else
+      errorQueue.push("-113,\"Undefined header; SYST:ERR is query-only\"");
+  }
+  else if (header == "SYST:DIAG" || header == "SYSTEM:DIAGNOSTIC")
+  {
+    if (isQuery)
+      handleSystDiag(param);
+    else
+      errorQueue.push("-113,\"Undefined header; SYST:DIAG is query-only\"");
+  }
+  else if (header == "SYST:DEB" || header == "SYSTEM:DEBUG")
+  {
+    handleSystDeb(isQuery, param);
+  }
+  else if (header == "SYST:HELP" || header == "SYSTEM:HELP")
+  {
+    if (isQuery)
+      printHelp();
+    else
+      errorQueue.push("-113,\"Undefined header; SYST:HELP is query-only\"");
   }
 
   else
   {
-    Serial.println("ERROR:Unknown command");
+    errorQueue.push("-113,\"Undefined header: " + header + "\"");
   }
 }
 
@@ -631,7 +741,6 @@ void loop()
   if (appState.mode != MODE_IDLE &&
       (now - appState.lastPoll >= appState.pollInterval))
   {
-
     appState.lastPoll = now;
 
     switch (appState.mode)

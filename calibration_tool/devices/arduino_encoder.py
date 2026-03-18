@@ -1,23 +1,24 @@
 """
-Arduino Encoder Communication for AS5048A.
+Arduino Encoder Communication for AS5048A (SCPI protocol).
 
 Communicates with the Arduino running the AS5048A firmware.
-Sends commands like R_A to read angle and parses responses.
+Uses SCPI commands: MEAS:ANGL? A to read angle, CONF:ZERO A to set zero, etc.
 """
 
-import serial
-import time
 import re
+import time
 from typing import Optional, Tuple
+
+import serial
 
 
 class ArduinoEncoder:
     """
-    Interface to AS5048A encoder via Arduino.
+    Interface to AS5048A encoder via Arduino (SCPI protocol).
 
     Protocol:
-        Send: R_A (read angle encoder A)
-        Receive: DATA,A,<angle_deg>
+        Send: MEAS:ANGL? A   (read angle encoder A)
+        Receive: 45.23       (bare float in degrees)
 
     Example:
         >>> encoder = ArduinoEncoder("/dev/cu.usbmodem1101")
@@ -27,10 +28,8 @@ class ArduinoEncoder:
         >>> encoder.disconnect()
     """
 
-    # Regex patterns for parsing responses
-    DATA_PATTERN = re.compile(r"DATA,([AB]),(-?\d+\.?\d*)")
-    ERROR_PATTERN = re.compile(r"ERRO,([AB]),(.+)")
-    OK_PATTERN = re.compile(r"OK:(.+)")
+    # Streaming data pattern: DATA:ANGL A,45.23
+    STREAM_ANGLE_PATTERN = re.compile(r"DATA:ANGL\s+([AB]|BOTH),(-?\d+\.?\d*)(?:,(-?\d+\.?\d*))?")
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
         """
@@ -89,7 +88,7 @@ class ArduinoEncoder:
         print("[ArduinoEncoder] Disconnected")
 
     def _send_command(self, cmd: str) -> None:
-        """Send command to Arduino."""
+        """Send SCPI command to Arduino."""
         if not self.connected:
             raise RuntimeError("Not connected to Arduino")
         self._serial.write(f"{cmd}\n".encode("utf-8"))
@@ -122,6 +121,8 @@ class ArduinoEncoder:
         """
         Read angle from encoder.
 
+        Sends MEAS:ANGL? <id> and parses the bare float response.
+
         Args:
             encoder_id: 'A' or 'B'
 
@@ -132,57 +133,43 @@ class ArduinoEncoder:
             print("[ArduinoEncoder] Not connected")
             return None
 
-        # Send read command
-        cmd = f"R_{encoder_id}"
-        self._send_command(cmd)
+        self._send_command(f"MEAS:ANGL? {encoder_id}")
 
-        # Read response
         response = self._read_line(timeout=1.0)
         if not response:
             print("[ArduinoEncoder] No response")
             return None
 
-        # Parse DATA response
-        match = self.DATA_PATTERN.match(response)
-        if match:
-            enc_id = match.group(1)
-            angle = float(match.group(2))
-            return angle
-
-        # Check for error
-        error_match = self.ERROR_PATTERN.match(response)
-        if error_match:
-            print(f"[ArduinoEncoder] Error: {error_match.group(2)}")
+        try:
+            return float(response)
+        except ValueError:
+            print(f"[ArduinoEncoder] Unexpected response: {response}")
             return None
-
-        print(f"[ArduinoEncoder] Unexpected response: {response}")
-        return None
 
     def set_zero(self, encoder_id: str = "A") -> bool:
         """
         Set current position as zero for encoder.
 
+        Sends CONF:ZERO <id> (no response expected).
+
         Args:
             encoder_id: 'A' or 'B'
 
         Returns:
-            True if successful
+            True if command sent successfully
         """
         if not self.connected:
             return False
 
-        cmd = f"Z_{encoder_id}"
-        self._send_command(cmd)
-
-        response = self._read_line(timeout=1.0)
-        if response and response.startswith("OK:"):
-            print(f"[ArduinoEncoder] Zero set for encoder {encoder_id}")
-            return True
-        return False
+        self._send_command(f"CONF:ZERO {encoder_id}")
+        print(f"[ArduinoEncoder] Zero set for encoder {encoder_id}")
+        return True
 
     def read_both_angles(self) -> Optional[Tuple[float, float]]:
         """
         Read angles from both encoders.
+
+        Sends MEAS:ANGL? BOTH and parses the comma-separated response.
 
         Returns:
             Tuple (angle_a, angle_b) or None if error
@@ -190,18 +177,18 @@ class ArduinoEncoder:
         if not self.connected:
             return None
 
-        self._send_command("R_BOTH")
+        self._send_command("MEAS:ANGL? BOTH")
         response = self._read_line(timeout=1.0)
 
-        if response and response.startswith("DATA_BOTH,"):
+        if not response:
+            return None
+
+        try:
             parts = response.split(",")
-            if len(parts) >= 3:
-                try:
-                    angle_a = float(parts[1])
-                    angle_b = float(parts[2])
-                    return (angle_a, angle_b)
-                except ValueError:
-                    pass
+            if len(parts) >= 2:
+                return (float(parts[0]), float(parts[1]))
+        except ValueError:
+            print(f"[ArduinoEncoder] Unexpected response: {response}")
         return None
 
 
@@ -214,9 +201,9 @@ if __name__ == "__main__":
     if encoder.connect():
         print("\nReading 5 samples...")
         for i in range(5):
-            angle = encoder.read_angle("A")
-            if angle is not None:
-                print(f"  Sample {i+1}: {angle:.2f}°")
+            sample = encoder.read_angle("A")
+            if sample is not None:
+                print(f"  Sample {i+1}: {sample:.2f}°")
             time.sleep(0.5)
 
         encoder.disconnect()

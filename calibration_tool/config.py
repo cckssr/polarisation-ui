@@ -20,12 +20,12 @@ ARDUINO_BAUDRATE = 115200
 
 # Serial number of your KDC101 controller (8 digits)
 # Find this on the label of your controller
-KDC101_SERIAL = "27000001"  # <-- EDIT THIS
+KDC101_SERIAL = "27266999"  # <-- EDIT THIS
 
 # Serial port for KDC101
 # macOS: typically /dev/cu.usbserial-* (FTDI chip)
 # The port name often contains the serial number
-KDC101_PORT = "/dev/cu.usbserial-27000001"  # <-- EDIT THIS
+KDC101_PORT = "/dev/cu.usbserial-27266999"  # <-- EDIT THIS
 KDC101_BAUDRATE = 115200
 
 # ============================================================================
