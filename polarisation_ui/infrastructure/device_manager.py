@@ -16,6 +16,8 @@ from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
+from serial.tools import list_ports
+
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino
 
@@ -71,6 +73,13 @@ class GoniometerDeviceManager:
         self._encoder_status = DeviceStatus(state=DeviceState.DISCONNECTED)
 
         Debug.info(f"Device manager initialized (mock={use_mock})")
+
+    # ==================== Port Discovery ====================
+
+    @staticmethod
+    def list_available_ports() -> list[str]:
+        """Return a list of available serial port device names."""
+        return [p.device for p in list_ports.comports()]
 
     # ==================== Connection Management ====================
 

@@ -187,6 +187,7 @@ class DualEncoderArduino:
         response = self._device.read_value(timeout=self.timeout, return_type="str")
         if not response:
             Debug.error(f"No response from encoder {encoder_id.value}")
+            self._query_and_log_error()
             return None
 
         return self._parse_single_response(response, encoder_id)
@@ -212,6 +213,7 @@ class DualEncoderArduino:
         response = self._device.read_value(timeout=self.timeout, return_type="str")
         if not response:
             Debug.error("No response for MEAS:ANGL? BOTH command")
+            self._query_and_log_error()
             return None
 
         return self._parse_both_response(response)
@@ -356,6 +358,24 @@ class DualEncoderArduino:
     def flush_buffer(self) -> bool:
         """Clear input buffer (removes stale data)."""
         return self._device.flush_input_buffer()
+
+    def _query_and_log_error(self) -> None:
+        """
+        Query the device error queue and log the result.
+
+        Called after a read timeout so the caller knows whether the Arduino
+        reported an error (e.g. unknown command, hardware fault) or simply
+        had no data to send.  Flushes stale bytes first so the SYST:ERR?
+        response is not contaminated by the previous timed-out command.
+        """
+        self._device.flush_input_buffer()
+        error = self.query_error()
+        if error is None:
+            Debug.error("SYST:ERR? query failed (no response)")
+        elif error.startswith("0,"):
+            Debug.debug(f"SYST:ERR? → {error} (no device error)")
+        else:
+            Debug.error(f"SYST:ERR? → {error}")
 
     def _send_command_no_response(self, command: str) -> bool:
         """
