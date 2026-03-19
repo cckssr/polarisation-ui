@@ -121,7 +121,7 @@ void initEncoders()
 {
   encoderA.begin(SPI_CLOCK_HZ);
   encoderB.begin(SPI_CLOCK_HZ);
-  appState.encoderBPresent = false;
+  appState.encoderBPresent = true;
 }
 
 void setup()
@@ -599,13 +599,7 @@ void handleCommand(String cmd)
   if (cmd.length() == 0)
     return;
 
-  // SCPI is case-insensitive
-  cmd.toUpperCase();
-
-  bool isQuery = cmd.endsWith("?");
-  if (isQuery)
-    cmd = cmd.substring(0, cmd.length() - 1);
-  cmd.trim();
+  cmd.toUpperCase(); // SCPI is case-insensitive
 
   // Split into header and parameter at first space
   String header = cmd;
@@ -617,7 +611,14 @@ void handleCommand(String cmd)
     param = cmd.substring(space + 1);
     param.trim();
   }
+  
+  bool isQuery = header.endsWith("?");
+  if (isQuery)
+    header = header.substring(0, header.length() - 1);
 
+  // Serial.println("DATA:INFO Received command: " + cmd);
+  // Serial.println("DATA:INFO Parsed header: " + header + ", parameter: " + param + ", isQuery: " + String(isQuery ? "Yes" : "No"));
+  
   // --- Common IEEE 488.2 commands ---
   if (header == "*IDN")
   {
