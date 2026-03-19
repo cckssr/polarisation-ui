@@ -7,7 +7,7 @@
       "author": "C. Kessler, K. Brandt"
     },
     "debug": {
-      "level_default": "info"
+      "level_default": "verbose"
     },
     "connection": {
       "max_retry_attempts": 10,
@@ -32,6 +32,13 @@
       "gui_update_interval": 200
     },
 
+    "acquisition": {
+      "det_average_on": true,
+      "det_averages": 5,
+      "samp_average_on": true,
+      "samp_averages": 5
+    },
+
     "data_controller": {
       "max_history_size": 1000,
       "high_speed_mode": {
@@ -45,7 +52,13 @@
       "base_folder": "Polarisation"
     },
     "ui": {
-      "theme": "dark"
+      "theme": "dark",
+      "status_led": {
+        "connected": "#00ff00",
+        "disconnected": "#ff0b03",
+        "connecting": "#ffc800",
+        "inactive": "#808080"
+      }
     },
     "colors": {
       "green": "green",

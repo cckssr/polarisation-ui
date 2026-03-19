@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1144</width>
-    <height>836</height>
+    <width>1128</width>
+    <height>935</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>750</height>
+    <height>860</height>
    </size>
   </property>
   <property name="font">
@@ -54,7 +54,7 @@
      </widget>
     </item>
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,1,0,0">
       <property name="spacing">
        <number>-1</number>
       </property>
@@ -68,9 +68,9 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QGroupBox" name="live_values">
+       <widget class="QGroupBox" name="live_values_4">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -78,7 +78,237 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>160</height>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+         </font>
+        </property>
+        <property name="title">
+         <string>Arduino-Verbindung</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <layout class="QFormLayout" name="formLayout_6">
+         <property name="sizeConstraint">
+          <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+         </property>
+         <property name="fieldGrowthPolicy">
+          <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+         </property>
+         <property name="labelAlignment">
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+         </property>
+         <property name="horizontalSpacing">
+          <number>-1</number>
+         </property>
+         <property name="verticalSpacing">
+          <number>10</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Port</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QComboBox" name="arduino_ports">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>155</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="ports_refresh">
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::ViewRefresh"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>14</width>
+               <height>14</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Status</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <layout class="QHBoxLayout" name="sample_group_3">
+           <item>
+            <widget class="QLabel" name="arduino_status">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>13</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Nicht verbunden</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="arduino_statusLED">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="arduino_connect">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Orientation::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Policy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>10</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="live_values">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>100</height>
          </size>
         </property>
         <property name="font">
@@ -111,10 +341,16 @@
          <property name="verticalSpacing">
           <number>10</number>
          </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_4">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -137,7 +373,7 @@
            <item>
             <widget class="QLabel" name="sample_enr">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -157,6 +393,12 @@
            </item>
            <item>
             <widget class="QLabel" name="sample_statusLED">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
                <width>20</width>
@@ -181,6 +423,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -219,10 +467,19 @@
            <property name="lineWidth">
             <number>2</number>
            </property>
+           <property name="digitCount">
+            <number>6</number>
+           </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="sample_zero">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -260,8 +517,11 @@
       </item>
       <item>
        <widget class="QGroupBox" name="live_values_2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -269,7 +529,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>160</height>
+          <height>100</height>
          </size>
         </property>
         <property name="font">
@@ -299,10 +559,16 @@
          <property name="verticalSpacing">
           <number>10</number>
          </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_14">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -325,7 +591,7 @@
            <item>
             <widget class="QLabel" name="dstage_enr">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -345,6 +611,12 @@
            </item>
            <item>
             <widget class="QLabel" name="dstage_statusLED">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
                <width>20</width>
@@ -369,6 +641,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_11">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -407,10 +685,19 @@
            <property name="lineWidth">
             <number>2</number>
            </property>
+           <property name="digitCount">
+            <number>6</number>
+           </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="dstage_zero_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -448,8 +735,11 @@
       </item>
       <item>
        <widget class="QGroupBox" name="live_values_3">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -490,7 +780,7 @@
          <item row="0" column="0">
           <widget class="QLabel" name="label_18">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -513,7 +803,7 @@
            <item>
             <widget class="QLabel" name="detector_enr">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -533,6 +823,12 @@
            </item>
            <item>
             <widget class="QLabel" name="detector_statusLED">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
                <width>20</width>
@@ -557,6 +853,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_19">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -619,7 +921,7 @@
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>40</height>
+          <height>10</height>
          </size>
         </property>
        </spacer>
@@ -903,52 +1205,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QCheckBox" name="autoSave">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>850</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>13</pointsize>
-              </font>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bei Aktivierung werden die Messungen automatisch im Format:&lt;/p&gt;&lt;p&gt;YYYY_MM_DD-&lt;span style=&quot; font-style:italic;&quot;&gt;Radioaktive Probe&lt;/span&gt;-&lt;span style=&quot; font-style:italic;&quot;&gt;Suffix&lt;/span&gt;.csv&lt;/p&gt;&lt;p&gt;im Ordner Dokumente/Geiger-Mueller/ gespeichert.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::LayoutDirection::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>Automatische Speicherung. </string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <property name="tristate">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
         </layout>
        </widget>
       </item>
@@ -1094,44 +1350,71 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1144</width>
+     <width>1128</width>
      <height>39</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuEinstellungen">
+    <property name="title">
+     <string>Einstellungen</string>
+    </property>
+    <addaction name="actionAutomatische_Speicherung_aktiviert"/>
+    <addaction name="actionAquisations_Einstellungen"/>
+   </widget>
+   <addaction name="menuEinstellungen"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionAutomatische_Speicherung_aktiviert">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Automatische Speicherung aktiviert</string>
+   </property>
+  </action>
+  <action name="actionAquisations_Einstellungen">
+   <property name="text">
+    <string>Aquisations-Einstellungen</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
   <connection>
-   <sender>autoSave</sender>
-   <signal>toggled(bool)</signal>
+   <sender>actionAutomatische_Speicherung_aktiviert</sender>
+   <signal>triggered(bool)</signal>
    <receiver>label_5</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>228</x>
-     <y>653</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>134</x>
-     <y>594</y>
+     <x>111</x>
+     <y>679</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>autoSave</sender>
-   <signal>toggled(bool)</signal>
+   <sender>actionAutomatische_Speicherung_aktiviert</sender>
+   <signal>triggered(bool)</signal>
    <receiver>suffix</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>259</x>
-     <y>653</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>275</x>
-     <y>594</y>
+     <x>256</x>
+     <y>679</y>
     </hint>
    </hints>
   </connection>

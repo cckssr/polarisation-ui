@@ -2,6 +2,7 @@
     "files": [
         "../mock_main.py",
         "../mainwindow.ui",
-        "../connection.ui"
+        "../connection.ui",
+        "../acq_settings.ui"
     ]
 }

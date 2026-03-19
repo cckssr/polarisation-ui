@@ -123,6 +123,21 @@ class MeasurementSession:
 
 
 @dataclass
+class AcquisitionSettings:
+    """
+    Acquisition settings for the current session.
+
+    Loaded from config at startup; changes made in the settings dialog
+    are kept in memory only and are never written back to config.json.
+    """
+
+    det_average_on: bool = True
+    det_averages: int = 5
+    samp_average_on: bool = True
+    samp_averages: int = 5
+
+
+@dataclass
 class DeviceInfo:
     """Arduino device information and status."""
 
