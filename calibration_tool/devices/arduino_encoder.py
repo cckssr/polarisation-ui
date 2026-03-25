@@ -165,6 +165,26 @@ class ArduinoEncoder:
         print(f"[ArduinoEncoder] Zero set for encoder {encoder_id}")
         return True
 
+    def clear_error_flag(self, encoder_id: str = "A") -> bool:
+        """
+        Clear hardware Error Flag on encoder (CONF:ERR <id>).
+
+        The AS5048A EF is self-latching. Call this if the sensor keeps
+        returning NAN despite no ongoing hardware problem.
+
+        Args:
+            encoder_id: 'A', 'B', or 'BOTH'
+
+        Returns:
+            True if command sent successfully
+        """
+        if not self.connected:
+            return False
+
+        self._send_command(f"CONF:ERR {encoder_id}")
+        print(f"[ArduinoEncoder] Error flag cleared for encoder {encoder_id}")
+        return True
+
     def read_both_angles(self) -> Optional[Tuple[float, float]]:
         """
         Read angles from both encoders.

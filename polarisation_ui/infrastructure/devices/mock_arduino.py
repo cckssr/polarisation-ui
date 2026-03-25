@@ -268,6 +268,10 @@ class MockArduino:
                 self.encoder_b.zero_offset = self.encoder_b.current_angle
             return None
 
+        # CONF:ERR A|B|BOTH  — no-op in mock (no hardware EF to clear)
+        if header == "CONF:ERR":
+            return None
+
         # INIT ON,<target> | INIT OFF
         if header == "INIT":
             if param.startswith("ON"):

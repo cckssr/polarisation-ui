@@ -253,22 +253,45 @@ class DualEncoderArduino:
         return self._send_command_no_response("ABOR")
 
     def reset_zero_a(self) -> bool:
-        """Set zero position for encoder A."""
+        """Set zero position for encoder A (CONF:ZERO A)."""
         return self._send_command_no_response("CONF:ZERO A")
 
     def reset_zero_b(self) -> bool:
-        """Set zero position for encoder B."""
+        """Set zero position for encoder B (CONF:ZERO B)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
         return self._send_command_no_response("CONF:ZERO B")
 
     def reset_zero_both(self) -> bool:
-        """Set zero position for both encoders."""
+        """Set zero position for both encoders (CONF:ZERO BOTH)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
         return self._send_command_no_response("CONF:ZERO BOTH")
+
+    def clear_error_flag_a(self) -> bool:
+        """
+        Clear hardware Error Flag on encoder A (CONF:ERR A).
+
+        The AS5048A EF bit is self-latching. It is auto-cleared during debug-mode
+        reads, but can be manually cleared here when needed.
+        """
+        return self._send_command_no_response("CONF:ERR A")
+
+    def clear_error_flag_b(self) -> bool:
+        """Clear hardware Error Flag on encoder B (CONF:ERR B)."""
+        if not self.encoder_b_present:
+            Debug.warning("Encoder B not present")
+            return False
+        return self._send_command_no_response("CONF:ERR B")
+
+    def clear_error_flag_both(self) -> bool:
+        """Clear hardware Error Flag on both encoders (CONF:ERR BOTH)."""
+        if not self.encoder_b_present:
+            Debug.warning("Encoder B not present")
+            return False
+        return self._send_command_no_response("CONF:ERR BOTH")
 
     def set_poll_interval(self, interval_ms: int) -> bool:
         """
