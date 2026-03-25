@@ -91,7 +91,9 @@ class MainWindow(QMainWindow):
         self._acq_settings: AcquisitionSettings = self._load_acq_settings_from_config()
 
         # Rolling-average buffers; sized from initial settings
-        self._sample_buffer: deque[float] = deque(maxlen=self._acq_settings.samp_averages)
+        self._sample_buffer: deque[float] = deque(
+            maxlen=self._acq_settings.samp_averages
+        )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
 
         # Setup UI and connections
