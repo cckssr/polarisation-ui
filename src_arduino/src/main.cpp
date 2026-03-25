@@ -5,14 +5,9 @@
 // CONFIGURATION
 // ============================================================================
 
-// SPI CS pins for encoders
 #define ENCODER_A_CS_PIN 9
 #define ENCODER_B_CS_PIN 10
-
-// Baud rate for USB communication
 #define SERIAL_BAUDRATE 115200
-
-// Default polling interval in continuous mode (ms)
 #define DEFAULT_POLL_INTERVAL 50
 #define SPI_CLOCK_HZ 100000 // 100 kHz
 
@@ -20,7 +15,7 @@
 #define MAX_ERRORS 10
 
 // ============================================================================
-// ERROR QUEUE (SCPI SYST:ERR?)
+// ERROR QUEUE  (SYST:ERR?)
 // ============================================================================
 
 struct ErrorQueue
@@ -51,7 +46,7 @@ struct ErrorQueue
 ErrorQueue errorQueue;
 
 // ============================================================================
-// STATISTICS STRUCTURE
+// STATISTICS
 // ============================================================================
 
 struct ContinuousStats
@@ -60,17 +55,12 @@ struct ContinuousStats
   unsigned long endTime = 0;
   unsigned long dataPoints = 0;
   unsigned long parityErrors = 0;
-  unsigned long errorFlagErrors = 0;
+  unsigned long errorFlagEvents = 0; // times EF was set (auto-cleared)
   unsigned long totalReadAttempts = 0;
 
   void reset()
   {
-    startTime = 0;
-    endTime = 0;
-    dataPoints = 0;
-    parityErrors = 0;
-    errorFlagErrors = 0;
-    totalReadAttempts = 0;
+    startTime = endTime = dataPoints = parityErrors = errorFlagEvents = totalReadAttempts = 0;
   }
 
   void print()
@@ -79,7 +69,7 @@ struct ContinuousStats
     Serial.println("DATA:STAT DUR," + String(durationMs));
     Serial.println("DATA:STAT NPTS," + String(dataPoints));
     Serial.println("DATA:STAT PERR," + String(parityErrors));
-    Serial.println("DATA:STAT EERR," + String(errorFlagErrors));
+    Serial.println("DATA:STAT EERR," + String(errorFlagEvents));
   }
 };
 
@@ -107,7 +97,7 @@ struct AppState
   OperationMode mode = MODE_IDLE;
   unsigned long lastPoll = 0;
   unsigned long pollInterval = DEFAULT_POLL_INTERVAL;
-  bool encoderBPresent = false;
+  bool encoderBPresent = true;
   bool debugOutput = false;
 };
 
@@ -121,22 +111,19 @@ void initEncoders()
 {
   encoderA.begin(SPI_CLOCK_HZ);
   encoderB.begin(SPI_CLOCK_HZ);
-  appState.encoderBPresent = true;
 }
 
 void setup()
 {
   Serial.begin(SERIAL_BAUDRATE);
   delay(500);
-
   Serial.println("DATA:INFO " IDN_STRING " Ready");
   Serial.println("DATA:INFO Send SYST:HELP? for command reference");
-
   initEncoders();
 }
 
 // ============================================================================
-// DATA CONVERSION
+// HELPERS
 // ============================================================================
 
 float convertRawToDegrees(uint16_t raw)
@@ -144,54 +131,64 @@ float convertRawToDegrees(uint16_t raw)
   return (raw & 0x3FFF) * 360.0 / 16384.0;
 }
 
+// Read angle with automatic error-flag recovery.
+// If EF is set, clears it via clearErrorFlag() and retries once.
+// Returns {raw16=0, data14=0, errorFlag=true, parityOk=false} on persistent failure.
+AS5048A_SPI::FrameResult readAngleWithRecovery(AS5048A_SPI &encoder)
+{
+  AS5048A_SPI::FrameResult result = encoder.readAngleRawWithDiagnostics();
+
+  if (result.errorFlag)
+  {
+    // AS5048A: reading REG_CLR_ERR (0x0001) clears the EF bit for subsequent reads.
+    encoder.clearErrorFlag();
+    result = encoder.readAngleRawWithDiagnostics(); // single retry
+  }
+
+  return result;
+}
+
 // ============================================================================
-// ENCODER READ & SEND OPERATIONS
+// STREAMING READ & SEND
 // ============================================================================
 
-// Streaming output for single encoder angle
-// Format: DATA:ANGL <id>,<deg>[,<raw>]
+// Streaming: DATA:ANGL <id>,<deg>[,<raw14>]
 void readAndSendAngle(char encoderId, AS5048A_SPI &encoder)
 {
+  Serial.print("DATA:ANGL ");
+  Serial.print(encoderId);
+  Serial.print(",");
+
   if (appState.debugOutput)
   {
-    AS5048A_SPI::FrameResult result = encoder.readAngleRawWithDiagnostics();
+    AS5048A_SPI::FrameResult result = readAngleWithRecovery(encoder);
     stats.totalReadAttempts++;
+
     if (!result.parityOk)
       stats.parityErrors++;
-    if (result.errorFlag)
-      stats.errorFlagErrors++;
 
-    if (result.parityOk && !result.errorFlag)
+    if (result.errorFlag)
     {
-      stats.dataPoints++;
-      float deg = convertRawToDegrees(result.data14);
-      Serial.print("DATA:ANGL ");
-      Serial.print(encoderId);
-      Serial.print(",");
-      Serial.print(deg, 2);
-      Serial.print(",");
-      Serial.println(result.data14, DEC);
+      // Persistent failure even after auto-clear
+      stats.errorFlagEvents++;
+      errorQueue.push("-300,\"Persistent EF encoder " + String(encoderId) + "\"");
+      Serial.println("NAN");
+      return;
     }
-    else
-    {
-      errorQueue.push("-300,\"Hardware error encoder " + String(encoderId) + "\"");
-      Serial.print("DATA:ANGL ");
-      Serial.print(encoderId);
-      Serial.println(",NAN");
-    }
+
+    stats.dataPoints++;
+    float deg = convertRawToDegrees(result.data14);
+    Serial.print(deg, 2);
+    Serial.print(",");
+    Serial.println(result.data14, DEC);
   }
   else
   {
-    float deg = encoder.readAngleDeg();
-    Serial.print("DATA:ANGL ");
-    Serial.print(encoderId);
-    Serial.print(",");
-    Serial.println(deg, 2);
+    Serial.println(encoder.readAngleDeg(), 2);
   }
 }
 
-// Streaming output for both encoders
-// Format: DATA:ANGL BOTH,<deg_a>,<deg_b>
+// Streaming: DATA:ANGL BOTH,<deg_a>,<deg_b>
 void readAndSendAngles()
 {
   float angleA = encoderA.readAngleDeg();
@@ -202,8 +199,7 @@ void readAndSendAngles()
   Serial.println(angleB, 2);
 }
 
-// Streaming output for single encoder magnitude
-// Format: DATA:MAGN <id>,<value>
+// Streaming: DATA:MAGN <id>,<raw14>
 void readAndSendMagnitude(char encoderId, AS5048A_SPI &encoder)
 {
   AS5048A_SPI::FrameResult result = encoder.readMagnitudeRawWithDiagnostics();
@@ -221,23 +217,20 @@ void readAndSendMagnitude(char encoderId, AS5048A_SPI &encoder)
   }
 }
 
-// Streaming output for both magnitudes
-// Format: DATA:MAGN BOTH,<val_a>,<val_b>
+// Streaming: DATA:MAGN BOTH,<raw_a>,<raw_b>
 void readAndSendMagnitudes()
 {
-  AS5048A_SPI::FrameResult resultA = encoderA.readMagnitudeRawWithDiagnostics();
-  AS5048A_SPI::FrameResult resultB = appState.encoderBPresent
-                                         ? encoderB.readMagnitudeRawWithDiagnostics()
-                                         : AS5048A_SPI::FrameResult{0, 0, false, true};
-
+  AS5048A_SPI::FrameResult rA = encoderA.readMagnitudeRawWithDiagnostics();
+  AS5048A_SPI::FrameResult rB = appState.encoderBPresent
+                                    ? encoderB.readMagnitudeRawWithDiagnostics()
+                                    : AS5048A_SPI::FrameResult{0, 0, false, true};
   Serial.print("DATA:MAGN BOTH,");
-  Serial.print((!resultA.parityOk || resultA.errorFlag) ? "NAN" : String(resultA.data14));
+  Serial.print((!rA.parityOk || rA.errorFlag) ? "NAN" : String(rA.data14));
   Serial.print(",");
-  Serial.println((appState.encoderBPresent && (!resultB.parityOk || resultB.errorFlag)) ? "NAN" : String(resultB.data14));
+  Serial.println((appState.encoderBPresent && (!rB.parityOk || rB.errorFlag)) ? "NAN" : String(rB.data14));
 }
 
-// Streaming NOP signal quality test
-// Format: DATA:NOP A,<parity>,0x<raw>[,B,<parity>,0x<raw>]
+// Streaming: DATA:NOP A,<OK|FAIL>,0x<raw>[,B,<OK|FAIL>,0x<raw>]
 void sendContinuousNOP()
 {
   AS5048A_SPI::FrameResult rA = encoderA.nop();
@@ -264,13 +257,13 @@ void sendContinuousNOP()
 // SCPI COMMAND HANDLERS
 // ============================================================================
 
-// *IDN?
+// *IDN?  →  <manufacturer>,<model>,<serial>,<fw>
 void handleIDN()
 {
   Serial.println(IDN_STRING);
 }
 
-// *RST
+// *RST  —  stop streaming, restore defaults, clear error queue
 void handleRST()
 {
   if (appState.debugOutput && appState.mode != MODE_IDLE)
@@ -285,14 +278,14 @@ void handleRST()
   stats.reset();
 }
 
-// *CLS
+// *CLS  —  clear SCPI error queue
 void handleCLS()
 {
   errorQueue.clear();
 }
 
-// MEAS:ANGL? [A|B|BOTH]
-// Response: <deg>  or  <deg_a>,<deg_b>
+// MEAS:ANGL? A|B|BOTH
+// Query-only. Response: <deg>  or  <deg_a>,<deg_b>
 void handleMeasAngl(const String &param)
 {
   if (param == "A" || param == "")
@@ -324,8 +317,9 @@ void handleMeasAngl(const String &param)
   }
 }
 
-// MEAS:MAGN? [A|B|BOTH]
-// Response: <raw>  or  <raw_a>,<raw_b>
+// MEAS:MAGN? A|B|BOTH
+// Query-only. Response: <raw14>  or  <raw_a>,<raw_b>
+// Always returns bare integer values regardless of debug mode.
 void handleMeasMagn(const String &param)
 {
   auto readMagn = [](AS5048A_SPI &enc) -> String
@@ -361,7 +355,8 @@ void handleMeasMagn(const String &param)
   }
 }
 
-// CONF:ZERO [A|B|BOTH]
+// CONF:ZERO A|B|BOTH
+// Command-only. Sets current position as software zero (no chip write).
 void handleConfZero(const String &param)
 {
   if (param == "A" || param == "")
@@ -389,12 +384,44 @@ void handleConfZero(const String &param)
   }
 }
 
-// INIT ON,<target>  |  INIT OFF
+// CONF:ERR A|B|BOTH
+// Command-only. Clears the AS5048A hardware Error Flag (EF) by reading REG_CLR_ERR (0x0001).
+// The EF is self-latching — once set it stays set until explicitly cleared.
+// This command is rarely needed: reads in debug mode auto-clear EF and retry.
+void handleConfErr(const String &param)
+{
+  if (param == "A" || param == "")
+  {
+    encoderA.clearErrorFlag();
+  }
+  else if (param == "B")
+  {
+    if (!appState.encoderBPresent)
+    {
+      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+      return;
+    }
+    encoderB.clearErrorFlag();
+  }
+  else if (param == "BOTH")
+  {
+    encoderA.clearErrorFlag();
+    if (appState.encoderBPresent)
+      encoderB.clearErrorFlag();
+  }
+  else
+  {
+    errorQueue.push("-113,\"Undefined header; unknown encoder: " + param + "\"");
+  }
+}
+
+// INIT ON,<A|B|BOTH|MAG|NOP>  |  INIT OFF
+// Command-only. Starts / stops continuous streaming.
 void handleInit(const String &param)
 {
   if (param.startsWith("ON"))
   {
-    String target = "A";
+    String target = "BOTH"; // sensible default: both encoders
     int comma = param.indexOf(',');
     if (comma >= 0)
     {
@@ -445,7 +472,7 @@ void handleInit(const String &param)
       stats.startTime = millis();
     }
   }
-  else if (param == "OFF" || param == "0")
+  else if (param == "OFF")
   {
     if (appState.debugOutput && appState.mode != MODE_IDLE)
     {
@@ -456,11 +483,12 @@ void handleInit(const String &param)
   }
   else
   {
-    errorQueue.push("-102,\"Syntax error; expected ON,<target> or OFF\"");
+    errorQueue.push("-102,\"Syntax error; expected: INIT ON,<A|B|BOTH|MAG|NOP> or INIT OFF\"");
   }
 }
 
-// ABOR - stop continuous mode
+// ABOR  —  stop any active streaming (alias for INIT OFF)
+// Command-only.
 void handleAbor()
 {
   if (appState.debugOutput && appState.mode != MODE_IDLE)
@@ -471,35 +499,31 @@ void handleAbor()
   appState.mode = MODE_IDLE;
 }
 
-// SENS:INT <ms>  |  SENS:INT?
+// SENS:INT <ms>   Set poll interval (command)
+// SENS:INT?       Query poll interval (query)
 void handleSensInt(bool isQuery, const String &param)
 {
   if (isQuery)
   {
     Serial.println(appState.pollInterval);
+    return;
   }
+  int interval = param.toInt();
+  if (interval >= 1 && interval <= 9999)
+    appState.pollInterval = (unsigned long)interval;
   else
-  {
-    int interval = param.toInt();
-    if (interval > 0 && interval < 10000)
-    {
-      appState.pollInterval = (unsigned long)interval;
-    }
-    else
-    {
-      errorQueue.push("-222,\"Data out of range; interval must be 1-9999 ms\"");
-    }
-  }
+    errorQueue.push("-222,\"Data out of range; interval must be 1-9999 ms\"");
 }
 
-// SYST:ERR?
+// SYST:ERR?  →  <code>,\"<message>\"
+// Query-only. Pops and returns the oldest error from the queue.
 void handleSystErr()
 {
   Serial.println(errorQueue.pop());
 }
 
-// SYST:DIAG? [A|B]
-// Response: <compHigh>,<compLow>,<cof>,<ocf>,<agc>
+// SYST:DIAG? A|B
+// Query-only. Response: <compHigh>,<compLow>,<cof>,<ocf>,<agc>
 void handleSystDiag(const String &param)
 {
   AS5048A_SPI *enc = nullptr;
@@ -536,56 +560,63 @@ void handleSystDiag(const String &param)
   Serial.println(diag.agc);
 }
 
-// SYST:DEB ON|OFF|1|0  |  SYST:DEB?
+// SYST:DEB ON|OFF   Enable/disable debug mode (command)
+// SYST:DEB?         Query debug state: 0 or 1 (query)
 void handleSystDeb(bool isQuery, const String &param)
 {
   if (isQuery)
   {
     Serial.println(appState.debugOutput ? "1" : "0");
+    return;
   }
+  if (param == "ON" || param == "1")
+    appState.debugOutput = true;
+  else if (param == "OFF" || param == "0")
+    appState.debugOutput = false;
   else
-  {
-    if (param == "ON" || param == "1")
-      appState.debugOutput = true;
-    else if (param == "OFF" || param == "0")
-      appState.debugOutput = false;
-    else
-      errorQueue.push("-102,\"Syntax error; use ON, OFF, 1, or 0\"");
-  }
+    errorQueue.push("-102,\"Syntax error; use ON, OFF, 1, or 0\"");
 }
 
 // SYST:HELP?
+// Query-only.
 void printHelp()
 {
   Serial.println("=== AS5048A SCPI Command Reference ===");
-  Serial.println("Common:");
-  Serial.println("  *IDN?                  Identification string");
-  Serial.println("  *RST                   Reset to defaults (stops streaming)");
-  Serial.println("  *CLS                   Clear error queue");
-  Serial.println("Measure (single read):");
-  Serial.println("  MEAS:ANGL? A|B|BOTH    Read angle in degrees");
-  Serial.println("  MEAS:MAGN? A|B|BOTH    Read raw magnitude (14-bit)");
-  Serial.println("Configure:");
-  Serial.println("  CONF:ZERO A|B|BOTH     Set current position as zero");
-  Serial.println("Continuous streaming:");
+  Serial.println("IEEE 488.2 Common Commands:");
+  Serial.println("  *IDN?                  Identification string (query)");
+  Serial.println("  *RST                   Reset: stop streaming, restore defaults");
+  Serial.println("  *CLS                   Clear SCPI error queue");
+  Serial.println("MEASure — single reads (queries only):");
+  Serial.println("  MEAS:ANGL? A|B|BOTH    Angle in degrees");
+  Serial.println("  MEAS:MAGN? A|B|BOTH    Raw magnitude (14-bit integer)");
+  Serial.println("CONFigure — hardware settings (commands only):");
+  Serial.println("  CONF:ZERO A|B|BOTH     Set current position as software zero");
+  Serial.println("  CONF:ERR  A|B|BOTH     Clear hardware Error Flag (EF) on sensor");
+  Serial.println("                         (auto-cleared in debug mode; rarely needed)");
+  Serial.println("INITiate / ABORt — streaming control (commands only):");
   Serial.println("  INIT ON,A|B|BOTH       Start angle streaming");
   Serial.println("  INIT ON,MAG            Start magnitude streaming");
-  Serial.println("  INIT ON,NOP            Start NOP signal quality test");
-  Serial.println("  INIT OFF               Stop streaming (= ABOR)");
-  Serial.println("  ABOR                   Abort streaming");
-  Serial.println("Sense (settings):");
+  Serial.println("  INIT ON,NOP            Start NOP signal-quality test");
+  Serial.println("  INIT OFF               Stop streaming");
+  Serial.println("  ABOR                   Abort streaming (= INIT OFF)");
+  Serial.println("SENSe — acquisition settings (command + query):");
   Serial.println("  SENS:INT <ms>          Set poll interval (1-9999 ms)");
   Serial.println("  SENS:INT?              Query poll interval");
-  Serial.println("System:");
-  Serial.println("  SYST:ERR?              Query next error from queue");
-  Serial.println("  SYST:DIAG? A|B         Read encoder diagnostics");
+  Serial.println("SYSTem — diagnostics (mostly queries):");
+  Serial.println("  SYST:ERR?              Pop oldest error: <code>,\"<msg>\"");
+  Serial.println("  SYST:DIAG? A|B         Diagnostics: compH,compL,cof,ocf,agc");
   Serial.println("  SYST:DEB ON|OFF        Enable/disable debug output");
-  Serial.println("  SYST:DEB?              Query debug state");
+  Serial.println("  SYST:DEB?              Query debug state (0 or 1)");
   Serial.println("  SYST:HELP?             This help text");
-  Serial.println("Streaming data format:");
-  Serial.println("  DATA:ANGL A,<deg>      Single encoder angle");
-  Serial.println("  DATA:ANGL BOTH,<a>,<b> Both encoder angles");
-  Serial.println("  DATA:MAGN A,<raw>      Single encoder magnitude");
+  Serial.println("Streaming output format:");
+  Serial.println("  DATA:ANGL A,<deg>             Single encoder angle");
+  Serial.println("  DATA:ANGL A,<deg>,<raw14>      ...with raw value (debug)");
+  Serial.println("  DATA:ANGL BOTH,<deg_a>,<deg_b> Both encoders");
+  Serial.println("  DATA:MAGN A,<raw14>            Single encoder magnitude");
+  Serial.println("  DATA:MAGN BOTH,<a>,<b>         Both encoders magnitude");
+  Serial.println("  DATA:NOP A,<OK|FAIL>,0x<raw>   NOP signal test");
+  Serial.println("  DATA:STAT ...                  Statistics after ABOR/INIT OFF (debug)");
+  Serial.println("  DATA:INFO ...                  Informational messages");
   Serial.println("======================================");
 }
 
@@ -601,7 +632,7 @@ void handleCommand(String cmd)
 
   cmd.toUpperCase(); // SCPI is case-insensitive
 
-  // Split into header and parameter at first space
+  // Split into header (first word) and parameter (remainder)
   String header = cmd;
   String param = "";
   int space = cmd.indexOf(' ');
@@ -611,111 +642,94 @@ void handleCommand(String cmd)
     param = cmd.substring(space + 1);
     param.trim();
   }
-  
+
+  // '?' must be attached to the header, not the parameter.
+  // E.g.: "MEAS:ANGL? A"  → header="MEAS:ANGL?", param="A"
+  //        "SENS:INT?"     → header="SENS:INT?",   param=""
   bool isQuery = header.endsWith("?");
   if (isQuery)
     header = header.substring(0, header.length() - 1);
 
-  // Serial.println("DATA:INFO Received command: " + cmd);
-  // Serial.println("DATA:INFO Parsed header: " + header + ", parameter: " + param + ", isQuery: " + String(isQuery ? "Yes" : "No"));
-  
-  // --- Common IEEE 488.2 commands ---
+  // ── IEEE 488.2 Common Commands ─────────────────────────────────────────────
   if (header == "*IDN")
   {
-    if (isQuery)
-      handleIDN();
-    else
-      errorQueue.push("-113,\"Undefined header; *IDN is query-only\"");
+    if (isQuery) handleIDN();
+    else errorQueue.push("-113,\"Undefined header; *IDN is query-only\"");
   }
   else if (header == "*RST")
   {
-    if (!isQuery)
-      handleRST();
-    else
-      errorQueue.push("-113,\"Undefined header; *RST is command-only\"");
+    if (!isQuery) handleRST();
+    else errorQueue.push("-113,\"Undefined header; *RST is command-only\"");
   }
   else if (header == "*CLS")
   {
-    if (!isQuery)
-      handleCLS();
-    else
-      errorQueue.push("-113,\"Undefined header; *CLS is command-only\"");
+    if (!isQuery) handleCLS();
+    else errorQueue.push("-113,\"Undefined header; *CLS is command-only\"");
   }
 
-  // --- MEASure subsystem ---
-  else if (header == "MEAS:ANGL" || header == "MEASURE:ANGLE")
+  // ── MEASure subsystem ──────────────────────────────────────────────────────
+  else if (header == "MEAS:ANGL")
   {
-    if (isQuery)
-      handleMeasAngl(param);
-    else
-      errorQueue.push("-113,\"Undefined header; MEAS:ANGL is query-only\"");
+    if (isQuery) handleMeasAngl(param);
+    else errorQueue.push("-113,\"Undefined header; MEAS:ANGL is query-only\"");
   }
-  else if (header == "MEAS:MAGN" || header == "MEASURE:MAGNITUDE")
+  else if (header == "MEAS:MAGN")
   {
-    if (isQuery)
-      handleMeasMagn(param);
-    else
-      errorQueue.push("-113,\"Undefined header; MEAS:MAGN is query-only\"");
+    if (isQuery) handleMeasMagn(param);
+    else errorQueue.push("-113,\"Undefined header; MEAS:MAGN is query-only\"");
   }
 
-  // --- CONFigure subsystem ---
-  else if (header == "CONF:ZERO" || header == "CONFIGURE:ZERO")
+  // ── CONFigure subsystem ────────────────────────────────────────────────────
+  else if (header == "CONF:ZERO")
   {
-    if (!isQuery)
-      handleConfZero(param);
-    else
-      errorQueue.push("-113,\"Undefined header; CONF:ZERO is command-only\"");
+    if (!isQuery) handleConfZero(param);
+    else errorQueue.push("-113,\"Undefined header; CONF:ZERO is command-only\"");
+  }
+  else if (header == "CONF:ERR")
+  {
+    if (!isQuery) handleConfErr(param);
+    else errorQueue.push("-113,\"Undefined header; CONF:ERR is command-only\"");
   }
 
-  // --- INITiate ---
-  else if (header == "INIT" || header == "INITIATE")
+  // ── INITiate ───────────────────────────────────────────────────────────────
+  else if (header == "INIT")
   {
-    if (!isQuery)
-      handleInit(param);
-    else
-      errorQueue.push("-113,\"Undefined header; INIT is command-only\"");
+    if (!isQuery) handleInit(param);
+    else errorQueue.push("-113,\"Undefined header; INIT is command-only\"");
   }
 
-  // --- ABORt ---
-  else if (header == "ABOR" || header == "ABORT")
+  // ── ABORt ─────────────────────────────────────────────────────────────────
+  else if (header == "ABOR")
   {
-    if (!isQuery)
-      handleAbor();
-    else
-      errorQueue.push("-113,\"Undefined header; ABOR is command-only\"");
+    if (!isQuery) handleAbor();
+    else errorQueue.push("-113,\"Undefined header; ABOR is command-only\"");
   }
 
-  // --- SENSe subsystem ---
-  else if (header == "SENS:INT" || header == "SENSE:INTERVAL")
+  // ── SENSe subsystem ────────────────────────────────────────────────────────
+  else if (header == "SENS:INT")
   {
     handleSensInt(isQuery, param);
   }
 
-  // --- SYSTem subsystem ---
-  else if (header == "SYST:ERR" || header == "SYSTEM:ERROR")
+  // ── SYSTem subsystem ───────────────────────────────────────────────────────
+  else if (header == "SYST:ERR")
   {
-    if (isQuery)
-      handleSystErr();
-    else
-      errorQueue.push("-113,\"Undefined header; SYST:ERR is query-only\"");
+    if (isQuery) handleSystErr();
+    else errorQueue.push("-113,\"Undefined header; SYST:ERR is query-only\"");
   }
-  else if (header == "SYST:DIAG" || header == "SYSTEM:DIAGNOSTIC")
+  else if (header == "SYST:DIAG")
   {
-    if (isQuery)
-      handleSystDiag(param);
-    else
-      errorQueue.push("-113,\"Undefined header; SYST:DIAG is query-only\"");
+    if (isQuery) handleSystDiag(param);
+    else errorQueue.push("-113,\"Undefined header; SYST:DIAG is query-only\"");
   }
-  else if (header == "SYST:DEB" || header == "SYSTEM:DEBUG")
+  else if (header == "SYST:DEB")
   {
     handleSystDeb(isQuery, param);
   }
-  else if (header == "SYST:HELP" || header == "SYSTEM:HELP")
+  else if (header == "SYST:HELP")
   {
-    if (isQuery)
-      printHelp();
-    else
-      errorQueue.push("-113,\"Undefined header; SYST:HELP is query-only\"");
+    if (isQuery) printHelp();
+    else errorQueue.push("-113,\"Undefined header; SYST:HELP is query-only\"");
   }
 
   else
@@ -730,20 +744,16 @@ void handleCommand(String cmd)
 
 void loop()
 {
-  // Handle incoming serial commands
   if (Serial.available())
   {
     String cmd = Serial.readStringUntil('\n');
     handleCommand(cmd);
   }
 
-  // Continuous mode: poll at specified interval
   unsigned long now = millis();
-  if (appState.mode != MODE_IDLE &&
-      (now - appState.lastPoll >= appState.pollInterval))
+  if (appState.mode != MODE_IDLE && (now - appState.lastPoll >= appState.pollInterval))
   {
     appState.lastPoll = now;
-
     switch (appState.mode)
     {
     case MODE_CONTINUOUS_A:
