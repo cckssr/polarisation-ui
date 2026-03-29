@@ -42,6 +42,12 @@ class DataController(QObject):
     # Default polling interval (milliseconds)
     DEFAULT_POLL_INTERVAL = 100  # 10 Hz
 
+    # Delay before each reconnection attempt (milliseconds)
+    RETRY_DELAY_MS = 3000
+
+    # Signal emitted when a reconnection attempt begins
+    retry_connecting = Signal()
+
     def __init__(
         self, device_manager: GoniometerDeviceManager, parent: Optional[QObject] = None
     ):
@@ -60,6 +66,11 @@ class DataController(QObject):
         self.poll_timer = QTimer(self)
         self.poll_timer.timeout.connect(self._poll_sensors)
         self.poll_interval = self.DEFAULT_POLL_INTERVAL
+
+        # Retry timer — fires once after RETRY_DELAY_MS when connection is lost
+        self._retry_timer = QTimer(self)
+        self._retry_timer.setSingleShot(True)
+        self._retry_timer.timeout.connect(self._attempt_reconnect)
 
         # State tracking
         self._is_measuring = False
@@ -191,13 +202,34 @@ class DataController(QObject):
         # Emit error signal
         self.error_occurred.emit(error_msg)
 
-        # Stop if too many errors
-        if self._error_count >= self._max_errors:
-            Debug.error("Too many consecutive errors, stopping polling")
-            self.stop_continuous_reading()
+        # Pause polling and schedule a delayed reconnect attempt
+        self.poll_timer.stop()
 
+        if self._error_count >= self._max_errors:
+            Debug.error("Too many consecutive errors, giving up")
             if self._is_measuring:
                 self.stop_measurement()
+        else:
+            self._retry_timer.start(self.RETRY_DELAY_MS)
+
+    @Slot()
+    def _attempt_reconnect(self) -> None:
+        """Try to resume polling after a connection error."""
+        self.retry_connecting.emit()
+        Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
+
+        try:
+            angles = self.device_manager.read_angles()
+            if angles is not None:
+                self._error_count = 0
+                self.poll_timer.start(self.poll_interval)
+                sample_angle, detector_angle = angles
+                self.angles_updated.emit(sample_angle, detector_angle)
+                Debug.info("Reconnected successfully")
+            else:
+                self._handle_read_error("Failed to read angles")
+        except Exception as e:
+            self._handle_read_error(f"Exception during reconnect: {e}")
 
     # ==================== Manual Reading ====================
 
@@ -231,6 +263,7 @@ class DataController(QObject):
 
     def cleanup(self) -> None:
         """Clean up resources."""
+        self._retry_timer.stop()
         self.stop_continuous_reading()
 
         if self._is_measuring:

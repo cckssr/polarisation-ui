@@ -3,6 +3,7 @@
         "../mock_main.py",
         "../mainwindow.ui",
         "../connection.ui",
-        "../acq_settings.ui"
+        "../acq_settings.ui",
+        "../encoder_debug.ui"
     ]
 }

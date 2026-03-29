@@ -17,7 +17,7 @@ Responsibilities:
 from collections import deque
 
 from PySide6.QtWidgets import QDialog, QMainWindow, QComboBox
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QCloseEvent
 
 from polarisation_ui.infrastructure.logging import Debug
@@ -27,17 +27,18 @@ from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
 # UI components
 from polarisation_ui.core.models import AcquisitionSettings
-from polarisation_ui.ui.common.dialogs import show_info, show_error
+from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
+
 from polarisation_ui.ui.common.statusbar import StatusBarManager
 from polarisation_ui.ui.common.status_led import (
     set_connection_status,
     LED_GREEN,
     LED_RED,
     LED_YELLOW,
-    LED_GRAY,
 )
 from polarisation_ui.ui.controllers.data_controller import DataController
+from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 
 # Import settings
 CONFIG = import_config()
@@ -140,6 +141,7 @@ class MainWindow(QMainWindow):
         self.ui.actionAquisations_Einstellungen.triggered.connect(
             self._open_acq_settings
         )
+        self.ui.actionEncoder_Debugging.triggered.connect(self._open_encoder_debug)
 
         # Arduino connection controls
         self.ui.ports_refresh.clicked.connect(self._populate_ports)
@@ -161,6 +163,7 @@ class MainWindow(QMainWindow):
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.error_occurred.connect(self._handle_data_error)
+        self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
 
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
@@ -374,6 +377,13 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_error("Failed to zero detector encoder")
             show_error(self, "Zero Error", "Failed to zero detector encoder.")
 
+    @Slot()
+    def _open_encoder_debug(self) -> None:
+        """Open the encoder debug dialog (non-modal)."""
+        dialog = EncoderDebugDialog(self.device_manager, parent=self)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.show()
+
     # ==================== Measurement Control ====================
 
     @Slot()
@@ -471,6 +481,13 @@ class MainWindow(QMainWindow):
         # Set LEDs to red if connection lost
         self.ui.sample_statusLED.setStyleSheet(LED_RED)
         self.ui.dstage_statusLED.setStyleSheet(LED_RED)
+
+    @Slot()
+    def _handle_reconnect_attempt(self) -> None:
+        """Show reconnection status in the status bar."""
+        self.statusbar_manager.show_warning(
+            "Verbindung unterbrochen – Wiederverbindung wird versucht..."
+        )
 
     # ==================== Window Lifecycle ====================
 

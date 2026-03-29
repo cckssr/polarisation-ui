@@ -1360,6 +1360,7 @@
     </property>
     <addaction name="actionAutomatische_Speicherung_aktiviert"/>
     <addaction name="actionAquisations_Einstellungen"/>
+    <addaction name="actionEncoder_Debugging"/>
    </widget>
    <addaction name="menuEinstellungen"/>
   </widget>
@@ -1381,6 +1382,11 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionEncoder_Debugging">
+   <property name="text">
+    <string>Encoder Debugging</string>
    </property>
   </action>
  </widget>
