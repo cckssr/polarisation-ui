@@ -109,27 +109,27 @@ class MainWindow(QMainWindow):
         """Setup initial UI state (disconnected)."""
         # Make the combobox editable with a read-only line edit so the popup can show
         # full port names while the collapsed view shows a truncated version.
-        self.ui.arduino_ports.setEditable(True)
-        self.ui.arduino_ports.lineEdit().setReadOnly(True)
-        self.ui.arduino_ports.setSizeAdjustPolicy(
+        self.ui.cbArduinoPort.setEditable(True)
+        self.ui.cbArduinoPort.lineEdit().setReadOnly(True)
+        self.ui.cbArduinoPort.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
-        self.ui.arduino_ports.setMinimumContentsLength(18)
+        self.ui.cbArduinoPort.setMinimumContentsLength(18)
         self._populate_ports()
 
         # Arduino connection group: start disconnected
-        self.ui.arduino_statusLED.setStyleSheet(LED_RED)
-        self.ui.arduino_status.setText("Nicht verbunden")
+        self.ui.ledArduinoStatus.setStyleSheet(LED_RED)
+        self.ui.lblArduinoStatusValue.setText("Nicht verbunden")
 
         # Encoder/detector groups disabled until connected
-        self.ui.live_values.setEnabled(False)
-        self.ui.live_values_2.setEnabled(False)
-        self.ui.live_values_3.setEnabled(False)
+        self.ui.gbSampleStage.setEnabled(False)
+        self.ui.gbDetectorStage.setEnabled(False)
+        self.ui.gbDetector.setEnabled(False)
 
         # Measurement controls disabled until connected
-        self.ui.buttonStart.setEnabled(False)
-        self.ui.buttonStop.setEnabled(False)
-        self.ui.buttonReset.setEnabled(False)
+        self.ui.btnStartMeasurement.setEnabled(False)
+        self.ui.btnStopMeasurement.setEnabled(False)
+        self.ui.btnResetMeasurement.setEnabled(False)
 
         self.statusbar_manager.show_info("Bitte Arduino verbinden")
 
@@ -138,27 +138,25 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         """Connect all signals between components."""
         # Menu actions
-        self.ui.actionAquisations_Einstellungen.triggered.connect(
-            self._open_acq_settings
-        )
-        self.ui.actionEncoder_Debugging.triggered.connect(self._open_encoder_debug)
+        self.ui.actionAcquisitionSettings.triggered.connect(self._open_acq_settings)
+        self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
 
         # Arduino connection controls
-        self.ui.ports_refresh.clicked.connect(self._populate_ports)
-        self.ui.arduino_connect.clicked.connect(self._connect_arduino)
-        self.ui.arduino_ports.currentIndexChanged.connect(self._update_port_display)
+        self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
+        self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
+        self.ui.cbArduinoPort.currentIndexChanged.connect(self._update_port_display)
 
         # Zero buttons
-        self.ui.sample_zero.clicked.connect(self._zero_sample_encoder)
-        self.ui.dstage_zero_2.clicked.connect(self._zero_detector_encoder)
+        self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
+        self.ui.btnDetectorStageZero.clicked.connect(self._zero_detector_encoder)
 
         # Measurement controls
-        self.ui.buttonStart.clicked.connect(self._start_measurement)
-        self.ui.buttonStop.clicked.connect(self._stop_measurement)
-        self.ui.buttonReset.clicked.connect(self._reset_measurement)
+        self.ui.btnStartMeasurement.clicked.connect(self._start_measurement)
+        self.ui.btnStopMeasurement.clicked.connect(self._stop_measurement)
+        self.ui.btnResetMeasurement.clicked.connect(self._reset_measurement)
 
         # Save button
-        self.ui.buttonSave.clicked.connect(self._save_data)
+        self.ui.btnSave.clicked.connect(self._save_data)
 
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
@@ -174,58 +172,58 @@ class MainWindow(QMainWindow):
     def _populate_ports(self) -> None:
         """Populate the port combobox with currently available serial ports."""
         ports = self.device_manager.list_available_ports()
-        self.ui.arduino_ports.clear()
+        self.ui.cbArduinoPort.clear()
         for port in ports:
-            self.ui.arduino_ports.addItem(port)
+            self.ui.cbArduinoPort.addItem(port)
         if not ports:
-            self.ui.arduino_ports.addItem("Keine Ports gefunden")
+            self.ui.cbArduinoPort.addItem("Keine Ports gefunden")
 
         # Let the popup grow wide enough for the longest entry while the collapsed
         # combobox stays narrow (limited by minimumContentsLength).
-        fm = self.ui.arduino_ports.fontMetrics()
+        fm = self.ui.cbArduinoPort.fontMetrics()
         all_items = ports if ports else ["Keine Ports gefunden"]
         popup_width = max(fm.horizontalAdvance(p) for p in all_items) + 32
-        self.ui.arduino_ports.view().setMinimumWidth(popup_width)
+        self.ui.cbArduinoPort.view().setMinimumWidth(popup_width)
 
         # Truncate the collapsed display (signal may not be connected yet on first call)
-        self._update_port_display(self.ui.arduino_ports.currentIndex())
+        self._update_port_display(self.ui.cbArduinoPort.currentIndex())
         Debug.info(f"Available serial ports: {ports}")
 
     @Slot(int)
     def _update_port_display(self, index: int) -> None:
         """Show truncated port name in the collapsed combobox; full name stays in the popup."""
-        if index < 0 or not self.ui.arduino_ports.isEditable():
+        if index < 0 or not self.ui.cbArduinoPort.isEditable():
             return
-        line_edit = self.ui.arduino_ports.lineEdit()
+        line_edit = self.ui.cbArduinoPort.lineEdit()
         if line_edit is None:
             return
-        full = self.ui.arduino_ports.itemText(index)
+        full = self.ui.cbArduinoPort.itemText(index)
         truncated = f"..{full[-13:]}" if len(full) > 15 else full
         line_edit.setText(truncated)
 
     @Slot()
     def _connect_arduino(self) -> None:
         """Attempt to connect to Arduino on the selected port."""
-        port = self.ui.arduino_ports.itemText(self.ui.arduino_ports.currentIndex())
+        port = self.ui.cbArduinoPort.itemText(self.ui.cbArduinoPort.currentIndex())
         if not port or port == "Keine Ports gefunden":
-            self.ui.arduino_status.setText("Kein Port gewählt")
+            self.ui.lblArduinoStatusValue.setText("Kein Port gewählt")
             return
 
         set_connection_status(
-            self.ui.arduino_statusLED,
-            self.ui.arduino_status,
+            self.ui.ledArduinoStatus,
+            self.ui.lblArduinoStatusValue,
             "Verbinde...",
             LED_YELLOW,
         )
-        self.ui.arduino_ports.setEnabled(False)
-        self.ui.ports_refresh.setEnabled(False)
+        self.ui.cbArduinoPort.setEnabled(False)
+        self.ui.btnRefreshPorts.setEnabled(False)
 
         success = self.device_manager.connect_encoders(port=port)
 
         if success:
             set_connection_status(
-                self.ui.arduino_statusLED,
-                self.ui.arduino_status,
+                self.ui.ledArduinoStatus,
+                self.ui.lblArduinoStatusValue,
                 "Verbunden",
                 LED_GREEN,
             )
@@ -238,29 +236,35 @@ class MainWindow(QMainWindow):
                 or "Verbindung fehlgeschlagen"
             )
             set_connection_status(
-                self.ui.arduino_statusLED,
-                self.ui.arduino_status,
+                self.ui.ledArduinoStatus,
+                self.ui.lblArduinoStatusValue,
                 f"Fehler: {error[:30]}",
                 LED_RED,
             )
-            self.ui.arduino_ports.setEnabled(True)
-            self.ui.ports_refresh.setEnabled(True)
+            self.ui.cbArduinoPort.setEnabled(True)
+            self.ui.btnRefreshPorts.setEnabled(True)
             self.statusbar_manager.show_error(f"Verbindung fehlgeschlagen: {error}")
             Debug.error(f"Arduino connection failed: {error}")
 
     def _on_arduino_connected(self) -> None:
         """Enable encoder UI sections and start data acquisition after connection."""
-        self.ui.live_values.setEnabled(True)
-        self.ui.live_values_2.setEnabled(True)
+        self.ui.gbSampleStage.setEnabled(True)
+        self.ui.gbDetectorStage.setEnabled(True)
         set_connection_status(
-            self.ui.sample_statusLED, self.ui.sample_enr, "Encoder A", LED_GREEN
+            self.ui.ledSampleStatus,
+            self.ui.lblSampleStatusValue,
+            "Encoder A",
+            LED_GREEN,
         )
         set_connection_status(
-            self.ui.dstage_statusLED, self.ui.dstage_enr, "Encoder B", LED_GREEN
+            self.ui.ledDetectorStageStatus,
+            self.ui.lblDetectorStageStatusValue,
+            "Encoder B",
+            LED_GREEN,
         )
-        self.ui.sample_angle.display(0.00)
-        self.ui.dstage_angle.display(0.00)
-        self.ui.buttonStart.setEnabled(True)
+        self.ui.lcdSampleAngle.display(0.00)
+        self.ui.lcdDetectorStageAngle.display(0.00)
+        self.ui.btnStartMeasurement.setEnabled(True)
         self.data_controller.start_continuous_reading()
 
     # ==================== Acquisition Settings ====================
@@ -330,8 +334,8 @@ class MainWindow(QMainWindow):
         )
 
         # Update LCD displays
-        self.ui.sample_angle.display(f"{display_sample:.2f}")
-        self.ui.dstage_angle.display(f"{display_det:.2f}")
+        self.ui.lcdSampleAngle.display(f"{display_sample:.2f}")
+        self.ui.lcdDetectorStageAngle.display(f"{display_det:.2f}")
 
         # Validate geometry (detector should be ~2x sample)
         expected_detector = 2.0 * sample_angle
@@ -412,7 +416,7 @@ class MainWindow(QMainWindow):
         Debug.info("Measurement data reset")
 
         # Disable reset button
-        self.ui.buttonReset.setEnabled(False)
+        self.ui.btnResetMeasurement.setEnabled(False)
 
     @Slot()
     def _on_measurement_started(self) -> None:
@@ -420,16 +424,16 @@ class MainWindow(QMainWindow):
         self._is_measuring = True
 
         # Update UI state
-        self.ui.buttonStart.setEnabled(False)
-        self.ui.buttonStop.setEnabled(True)
-        self.ui.buttonReset.setEnabled(False)
+        self.ui.btnStartMeasurement.setEnabled(False)
+        self.ui.btnStopMeasurement.setEnabled(True)
+        self.ui.btnResetMeasurement.setEnabled(False)
 
         # Disable zeroing during measurement
-        self.ui.sample_zero.setEnabled(False)
-        self.ui.dstage_zero_2.setEnabled(False)
+        self.ui.btnSampleZero.setEnabled(False)
+        self.ui.btnDetectorStageZero.setEnabled(False)
 
         # Enable save when measurement has data
-        self.ui.buttonSave.setEnabled(False)  # Enable after first data point
+        self.ui.btnSave.setEnabled(False)  # Enable after first data point
 
     @Slot()
     def _on_measurement_stopped(self) -> None:
@@ -437,16 +441,16 @@ class MainWindow(QMainWindow):
         self._is_measuring = False
 
         # Update UI state
-        self.ui.buttonStart.setEnabled(True)
-        self.ui.buttonStop.setEnabled(False)
-        self.ui.buttonReset.setEnabled(True)
+        self.ui.btnStartMeasurement.setEnabled(True)
+        self.ui.btnStopMeasurement.setEnabled(False)
+        self.ui.btnResetMeasurement.setEnabled(True)
 
         # Re-enable zeroing
-        self.ui.sample_zero.setEnabled(True)
-        self.ui.dstage_zero_2.setEnabled(True)
+        self.ui.btnSampleZero.setEnabled(True)
+        self.ui.btnDetectorStageZero.setEnabled(True)
 
         # Enable save if we have data
-        self.ui.buttonSave.setEnabled(True)
+        self.ui.btnSave.setEnabled(True)
 
     # ==================== Data Saving ====================
 
@@ -454,8 +458,8 @@ class MainWindow(QMainWindow):
     def _save_data(self) -> None:
         """Save measurement data to file."""
         # Get save parameters from UI
-        group_letter = self.ui.groupLetter.currentText()
-        suffix = self.ui.suffix.text()
+        group_letter = self.ui.cbGroupLetter.currentText()
+        suffix = self.ui.leSuffix.text()
 
         if not group_letter:
             show_error(self, "Save Error", "Please select a group letter.")
@@ -479,8 +483,8 @@ class MainWindow(QMainWindow):
         Debug.error(f"Data acquisition error: {error_msg}")
 
         # Set LEDs to red if connection lost
-        self.ui.sample_statusLED.setStyleSheet(LED_RED)
-        self.ui.dstage_statusLED.setStyleSheet(LED_RED)
+        self.ui.ledSampleStatus.setStyleSheet(LED_RED)
+        self.ui.ledDetectorStageStatus.setStyleSheet(LED_RED)
 
     @Slot()
     def _handle_reconnect_attempt(self) -> None:

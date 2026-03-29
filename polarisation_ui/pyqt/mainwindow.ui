@@ -68,7 +68,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QGroupBox" name="live_values_4">
+       <widget class="QGroupBox" name="gbArduinoConnection">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -95,7 +95,7 @@
         <property name="checkable">
          <bool>false</bool>
         </property>
-        <layout class="QFormLayout" name="formLayout_6">
+        <layout class="QFormLayout" name="formArduinoConnection">
          <property name="sizeConstraint">
           <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
          </property>
@@ -118,7 +118,7 @@
           <number>5</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_9">
+          <widget class="QLabel" name="lblArduinoPort">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -139,12 +139,12 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <layout class="QHBoxLayout" name="hlArduinoPort">
            <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
-            <widget class="QComboBox" name="arduino_ports">
+            <widget class="QComboBox" name="cbArduinoPort">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -160,7 +160,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="ports_refresh">
+            <widget class="QToolButton" name="btnRefreshPorts">
              <property name="text">
               <string>...</string>
              </property>
@@ -178,7 +178,7 @@
           </layout>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_8">
+          <widget class="QLabel" name="lblArduinoStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -199,9 +199,9 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <layout class="QHBoxLayout" name="sample_group_3">
+          <layout class="QHBoxLayout" name="hlArduinoStatus">
            <item>
-            <widget class="QLabel" name="arduino_status">
+            <widget class="QLabel" name="lblArduinoStatusValue">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -222,7 +222,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="arduino_statusLED">
+            <widget class="QLabel" name="ledArduinoStatus">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -252,7 +252,7 @@
           </layout>
          </item>
          <item row="2" column="0" colspan="2">
-          <widget class="QPushButton" name="arduino_connect">
+          <widget class="QPushButton" name="btnArduinoConnect">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -295,7 +295,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QGroupBox" name="live_values">
+       <widget class="QGroupBox" name="gbSampleStage">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -325,7 +325,7 @@
         <property name="checkable">
          <bool>false</bool>
         </property>
-        <layout class="QFormLayout" name="formLayout">
+        <layout class="QFormLayout" name="formSampleStage">
          <property name="sizeConstraint">
           <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
          </property>
@@ -348,7 +348,7 @@
           <number>5</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="lblSampleStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -369,9 +369,9 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <layout class="QHBoxLayout" name="sample_group">
+          <layout class="QHBoxLayout" name="hlSampleStatus">
            <item>
-            <widget class="QLabel" name="sample_enr">
+            <widget class="QLabel" name="lblSampleStatusValue">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -392,7 +392,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="sample_statusLED">
+            <widget class="QLabel" name="ledSampleStatus">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -422,7 +422,7 @@
           </layout>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="lblSampleAngle">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -446,7 +446,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLCDNumber" name="sample_angle">
+          <widget class="QLCDNumber" name="lcdSampleAngle">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -473,7 +473,7 @@
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
-          <widget class="QPushButton" name="sample_zero">
+          <widget class="QPushButton" name="btnSampleZero">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -516,7 +516,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QGroupBox" name="live_values_2">
+       <widget class="QGroupBox" name="gbDetectorStage">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -543,7 +543,7 @@
         <property name="alignment">
          <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
-        <layout class="QFormLayout" name="formLayout_3">
+        <layout class="QFormLayout" name="formDetectorStage">
          <property name="sizeConstraint">
           <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
          </property>
@@ -566,7 +566,7 @@
           <number>5</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_14">
+          <widget class="QLabel" name="lblDetectorStageStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -587,9 +587,9 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <layout class="QHBoxLayout" name="dstage_group">
+          <layout class="QHBoxLayout" name="hlDetectorStageStatus">
            <item>
-            <widget class="QLabel" name="dstage_enr">
+            <widget class="QLabel" name="lblDetectorStageStatusValue">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -610,7 +610,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="dstage_statusLED">
+            <widget class="QLabel" name="ledDetectorStageStatus">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -640,7 +640,7 @@
           </layout>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_11">
+          <widget class="QLabel" name="lblDetectorStageAngle">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -664,7 +664,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLCDNumber" name="dstage_angle">
+          <widget class="QLCDNumber" name="lcdDetectorStageAngle">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -691,7 +691,7 @@
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
-          <widget class="QPushButton" name="dstage_zero_2">
+          <widget class="QPushButton" name="btnDetectorStageZero">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -734,7 +734,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QGroupBox" name="live_values_3">
+       <widget class="QGroupBox" name="gbDetector">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -761,7 +761,7 @@
         <property name="alignment">
          <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
-        <layout class="QFormLayout" name="formLayout_4">
+        <layout class="QFormLayout" name="formDetector">
          <property name="sizeConstraint">
           <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
          </property>
@@ -778,7 +778,7 @@
           <number>10</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_18">
+          <widget class="QLabel" name="lblDetectorStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -799,9 +799,9 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <layout class="QHBoxLayout" name="detector_group">
+          <layout class="QHBoxLayout" name="hlDetectorStatus">
            <item>
-            <widget class="QLabel" name="detector_enr">
+            <widget class="QLabel" name="lblDetectorStatusValue">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -822,7 +822,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="detector_statusLED">
+            <widget class="QLabel" name="ledDetectorStatus">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -852,7 +852,7 @@
           </layout>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_19">
+          <widget class="QLabel" name="lblDetectorVoltage">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -879,7 +879,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLCDNumber" name="detector_voltage">
+          <widget class="QLCDNumber" name="lcdDetectorVoltage">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -927,7 +927,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="gbSave">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -962,7 +962,7 @@
           <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
          </property>
          <item>
-          <layout class="QFormLayout" name="formLayout_2">
+          <layout class="QFormLayout" name="formSave">
            <property name="fieldGrowthPolicy">
             <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
            </property>
@@ -973,7 +973,7 @@
             <number>0</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_7">
+            <widget class="QLabel" name="lblGroupLetter">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
@@ -985,7 +985,7 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="groupLetter">
+            <widget class="QComboBox" name="cbGroupLetter">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1132,7 +1132,7 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_5">
+            <widget class="QLabel" name="lblSuffix">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
@@ -1144,7 +1144,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLineEdit" name="suffix">
+            <widget class="QLineEdit" name="leSuffix">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1170,7 +1170,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QPushButton" name="buttonSave">
+          <widget class="QPushButton" name="btnSave">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -1209,7 +1209,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="hlMeasurementControls">
         <property name="leftMargin">
          <number>2</number>
         </property>
@@ -1223,7 +1223,7 @@
          <number>2</number>
         </property>
         <item>
-         <widget class="QPushButton" name="buttonStart">
+         <widget class="QPushButton" name="btnStartMeasurement">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -1253,7 +1253,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="buttonStop">
+         <widget class="QPushButton" name="btnStopMeasurement">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -1283,7 +1283,7 @@
          </widget>
         </item>
         <item>
-         <widget class="Line" name="line_3">
+         <widget class="Line" name="lineMeasurementControls">
           <property name="font">
            <font>
             <pointsize>11</pointsize>
@@ -1295,7 +1295,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="buttonReset">
+         <widget class="QPushButton" name="btnResetMeasurement">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -1322,7 +1322,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="plot_detector" native="true">
+       <widget class="QWidget" name="plotDetector" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
@@ -1332,7 +1332,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="plot_measurement" native="true">
+       <widget class="QWidget" name="plotMeasurement" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -1358,14 +1358,14 @@
     <property name="title">
      <string>Einstellungen</string>
     </property>
-    <addaction name="actionAutomatische_Speicherung_aktiviert"/>
-    <addaction name="actionAquisations_Einstellungen"/>
-    <addaction name="actionEncoder_Debugging"/>
+    <addaction name="actionAutoSaveEnabled"/>
+    <addaction name="actionAcquisitionSettings"/>
+    <addaction name="actionEncoderDebug"/>
    </widget>
    <addaction name="menuEinstellungen"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionAutomatische_Speicherung_aktiviert">
+  <action name="actionAutoSaveEnabled">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1376,7 +1376,7 @@
     <string>Automatische Speicherung aktiviert</string>
    </property>
   </action>
-  <action name="actionAquisations_Einstellungen">
+  <action name="actionAcquisitionSettings">
    <property name="text">
     <string>Aquisations-Einstellungen</string>
    </property>
@@ -1384,7 +1384,7 @@
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
-  <action name="actionEncoder_Debugging">
+  <action name="actionEncoderDebug">
    <property name="text">
     <string>Encoder Debugging</string>
    </property>
@@ -1393,9 +1393,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>actionAutomatische_Speicherung_aktiviert</sender>
+   <sender>actionAutoSaveEnabled</sender>
    <signal>triggered(bool)</signal>
-   <receiver>label_5</receiver>
+   <receiver>lblSuffix</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1409,9 +1409,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionAutomatische_Speicherung_aktiviert</sender>
+   <sender>actionAutoSaveEnabled</sender>
    <signal>triggered(bool)</signal>
-   <receiver>suffix</receiver>
+   <receiver>leSuffix</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">

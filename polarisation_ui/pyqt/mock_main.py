@@ -23,6 +23,6 @@ if __name__ == "__main__":
         acq_ui.setupUi(dialog)
         dialog.exec()
 
-    ui.actionAquisations_Einstellungen.triggered.connect(open_acq_settings)
+    ui.actionAcquisitionSettings.triggered.connect(open_acq_settings)
 
     sys.exit(app.exec())
