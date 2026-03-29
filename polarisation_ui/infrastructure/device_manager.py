@@ -114,7 +114,7 @@ class GoniometerDeviceManager:
                 self._encoder_status = DeviceStatus(
                     state=DeviceState.CONNECTED, port=port, baudrate=baudrate
                 )
-                Debug.info(f"Encoder Arduino connected successfully")
+                Debug.info("Encoder Arduino connected successfully")
                 return True
             else:
                 self._encoder_status = DeviceStatus(
@@ -265,8 +265,6 @@ class GoniometerDeviceManager:
             if device is None:
                 return False
 
-            from polarisation_ui.infrastructure.devices.dual_encoder import EncoderID
-
             device.reset_zero_a()
             Debug.info("Sample encoder zeroed")
             return True
@@ -283,8 +281,6 @@ class GoniometerDeviceManager:
             device = self.get_encoder_device()
             if device is None:
                 return False
-
-            from polarisation_ui.infrastructure.devices.dual_encoder import EncoderID
 
             device.reset_zero_b()
             Debug.info("Detector encoder zeroed")

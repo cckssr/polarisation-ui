@@ -5,8 +5,8 @@ Provides helper functions for updating the status bar with
 consistent formatting and behavior.
 """
 
-from PySide6.QtWidgets import QStatusBar
 from typing import Optional
+from PySide6.QtWidgets import QStatusBar
 
 
 class StatusBarManager:

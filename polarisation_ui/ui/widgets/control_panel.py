@@ -7,9 +7,9 @@ Provides buttons and controls for:
     - Starting/stopping measurements
 """
 
+from typing import Optional
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QPushButton
 from PySide6.QtCore import Signal, Slot
-from typing import Optional
 
 
 class ControlPanelWidget(QWidget):

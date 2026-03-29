@@ -5,8 +5,8 @@ Provides standardized PySide6 dialogs for info, warnings, errors, and confirmati
 Centralizes dialog styling and behavior across the application.
 """
 
-from PySide6.QtWidgets import QMessageBox, QWidget
 from typing import Optional
+from PySide6.QtWidgets import QMessageBox, QWidget
 
 
 def show_info(
