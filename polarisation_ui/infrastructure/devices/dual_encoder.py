@@ -9,8 +9,8 @@ setting zero positions.
 The interface communicates with the Arduino via SCPI commands defined in main.cpp:
     - MEAS:ANGL? A/B/BOTH   Read angle(s) in degrees
     - MEAS:MAGN? A/B/BOTH   Read raw magnitude(s)
-    - INIT ON,A/B/BOTH      Start continuous angle streaming
-    - INIT ON,MAG           Start continuous magnitude streaming
+    - INIT:CONT ON,A/B/BOTH Start continuous angle streaming
+    - INIT:CONT ON,MAG      Start continuous magnitude streaming
     - ABOR                  Stop continuous streaming
     - CONF:ZERO A/B/BOTH    Set zero position
     - SENS:INT <ms>         Set poll interval
@@ -25,7 +25,7 @@ Architecture:
     - Handles protocol parsing and error recovery
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -220,7 +220,7 @@ class DualEncoderArduino:
 
     def start_continuous_a(self) -> bool:
         """Start continuous angle streaming for encoder A."""
-        return self._send_command_no_response("INIT ON,A")
+        return self._send_command_no_response("INIT:CONT ON,A")
 
     def stop_continuous_a(self) -> bool:
         """Stop continuous streaming."""
@@ -231,7 +231,7 @@ class DualEncoderArduino:
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("INIT ON,B")
+        return self._send_command_no_response("INIT:CONT ON,B")
 
     def stop_continuous_b(self) -> bool:
         """Stop continuous streaming."""
@@ -242,7 +242,7 @@ class DualEncoderArduino:
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("INIT ON,BOTH")
+        return self._send_command_no_response("INIT:CONT ON,BOTH")
 
     def stop_continuous_both(self) -> bool:
         """Stop continuous streaming."""
@@ -313,18 +313,18 @@ class DualEncoderArduino:
             return True
         return False
 
-    def get_diagnostics_a(self) -> Optional[Dict[str, bool]]:
+    def get_diagnostics_a(self) -> Optional[Dict[str, Any]]:
         """Read diagnostics from encoder A."""
         return self.get_diagnostics(EncoderID.A)
 
-    def get_diagnostics_b(self) -> Optional[Dict[str, bool]]:
+    def get_diagnostics_b(self) -> Optional[Dict[str, Any]]:
         """Read diagnostics from encoder B."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return None
         return self.get_diagnostics(EncoderID.B)
 
-    def get_diagnostics(self, encoder_id: EncoderID) -> Optional[Dict[str, bool]]:
+    def get_diagnostics(self, encoder_id: EncoderID) -> Optional[Dict[str, Any]]:
         """
         Read diagnostics from one encoder.
 
@@ -360,6 +360,58 @@ class DualEncoderArduino:
         """
         command = "SYST:ERR?"
         if not self._device.send_command(command, add_newline=True):
+            return None
+        return self._device.read_value(timeout=self.timeout, return_type="str")
+
+    def read_magnitude(self, encoder_id: EncoderID) -> Optional[int]:
+        """
+        Read raw magnitude from one encoder (MEAS:MAGN? A/B).
+
+        Returns the 14-bit raw magnetic field magnitude (0–16383).
+        High values indicate a strong field; low values a weak one.
+
+        Args:
+            encoder_id: Which encoder to query.
+
+        Returns:
+            Raw magnitude integer, or None on error.
+        """
+        if encoder_id == EncoderID.B and not self.encoder_b_present:
+            Debug.warning("Encoder B not available")
+            return None
+
+        command = f"MEAS:MAGN? {encoder_id.value}"
+        if not self._device.send_command(command, add_newline=True):
+            Debug.error(f"Failed to send command: {command}")
+            return None
+
+        response = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not response:
+            Debug.error(f"No response for {command}")
+            return None
+
+        try:
+            return int(response.strip())
+        except ValueError as e:
+            Debug.error(f"Failed to parse magnitude response: '{response}' ({e})")
+            return None
+
+    def send_query(self, command: str) -> Optional[str]:
+        """
+        Send an arbitrary SCPI command and return the response line.
+
+        For query commands (ending with '?') the response is returned.
+        For control commands the Arduino sends no response; None is returned
+        after a short timeout.  Use this primarily from the debug terminal.
+
+        Args:
+            command: Raw SCPI command string.
+
+        Returns:
+            Response string, or None if nothing was received / send failed.
+        """
+        if not self._device.send_command(command, add_newline=True):
+            Debug.error(f"Failed to send raw query: {command}")
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
@@ -466,7 +518,7 @@ class DualEncoderArduino:
 
     def _parse_diagnostics_response(
         self, response: str, encoder_id: EncoderID
-    ) -> Optional[Dict[str, bool]]:
+    ) -> Optional[Dict[str, Any]]:
         """
         Parse diagnostics query response.
 
@@ -477,7 +529,8 @@ class DualEncoderArduino:
             encoder_id (EncoderID): Expected encoder ID.
 
         Returns:
-            Dict with diagnostic flags or None if parsing failed.
+            Dict with keys compHigh/compLow/cof/ocf (bool) and agc (int 0-255).
+            Returns None if parsing failed.
         """
         try:
             parts = response.strip().split(",")
@@ -485,8 +538,11 @@ class DualEncoderArduino:
                 Debug.error(f"Invalid diagnostics response: '{response}'")
                 return None
 
-            keys = ["compHigh", "compLow", "cof", "ocf", "agc"]
-            diag_dict = {key: bool(int(val.strip())) for key, val in zip(keys, parts)}
+            flag_keys = ["compHigh", "compLow", "cof", "ocf"]
+            diag_dict: Dict[str, Any] = {
+                key: bool(int(parts[i].strip())) for i, key in enumerate(flag_keys)
+            }
+            diag_dict["agc"] = int(parts[4].strip())
             Debug.debug(f"Parsed diagnostics for {encoder_id.value}: {diag_dict}")
             return diag_dict
 

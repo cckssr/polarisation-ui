@@ -272,8 +272,8 @@ class MockArduino:
         if header == "CONF:ERR":
             return None
 
-        # INIT ON,<target> | INIT OFF
-        if header == "INIT":
+        # INIT:CONT ON,<target> | INIT:CONT OFF
+        if header == "INIT:CONT":
             if param.startswith("ON"):
                 target = param[2:].lstrip(",").strip() or "A"
                 if target == "A":

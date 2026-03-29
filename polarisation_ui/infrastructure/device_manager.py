@@ -267,7 +267,7 @@ class GoniometerDeviceManager:
 
             from polarisation_ui.infrastructure.devices.dual_encoder import EncoderID
 
-            device.set_zero_a()
+            device.reset_zero_a()
             Debug.info("Sample encoder zeroed")
             return True
         except Exception as e:
@@ -286,7 +286,7 @@ class GoniometerDeviceManager:
 
             from polarisation_ui.infrastructure.devices.dual_encoder import EncoderID
 
-            device.set_zero_b()
+            device.reset_zero_b()
             Debug.info("Detector encoder zeroed")
             return True
         except Exception as e:
@@ -303,7 +303,7 @@ class GoniometerDeviceManager:
             if device is None:
                 return False
 
-            device.set_zero_both()
+            device.reset_zero_both()
             Debug.info("Both encoders zeroed")
             return True
         except Exception as e:
