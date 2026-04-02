@@ -57,10 +57,8 @@ def _import_and_call_main(module_names: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    # Typical names we try: local package `gmcounter` (repo layout) and installed
-    # package `gmcounter` (distribution layout). Try running the module
-    # first (preserves package context), fall back to import+call.
-    module_candidates = ["gmcounter.main"]
+    # Module candidates for polarisation-ui
+    module_candidates = ["polarisation_ui.main"]
 
     try:
         _run_module_by_name(module_candidates)

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pyside6-uic polarisation_ui/pyqt/encoder_debug.ui -o polarisation_ui/pyqt/ui_encoder_debug.py)"
+    ]
+  }
+}

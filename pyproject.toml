@@ -57,14 +57,14 @@ Repository = "https://github.com/cckssr/polarisation-ui"
 Issues = "https://github.com/cckssr/polarisation-ui/issues"
 
 [project.gui-scripts]
-polarisation-ui = "polarisation-ui.main:main"
+polarisation-ui = "polarisation_ui.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["polarisation-ui", "polarisation-ui.*"]
+include = ["polarisation_ui", "polarisation_ui.*"]
 
 [tool.setuptools.package-data]
-"polarisation-ui" = ["pyqt/*.ui", "config.json"]
+"polarisation_ui" = ["pyqt/*.ui", "config.json"]
 
 [tool.black]
 line-length = 88
