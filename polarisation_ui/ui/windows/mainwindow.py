@@ -14,6 +14,7 @@ Responsibilities:
     - Manage measurement sessions
 """
 
+import math
 from collections import deque
 
 from PySide6.QtWidgets import QDialog, QMainWindow, QComboBox
@@ -39,6 +40,22 @@ from polarisation_ui.ui.common.status_led import (
 )
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
+
+def _circular_mean_deg(angles: deque) -> float:
+    """
+    Circular mean for a buffer of angles in degrees.
+
+    Arithmetic mean is wrong near the 0°/360° wrap (e.g. mean([359°, 1°])
+    would give 180° instead of 0°).  The circular mean uses atan2 of the
+    mean sin/cos components and is always correct.
+
+    Returns a value in [0°, 360°).
+    """
+    n = len(angles)
+    sin_sum = sum(math.sin(math.radians(a)) for a in angles)
+    cos_sum = sum(math.cos(math.radians(a)) for a in angles)
+    return math.degrees(math.atan2(sin_sum / n, cos_sum / n)) % 360
+
 
 # Import settings
 CONFIG = import_config()
@@ -97,6 +114,9 @@ class MainWindow(QMainWindow):
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
 
+        # Tracks whether the last diagnostic check passed; gates angle display updates
+        self._sensor_ok: bool = True
+
         # Setup UI and connections
         self._setup_initial_state()
         self._connect_signals()
@@ -119,7 +139,9 @@ class MainWindow(QMainWindow):
 
         # Arduino connection group: start disconnected
         self.ui.ledArduinoStatus.setStyleSheet(LED_RED)
-        self.ui.lblArduinoStatusValue.setText("Nicht verbunden")
+        self.ui.lblArduinoStatusValue.setText(
+            CONFIG["messages"]["device_not_connected"]
+        )
 
         # Encoder/detector groups disabled until connected
         self.ui.gbSampleStage.setEnabled(False)
@@ -131,7 +153,7 @@ class MainWindow(QMainWindow):
         self.ui.btnStopMeasurement.setEnabled(False)
         self.ui.btnResetMeasurement.setEnabled(False)
 
-        self.statusbar_manager.show_info("Bitte Arduino verbinden")
+        self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
     # ==================== Signal Connections ====================
 
@@ -160,8 +182,11 @@ class MainWindow(QMainWindow):
 
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
+        self.data_controller.diagnostics_updated.connect(self._handle_diagnostics_update)
         self.data_controller.error_occurred.connect(self._handle_data_error)
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
+        self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
+        self.data_controller.connection_lost.connect(self._handle_connection_lost)
 
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
@@ -176,12 +201,12 @@ class MainWindow(QMainWindow):
         for port in ports:
             self.ui.cbArduinoPort.addItem(port)
         if not ports:
-            self.ui.cbArduinoPort.addItem("Keine Ports gefunden")
+            self.ui.cbArduinoPort.addItem(CONFIG["messages"]["device_ports_missing"])
 
         # Let the popup grow wide enough for the longest entry while the collapsed
         # combobox stays narrow (limited by minimumContentsLength).
         fm = self.ui.cbArduinoPort.fontMetrics()
-        all_items = ports if ports else ["Keine Ports gefunden"]
+        all_items = ports if ports else [CONFIG["messages"]["device_ports_missing"]]
         popup_width = max(fm.horizontalAdvance(p) for p in all_items) + 32
         self.ui.cbArduinoPort.view().setMinimumWidth(popup_width)
 
@@ -205,8 +230,8 @@ class MainWindow(QMainWindow):
     def _connect_arduino(self) -> None:
         """Attempt to connect to Arduino on the selected port."""
         port = self.ui.cbArduinoPort.itemText(self.ui.cbArduinoPort.currentIndex())
-        if not port or port == "Keine Ports gefunden":
-            self.ui.lblArduinoStatusValue.setText("Kein Port gewählt")
+        if not port or port == CONFIG["messages"]["device_ports_missing"]:
+            self.ui.lblArduinoStatusValue.setText(CONFIG["messages"]["device_not_connected"])
             return
 
         set_connection_status(
@@ -265,6 +290,7 @@ class MainWindow(QMainWindow):
         self.ui.lcdSampleAngle.display(0.00)
         self.ui.lcdDetectorStageAngle.display(0.00)
         self.ui.btnStartMeasurement.setEnabled(True)
+        self._sensor_ok = True
         self.data_controller.start_continuous_reading()
 
     # ==================== Acquisition Settings ====================
@@ -318,17 +344,22 @@ class MainWindow(QMainWindow):
             sample_angle: Sample stage angle in degrees
             detector_angle: Detector stage angle in degrees
         """
-        # Rolling-average buffers always receive the raw value
+        # Always feed the buffers so the mean warms up even during sensor faults;
+        # they are cleared when health is restored (_handle_diagnostics_update).
         self._sample_buffer.append(sample_angle)
         self._det_buffer.append(detector_angle)
 
+        # Suppress display updates while the sensor reports a problem
+        if not self._sensor_ok:
+            return
+
         display_sample = (
-            sum(self._sample_buffer) / len(self._sample_buffer)
+            _circular_mean_deg(self._sample_buffer)
             if self._acq_settings.samp_average_on
             else sample_angle
         )
         display_det = (
-            sum(self._det_buffer) / len(self._det_buffer)
+            _circular_mean_deg(self._det_buffer)
             if self._acq_settings.det_average_on
             else detector_angle
         )
@@ -471,27 +502,119 @@ class MainWindow(QMainWindow):
 
     # ==================== Error Handling ====================
 
+    @Slot(bool, str)
+    def _handle_diagnostics_update(self, all_ok: bool, description: str) -> None:
+        """
+        React to periodic sensor diagnostics from the data controller.
+
+        On fault: freeze the angle displays (values are unreliable), switch
+        encoder LEDs to yellow, and show details in the status bar.
+        On recovery: restore green LEDs, clear the averaging buffers so the
+        display resumes with fresh samples, and clear the warning.
+        """
+        if all_ok:
+            if not self._sensor_ok:
+                # Transition bad → good: clear stale buffer samples
+                self._sample_buffer.clear()
+                self._det_buffer.clear()
+                self._sensor_ok = True
+                set_connection_status(
+                    self.ui.ledSampleStatus,
+                    self.ui.lblSampleStatusValue,
+                    "Encoder A",
+                    LED_GREEN,
+                )
+                set_connection_status(
+                    self.ui.ledDetectorStageStatus,
+                    self.ui.lblDetectorStageStatusValue,
+                    "Encoder B",
+                    LED_GREEN,
+                )
+                self.statusbar_manager.show_success("Sensor-Diagnose OK")
+        else:
+            self._sensor_ok = False
+            set_connection_status(
+                self.ui.ledSampleStatus,
+                self.ui.lblSampleStatusValue,
+                "Sensor-Fehler",
+                LED_YELLOW,
+            )
+            set_connection_status(
+                self.ui.ledDetectorStageStatus,
+                self.ui.lblDetectorStageStatusValue,
+                "Sensor-Fehler",
+                LED_YELLOW,
+            )
+            self.statusbar_manager.show_warning(f"Sensor-Diagnose: {description}")
+
     @Slot(str)
     def _handle_data_error(self, error_msg: str) -> None:
-        """
-        Handle data acquisition errors.
-
-        Args:
-            error_msg: Error message from data controller
-        """
-        self.statusbar_manager.show_error(f"Data error: {error_msg}")
+        """First read error: mark encoder LEDs yellow, show in status bar."""
         Debug.error(f"Data acquisition error: {error_msg}")
-
-        # Set LEDs to red if connection lost
-        self.ui.ledSampleStatus.setStyleSheet(LED_RED)
-        self.ui.ledDetectorStageStatus.setStyleSheet(LED_RED)
+        self._sensor_ok = False
+        set_connection_status(
+            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
+            "Verbindungsfehler", LED_YELLOW,
+        )
+        set_connection_status(
+            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
+            "Verbindungsfehler", LED_YELLOW,
+        )
+        self.statusbar_manager.show_error(f"Lesefehler: {error_msg}")
 
     @Slot()
     def _handle_reconnect_attempt(self) -> None:
-        """Show reconnection status in the status bar."""
+        """Show reconnection progress in status bar."""
         self.statusbar_manager.show_warning(
             "Verbindung unterbrochen – Wiederverbindung wird versucht..."
         )
+
+    @Slot()
+    def _handle_reconnect_success(self) -> None:
+        """Serial connection re-established: restore all status indicators."""
+        self._sensor_ok = True
+        self._sample_buffer.clear()
+        self._det_buffer.clear()
+        set_connection_status(
+            self.ui.ledArduinoStatus, self.ui.lblArduinoStatusValue,
+            "Verbunden", LED_GREEN,
+        )
+        set_connection_status(
+            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
+            "Encoder A", LED_GREEN,
+        )
+        set_connection_status(
+            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
+            "Encoder B", LED_GREEN,
+        )
+        self.statusbar_manager.show_success("Verbindung wiederhergestellt")
+        Debug.info("Reconnect: UI status restored")
+
+    @Slot()
+    def _handle_connection_lost(self) -> None:
+        """Max reconnect attempts exhausted: show disconnected state, re-enable connect UI."""
+        self._sensor_ok = False
+        set_connection_status(
+            self.ui.ledArduinoStatus, self.ui.lblArduinoStatusValue,
+            "Getrennt", LED_RED,
+        )
+        set_connection_status(
+            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
+            "Kein Signal", LED_RED,
+        )
+        set_connection_status(
+            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
+            "Kein Signal", LED_RED,
+        )
+        self.ui.gbSampleStage.setEnabled(False)
+        self.ui.gbDetectorStage.setEnabled(False)
+        self.ui.btnStartMeasurement.setEnabled(False)
+        self.ui.cbArduinoPort.setEnabled(True)
+        self.ui.btnRefreshPorts.setEnabled(True)
+        self.statusbar_manager.show_error(
+            "Verbindung verloren – bitte Arduino neu verbinden"
+        )
+        Debug.error("Connection permanently lost; user must reconnect manually")
 
     # ==================== Window Lifecycle ====================
 

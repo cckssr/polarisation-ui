@@ -69,6 +69,9 @@
 
     "messages": {
       "app_init": "Anwendung wird initialisiert...",
+      "device_not_connected": "Nicht verbunden..",
+      "device_please_connect": "Bitte Gerät anschließen.",
+      "device_ports_missing": "Keine Ports gefunden.",
       "connected": "Verbunden mit {}. Bereit für Messungen.",
       "measurement_running": "Messung läuft...",
       "measurement_stopped": "Messung gestoppt.",

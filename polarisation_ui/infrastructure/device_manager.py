@@ -131,6 +131,22 @@ class GoniometerDeviceManager:
             )
             return False
 
+    def reconnect_encoders(self) -> bool:
+        """
+        Re-establish the encoder connection using the last known port/baudrate.
+
+        Cleanly disconnects first, then calls connect_encoders() with the
+        stored parameters.  Returns False if no prior connection info exists.
+        """
+        port = self._encoder_status.port
+        baudrate = self._encoder_status.baudrate or 115200
+        if not port:
+            Debug.warning("Cannot reconnect: no previous port stored")
+            return False
+        Debug.info(f"Reconnecting to {port} at {baudrate} baud...")
+        self.disconnect_encoders()
+        return self.connect_encoders(port=port, baudrate=baudrate)
+
     def disconnect_encoders(self) -> None:
         """Disconnect from encoder Arduino."""
         if self._encoder_device is not None:
@@ -252,6 +268,22 @@ class GoniometerDeviceManager:
         except Exception as e:
             Debug.error(f"Error reading detector angle: {e}")
             return None
+
+    def read_diagnostics_both(
+        self,
+    ) -> Optional[tuple[Optional[dict], Optional[dict]]]:
+        """
+        Read SYST:DIAG? for both encoders.
+
+        Returns:
+            (diag_a, diag_b) where each entry is a dict with keys
+            compHigh, compLow, cof, ocf, agc — or None if that encoder
+            did not respond.  Returns None when not connected.
+        """
+        device = self.get_encoder_device()
+        if device is None:
+            return None
+        return (device.get_diagnostics_a(), device.get_diagnostics_b())
 
     # ==================== Device Control ====================
 

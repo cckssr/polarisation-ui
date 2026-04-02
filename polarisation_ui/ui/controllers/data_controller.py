@@ -8,6 +8,39 @@ emits signals for UI updates. Separates data collection from UI rendering.
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from typing import Optional
 
+
+def _evaluate_diagnostics(
+    diag_a: Optional[dict],
+    diag_b: Optional[dict],
+) -> tuple[bool, str]:
+    """
+    Evaluate raw SYST:DIAG? dicts from both encoders.
+
+    AS5048A health rules:
+      compHigh = True  → magnet too far away (AGC at max)
+      compLow  = True  → magnet too close    (AGC at min)
+      cof      = True  → CORDIC overflow, reading invalid
+      ocf      = False → offset compensation not yet finished
+
+    Returns:
+        (all_ok, human-readable error string).
+        all_ok is True only when both encoders report no faults.
+    """
+    errors: list[str] = []
+    for label, diag in (("Enc A", diag_a), ("Enc B", diag_b)):
+        if diag is None:
+            errors.append(f"{label}: keine Antwort")
+            continue
+        if diag.get("compHigh"):
+            errors.append(f"{label}: Magnet zu weit (COMP_H)")
+        if diag.get("compLow"):
+            errors.append(f"{label}: Magnet zu nah (COMP_L)")
+        if diag.get("cof"):
+            errors.append(f"{label}: CORDIC-Überlauf (COF)")
+        if not diag.get("ocf", True):
+            errors.append(f"{label}: Kalibrierung ausstehend (OCF)")
+    return len(errors) == 0, "; ".join(errors)
+
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -30,7 +63,8 @@ class DataController(QObject):
     """
 
     # Data signals
-    angles_updated = Signal(float, float)  # sample_angle, detector_angle
+    angles_updated = Signal(float, float)    # sample_angle, detector_angle
+    diagnostics_updated = Signal(bool, str)  # all_ok, error_description
 
     # Error signals
     error_occurred = Signal(str)  # error_message
@@ -45,8 +79,15 @@ class DataController(QObject):
     # Delay before each reconnection attempt (milliseconds)
     RETRY_DELAY_MS = 3000
 
+    # How often to run SYST:DIAG? checks (milliseconds)
+    DIAG_INTERVAL_MS = 5000  # every 5 s
+
     # Signal emitted when a reconnection attempt begins
     retry_connecting = Signal()
+    # Signal emitted when the connection is re-established after errors
+    reconnect_succeeded = Signal()
+    # Signal emitted when max errors are reached and we stop trying
+    connection_lost = Signal()
 
     def __init__(
         self, device_manager: GoniometerDeviceManager, parent: Optional[QObject] = None
@@ -71,6 +112,10 @@ class DataController(QObject):
         self._retry_timer = QTimer(self)
         self._retry_timer.setSingleShot(True)
         self._retry_timer.timeout.connect(self._attempt_reconnect)
+
+        # Diagnostic timer — periodically sends SYST:DIAG? to both encoders
+        self._diag_timer = QTimer(self)
+        self._diag_timer.timeout.connect(self._check_diagnostics)
 
         # State tracking
         self._is_measuring = False
@@ -112,6 +157,7 @@ class DataController(QObject):
 
         self._error_count = 0
         self.poll_timer.start(self.poll_interval)
+        self._diag_timer.start(self.DIAG_INTERVAL_MS)
         Debug.info("Continuous reading started")
         return True
 
@@ -119,6 +165,7 @@ class DataController(QObject):
         """Stop continuous sensor polling."""
         if self.poll_timer.isActive():
             self.poll_timer.stop()
+            self._diag_timer.stop()
             Debug.info("Continuous reading stopped")
 
     def is_reading(self) -> bool:
@@ -209,25 +256,26 @@ class DataController(QObject):
             Debug.error("Too many consecutive errors, giving up")
             if self._is_measuring:
                 self.stop_measurement()
+            self.connection_lost.emit()
         else:
             self._retry_timer.start(self.RETRY_DELAY_MS)
 
     @Slot()
     def _attempt_reconnect(self) -> None:
-        """Try to resume polling after a connection error."""
+        """Try to re-establish the serial connection and resume polling."""
         self.retry_connecting.emit()
         Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
 
         try:
-            angles = self.device_manager.read_angles()
-            if angles is not None:
+            success = self.device_manager.reconnect_encoders()
+            if success:
                 self._error_count = 0
                 self.poll_timer.start(self.poll_interval)
-                sample_angle, detector_angle = angles
-                self.angles_updated.emit(sample_angle, detector_angle)
+                self._diag_timer.start(self.DIAG_INTERVAL_MS)
+                self.reconnect_succeeded.emit()
                 Debug.info("Reconnected successfully")
             else:
-                self._handle_read_error("Failed to read angles")
+                self._handle_read_error("Reconnect failed")
         except Exception as e:
             self._handle_read_error(f"Exception during reconnect: {e}")
 
@@ -259,11 +307,42 @@ class DataController(QObject):
             self.error_occurred.emit(str(e))
             return None
 
+    # ==================== Diagnostics ====================
+
+    @Slot()
+    def _check_diagnostics(self) -> None:
+        """
+        Run SYST:DIAG? on both encoders and emit diagnostics_updated.
+
+        The angle-polling timer is paused for the duration of the SCPI
+        exchange so that serial commands do not interleave.
+        """
+        was_polling = self.poll_timer.isActive()
+        if was_polling:
+            self.poll_timer.stop()
+
+        try:
+            result = self.device_manager.read_diagnostics_both()
+        finally:
+            if was_polling:
+                self.poll_timer.start(self.poll_interval)
+
+        if result is None:
+            return  # not connected — nothing to report
+
+        all_ok, description = _evaluate_diagnostics(result[0], result[1])
+        self.diagnostics_updated.emit(all_ok, description)
+        if not all_ok:
+            Debug.warning(f"Sensor diagnostics failed: {description}")
+        else:
+            Debug.debug("Sensor diagnostics OK")
+
     # ==================== Cleanup ====================
 
     def cleanup(self) -> None:
         """Clean up resources."""
         self._retry_timer.stop()
+        self._diag_timer.stop()
         self.stop_continuous_reading()
 
         if self._is_measuring:
