@@ -36,7 +36,8 @@
       "det_average_on": true,
       "det_averages": 5,
       "samp_average_on": true,
-      "samp_averages": 5
+      "samp_averages": 5,
+      "sample_stage_inverted": true
     },
 
     "data_controller": {

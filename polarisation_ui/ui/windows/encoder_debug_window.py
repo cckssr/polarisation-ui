@@ -17,7 +17,7 @@ dialog that lives entirely inside the UI layer.
 from datetime import datetime
 
 from PySide6.QtCore import QTimer, Slot
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QCheckBox, QDialog, QFormLayout, QLabel
 
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.dual_encoder import (
@@ -54,12 +54,18 @@ class EncoderDebugDialog(QDialog):
     serial connections are opened.
     """
 
-    def __init__(self, device_manager: GoniometerDeviceManager, parent=None) -> None:
+    def __init__(
+        self,
+        device_manager: GoniometerDeviceManager,
+        sample_inverted: bool = False,
+        parent=None,
+    ) -> None:
         super().__init__(parent)
         self.ui = Ui_EncoderDebugDialog()
         self.ui.setupUi(self)
 
         self._dm = device_manager
+        self._sample_inverted = sample_inverted
 
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self._refresh)
@@ -239,6 +245,13 @@ class EncoderDebugDialog(QDialog):
             self.ui.cbDebugMode.blockSignals(True)
             self.ui.cbDebugMode.setChecked(raw_deb.strip() == "1")
             self.ui.cbDebugMode.blockSignals(False)
+
+        # Sample stage inverted flag — read-only, derived from hardware config
+        lbl = QLabel("Probe invertiert:", self.ui.gbSysInfo)
+        cb = QCheckBox(self.ui.gbSysInfo)
+        cb.setChecked(self._sample_inverted)
+        cb.setEnabled(False)
+        self.ui.formSysInfo.addRow(lbl, cb)
 
     # ==================== Controls ====================
 

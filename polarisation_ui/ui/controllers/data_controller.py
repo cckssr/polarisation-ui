@@ -9,37 +9,26 @@ from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from typing import Optional
 
 
-def _evaluate_diagnostics(
-    diag_a: Optional[dict],
-    diag_b: Optional[dict],
-) -> tuple[bool, str]:
+def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
     """
-    Evaluate raw SYST:DIAG? dicts from both encoders.
+    Evaluate one encoder's SYST:DIAG? dict.
 
-    AS5048A health rules:
-      compHigh = True  → magnet too far away (AGC at max)
-      compLow  = True  → magnet too close    (AGC at min)
-      cof      = True  → CORDIC overflow, reading invalid
-      ocf      = False → offset compensation not yet finished
-
-    Returns:
-        (all_ok, human-readable error string).
-        all_ok is True only when both encoders report no faults.
+    Returns (ok, description) — description is "<label>: OK" when healthy or
+    "<label>: <fault list>" when one or more flags are set.
     """
-    errors: list[str] = []
-    for label, diag in (("Enc A", diag_a), ("Enc B", diag_b)):
-        if diag is None:
-            errors.append(f"{label}: keine Antwort")
-            continue
-        if diag.get("compHigh"):
-            errors.append(f"{label}: Magnet zu weit (COMP_H)")
-        if diag.get("compLow"):
-            errors.append(f"{label}: Magnet zu nah (COMP_L)")
-        if diag.get("cof"):
-            errors.append(f"{label}: CORDIC-Überlauf (COF)")
-        if not diag.get("ocf", True):
-            errors.append(f"{label}: Kalibrierung ausstehend (OCF)")
-    return len(errors) == 0, "; ".join(errors)
+    if diag is None:
+        return False, f"{label}: keine Antwort"
+    faults: list[str] = []
+    if diag.get("compHigh"):
+        faults.append("Magnet zu weit (COMP_H)")
+    if diag.get("compLow"):
+        faults.append("Magnet zu nah (COMP_L)")
+    if diag.get("cof"):
+        faults.append("CORDIC-Überlauf (COF)")
+    if not diag.get("ocf", True):
+        faults.append("Kalibrierung ausstehend (OCF)")
+    ok = len(faults) == 0
+    return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
 
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
@@ -63,8 +52,9 @@ class DataController(QObject):
     """
 
     # Data signals
-    angles_updated = Signal(float, float)    # sample_angle, detector_angle
-    diagnostics_updated = Signal(bool, str)  # all_ok, error_description
+    angles_updated = Signal(float, float)              # sample_angle, detector_angle
+    # Per-encoder diagnostic results: (a_ok, a_desc, b_ok, b_desc)
+    diagnostics_updated = Signal(bool, str, bool, str)
 
     # Error signals
     error_occurred = Signal(str)  # error_message
@@ -121,6 +111,11 @@ class DataController(QObject):
         self._is_measuring = False
         self._error_count = 0
         self._max_errors = 10  # Stop after this many consecutive errors
+
+        # When True, sample angle is corrected as (360 - raw) % 360 to account
+        # for the diametrically flipped magnet on the sample stage.
+        # Set by MainWindow from AcquisitionSettings.sample_stage_inverted.
+        self.sample_inverted: bool = False
 
         Debug.debug("Data controller initialized")
 
@@ -226,6 +221,10 @@ class DataController(QObject):
 
             sample_angle, detector_angle = angles
 
+            # Correct for diametrically flipped magnet on sample stage
+            if self.sample_inverted:
+                sample_angle = (360.0 - sample_angle) % 360.0
+
             # Reset error counter on successful read
             self._error_count = 0
 
@@ -330,12 +329,13 @@ class DataController(QObject):
         if result is None:
             return  # not connected — nothing to report
 
-        all_ok, description = _evaluate_diagnostics(result[0], result[1])
-        self.diagnostics_updated.emit(all_ok, description)
-        if not all_ok:
-            Debug.warning(f"Sensor diagnostics failed: {description}")
+        a_ok, a_desc = _evaluate_encoder(result[0], "Enc A")
+        b_ok, b_desc = _evaluate_encoder(result[1], "Enc B")
+        self.diagnostics_updated.emit(a_ok, a_desc, b_ok, b_desc)
+        if not a_ok or not b_ok:
+            Debug.warning(f"Sensor diagnostics: {a_desc} | {b_desc}")
         else:
-            Debug.debug("Sensor diagnostics OK")
+            Debug.debug(f"Sensor diagnostics OK: {a_desc} | {b_desc}")
 
     # ==================== Cleanup ====================
 

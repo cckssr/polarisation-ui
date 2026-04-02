@@ -135,6 +135,10 @@ class AcquisitionSettings:
     det_averages: int = 5
     samp_average_on: bool = True
     samp_averages: int = 5
+    # Hardware flag: the sample-stage magnet is mounted diametrically flipped,
+    # so the raw angle increases in the wrong direction.  When True the
+    # DataController applies  corrected = (360 - raw) % 360  before emitting.
+    sample_stage_inverted: bool = True
 
 
 @dataclass

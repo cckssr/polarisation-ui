@@ -114,8 +114,9 @@ class MainWindow(QMainWindow):
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
 
-        # Tracks whether the last diagnostic check passed; gates angle display updates
-        self._sensor_ok: bool = True
+        # Per-encoder sensor health — gates the respective angle display independently
+        self._sensor_a_ok: bool = True
+        self._sensor_b_ok: bool = True
 
         # Setup UI and connections
         self._setup_initial_state()
@@ -290,7 +291,9 @@ class MainWindow(QMainWindow):
         self.ui.lcdSampleAngle.display(0.00)
         self.ui.lcdDetectorStageAngle.display(0.00)
         self.ui.btnStartMeasurement.setEnabled(True)
-        self._sensor_ok = True
+        self._sensor_a_ok = True
+        self._sensor_b_ok = True
+        self.data_controller.sample_inverted = self._acq_settings.sample_stage_inverted
         self.data_controller.start_continuous_reading()
 
     # ==================== Acquisition Settings ====================
@@ -308,6 +311,7 @@ class MainWindow(QMainWindow):
             det_averages=acq.get("det_averages", 5),
             samp_average_on=acq.get("samp_average_on", True),
             samp_averages=acq.get("samp_averages", 5),
+            sample_stage_inverted=acq.get("sample_stage_inverted", True),
         )
 
     @Slot()
@@ -323,6 +327,8 @@ class MainWindow(QMainWindow):
             # Recreate buffers with the new window size; old samples are discarded
             self._sample_buffer = deque(maxlen=self._acq_settings.samp_averages)
             self._det_buffer = deque(maxlen=self._acq_settings.det_averages)
+            # Sync inversion flag immediately
+            self.data_controller.sample_inverted = self._acq_settings.sample_stage_inverted
             Debug.info(
                 f"Acquisition settings updated: "
                 f"det={self._acq_settings.det_averages}x "
@@ -344,29 +350,26 @@ class MainWindow(QMainWindow):
             sample_angle: Sample stage angle in degrees
             detector_angle: Detector stage angle in degrees
         """
-        # Always feed the buffers so the mean warms up even during sensor faults;
-        # they are cleared when health is restored (_handle_diagnostics_update).
+        # Always feed the buffers — cleared on health recovery to avoid stale samples
         self._sample_buffer.append(sample_angle)
         self._det_buffer.append(detector_angle)
 
-        # Suppress display updates while the sensor reports a problem
-        if not self._sensor_ok:
-            return
+        # Each encoder gates its own display independently
+        if self._sensor_a_ok:
+            display_sample = (
+                _circular_mean_deg(self._sample_buffer)
+                if self._acq_settings.samp_average_on
+                else sample_angle
+            )
+            self.ui.lcdSampleAngle.display(f"{display_sample:.2f}")
 
-        display_sample = (
-            _circular_mean_deg(self._sample_buffer)
-            if self._acq_settings.samp_average_on
-            else sample_angle
-        )
-        display_det = (
-            _circular_mean_deg(self._det_buffer)
-            if self._acq_settings.det_average_on
-            else detector_angle
-        )
-
-        # Update LCD displays
-        self.ui.lcdSampleAngle.display(f"{display_sample:.2f}")
-        self.ui.lcdDetectorStageAngle.display(f"{display_det:.2f}")
+        if self._sensor_b_ok:
+            display_det = (
+                _circular_mean_deg(self._det_buffer)
+                if self._acq_settings.det_average_on
+                else detector_angle
+            )
+            self.ui.lcdDetectorStageAngle.display(f"{display_det:.2f}")
 
         # Validate geometry (detector should be ~2x sample)
         expected_detector = 2.0 * sample_angle
@@ -415,7 +418,11 @@ class MainWindow(QMainWindow):
     @Slot()
     def _open_encoder_debug(self) -> None:
         """Open the encoder debug dialog (non-modal)."""
-        dialog = EncoderDebugDialog(self.device_manager, parent=self)
+        dialog = EncoderDebugDialog(
+            self.device_manager,
+            sample_inverted=self._acq_settings.sample_stage_inverted,
+            parent=self,
+        )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dialog.show()
 
@@ -502,50 +509,55 @@ class MainWindow(QMainWindow):
 
     # ==================== Error Handling ====================
 
-    @Slot(bool, str)
-    def _handle_diagnostics_update(self, all_ok: bool, description: str) -> None:
+    @Slot(bool, str, bool, str)
+    def _handle_diagnostics_update(
+        self, a_ok: bool, a_desc: str, b_ok: bool, b_desc: str
+    ) -> None:
         """
-        React to periodic sensor diagnostics from the data controller.
+        React to per-encoder diagnostic results from the data controller.
 
-        On fault: freeze the angle displays (values are unreliable), switch
-        encoder LEDs to yellow, and show details in the status bar.
-        On recovery: restore green LEDs, clear the averaging buffers so the
-        display resumes with fresh samples, and clear the warning.
+        Each encoder's LED and display gate is updated independently so a
+        fault on one stage doesn't affect the other.
         """
-        if all_ok:
-            if not self._sensor_ok:
-                # Transition bad → good: clear stale buffer samples
-                self._sample_buffer.clear()
-                self._det_buffer.clear()
-                self._sensor_ok = True
-                set_connection_status(
-                    self.ui.ledSampleStatus,
-                    self.ui.lblSampleStatusValue,
-                    "Encoder A",
-                    LED_GREEN,
-                )
-                set_connection_status(
-                    self.ui.ledDetectorStageStatus,
-                    self.ui.lblDetectorStageStatusValue,
-                    "Encoder B",
-                    LED_GREEN,
-                )
-                self.statusbar_manager.show_success("Sensor-Diagnose OK")
+        self._update_encoder_health(
+            ok=a_ok,
+            prev_ok=self._sensor_a_ok,
+            led=self.ui.ledSampleStatus,
+            label=self.ui.lblSampleStatusValue,
+            label_ok="Encoder A",
+            buffer=self._sample_buffer,
+        )
+        self._sensor_a_ok = a_ok
+
+        self._update_encoder_health(
+            ok=b_ok,
+            prev_ok=self._sensor_b_ok,
+            led=self.ui.ledDetectorStageStatus,
+            label=self.ui.lblDetectorStageStatusValue,
+            label_ok="Encoder B",
+            buffer=self._det_buffer,
+        )
+        self._sensor_b_ok = b_ok
+
+        # Status bar: only show when something is wrong or just recovered
+        if not a_ok or not b_ok:
+            parts = [d for ok, d in ((a_ok, a_desc), (b_ok, b_desc)) if not ok]
+            self.statusbar_manager.show_warning(f"Sensor-Diagnose: {' | '.join(parts)}")
+        elif not self._sensor_a_ok and not self._sensor_b_ok:
+            # Both just recovered
+            self.statusbar_manager.show_success("Sensor-Diagnose OK")
+
+    def _update_encoder_health(
+        self, *, ok: bool, prev_ok: bool,
+        led, label, label_ok: str, buffer: deque
+    ) -> None:
+        """Apply LED + buffer update for one encoder based on its diagnostic result."""
+        if ok:
+            if not prev_ok:
+                buffer.clear()
+                set_connection_status(led, label, label_ok, LED_GREEN)
         else:
-            self._sensor_ok = False
-            set_connection_status(
-                self.ui.ledSampleStatus,
-                self.ui.lblSampleStatusValue,
-                "Sensor-Fehler",
-                LED_YELLOW,
-            )
-            set_connection_status(
-                self.ui.ledDetectorStageStatus,
-                self.ui.lblDetectorStageStatusValue,
-                "Sensor-Fehler",
-                LED_YELLOW,
-            )
-            self.statusbar_manager.show_warning(f"Sensor-Diagnose: {description}")
+            set_connection_status(led, label, "Sensor-Fehler", LED_YELLOW)
 
     @Slot(str)
     def _handle_data_error(self, error_msg: str) -> None:
