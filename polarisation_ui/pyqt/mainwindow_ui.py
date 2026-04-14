@@ -20,14 +20,14 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
     QGridLayout, QGroupBox, QHBoxLayout, QLCDNumber,
     QLabel, QLayout, QLineEdit, QMainWindow,
     QMenu, QMenuBar, QPushButton, QSizePolicy,
-    QSpacerItem, QStatusBar, QToolButton, QVBoxLayout,
-    QWidget)
+    QSpacerItem, QStatusBar, QTabWidget, QToolButton,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1128, 935)
+        MainWindow.resize(1098, 901)
         MainWindow.setMinimumSize(QSize(0, 860))
         font = QFont()
         font.setPointSize(13)
@@ -46,16 +46,6 @@ class Ui_MainWindow(object):
         self.gridLayout_5 = QGridLayout(self.centralwidget)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
         self.gridLayout_5.setContentsMargins(10, 0, 10, 10)
-        self.line = QFrame(self.centralwidget)
-        self.line.setObjectName(u"line")
-        font1 = QFont()
-        font1.setPointSize(11)
-        self.line.setFont(font1)
-        self.line.setFrameShadow(QFrame.Shadow.Plain)
-        self.line.setFrameShape(QFrame.Shape.VLine)
-
-        self.gridLayout_5.addWidget(self.line, 0, 1, 1, 1)
-
         self.verticalLayout_2 = QVBoxLayout()
 #ifndef Q_OS_MAC
         self.verticalLayout_2.setSpacing(-1)
@@ -71,9 +61,9 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.gbArduinoConnection.sizePolicy().hasHeightForWidth())
         self.gbArduinoConnection.setSizePolicy(sizePolicy)
         self.gbArduinoConnection.setMinimumSize(QSize(0, 100))
-        font2 = QFont()
-        font2.setPointSize(15)
-        self.gbArduinoConnection.setFont(font2)
+        font1 = QFont()
+        font1.setPointSize(15)
+        self.gbArduinoConnection.setFont(font1)
         self.gbArduinoConnection.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbArduinoConnection.setCheckable(False)
         self.formArduinoConnection = QFormLayout(self.gbArduinoConnection)
@@ -173,7 +163,7 @@ class Ui_MainWindow(object):
         sizePolicy1.setHeightForWidth(self.gbSampleStage.sizePolicy().hasHeightForWidth())
         self.gbSampleStage.setSizePolicy(sizePolicy1)
         self.gbSampleStage.setMinimumSize(QSize(0, 100))
-        self.gbSampleStage.setFont(font2)
+        self.gbSampleStage.setFont(font1)
         self.gbSampleStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbSampleStage.setCheckable(False)
         self.formSampleStage = QFormLayout(self.gbSampleStage)
@@ -265,7 +255,7 @@ class Ui_MainWindow(object):
         sizePolicy1.setHeightForWidth(self.gbDetectorStage.sizePolicy().hasHeightForWidth())
         self.gbDetectorStage.setSizePolicy(sizePolicy1)
         self.gbDetectorStage.setMinimumSize(QSize(0, 100))
-        self.gbDetectorStage.setFont(font2)
+        self.gbDetectorStage.setFont(font1)
         self.gbDetectorStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formDetectorStage = QFormLayout(self.gbDetectorStage)
         self.formDetectorStage.setObjectName(u"formDetectorStage")
@@ -350,7 +340,7 @@ class Ui_MainWindow(object):
         sizePolicy1.setHeightForWidth(self.gbDetector.sizePolicy().hasHeightForWidth())
         self.gbDetector.setSizePolicy(sizePolicy1)
         self.gbDetector.setMinimumSize(QSize(0, 125))
-        self.gbDetector.setFont(font2)
+        self.gbDetector.setFont(font1)
         self.gbDetector.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formDetector = QFormLayout(self.gbDetector)
         self.formDetector.setObjectName(u"formDetector")
@@ -427,7 +417,7 @@ class Ui_MainWindow(object):
         sizePolicy4.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
         self.gbSave.setSizePolicy(sizePolicy4)
         self.gbSave.setMinimumSize(QSize(0, 50))
-        self.gbSave.setFont(font2)
+        self.gbSave.setFont(font1)
         self.gbSave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbSave.setFlat(False)
         self.gbSave.setCheckable(False)
@@ -540,7 +530,9 @@ class Ui_MainWindow(object):
 
         self.lineMeasurementControls = QFrame(self.centralwidget)
         self.lineMeasurementControls.setObjectName(u"lineMeasurementControls")
-        self.lineMeasurementControls.setFont(font1)
+        font2 = QFont()
+        font2.setPointSize(11)
+        self.lineMeasurementControls.setFont(font2)
         self.lineMeasurementControls.setFrameShape(QFrame.Shape.VLine)
         self.lineMeasurementControls.setFrameShadow(QFrame.Shadow.Sunken)
 
@@ -560,38 +552,60 @@ class Ui_MainWindow(object):
 
         self.gridLayout_5.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
 
-        self.verticalLayout_3 = QVBoxLayout()
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.verticalLayout_3.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
-        self.verticalLayout_3.setContentsMargins(-1, -1, 0, -1)
-        self.plotDetector = QWidget(self.centralwidget)
-        self.plotDetector.setObjectName(u"plotDetector")
-        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
-        sizePolicy7.setHorizontalStretch(0)
-        sizePolicy7.setVerticalStretch(1)
-        sizePolicy7.setHeightForWidth(self.plotDetector.sizePolicy().hasHeightForWidth())
-        self.plotDetector.setSizePolicy(sizePolicy7)
+        self.line = QFrame(self.centralwidget)
+        self.line.setObjectName(u"line")
+        self.line.setFont(font2)
+        self.line.setFrameShadow(QFrame.Shadow.Plain)
+        self.line.setFrameShape(QFrame.Shape.VLine)
 
-        self.verticalLayout_3.addWidget(self.plotDetector)
+        self.gridLayout_5.addWidget(self.line, 0, 1, 1, 1)
 
-        self.plotMeasurement = QWidget(self.centralwidget)
-        self.plotMeasurement.setObjectName(u"plotMeasurement")
-        sizePolicy8 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        sizePolicy8.setHorizontalStretch(0)
-        sizePolicy8.setVerticalStretch(1)
-        sizePolicy8.setHeightForWidth(self.plotMeasurement.sizePolicy().hasHeightForWidth())
-        self.plotMeasurement.setSizePolicy(sizePolicy8)
+        self.tabWidget = QTabWidget(self.centralwidget)
+        self.tabWidget.setObjectName(u"tabWidget")
+        self.tabMalus = QWidget()
+        self.tabMalus.setObjectName(u"tabMalus")
+        self.gridLayout = QGridLayout(self.tabMalus)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.gridLayout.setContentsMargins(5, 10, 10, 5)
+        self.plotDetektor = QWidget(self.tabMalus)
+        self.plotDetektor.setObjectName(u"plotDetektor")
 
-        self.verticalLayout_3.addWidget(self.plotMeasurement)
+        self.gridLayout.addWidget(self.plotDetektor, 0, 0, 1, 2)
 
+        self.pushButton = QPushButton(self.tabMalus)
+        self.pushButton.setObjectName(u"pushButton")
 
-        self.gridLayout_5.addLayout(self.verticalLayout_3, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.pushButton, 3, 1, 1, 1)
+
+        self.pushButton_2 = QPushButton(self.tabMalus)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+
+        self.gridLayout.addWidget(self.pushButton_2, 2, 1, 1, 1)
+
+        self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.gridLayout.addItem(self.verticalSpacer_5, 1, 1, 1, 1)
+
+        self.plotWinkelmessung = QWidget(self.tabMalus)
+        self.plotWinkelmessung.setObjectName(u"plotWinkelmessung")
+
+        self.gridLayout.addWidget(self.plotWinkelmessung, 1, 0, 3, 1)
+
+        self.gridLayout.setRowStretch(0, 3)
+        self.gridLayout.setRowStretch(1, 2)
+        self.gridLayout.setColumnStretch(0, 1)
+        self.tabWidget.addTab(self.tabMalus, "")
+        self.tab_4 = QWidget()
+        self.tab_4.setObjectName(u"tab_4")
+        self.tabWidget.addTab(self.tab_4, "")
+
+        self.gridLayout_5.addWidget(self.tabWidget, 0, 2, 1, 1)
 
         self.gridLayout_5.setColumnStretch(2, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1128, 39))
+        self.menubar.setGeometry(QRect(0, 0, 1098, 39))
         self.menuEinstellungen = QMenu(self.menubar)
         self.menuEinstellungen.setObjectName(u"menuEinstellungen")
         MainWindow.setMenuBar(self.menubar)
@@ -690,6 +704,12 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.btnStopMeasurement.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.btnResetMeasurement.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Punkt\n"
+" speichern", None))
+        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"Letzten Punkt\n"
+" l\u00f6schen", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabMalus), QCoreApplication.translate("MainWindow", u"Malus", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("MainWindow", u"Tab 2", None))
         self.menuEinstellungen.setTitle(QCoreApplication.translate("MainWindow", u"Einstellungen", None))
     # retranslateUi
 

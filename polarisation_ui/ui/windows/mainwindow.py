@@ -41,6 +41,7 @@ from polarisation_ui.ui.common.status_led import (
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 
+
 def _circular_mean_deg(angles: deque) -> float:
     """
     Circular mean for a buffer of angles in degrees.
@@ -183,7 +184,9 @@ class MainWindow(QMainWindow):
 
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
-        self.data_controller.diagnostics_updated.connect(self._handle_diagnostics_update)
+        self.data_controller.diagnostics_updated.connect(
+            self._handle_diagnostics_update
+        )
         self.data_controller.error_occurred.connect(self._handle_data_error)
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
         self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
@@ -232,7 +235,9 @@ class MainWindow(QMainWindow):
         """Attempt to connect to Arduino on the selected port."""
         port = self.ui.cbArduinoPort.itemText(self.ui.cbArduinoPort.currentIndex())
         if not port or port == CONFIG["messages"]["device_ports_missing"]:
-            self.ui.lblArduinoStatusValue.setText(CONFIG["messages"]["device_not_connected"])
+            self.ui.lblArduinoStatusValue.setText(
+                CONFIG["messages"]["device_not_connected"]
+            )
             return
 
         set_connection_status(
@@ -328,7 +333,9 @@ class MainWindow(QMainWindow):
             self._sample_buffer = deque(maxlen=self._acq_settings.samp_averages)
             self._det_buffer = deque(maxlen=self._acq_settings.det_averages)
             # Sync inversion flag immediately
-            self.data_controller.sample_inverted = self._acq_settings.sample_stage_inverted
+            self.data_controller.sample_inverted = (
+                self._acq_settings.sample_stage_inverted
+            )
             Debug.info(
                 f"Acquisition settings updated: "
                 f"det={self._acq_settings.det_averages}x "
@@ -548,8 +555,7 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Sensor-Diagnose OK")
 
     def _update_encoder_health(
-        self, *, ok: bool, prev_ok: bool,
-        led, label, label_ok: str, buffer: deque
+        self, *, ok: bool, prev_ok: bool, led, label, label_ok: str, buffer: deque
     ) -> None:
         """Apply LED + buffer update for one encoder based on its diagnostic result."""
         if ok:
@@ -565,12 +571,16 @@ class MainWindow(QMainWindow):
         Debug.error(f"Data acquisition error: {error_msg}")
         self._sensor_ok = False
         set_connection_status(
-            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
-            "Verbindungsfehler", LED_YELLOW,
+            self.ui.ledSampleStatus,
+            self.ui.lblSampleStatusValue,
+            "Verbindungsfehler",
+            LED_YELLOW,
         )
         set_connection_status(
-            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
-            "Verbindungsfehler", LED_YELLOW,
+            self.ui.ledDetectorStageStatus,
+            self.ui.lblDetectorStageStatusValue,
+            "Verbindungsfehler",
+            LED_YELLOW,
         )
         self.statusbar_manager.show_error(f"Lesefehler: {error_msg}")
 
@@ -588,16 +598,22 @@ class MainWindow(QMainWindow):
         self._sample_buffer.clear()
         self._det_buffer.clear()
         set_connection_status(
-            self.ui.ledArduinoStatus, self.ui.lblArduinoStatusValue,
-            "Verbunden", LED_GREEN,
+            self.ui.ledArduinoStatus,
+            self.ui.lblArduinoStatusValue,
+            "Verbunden",
+            LED_GREEN,
         )
         set_connection_status(
-            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
-            "Encoder A", LED_GREEN,
+            self.ui.ledSampleStatus,
+            self.ui.lblSampleStatusValue,
+            "Encoder A",
+            LED_GREEN,
         )
         set_connection_status(
-            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
-            "Encoder B", LED_GREEN,
+            self.ui.ledDetectorStageStatus,
+            self.ui.lblDetectorStageStatusValue,
+            "Encoder B",
+            LED_GREEN,
         )
         self.statusbar_manager.show_success("Verbindung wiederhergestellt")
         Debug.info("Reconnect: UI status restored")
@@ -607,16 +623,22 @@ class MainWindow(QMainWindow):
         """Max reconnect attempts exhausted: show disconnected state, re-enable connect UI."""
         self._sensor_ok = False
         set_connection_status(
-            self.ui.ledArduinoStatus, self.ui.lblArduinoStatusValue,
-            "Getrennt", LED_RED,
+            self.ui.ledArduinoStatus,
+            self.ui.lblArduinoStatusValue,
+            "Getrennt",
+            LED_RED,
         )
         set_connection_status(
-            self.ui.ledSampleStatus, self.ui.lblSampleStatusValue,
-            "Kein Signal", LED_RED,
+            self.ui.ledSampleStatus,
+            self.ui.lblSampleStatusValue,
+            "Kein Signal",
+            LED_RED,
         )
         set_connection_status(
-            self.ui.ledDetectorStageStatus, self.ui.lblDetectorStageStatusValue,
-            "Kein Signal", LED_RED,
+            self.ui.ledDetectorStageStatus,
+            self.ui.lblDetectorStageStatusValue,
+            "Kein Signal",
+            LED_RED,
         )
         self.ui.gbSampleStage.setEnabled(False)
         self.ui.gbDetectorStage.setEnabled(False)
