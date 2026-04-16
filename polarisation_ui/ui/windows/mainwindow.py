@@ -14,8 +14,7 @@ Responsibilities:
     - Manage measurement sessions
 """
 
-import math
-from collections import deque
+from collections.abc import Callable
 
 from PySide6.QtWidgets import QDialog, QMainWindow, QComboBox
 from PySide6.QtCore import Qt, Slot
@@ -40,22 +39,6 @@ from polarisation_ui.ui.common.status_led import (
 )
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
-
-
-def _circular_mean_deg(angles: deque) -> float:
-    """
-    Circular mean for a buffer of angles in degrees.
-
-    Arithmetic mean is wrong near the 0°/360° wrap (e.g. mean([359°, 1°])
-    would give 180° instead of 0°).  The circular mean uses atan2 of the
-    mean sin/cos components and is always correct.
-
-    Returns a value in [0°, 360°).
-    """
-    n = len(angles)
-    sin_sum = sum(math.sin(math.radians(a)) for a in angles)
-    cos_sum = sum(math.cos(math.radians(a)) for a in angles)
-    return math.degrees(math.atan2(sin_sum / n, cos_sum / n)) % 360
 
 
 # Import settings
@@ -109,18 +92,21 @@ class MainWindow(QMainWindow):
         # Load acquisition settings from config once; changes are session-only
         self._acq_settings: AcquisitionSettings = self._load_acq_settings_from_config()
 
-        # Rolling-average buffers; sized from initial settings
-        self._sample_buffer: deque[float] = deque(
-            maxlen=self._acq_settings.samp_averages
-        )
-        self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
-
         # Per-encoder sensor health — gates the respective angle display independently
         self._sensor_a_ok: bool = True
         self._sensor_b_ok: bool = True
 
+        # Last received values — used by Malus save/plot slots
+        self._current_sample_angle: float = 0.0
+        self._current_detector_angle: float = 0.0
+        self._current_intensity: float = 0.0
+
+        # Push loaded settings into the data controller before starting
+        self.data_controller.update_acq_settings(self._acq_settings)
+
         # Setup UI and connections
         self._setup_initial_state()
+        self._setup_malus_plots()
         self._connect_signals()
 
         Debug.info("MainWindow initialized with Qt Designer UI")
@@ -157,6 +143,23 @@ class MainWindow(QMainWindow):
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
+    def _setup_malus_plots(self) -> None:
+        """Embed pyqtgraph plot widgets into the tabMalus placeholder QWidgets."""
+        from PySide6.QtWidgets import QVBoxLayout
+
+        from polarisation_ui.ui.widgets.malus_curve_plot import MalusCurvePlot
+        from polarisation_ui.ui.widgets.malus_detector_plot import MalusDetectorPlot
+
+        lay1 = QVBoxLayout(self.ui.plotDetector)
+        lay1.setContentsMargins(0, 0, 0, 0)
+        self._malus_detector_plot = MalusDetectorPlot()
+        lay1.addWidget(self._malus_detector_plot)
+
+        lay2 = QVBoxLayout(self.ui.plotAnglemeas)
+        lay2.setContentsMargins(0, 0, 0, 0)
+        self._malus_curve_plot = MalusCurvePlot()
+        lay2.addWidget(self._malus_curve_plot)
+
     # ==================== Signal Connections ====================
 
     def _connect_signals(self) -> None:
@@ -182,7 +185,12 @@ class MainWindow(QMainWindow):
         # Save button
         self.ui.btnSave.clicked.connect(self._save_data)
 
+        # Malus tab — save / delete point buttons
+        self.ui.btnSavePoint.clicked.connect(self._save_malus_point)
+        self.ui.btnDeletePoint.clicked.connect(self._delete_last_malus_point)
+
         # Data controller signals
+        self.data_controller.intensity_updated.connect(self._on_intensity_updated)
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.diagnostics_updated.connect(
             self._handle_diagnostics_update
@@ -298,7 +306,6 @@ class MainWindow(QMainWindow):
         self.ui.btnStartMeasurement.setEnabled(True)
         self._sensor_a_ok = True
         self._sensor_b_ok = True
-        self.data_controller.sample_inverted = self._acq_settings.sample_stage_inverted
         self.data_controller.start_continuous_reading()
 
     # ==================== Acquisition Settings ====================
@@ -329,20 +336,7 @@ class MainWindow(QMainWindow):
         # dialog itself.
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._acq_settings = dialog.get_settings()
-            # Recreate buffers with the new window size; old samples are discarded
-            self._sample_buffer = deque(maxlen=self._acq_settings.samp_averages)
-            self._det_buffer = deque(maxlen=self._acq_settings.det_averages)
-            # Sync inversion flag immediately
-            self.data_controller.sample_inverted = (
-                self._acq_settings.sample_stage_inverted
-            )
-            Debug.info(
-                f"Acquisition settings updated: "
-                f"det={self._acq_settings.det_averages}x "
-                f"(on={self._acq_settings.det_average_on}), "
-                f"samp={self._acq_settings.samp_averages}x "
-                f"(on={self._acq_settings.samp_average_on})"
-            )
+            self.data_controller.update_acq_settings(self._acq_settings)
 
     # ==================== Data Display Updates ====================
 
@@ -357,44 +351,41 @@ class MainWindow(QMainWindow):
             sample_angle: Sample stage angle in degrees
             detector_angle: Detector stage angle in degrees
         """
-        # Always feed the buffers — cleared on health recovery to avoid stale samples
-        self._sample_buffer.append(sample_angle)
-        self._det_buffer.append(detector_angle)
-
-        # Each encoder gates its own display independently
+        # Values received from DataController are already averaged — display directly.
+        # Each encoder gates its own display independently via health flags.
         if self._sensor_a_ok:
-            display_sample = (
-                _circular_mean_deg(self._sample_buffer)
-                if self._acq_settings.samp_average_on
-                else sample_angle
-            )
-            self.ui.lcdSampleAngle.display(f"{display_sample:.2f}")
+            self.ui.lcdSampleAngle.display(f"{sample_angle:.2f}")
 
         if self._sensor_b_ok:
-            display_det = (
-                _circular_mean_deg(self._det_buffer)
-                if self._acq_settings.det_average_on
-                else detector_angle
-            )
-            self.ui.lcdDetectorStageAngle.display(f"{display_det:.2f}")
+            self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
 
-        # Validate geometry (detector should be ~2x sample)
-        expected_detector = 2.0 * sample_angle
-        difference = abs(detector_angle - expected_detector)
-        tolerance = 0.5  # degrees
+        # Store latest values for Malus save slot
+        self._current_sample_angle = sample_angle
+        self._current_detector_angle = detector_angle
 
-        if difference > tolerance:
-            # Geometry error - show in status bar occasionally
-            if not hasattr(self, "_last_error_shown"):
-                self._last_error_shown = 0
+        # Update live detector scan plot (intensity already fresh from intensity_updated)
+        self._malus_detector_plot.update_data(detector_angle, self._current_intensity)
 
-            # Only show every 50 updates to avoid spam
-            self._last_error_shown += 1
-            if self._last_error_shown >= 50:
-                self.statusbar_manager.show_warning(
-                    f"Geometry error: {difference:.2f}°", timeout=2000
-                )
-                self._last_error_shown = 0
+    # ==================== Malus Tab ====================
+
+    @Slot(float)
+    def _on_intensity_updated(self, intensity: float) -> None:
+        """Store the latest intensity reading for use by the Malus save slot."""
+        self._current_intensity = intensity
+
+    @Slot()
+    def _save_malus_point(self) -> None:
+        """Save current (sample angle, intensity) as a Malus measurement point."""
+        self._malus_curve_plot.add_point(
+            self._current_sample_angle, self._current_intensity
+        )
+
+    @Slot()
+    def _delete_last_malus_point(self) -> None:
+        """Remove the most recently saved Malus point."""
+        removed = self._malus_curve_plot.remove_last_point()
+        if not removed:
+            self.statusbar_manager.show_warning("Keine Punkte zum Löschen")
 
     # ==================== Encoder Control ====================
 
@@ -456,7 +447,8 @@ class MainWindow(QMainWindow):
     @Slot()
     def _reset_measurement(self) -> None:
         """Reset measurement data."""
-        # TODO: Clear accumulated measurement data
+        self._malus_detector_plot.clear()
+        self._malus_curve_plot.clear()
         self.statusbar_manager.show_info("Measurement reset")
         Debug.info("Measurement data reset")
 
@@ -532,7 +524,7 @@ class MainWindow(QMainWindow):
             led=self.ui.ledSampleStatus,
             label=self.ui.lblSampleStatusValue,
             label_ok="Encoder A",
-            buffer=self._sample_buffer,
+            clear_fn=self.data_controller.clear_sample_buffer,
         )
         self._sensor_a_ok = a_ok
 
@@ -542,7 +534,7 @@ class MainWindow(QMainWindow):
             led=self.ui.ledDetectorStageStatus,
             label=self.ui.lblDetectorStageStatusValue,
             label_ok="Encoder B",
-            buffer=self._det_buffer,
+            clear_fn=self.data_controller.clear_det_buffer,
         )
         self._sensor_b_ok = b_ok
 
@@ -555,12 +547,19 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Sensor-Diagnose OK")
 
     def _update_encoder_health(
-        self, *, ok: bool, prev_ok: bool, led, label, label_ok: str, buffer: deque
+        self,
+        *,
+        ok: bool,
+        prev_ok: bool,
+        led,
+        label,
+        label_ok: str,
+        clear_fn: Callable[[], None],
     ) -> None:
-        """Apply LED + buffer update for one encoder based on its diagnostic result."""
+        """Apply LED update for one encoder; flush its averaging buffer on recovery."""
         if ok:
             if not prev_ok:
-                buffer.clear()
+                clear_fn()
                 set_connection_status(led, label, label_ok, LED_GREEN)
         else:
             set_connection_status(led, label, "Sensor-Fehler", LED_YELLOW)
@@ -569,7 +568,6 @@ class MainWindow(QMainWindow):
     def _handle_data_error(self, error_msg: str) -> None:
         """First read error: mark encoder LEDs yellow, show in status bar."""
         Debug.error(f"Data acquisition error: {error_msg}")
-        self._sensor_ok = False
         set_connection_status(
             self.ui.ledSampleStatus,
             self.ui.lblSampleStatusValue,
@@ -594,9 +592,6 @@ class MainWindow(QMainWindow):
     @Slot()
     def _handle_reconnect_success(self) -> None:
         """Serial connection re-established: restore all status indicators."""
-        self._sensor_ok = True
-        self._sample_buffer.clear()
-        self._det_buffer.clear()
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
@@ -621,7 +616,6 @@ class MainWindow(QMainWindow):
     @Slot()
     def _handle_connection_lost(self) -> None:
         """Max reconnect attempts exhausted: show disconnected state, re-enable connect UI."""
-        self._sensor_ok = False
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,

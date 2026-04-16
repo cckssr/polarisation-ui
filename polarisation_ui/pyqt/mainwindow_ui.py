@@ -567,29 +567,29 @@ class Ui_MainWindow(object):
         self.gridLayout = QGridLayout(self.tabMalus)
         self.gridLayout.setObjectName(u"gridLayout")
         self.gridLayout.setContentsMargins(5, 10, 10, 5)
-        self.plotDetektor = QWidget(self.tabMalus)
-        self.plotDetektor.setObjectName(u"plotDetektor")
+        self.plotDetector = QWidget(self.tabMalus)
+        self.plotDetector.setObjectName(u"plotDetector")
 
-        self.gridLayout.addWidget(self.plotDetektor, 0, 0, 1, 2)
+        self.gridLayout.addWidget(self.plotDetector, 0, 0, 1, 2)
 
-        self.pushButton = QPushButton(self.tabMalus)
-        self.pushButton.setObjectName(u"pushButton")
+        self.btnSavePoint = QPushButton(self.tabMalus)
+        self.btnSavePoint.setObjectName(u"btnSavePoint")
 
-        self.gridLayout.addWidget(self.pushButton, 3, 1, 1, 1)
+        self.gridLayout.addWidget(self.btnSavePoint, 3, 1, 1, 1)
 
-        self.pushButton_2 = QPushButton(self.tabMalus)
-        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.btnDeletePoint = QPushButton(self.tabMalus)
+        self.btnDeletePoint.setObjectName(u"btnDeletePoint")
 
-        self.gridLayout.addWidget(self.pushButton_2, 2, 1, 1, 1)
+        self.gridLayout.addWidget(self.btnDeletePoint, 2, 1, 1, 1)
 
         self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout.addItem(self.verticalSpacer_5, 1, 1, 1, 1)
 
-        self.plotWinkelmessung = QWidget(self.tabMalus)
-        self.plotWinkelmessung.setObjectName(u"plotWinkelmessung")
+        self.plotAnglemeas = QWidget(self.tabMalus)
+        self.plotAnglemeas.setObjectName(u"plotAnglemeas")
 
-        self.gridLayout.addWidget(self.plotWinkelmessung, 1, 0, 3, 1)
+        self.gridLayout.addWidget(self.plotAnglemeas, 1, 0, 3, 1)
 
         self.gridLayout.setRowStretch(0, 3)
         self.gridLayout.setRowStretch(1, 2)
@@ -704,9 +704,9 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.btnStopMeasurement.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.btnResetMeasurement.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Punkt\n"
+        self.btnSavePoint.setText(QCoreApplication.translate("MainWindow", u"Punkt\n"
 " speichern", None))
-        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"Letzten Punkt\n"
+        self.btnDeletePoint.setText(QCoreApplication.translate("MainWindow", u"Letzten Punkt\n"
 " l\u00f6schen", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabMalus), QCoreApplication.translate("MainWindow", u"Malus", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("MainWindow", u"Tab 2", None))

@@ -1333,10 +1333,10 @@
          <number>5</number>
         </property>
         <item row="0" column="0" colspan="2">
-         <widget class="QWidget" name="plotDetektor" native="true"/>
+         <widget class="QWidget" name="plotDetector" native="true"/>
         </item>
         <item row="3" column="1">
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="btnSavePoint">
           <property name="text">
            <string>Punkt
  speichern</string>
@@ -1344,7 +1344,7 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="btnDeletePoint">
           <property name="text">
            <string>Letzten Punkt
  löschen</string>
@@ -1365,7 +1365,7 @@
          </spacer>
         </item>
         <item row="1" column="0" rowspan="3">
-         <widget class="QWidget" name="plotWinkelmessung" native="true"/>
+         <widget class="QWidget" name="plotAnglemeas" native="true"/>
         </item>
        </layout>
       </widget>

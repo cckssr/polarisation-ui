@@ -5,6 +5,10 @@ Manages threaded data acquisition from encoder devices and
 emits signals for UI updates. Separates data collection from UI rendering.
 """
 
+import math
+import random
+from collections import deque
+
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from typing import Optional
 
@@ -30,6 +34,9 @@ def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
     ok = len(faults) == 0
     return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
 
+
+from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -52,7 +59,8 @@ class DataController(QObject):
     """
 
     # Data signals
-    angles_updated = Signal(float, float)              # sample_angle, detector_angle
+    angles_updated = Signal(float, float)  # sample_angle, detector_angle
+    intensity_updated = Signal(float)  # photodiode / ADC reading (a.u.)
     # Per-encoder diagnostic results: (a_ok, a_desc, b_ok, b_desc)
     diagnostics_updated = Signal(bool, str, bool, str)
 
@@ -71,6 +79,14 @@ class DataController(QObject):
 
     # How often to run SYST:DIAG? checks (milliseconds)
     DIAG_INTERVAL_MS = 5000  # every 5 s
+
+    # --- Mock intensity parameters -------------------------------------------
+    # Replace _read_intensity() body with a real ADC read when hardware is ready.
+    _MOCK_PEAK_ANGLE: float = 90.0  # degrees — centre of simulated Gaussian
+    _MOCK_SIGMA: float = 20.0  # width (degrees)
+    _MOCK_AMPLITUDE: float = 1000.0  # peak intensity (a.u.)
+    _MOCK_NOISE: float = 15.0  # Gaussian noise amplitude
+    # -------------------------------------------------------------------------
 
     # Signal emitted when a reconnection attempt begins
     retry_connecting = Signal()
@@ -114,10 +130,49 @@ class DataController(QObject):
 
         # When True, sample angle is corrected as (360 - raw) % 360 to account
         # for the diametrically flipped magnet on the sample stage.
-        # Set by MainWindow from AcquisitionSettings.sample_stage_inverted.
         self.sample_inverted: bool = False
 
+        # Acquisition settings and rolling-average buffers.
+        # Populated with defaults here; call update_acq_settings() from MainWindow
+        # at startup and whenever the settings dialog is accepted.
+        self._acq_settings: AcquisitionSettings = AcquisitionSettings()
+        self._sample_buffer: deque[float] = deque(
+            maxlen=self._acq_settings.samp_averages
+        )
+        self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
+
         Debug.debug("Data controller initialized")
+
+    # ==================== Polling Control ====================
+
+    # ==================== Acquisition Settings ====================
+
+    def update_acq_settings(self, settings: AcquisitionSettings) -> None:
+        """
+        Apply new acquisition settings.
+
+        Recreates the averaging buffers (discarding old samples) and syncs
+        the sample-inversion flag.  Call at startup and whenever the settings
+        dialog is accepted.
+        """
+        self._acq_settings = settings
+        self._sample_buffer = deque(maxlen=settings.samp_averages)
+        self._det_buffer = deque(maxlen=settings.det_averages)
+        self.sample_inverted = settings.sample_stage_inverted
+        Debug.info(
+            f"Acq settings updated: "
+            f"samp={settings.samp_averages}× (on={settings.samp_average_on}), "
+            f"det={settings.det_averages}× (on={settings.det_average_on}), "
+            f"inverted={settings.sample_stage_inverted}"
+        )
+
+    def clear_sample_buffer(self) -> None:
+        """Flush the sample-angle averaging buffer (e.g. on sensor recovery)."""
+        self._sample_buffer.clear()
+
+    def clear_det_buffer(self) -> None:
+        """Flush the detector-angle averaging buffer (e.g. on sensor recovery)."""
+        self._det_buffer.clear()
 
     # ==================== Polling Control ====================
 
@@ -202,6 +257,21 @@ class DataController(QObject):
         """Check if measurement is active."""
         return self._is_measuring
 
+    # ==================== Intensity Reading ====================
+
+    def _read_intensity(self, detector_angle: float) -> float:
+        """
+        Return the current photodiode intensity (a.u.).
+
+        Currently a mock: Gaussian peak centred at _MOCK_PEAK_ANGLE.
+        Replace the body with a real ADC read when hardware is available.
+        """
+        diff = detector_angle - self._MOCK_PEAK_ANGLE
+        signal = self._MOCK_AMPLITUDE * math.exp(
+            -(diff**2) / (2.0 * self._MOCK_SIGMA**2)
+        )
+        return signal + random.gauss(0.0, self._MOCK_NOISE)
+
     # ==================== Data Acquisition ====================
 
     @Slot()
@@ -228,8 +298,26 @@ class DataController(QObject):
             # Reset error counter on successful read
             self._error_count = 0
 
-            # Emit updated values
-            self.angles_updated.emit(sample_angle, detector_angle)
+            # Apply rolling circular averaging before emitting so that
+            # consumers receive display-ready values.
+            self._sample_buffer.append(sample_angle)
+            self._det_buffer.append(detector_angle)
+
+            display_sample = (
+                circular_mean_deg(self._sample_buffer)
+                if self._acq_settings.samp_average_on and self._sample_buffer
+                else sample_angle
+            )
+            display_det = (
+                circular_mean_deg(self._det_buffer)
+                if self._acq_settings.det_average_on and self._det_buffer
+                else detector_angle
+            )
+
+            # Emit intensity first so MainWindow has a fresh value when
+            # angles_updated is processed (direct-connection ordering).
+            self.intensity_updated.emit(self._read_intensity(detector_angle))
+            self.angles_updated.emit(display_sample, display_det)
 
         except Exception as e:
             self._handle_read_error(f"Exception during sensor poll: {e}")
@@ -269,6 +357,8 @@ class DataController(QObject):
             success = self.device_manager.reconnect_encoders()
             if success:
                 self._error_count = 0
+                self._sample_buffer.clear()
+                self._det_buffer.clear()
                 self.poll_timer.start(self.poll_interval)
                 self._diag_timer.start(self.DIAG_INTERVAL_MS)
                 self.reconnect_succeeded.emit()
