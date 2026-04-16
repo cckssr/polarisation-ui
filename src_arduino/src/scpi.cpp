@@ -27,6 +27,9 @@ bool scpiParse(const String &line, String &header, String &param, bool &isQuery)
   if (isQuery)
     header = header.substring(0, header.length() - 1);
 
+  header.toUpperCase();
+  param.toUpperCase();
+
   return true;
 }
 
@@ -39,6 +42,35 @@ static void errQueryOnly(const String &h)
 static void errCmdOnly(const String &h)
 {
   errorQueue.push("-113,\"Undefined header; " + h + " is command-only\"");
+}
+
+static void normalizeHeader(String &header)
+{
+  // Accept common SCPI long forms and map to internal short forms.
+  if (header == "ABORT")
+    header = "ABOR";
+  else if (header == "MEASURE:ANGLE")
+    header = "MEAS:ANGL";
+  else if (header == "MEASURE:MAGNITUDE")
+    header = "MEAS:MAGN";
+  else if (header == "CONFIGURE:ZERO")
+    header = "CONF:ZERO";
+  else if (header == "CONFIGURE:ERR")
+    header = "CONF:ERR";
+  else if (header == "CONFIGURE:ERROR")
+    header = "CONF:ERR";
+  else if (header == "INITIATE:CONT" || header == "INITIATE:CONTINUOUS")
+    header = "INIT:CONT";
+  else if (header == "SENSE:INT" || header == "SENSE:INTERVAL")
+    header = "SENS:INT";
+  else if (header == "SYSTEM:ERR" || header == "SYSTEM:ERROR")
+    header = "SYST:ERR";
+  else if (header == "SYSTEM:DIAG" || header == "SYSTEM:DIAGNOSTICS")
+    header = "SYST:DIAG";
+  else if (header == "SYSTEM:DEB" || header == "SYSTEM:DEBUG")
+    header = "SYST:DEB";
+  else if (header == "SYSTEM:HELP")
+    header = "SYST:HELP";
 }
 
 // ── IEEE 488.2 common commands ─────────────────────────────────────────────
@@ -97,60 +129,85 @@ static void stopAcq()
 
 static void handleInitCont(bool isQuery, const String &param)
 {
+  if (appState.debug)
+  {
+    Serial.print("DEBUG:INIT:CONT param='");
+    Serial.print(param);
+    Serial.print("' isQuery=");
+    Serial.println(isQuery ? "1" : "0");
+  }
+
   if (isQuery)
   {
     Serial.println(appState.mode != AcqMode::Idle ? 1 : 0);
     return;
   }
 
-  if (param.startsWith("ON"))
-  {
-    String target = "BOTH"; // default: both encoders angle
-    int comma = param.indexOf(',');
-    if (comma >= 0)
-    {
-      target = param.substring(comma + 1);
-      target.trim();
-    }
+  String p = param;
+  p.trim();
 
-    AcqMode next;
-    if (target == "A")
-      next = AcqMode::AngleA;
-    else if (target == "B")
-      next = AcqMode::AngleB;
-    else if (target == "BOTH")
-      next = AcqMode::AngleBoth;
-    else if (target == "MAG")
-      next = AcqMode::Magnitude;
-    else if (target == "NOP")
-      next = AcqMode::Nop;
-    else
-    {
-      errorQueue.push("-113,\"Undefined header; unknown target: " + target + "\"");
-      return;
-    }
-
-    if ((next == AcqMode::AngleB || next == AcqMode::AngleBoth) && !appState.encBPresent)
-    {
-      errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
-      return;
-    }
-
-    appState.mode = next;
-    appState.lastPollMs = millis();
-    if (appState.debug)
-    {
-      acqStats.reset();
-      acqStats.startMs = millis();
-    }
-  }
-  else if (param == "OFF")
+  if (p == "OFF")
   {
     stopAcq();
+    return;
   }
+
+  if (!p.startsWith("ON"))
+  {
+    errorQueue.push("-102,\"Syntax error; expected: INIT:CONT ON[,A|B|BOTH|MAG|NOP] or INIT:CONT OFF\"");
+    return;
+  }
+
+  String target = "BOTH"; // default: both encoders angle
+
+  if (p.length() > 2)
+  {
+    char sep = p.charAt(2);
+    if (sep != ',' && sep != ' ' && sep != '\t')
+    {
+      errorQueue.push("-102,\"Syntax error; ON must be followed by <space> or <comma>. Format: ON[,A|B|BOTH|MAG|NOP]\"");
+      return;
+    }
+
+    String rest = p.substring(3);
+    rest.trim();
+    if (rest.length() == 0)
+    {
+      errorQueue.push("-102,\"Syntax error; expected target after ON. Use: ON A, ON B, ON,BOTH, ON,MAG, etc.\"");
+      return;
+    }
+    target = rest;
+  }
+
+  AcqMode next;
+  if (target == "A")
+    next = AcqMode::AngleA;
+  else if (target == "B")
+    next = AcqMode::AngleB;
+  else if (target == "BOTH")
+    next = AcqMode::AngleBoth;
+  else if (target == "MAG")
+    next = AcqMode::Magnitude;
+  else if (target == "NOP")
+    next = AcqMode::Nop;
   else
   {
-    errorQueue.push("-102,\"Syntax error; expected: INIT:CONT ON[,A|B|BOTH|MAG|NOP] or OFF\"");
+    errorQueue.push("-113,\"Undefined header; unknown target: " + target + "\"");
+    return;
+  }
+
+  if ((next == AcqMode::AngleB || next == AcqMode::AngleBoth) && !appState.encBPresent)
+  {
+    errorQueue.push("-241,\"Hardware missing; encoder B not present\"");
+    return;
+  }
+
+  appState.mode = next;
+  appState.lastPollMs = millis();
+  if (appState.debug)
+  {
+    acqStats.reset();
+    acqStats.startMs = millis();
   }
 }
 
@@ -200,25 +257,28 @@ static void handleSystDeb(bool isQuery, const String &param)
 static void handleSystHelp()
 {
   Serial.println("=== SCPI Command Reference (IEC 60488-2) ===");
+  Serial.println("Accepted headers: short and long SCPI forms (e.g. INIT:CONT / INITIATE:CONTINUOUS)");
   Serial.println("Common commands:");
   Serial.println("  *IDN?                 Identification: MFR,MODEL,SN,FW");
   Serial.println("  *RST                  Reset to defaults, stop streaming");
   Serial.println("  *CLS                  Clear error queue");
   Serial.println("  *TST?                 Self-test (returns 0=pass)");
   Serial.println("  *OPC?                 Returns 1 (always complete)");
-  Serial.println("  *OPC  *WAI            No-op (synchronous device)");
+  Serial.println("  *OPC                  No-op (synchronous device)");
+  Serial.println("  *WAI                  No-op (synchronous device)");
   Serial.println("MEASure — single-shot queries:");
-  Serial.println("  MEAS:ANGL? A|B|BOTH   Angle in degrees");
-  Serial.println("  MEAS:MAGN? A|B|BOTH   Raw magnitude (14-bit)");
+  Serial.println("  MEAS:ANGL? [A|B|BOTH] Angle in degrees (default: BOTH)");
+  Serial.println("  MEAS:MAGN? [A|B|BOTH] Raw magnitude (14-bit, default: BOTH)");
   Serial.println("CONFigure — hardware config commands:");
-  Serial.println("  CONF:ZERO A|B|BOTH    Set software zero position");
-  Serial.println("  CONF:ERR  A|B|BOTH    Clear hardware Error Flag");
+  Serial.println("  CONF:ZERO [A|B|BOTH]  Set software zero position (default: A)");
+  Serial.println("  CONF:ERR  [A|B|BOTH]  Clear hardware Error Flag (default: A)");
   Serial.println("INITiate:CONTinuous — streaming control:");
-  Serial.println("  INIT:CONT ON[,A|B|BOTH|MAG|NOP]  Start streaming");
+  Serial.println("  INIT:CONT ON [A|B|BOTH|MAG|NOP]  Start streaming (default: BOTH)");
+  Serial.println("  INIT:CONT ON,<target>             Or use comma: ON,A or ON,B");
   Serial.println("  INIT:CONT OFF                     Stop streaming");
   Serial.println("  INIT:CONT?                        Query streaming state");
   Serial.println("ABORt:");
-  Serial.println("  ABOR                  Stop streaming (= INIT:CONT OFF)");
+  Serial.println("  ABOR | ABORT          Stop streaming (= INIT:CONT OFF)");
   Serial.println("SENSe — acquisition settings:");
   Serial.println("  SENS:INT <ms>         Set poll interval (1-9999 ms)");
   Serial.println("  SENS:INT?             Query poll interval");
@@ -246,6 +306,8 @@ void scpiDispatch(const String &line)
   bool isQuery;
   if (!scpiParse(line, header, param, isQuery))
     return;
+
+  normalizeHeader(header);
 
   // ── IEEE 488.2 common commands ──────────────────────────────────────────
   if (header == "*IDN")

@@ -5,7 +5,9 @@
       "Bash(git commit:*)",
       "Bash(pyside6-uic polarisation_ui/pyqt/encoder_debug.ui -o polarisation_ui/pyqt/ui_encoder_debug.py)",
       "Bash(git checkout:*)",
-      "Bash(git merge feat/calibration-tool --no-ff -m ':*)"
+      "Bash(git merge feat/calibration-tool --no-ff -m ':*)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(.venv/bin/pytest tests/ -q)"
     ]
   }
 }
