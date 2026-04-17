@@ -92,7 +92,7 @@ void emitDataFrame()
   {
     Serial.print(",adcV=");
     if (adsSession.adcPresent())
-      Serial.print(adsSession.lastVoltage(), 6);
+      Serial.print(adsSession.takeVoltageReading(), 6);
     else
       Serial.print("nan");
   }
@@ -839,7 +839,8 @@ static void handleSystHelp()
   Serial.println("  CONF:PDTIA:GAIN <stage>      0.." + String(PDTIA_NUM_STAGES - 1));
   Serial.println("  CONF:PDTIA:GAIN?             stage,0b<bits>");
   Serial.println("  CONF:SRC ENC:A|ENC:B|ENC:BOTH|ADC|ADC:T|PDTIA  (comma list)");
-  Serial.println("  CONF:RATE <hz>               stream rate 1-1000 Hz");
+CONF:
+  SRC ENC : A, ADC Serial.println("  CONF:RATE <hz>               stream rate 1-1000 Hz");
   Serial.println("SENSe (queries):");
   Serial.println("  SENS:ADC:MUX? SENS:ADC:GAIN? SENS:ADC:RATE?");
   Serial.println("  SENS:ADC:MODE? SENS:ADC:FIR? SENS:ADC:VREF? SENS:ADC:TEMP?");
@@ -1027,85 +1028,45 @@ void scpiDispatch(const String &line)
   }
   else if (header == "CONF:ADC:MUX")
   {
-    !isQuery ? handleConfAdcMux(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcMux() : handleConfAdcMux(param);
   }
   else if (header == "CONF:ADC:GAIN")
   {
-    !isQuery ? handleConfAdcGain(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcGain() : handleConfAdcGain(param);
   }
   else if (header == "CONF:ADC:RATE")
   {
-    !isQuery ? handleConfAdcRate(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcRate() : handleConfAdcRate(param);
   }
   else if (header == "CONF:ADC:MODE")
   {
-    !isQuery ? handleConfAdcMode(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcMode() : handleConfAdcMode(param);
   }
   else if (header == "CONF:ADC:FIR")
   {
-    !isQuery ? handleConfAdcFir(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcFir() : handleConfAdcFir(param);
   }
   else if (header == "CONF:ADC:VREF")
   {
-    !isQuery ? handleConfAdcVref(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcVref() : handleConfAdcVref(param);
   }
   else if (header == "CONF:ADC:TEMP")
   {
-    !isQuery ? handleConfAdcTemp(param) : errCmdOnly(header);
+    isQuery ? handleSensAdcTemp() : handleConfAdcTemp(param);
   }
   else if (header == "CONF:PDTIA:GAIN")
   {
-    handleConfPdtiaGain(isQuery, param);
+    isQuery ? handleSensPdtiaGain() : handleConfPdtiaGain(isQuery, param);
   }
   else if (header == "CONF:SRC")
   {
-    !isQuery ? handleConfSrc(param) : errCmdOnly(header);
+    isQuery ? handleSensSrc() : handleConfSrc(param);
   }
   else if (header == "CONF:RATE")
   {
     handleConfRate(isQuery, param);
 
-    // ── SENSe ──────────────────────────────────────────────────────────────────
-  }
-  else if (header == "SENS:ADC:MUX")
-  {
-    isQuery ? handleSensAdcMux() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:GAIN")
-  {
-    isQuery ? handleSensAdcGain() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:RATE")
-  {
-    isQuery ? handleSensAdcRate() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:MODE")
-  {
-    isQuery ? handleSensAdcMode() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:FIR")
-  {
-    isQuery ? handleSensAdcFir() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:VREF")
-  {
-    isQuery ? handleSensAdcVref() : errQueryOnly(header);
-  }
-  else if (header == "SENS:ADC:TEMP")
-  {
-    isQuery ? handleSensAdcTemp() : errQueryOnly(header);
-  }
-  else if (header == "SENS:PDTIA:GAIN")
-  {
-    isQuery ? handleSensPdtiaGain() : errQueryOnly(header);
-  }
-  else if (header == "SENS:SRC")
-  {
-    isQuery ? handleSensSrc() : errQueryOnly(header);
-  }
-  else if (header == "SENS:RATE")
-  {
-    isQuery ? handleSensRate() : errQueryOnly(header);
+    // ── INITiate / ABORt – consolidated under CONF:*
 
     // ── INITiate / ABORt ───────────────────────────────────────────────────────
   }

@@ -27,6 +27,7 @@ void loop()
   {
     String line = Serial.readStringUntil('\n');
     line.trim();
+    line.replace("\r", ""); // Remove any lingering CR from \r\n
     line.toUpperCase();
     scpiDispatch(line);
   }
