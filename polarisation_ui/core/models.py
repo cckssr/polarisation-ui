@@ -152,3 +152,13 @@ class DeviceInfo:
     connected: bool = False
     firmware_version: str = ""
     hardware_version: str = ""
+
+
+@dataclass
+class Frame:
+    """Consolidated per-sample data frame emitted by DataController at the polling rate."""
+
+    ts_ms: int
+    sample_angle: float
+    detector_angle: float
+    intensity: float

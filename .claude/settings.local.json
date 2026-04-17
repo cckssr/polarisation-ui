@@ -8,7 +8,17 @@
       "Bash(git merge feat/calibration-tool --no-ff -m ':*)",
       "Bash(python -m pytest tests/ -q)",
       "Bash(.venv/bin/pytest tests/ -q)",
-      "Bash(pio run *)"
+      "Bash(pio run *)",
+      "Bash(.venv/bin/pytest tests/infrastructure/ -v)",
+      "Bash(.venv/bin/pytest tests/infrastructure/ -v --timeout=30)",
+      "Bash(.venv/bin/pytest tests/ -v)",
+      "Bash(.venv/bin/pytest tests/infrastructure/ -q)",
+      "Bash(bash polarisation_ui/pyqt/pyuic.sh)",
+      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py tests/test_goniometer_system.py tests/infrastructure/ -v)",
+      "Bash(.venv/bin/pip show *)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py tests/infrastructure/ -v)",
+      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py -v)"
     ]
   }
 }

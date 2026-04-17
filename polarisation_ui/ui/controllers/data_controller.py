@@ -7,6 +7,7 @@ emits signals for UI updates. Separates data collection from UI rendering.
 
 import math
 import random
+import time
 from collections import deque
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
@@ -35,7 +36,7 @@ def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
     return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
 
 
-from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
@@ -61,6 +62,7 @@ class DataController(QObject):
     # Data signals
     angles_updated = Signal(float, float)  # sample_angle, detector_angle
     intensity_updated = Signal(float)  # photodiode / ADC reading (a.u.)
+    frame_ready = Signal(Frame)  # consolidated per-sample frame
     # Per-encoder diagnostic results: (a_ok, a_desc, b_ok, b_desc)
     diagnostics_updated = Signal(bool, str, bool, str)
 
@@ -327,10 +329,17 @@ class DataController(QObject):
                 else detector_angle
             )
 
-            # Emit intensity first so MainWindow has a fresh value when
-            # angles_updated is processed (direct-connection ordering).
-            self.intensity_updated.emit(self._read_intensity(detector_angle))
+            intensity = self._read_intensity(detector_angle)
+            self.intensity_updated.emit(intensity)
             self.angles_updated.emit(display_sample, display_det)
+            self.frame_ready.emit(
+                Frame(
+                    ts_ms=int(time.monotonic() * 1000),
+                    sample_angle=display_sample,
+                    detector_angle=display_det,
+                    intensity=intensity,
+                )
+            )
 
         except Exception as e:
             self._handle_read_error(f"Exception during sensor poll: {e}")

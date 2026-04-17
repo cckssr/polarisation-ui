@@ -26,7 +26,7 @@ from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManage
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
 # UI components
-from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 
@@ -39,6 +39,8 @@ from polarisation_ui.ui.common.status_led import (
 )
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
+from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
+from polarisation_ui.ui.widgets.tab_registry import TabRegistry
 
 
 # Import settings
@@ -96,17 +98,15 @@ class MainWindow(QMainWindow):
         self._sensor_a_ok: bool = True
         self._sensor_b_ok: bool = True
 
-        # Last received values — used by Malus save/plot slots
-        self._current_sample_angle: float = 0.0
-        self._current_detector_angle: float = 0.0
-        self._current_intensity: float = 0.0
+        # Registered experiment tab instances (populated by _setup_tabs)
+        self._tab_instances: list[PlotTabBase] = []
 
         # Push loaded settings into the data controller before starting
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
         self._setup_initial_state()
-        self._setup_malus_plots()
+        self._setup_tabs()
         self._connect_signals()
 
         Debug.info("MainWindow initialized with Qt Designer UI")
@@ -143,22 +143,17 @@ class MainWindow(QMainWindow):
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
-    def _setup_malus_plots(self) -> None:
-        """Embed pyqtgraph plot widgets into the tabMalus placeholder QWidgets."""
-        from PySide6.QtWidgets import QVBoxLayout
+    def _setup_tabs(self) -> None:
+        """Instantiate and register all available experiment tabs into tabWidget."""
+        # Trigger tab registrations by importing the tabs package
+        import polarisation_ui.ui.widgets.tabs  # noqa: F401
 
-        from polarisation_ui.ui.widgets.malus_curve_plot import MalusCurvePlot
-        from polarisation_ui.ui.widgets.malus_detector_plot import MalusDetectorPlot
-
-        lay1 = QVBoxLayout(self.ui.plotDetector)
-        lay1.setContentsMargins(0, 0, 0, 0)
-        self._malus_detector_plot = MalusDetectorPlot()
-        lay1.addWidget(self._malus_detector_plot)
-
-        lay2 = QVBoxLayout(self.ui.plotAnglemeas)
-        lay2.setContentsMargins(0, 0, 0, 0)
-        self._malus_curve_plot = MalusCurvePlot()
-        lay2.addWidget(self._malus_curve_plot)
+        for tab_cls in TabRegistry.available(modules={}):
+            tab = tab_cls()
+            tab.build()
+            tab.status_message.connect(self._handle_tab_status)
+            self.ui.tabWidget.addTab(tab, tab.tab_title)
+            self._tab_instances.append(tab)
 
     # ==================== Signal Connections ====================
 
@@ -185,12 +180,7 @@ class MainWindow(QMainWindow):
         # Save button
         self.ui.btnSave.clicked.connect(self._save_data)
 
-        # Malus tab — save / delete point buttons
-        self.ui.btnSavePoint.clicked.connect(self._save_malus_point)
-        self.ui.btnDeletePoint.clicked.connect(self._delete_last_malus_point)
-
         # Data controller signals
-        self.data_controller.intensity_updated.connect(self._on_intensity_updated)
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.diagnostics_updated.connect(
             self._handle_diagnostics_update
@@ -203,6 +193,45 @@ class MainWindow(QMainWindow):
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
         self.data_controller.measurement_stopped.connect(self._on_measurement_stopped)
+
+        # Fan frame_ready to all tab on_frame handlers
+        for tab in self._tab_instances:
+            self.data_controller.frame_ready.connect(tab.on_frame)
+
+        # Connection state changes → all tabs
+        self.data_controller.reconnect_succeeded.connect(
+            lambda: self._notify_tabs_connection_state(ConnState.CONNECTED)
+        )
+        self.data_controller.retry_connecting.connect(
+            lambda: self._notify_tabs_connection_state(ConnState.RECONNECTING)
+        )
+        self.data_controller.connection_lost.connect(
+            lambda: self._notify_tabs_connection_state(ConnState.LOST)
+        )
+
+        # Tab activation
+        self.ui.tabWidget.currentChanged.connect(self._on_tab_changed)
+
+    def _notify_tabs_connection_state(self, state: ConnState) -> None:
+        for tab in self._tab_instances:
+            tab.on_connection_state(state)
+
+    @Slot(int)
+    def _on_tab_changed(self, index: int) -> None:
+        for i, tab in enumerate(self._tab_instances):
+            if i == index:
+                tab.on_activated()
+            else:
+                tab.on_deactivated()
+
+    @Slot(str, str)
+    def _handle_tab_status(self, level: str, msg: str) -> None:
+        if level == "warning":
+            self.statusbar_manager.show_warning(msg)
+        elif level == "error":
+            self.statusbar_manager.show_error(msg)
+        else:
+            self.statusbar_manager.show_info(msg)
 
     # ==================== Arduino Connection ====================
 
@@ -307,6 +336,7 @@ class MainWindow(QMainWindow):
         self._sensor_a_ok = True
         self._sensor_b_ok = True
         self.data_controller.start_continuous_reading()
+        self._notify_tabs_connection_state(ConnState.CONNECTED)
 
     # ==================== Acquisition Settings ====================
 
@@ -358,34 +388,6 @@ class MainWindow(QMainWindow):
 
         if self._sensor_b_ok:
             self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
-
-        # Store latest values for Malus save slot
-        self._current_sample_angle = sample_angle
-        self._current_detector_angle = detector_angle
-
-        # Update live detector scan plot (intensity already fresh from intensity_updated)
-        self._malus_detector_plot.update_data(detector_angle, self._current_intensity)
-
-    # ==================== Malus Tab ====================
-
-    @Slot(float)
-    def _on_intensity_updated(self, intensity: float) -> None:
-        """Store the latest intensity reading for use by the Malus save slot."""
-        self._current_intensity = intensity
-
-    @Slot()
-    def _save_malus_point(self) -> None:
-        """Save current (sample angle, intensity) as a Malus measurement point."""
-        self._malus_curve_plot.add_point(
-            self._current_sample_angle, self._current_intensity
-        )
-
-    @Slot()
-    def _delete_last_malus_point(self) -> None:
-        """Remove the most recently saved Malus point."""
-        removed = self._malus_curve_plot.remove_last_point()
-        if not removed:
-            self.statusbar_manager.show_warning("Keine Punkte zum Löschen")
 
     # ==================== Encoder Control ====================
 
@@ -446,9 +448,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _reset_measurement(self) -> None:
-        """Reset measurement data."""
-        self._malus_detector_plot.clear()
-        self._malus_curve_plot.clear()
+        """Reset measurement data across all tabs."""
+        for tab in self._tab_instances:
+            tab.on_reset()
         self.statusbar_manager.show_info("Measurement reset")
         Debug.info("Measurement data reset")
 

@@ -382,26 +382,6 @@ class Ui_MainWindow(object):
 
         self.formDetector.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlDetectorStatus)
 
-        self.lblDetectorVoltage = QLabel(self.gbDetector)
-        self.lblDetectorVoltage.setObjectName(u"lblDetectorVoltage")
-        sizePolicy.setHeightForWidth(self.lblDetectorVoltage.sizePolicy().hasHeightForWidth())
-        self.lblDetectorVoltage.setSizePolicy(sizePolicy)
-        self.lblDetectorVoltage.setMinimumSize(QSize(0, 40))
-        self.lblDetectorVoltage.setFont(font)
-        self.lblDetectorVoltage.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-
-        self.formDetector.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblDetectorVoltage)
-
-        self.lcdDetectorVoltage = QLCDNumber(self.gbDetector)
-        self.lcdDetectorVoltage.setObjectName(u"lcdDetectorVoltage")
-        sizePolicy2.setHeightForWidth(self.lcdDetectorVoltage.sizePolicy().hasHeightForWidth())
-        self.lcdDetectorVoltage.setSizePolicy(sizePolicy2)
-        self.lcdDetectorVoltage.setMinimumSize(QSize(0, 40))
-        self.lcdDetectorVoltage.setFont(font)
-        self.lcdDetectorVoltage.setLineWidth(2)
-
-        self.formDetector.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage)
-
 
         self.verticalLayout_2.addWidget(self.gbDetector)
 
@@ -562,42 +542,6 @@ class Ui_MainWindow(object):
 
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.tabMalus = QWidget()
-        self.tabMalus.setObjectName(u"tabMalus")
-        self.gridLayout = QGridLayout(self.tabMalus)
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.gridLayout.setContentsMargins(5, 10, 10, 5)
-        self.plotDetector = QWidget(self.tabMalus)
-        self.plotDetector.setObjectName(u"plotDetector")
-
-        self.gridLayout.addWidget(self.plotDetector, 0, 0, 1, 2)
-
-        self.btnSavePoint = QPushButton(self.tabMalus)
-        self.btnSavePoint.setObjectName(u"btnSavePoint")
-
-        self.gridLayout.addWidget(self.btnSavePoint, 3, 1, 1, 1)
-
-        self.btnDeletePoint = QPushButton(self.tabMalus)
-        self.btnDeletePoint.setObjectName(u"btnDeletePoint")
-
-        self.gridLayout.addWidget(self.btnDeletePoint, 2, 1, 1, 1)
-
-        self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.gridLayout.addItem(self.verticalSpacer_5, 1, 1, 1, 1)
-
-        self.plotAnglemeas = QWidget(self.tabMalus)
-        self.plotAnglemeas.setObjectName(u"plotAnglemeas")
-
-        self.gridLayout.addWidget(self.plotAnglemeas, 1, 0, 3, 1)
-
-        self.gridLayout.setRowStretch(0, 3)
-        self.gridLayout.setRowStretch(1, 2)
-        self.gridLayout.setColumnStretch(0, 1)
-        self.tabWidget.addTab(self.tabMalus, "")
-        self.tab_4 = QWidget()
-        self.tab_4.setObjectName(u"tab_4")
-        self.tabWidget.addTab(self.tab_4, "")
 
         self.gridLayout_5.addWidget(self.tabWidget, 0, 2, 1, 1)
 
@@ -656,7 +600,6 @@ class Ui_MainWindow(object):
         self.lblDetectorStatus.setText(QCoreApplication.translate("MainWindow", u"Status", None))
         self.lblDetectorStatusValue.setText(QCoreApplication.translate("MainWindow", u"E12345", None))
         self.ledDetectorStatus.setText("")
-        self.lblDetectorVoltage.setText(QCoreApplication.translate("MainWindow", u"Fotospannung (V)", None))
         self.gbSave.setTitle(QCoreApplication.translate("MainWindow", u"Speicherung", None))
         self.lblGroupLetter.setText(QCoreApplication.translate("MainWindow", u"Gruppe*", None))
         self.cbGroupLetter.setItemText(0, QCoreApplication.translate("MainWindow", u"A", None))
@@ -704,12 +647,6 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.btnStopMeasurement.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.btnResetMeasurement.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
-        self.btnSavePoint.setText(QCoreApplication.translate("MainWindow", u"Punkt\n"
-" speichern", None))
-        self.btnDeletePoint.setText(QCoreApplication.translate("MainWindow", u"Letzten Punkt\n"
-" l\u00f6schen", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabMalus), QCoreApplication.translate("MainWindow", u"Malus", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("MainWindow", u"Tab 2", None))
         self.menuEinstellungen.setTitle(QCoreApplication.translate("MainWindow", u"Einstellungen", None))
     # retranslateUi
 
