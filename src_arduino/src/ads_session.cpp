@@ -6,7 +6,6 @@
 //   bit 0 → PDTIA_PIN_0 … bit 3 → PDTIA_PIN_3
 // Adjust this table to match your physical hardware wiring.
 static const uint8_t kPdGainPatterns[PDTIA_NUM_STAGES] = {
-    0b0000, // stage 0 — lowest gain (all GPIO low)
     0b0001, // stage 1
     0b0010, // stage 2
     0b0100, // stage 3

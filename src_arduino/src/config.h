@@ -12,12 +12,12 @@
 
 // ── PD-TIA discrete gain select (4 GPIO lines, active HIGH) ──────────────────
 // Bit 0 of the gain pattern maps to PIN_0, bit 3 to PIN_3.
-#define PDTIA_PIN_0 A1
-#define PDTIA_PIN_1 A2
-#define PDTIA_PIN_2 A3
-#define PDTIA_PIN_3 A4
+#define PDTIA_PIN_0 A4
+#define PDTIA_PIN_1 A5
+#define PDTIA_PIN_2 A6
+#define PDTIA_PIN_3 A7
 // Number of gain stages.  The actual 4-bit patterns live in ads_session.cpp.
-#define PDTIA_NUM_STAGES 5
+#define PDTIA_NUM_STAGES 4
 
 // ── Serial ────────────────────────────────────────────────────────────────────
 #define BAUD_RATE 115200

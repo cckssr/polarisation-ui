@@ -1,9 +1,54 @@
-#include <unity.h>
+#include <iostream>
 #include <string>
 #include <cctype>
+#include <cassert>
+#include <cstring>
 
-// Mock für PlatformIO native testingpi
-#ifdef UNIT_TEST
+// ─── Simple Test Framework ────────────────────────────────────────────────
+
+int test_count = 0;
+int pass_count = 0;
+int fail_count = 0;
+
+#define TEST_ASSERT_EQUAL_STRING(expected, actual) \
+  do { \
+    test_count++; \
+    if (strcmp(expected, actual) == 0) { \
+      pass_count++; \
+      std::cout << "  ✓ PASS\n"; \
+    } else { \
+      fail_count++; \
+      std::cout << "  ✗ FAIL: expected '" << expected << "', got '" << actual << "'\n"; \
+    } \
+  } while(0)
+
+#define TEST_ASSERT_TRUE(condition) \
+  do { \
+    test_count++; \
+    if (condition) { \
+      pass_count++; \
+      std::cout << "  ✓ PASS\n"; \
+    } else { \
+      fail_count++; \
+      std::cout << "  ✗ FAIL: condition was false\n"; \
+    } \
+  } while(0)
+
+#define TEST_ASSERT_FALSE(condition) \
+  do { \
+    test_count++; \
+    if (!(condition)) { \
+      pass_count++; \
+      std::cout << "  ✓ PASS\n"; \
+    } else { \
+      fail_count++; \
+      std::cout << "  ✗ FAIL: condition was true\n"; \
+    } \
+  } while(0)
+
+#define RUN_TEST(name) \
+  std::cout << "\n" << #name << ":\n"; \
+  name();
 
 // Minimal Arduino String mock für Testing
 class StringMock
@@ -196,16 +241,26 @@ void test_parse_empty_line()
     TEST_ASSERT_FALSE(result);
 }
 
-// ─── Setup/Teardown ───────────────────────────────────────────────────────
+// ─── Main Test Runner ─────────────────────────────────────────────────────
 
-void setUp(void)
+int main()
 {
-    // before each test
-}
+    std::cout << "\n========== SCPI Parser Tests ==========\n";
 
-void tearDown(void)
-{
-    // after each test
-}
+    RUN_TEST(test_parse_simple_query);
+    RUN_TEST(test_parse_command_with_param);
+    RUN_TEST(test_parse_case_insensitive);
+    RUN_TEST(test_parse_multiple_params);
+    RUN_TEST(test_parse_with_whitespace);
+    RUN_TEST(test_parse_query_with_param);
+    RUN_TEST(test_parse_meas_encoder_both);
+    RUN_TEST(test_parse_empty_line);
 
-#endif // UNIT_TEST
+    std::cout << "\n========== Test Summary ==========\n";
+    std::cout << "Total:  " << test_count << "\n";
+    std::cout << "Passed: " << pass_count << "\n";
+    std::cout << "Failed: " << fail_count << "\n";
+    std::cout << "===================================\n\n";
+
+    return (fail_count == 0) ? 0 : 1;
+}
