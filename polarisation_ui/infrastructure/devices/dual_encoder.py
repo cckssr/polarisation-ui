@@ -92,7 +92,8 @@ class ADCClient:
         rate: int = 20,
         mode: str = "NORM",
         fir: str = "OFF",
-        vref: str = "INT",
+        vref: str = "EXT",
+        temp: bool = False,
     ) -> bool:
         """Send a batch of CONF:ADC:* commands; returns True if all succeeded."""
         cmds = [
@@ -102,6 +103,7 @@ class ADCClient:
             f"CONF:ADC:MODE {mode}",
             f"CONF:ADC:FIR {fir}",
             f"CONF:ADC:VREF {vref}",
+            f"CONF:ADC:TEMP {'ON' if temp else 'OFF'}",
         ]
         return all(self._dev._send_command_no_response(c) for c in cmds)
 
@@ -207,6 +209,8 @@ class DualEncoderArduino:
             idn = self.identify()
             if idn:
                 self._check_firmware_version(idn)
+            # Apply required ADC configuration: gain=1, external vref (2.5 V), temp on.
+            self.adc.configure(gain=1, vref="EXT", temp=False)
             Debug.info(f"DualEncoderArduino connected to {self.port}")
             return True
         except IncompatibleFirmwareError:
@@ -412,6 +416,76 @@ class DualEncoderArduino:
 
         return self._parse_diagnostics_response(response, encoder_id)
 
+    def get_adc_diagnostics(self) -> Optional[dict[str, Any]]:
+        """DIAG:ADC? → dict(reg0-reg3: int, drdy: bool, last_raw: int, absent: bool)."""
+        cmd = "DIAG:ADC?"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
+            return None
+        response = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not response:
+            Debug.error("No response for DIAG:ADC?")
+            return None
+        if response.strip() == "ABSENT":
+            return {"absent": True}
+        try:
+            kv: dict[str, str] = {}
+            for token in response.strip().split(","):
+                if "=" in token:
+                    k, _, v = token.partition("=")
+                    kv[k.strip()] = v.strip()
+            return {
+                "absent": False,
+                "reg0": int(kv.get("reg0", "0x0"), 16),
+                "reg1": int(kv.get("reg1", "0x0"), 16),
+                "reg2": int(kv.get("reg2", "0x0"), 16),
+                "reg3": int(kv.get("reg3", "0x0"), 16),
+                "drdy": bool(int(kv.get("drdy", "0"))),
+                "last_raw": int(kv.get("last_raw", "0x0"), 16),
+            }
+        except (ValueError, KeyError) as e:
+            Debug.error(f"Failed to parse DIAG:ADC? response: '{response}' ({e})")
+            return None
+
+    def get_pdtia_diagnostics(self) -> Optional[dict[str, Any]]:
+        """DIAG:PDTIA? → dict(stage: int, pattern: str like '0b1010')."""
+        cmd = "DIAG:PDTIA?"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
+            return None
+        response = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not response:
+            Debug.error("No response for DIAG:PDTIA?")
+            return None
+        try:
+            kv: dict[str, str] = {}
+            for token in response.strip().split(","):
+                if "=" in token:
+                    k, _, v = token.partition("=")
+                    kv[k.strip()] = v.strip()
+            return {
+                "stage": int(kv.get("stage", "0")),
+                "pattern": kv.get("pattern", "0b0000"),
+            }
+        except (ValueError, KeyError) as e:
+            Debug.error(f"Failed to parse DIAG:PDTIA? response: '{response}' ({e})")
+            return None
+
+    def get_adc_config(self) -> dict[str, str]:
+        """Query all current ADC config settings via CONF:ADC:*? commands."""
+        config: dict[str, str] = {}
+        for key, cmd in [
+            ("mux", "CONF:ADC:MUX?"),
+            ("gain", "CONF:ADC:GAIN?"),
+            ("rate", "CONF:ADC:RATE?"),
+            ("mode", "CONF:ADC:MODE?"),
+            ("fir", "CONF:ADC:FIR?"),
+            ("vref", "CONF:ADC:VREF?"),
+        ]:
+            val = self.send_query(cmd)
+            config[key] = val.strip() if val else "–"
+        return config
+
     # ── Misc ──────────────────────────────────────────────────────────────────
 
     def query_error(self) -> Optional[str]:
@@ -513,17 +587,23 @@ class DualEncoderArduino:
     def _parse_diagnostics_response(
         self, response: str, encoder_id: EncoderID
     ) -> Optional[dict[str, Any]]:
-        """DIAG:ENC? → 'compH,compL,cof,ocf,agc' → typed dict."""
+        """DIAG:ENC? → 'compH=N,compL=N,cof=N,ocf=N,agc=N' → typed dict."""
         try:
-            parts = response.strip().split(",")
-            if len(parts) < 5:
+            kv: dict[str, str] = {}
+            for token in response.strip().split(","):
+                if "=" in token:
+                    k, _, v = token.partition("=")
+                    kv[k.strip()] = v.strip()
+            if len(kv) < 5:
                 Debug.error(f"Invalid diagnostics response: '{response}'")
                 return None
-            flag_keys = ["compHigh", "compLow", "cof", "ocf"]
             diag: dict[str, Any] = {
-                k: bool(int(parts[i].strip())) for i, k in enumerate(flag_keys)
+                "compHigh": bool(int(kv.get("compH", "0"))),
+                "compLow": bool(int(kv.get("compL", "0"))),
+                "cof": bool(int(kv.get("cof", "0"))),
+                "ocf": bool(int(kv.get("ocf", "0"))),
+                "agc": int(kv.get("agc", "0")),
             }
-            diag["agc"] = int(parts[4].strip())
             Debug.debug(f"Diagnostics {encoder_id.value}: {diag}")
             return diag
         except (IndexError, ValueError) as e:

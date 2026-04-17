@@ -1,12 +1,12 @@
 """
-Encoder Debug Dialog.
+Encoder + ADS1220 Debug Dialog.
 
-Provides a comprehensive live view of all AS5048A encoder parameters:
-  - Angles (MEAS:ANGL? A/B)
-  - Raw magnitudes (MEAS:MAGN? A/B)
-  - Diagnostics: COMP_H, COMP_L, COF, OCF, AGC (SYST:DIAG? A/B)
+Provides a comprehensive live view of:
+  - AS5048A encoder angles, magnitudes, and diagnostics (DIAG:ENC?)
+  - ADS1220 live voltage, register dump (DIAG:ADC?), PD-TIA state (DIAG:PDTIA?)
+  - ADC configuration (CONF:ADC:*?)
   - SCPI error queue (SYST:ERR?)
-  - System info: IDN, poll interval, debug mode
+  - System info: IDN, streaming rate, debug mode
   - SCPI terminal for arbitrary commands
 
 Architecture note: accesses DualEncoderArduino directly via
@@ -17,7 +17,22 @@ dialog that lives entirely inside the UI layer.
 from datetime import datetime
 
 from PySide6.QtCore import QTimer, Slot
-from PySide6.QtWidgets import QCheckBox, QDialog, QFormLayout, QLabel
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QFormLayout,
+    QFrame,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLCDNumber,
+    QLineEdit,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.dual_encoder import (
@@ -74,6 +89,8 @@ class EncoderDebugDialog(QDialog):
         self._init_leds()
         self._load_system_info()
 
+        self._build_ads_tab()
+
         if self.ui.cbAutoRefresh.isChecked():
             self._refresh_timer.start(self.ui.spbRefreshInterval.value())
 
@@ -115,6 +132,7 @@ class EncoderDebugDialog(QDialog):
         ]
         for name in _conn_leds + _diag_leds:
             getattr(self.ui, name).setStyleSheet(LED_GRAY)
+        # ADS LEDs are instance vars created in _build_ads_tab — set after that call.
 
     # ==================== Device Access ====================
 
@@ -135,6 +153,7 @@ class EncoderDebugDialog(QDialog):
             return
         self._update_measurements(device)
         self._update_diagnostics(device)
+        self._update_adc_tab(device)
 
     def _set_disconnected_state(self) -> None:
         self.ui.ledConnA.setStyleSheet(LED_RED)
@@ -142,6 +161,9 @@ class EncoderDebugDialog(QDialog):
         for suffix in ("A", "B"):
             for led in ("ledCompH", "ledCompL", "ledCof", "ledOcf", "ledError"):
                 getattr(self.ui, f"{led}{suffix}").setStyleSheet(LED_GRAY)
+        if hasattr(self, "_led_adc_present"):
+            self._led_adc_present.setStyleSheet(LED_RED)
+            self._led_adc_drdy.setStyleSheet(LED_GRAY)
 
     # ──── Measurements (Angle + Magnitude) ──────────────────────────────────
 
@@ -231,11 +253,13 @@ class EncoderDebugDialog(QDialog):
         idn = device.identify()
         self.ui.leIdn.setText(idn if idn else "–")
 
-        # SENS:INT?
-        raw_interval = device.send_query("SENS:INT?")
-        if raw_interval:
+        # CONF:RATE? returns Hz; display as ms
+        raw_rate = device.send_query("CONF:RATE?")
+        if raw_rate:
             try:
-                self.ui.spbPollInterval.setValue(int(raw_interval.strip()))
+                hz = int(raw_rate.strip())
+                if hz > 0:
+                    self.ui.spbPollInterval.setValue(round(1000 / hz))
             except ValueError:
                 pass
 
@@ -371,6 +395,132 @@ class EncoderDebugDialog(QDialog):
         cmd = "SYST:DEB ON" if enabled else "SYST:DEB OFF"
         device.send_query(cmd)
         Debug.info(f"Arduino debug mode {'enabled' if enabled else 'disabled'}")
+
+    # ==================== ADS1220 Tab ====================
+
+    def _build_ads_tab(self) -> None:
+        """Create the ADS1220 / PD-TIA diagnostic tab programmatically."""
+        tab = QWidget()
+        vl = QVBoxLayout(tab)
+
+        # ── Live readings ────────────────────────────────────────────────────
+        gb_live = QGroupBox("Live-Messwerte")
+        form_live = QFormLayout(gb_live)
+
+        self._led_adc_present = QFrame()
+        self._led_adc_present.setMinimumSize(20, 20)
+        self._led_adc_present.setMaximumSize(20, 20)
+        self._led_adc_present.setFrameShape(QFrame.Shape.Box)
+        self._led_adc_present.setStyleSheet(LED_GRAY)
+        form_live.addRow("ADS1220 vorhanden:", self._led_adc_present)
+
+        self._lcd_adc_voltage = QLCDNumber()
+        self._lcd_adc_voltage.setDigitCount(10)
+        self._lcd_adc_voltage.setSmallDecimalPoint(True)
+        self._lcd_adc_voltage.setMinimumSize(180, 50)
+        self._lcd_adc_voltage.setToolTip("MEAS:ADC:VOLT? (V)")
+        form_live.addRow("Spannung (V):", self._lcd_adc_voltage)
+
+        self._led_adc_drdy = QFrame()
+        self._led_adc_drdy.setMinimumSize(20, 20)
+        self._led_adc_drdy.setMaximumSize(20, 20)
+        self._led_adc_drdy.setFrameShape(QFrame.Shape.Box)
+        self._led_adc_drdy.setStyleSheet(LED_GRAY)
+        self._led_adc_drdy.setToolTip("Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)")
+        form_live.addRow("Bereit (zeitbasiert):", self._led_adc_drdy)
+
+        vl.addWidget(gb_live)
+
+        # ── Registers + Config side by side ──────────────────────────────────
+        hl_mid = QHBoxLayout()
+
+        gb_regs = QGroupBox("Register (DIAG:ADC?)")
+        form_regs = QFormLayout(gb_regs)
+        self._le_adc_reg: dict[int, QLineEdit] = {}
+        for i in range(4):
+            le = QLineEdit()
+            le.setReadOnly(True)
+            le.setPlaceholderText("–")
+            self._le_adc_reg[i] = le
+            form_regs.addRow(f"REG{i}:", le)
+        self._le_adc_last_raw = QLineEdit()
+        self._le_adc_last_raw.setReadOnly(True)
+        self._le_adc_last_raw.setPlaceholderText("–")
+        form_regs.addRow("Last Raw:", self._le_adc_last_raw)
+        hl_mid.addWidget(gb_regs)
+
+        gb_cfg = QGroupBox("Konfiguration (CONF:ADC:*?)")
+        form_cfg = QFormLayout(gb_cfg)
+        self._le_adc_mux = QLineEdit(); self._le_adc_mux.setReadOnly(True); self._le_adc_mux.setPlaceholderText("–")
+        self._le_adc_gain = QLineEdit(); self._le_adc_gain.setReadOnly(True); self._le_adc_gain.setPlaceholderText("–")
+        self._le_adc_rate = QLineEdit(); self._le_adc_rate.setReadOnly(True); self._le_adc_rate.setPlaceholderText("–")
+        self._le_adc_mode = QLineEdit(); self._le_adc_mode.setReadOnly(True); self._le_adc_mode.setPlaceholderText("–")
+        self._le_adc_fir = QLineEdit(); self._le_adc_fir.setReadOnly(True); self._le_adc_fir.setPlaceholderText("–")
+        self._le_adc_vref = QLineEdit(); self._le_adc_vref.setReadOnly(True); self._le_adc_vref.setPlaceholderText("–")
+        form_cfg.addRow("MUX:", self._le_adc_mux)
+        form_cfg.addRow("Gain:", self._le_adc_gain)
+        form_cfg.addRow("Rate (SPS):", self._le_adc_rate)
+        form_cfg.addRow("Mode:", self._le_adc_mode)
+        form_cfg.addRow("FIR Filter:", self._le_adc_fir)
+        form_cfg.addRow("Spannungsref.:", self._le_adc_vref)
+        btn_read_cfg = QPushButton("Konfiguration lesen")
+        btn_read_cfg.clicked.connect(self._read_adc_config)
+        form_cfg.addRow("", btn_read_cfg)
+        hl_mid.addWidget(gb_cfg)
+
+        vl.addLayout(hl_mid)
+
+        # ── PD-TIA ───────────────────────────────────────────────────────────
+        gb_pdtia = QGroupBox("PD-TIA Verstärkung (DIAG:PDTIA?)")
+        form_pdtia = QFormLayout(gb_pdtia)
+        self._le_pdtia_stage = QLineEdit(); self._le_pdtia_stage.setReadOnly(True); self._le_pdtia_stage.setPlaceholderText("–")
+        self._le_pdtia_pattern = QLineEdit(); self._le_pdtia_pattern.setReadOnly(True); self._le_pdtia_pattern.setPlaceholderText("–")
+        form_pdtia.addRow("Stufe:", self._le_pdtia_stage)
+        form_pdtia.addRow("GPIO Muster:", self._le_pdtia_pattern)
+        vl.addWidget(gb_pdtia)
+
+        vl.addItem(QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        self.ui.tabWidget.addTab(tab, "ADS1220")
+
+    def _update_adc_tab(self, device: "DualEncoderArduino") -> None:
+        # Live voltage
+        voltage = device.adc.read_voltage()
+        if voltage is not None:
+            self._lcd_adc_voltage.display(voltage)
+
+        # ADC diagnostics (registers + drdy)
+        adc_diag = device.get_adc_diagnostics()
+        if adc_diag is not None:
+            if adc_diag.get("absent"):
+                self._led_adc_present.setStyleSheet(LED_RED)
+                self._led_adc_drdy.setStyleSheet(LED_GRAY)
+            else:
+                self._led_adc_present.setStyleSheet(LED_GREEN)
+                drdy = bool(adc_diag.get("drdy", False))
+                self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
+                for i in range(4):
+                    self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
+                self._le_adc_last_raw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
+
+        # PD-TIA
+        pdtia = device.get_pdtia_diagnostics()
+        if pdtia is not None:
+            self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
+            self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
+
+    @Slot()
+    def _read_adc_config(self) -> None:
+        device = self._device()
+        if device is None:
+            return
+        cfg = device.get_adc_config()
+        self._le_adc_mux.setText(cfg.get("mux", "–"))
+        self._le_adc_gain.setText(cfg.get("gain", "–"))
+        self._le_adc_rate.setText(cfg.get("rate", "–"))
+        self._le_adc_mode.setText(cfg.get("mode", "–"))
+        self._le_adc_fir.setText(cfg.get("fir", "–"))
+        self._le_adc_vref.setText(cfg.get("vref", "–"))
 
     # ==================== Lifecycle ====================
 

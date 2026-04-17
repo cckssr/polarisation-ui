@@ -70,13 +70,18 @@ private:
   float _lastVoltage = 0.0f;
   float _lastTemperature = NAN;
   int32_t _lastRaw = 0;
-  float _vrefVolts = 2.048f; // matches ADS1220 internal reference default
+  float _vrefVolts = 2.5f;           // external reference voltage
+  uint32_t _conversionPeriodMs = 50; // 1000 / data_rate_sps
+  uint32_t _nextConversionMs = 0;
 
   // Applies the 4-bit pattern for _pdGainStage to the four GPIO pins.
   void _applyPdGainGpio(uint8_t pattern);
 
   // Convert a raw 24-bit ADC code to voltage using current vref and gain.
   float _computeVoltage(int32_t raw) const;
+
+  // Wait for first DRDY after start and discard stale output buffer data.
+  void _waitForFirstConversion();
 };
 
 extern AdsSession adsSession;

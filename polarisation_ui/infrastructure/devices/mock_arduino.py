@@ -85,7 +85,7 @@ class MockArduino:
         self.adc_rate: int = 20
         self.adc_mode: str = "NORM"
         self.adc_fir: str = "OFF"
-        self.adc_vref: str = "INT"
+        self.adc_vref: str = "EXT"
         self.adc_temp_enabled: bool = False
 
         # PD-TIA discrete gain stage (0 = lowest gain)
@@ -465,20 +465,15 @@ class MockArduino:
 
         # ── DIAG subsystem ───────────────────────────────────────────────────
         if header == "DIAG:ENC" and is_query:
-            if param == "B":
-                return "0,0,0,1,195"  # compH,compL,cof,ocf,agc
-            return "0,0,0,1,200"
+            agc = 195 if param == "B" else 200
+            return f"compH=0,compL=0,cof=0,ocf=1,agc={agc}"
 
         if header == "DIAG:ADC" and is_query:
-            return (
-                f"GAIN={self.adc_gain},MUX={self.adc_mux},"
-                f"RATE={self.adc_rate},MODE={self.adc_mode},"
-                f"FIR={self.adc_fir},VREF={self.adc_vref},DRDY=1,RAW=8388608"
-            )
+            return "reg0=0x00,reg1=0x04,reg2=0x00,reg3=0x00,drdy=1,last_raw=0x800000"
 
         if header == "DIAG:PDTIA" and is_query:
             bits = f"{self.pdtia_gain & 0xF:04b}"
-            return f"{self.pdtia_gain},0b{bits}"
+            return f"stage={self.pdtia_gain},pattern=0b{bits}"
 
         if header == "DIAG:SELF" and is_query:
             return "ENC_A=PASS,ENC_B=PASS,ADC=PASS,PDTIA=PASS"
@@ -553,8 +548,8 @@ class MockArduino:
         self.adc_rate = 20
         self.adc_mode = "NORM"
         self.adc_fir = "OFF"
-        self.adc_vref = "INT"
-        self.adc_temp_enabled = False
+        self.adc_vref = "EXT"
+        self.adc_temp_enabled = True
         self.pdtia_gain = 0
 
     # ── Streaming ─────────────────────────────────────────────────────────────

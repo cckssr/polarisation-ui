@@ -6,8 +6,8 @@
 #define SPI_HZ 100000UL
 
 // ── ADS1220 ADC ───────────────────────────────────────────────────────────────
-#define ADC_CS_PIN 8   // chip select  (active low)
-#define ADC_DRDY_PIN 4 // DRDY output  (active low)
+#define ADC_CS_PIN 8    // chip select  (active low)
+#define ADC_DRDY_PIN -1 // DRDY not wired; time-based polling used instead
 #define ADC_SPI_HZ 4000000UL
 
 // ── PD-TIA discrete gain select (4 GPIO lines, active HIGH) ──────────────────

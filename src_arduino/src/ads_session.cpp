@@ -59,10 +59,24 @@ bool AdsSession::begin()
     return false;
   }
 
-  // Start in continuous conversion mode at default rate (20 SPS).
+  // Apply required configuration: gain=1, external reference (REFP0/REFN0, 2.5 V),
+  // 20 SPS, differential AIN0-AIN1.
+  // Temperature sensor left OFF by default; enable on-demand via CONF:ADC:TEMP ON
+  _adc.setGain(ADS1220::Gain::G1);
+  _adc.setVoltageReference(ADS1220::VoltageRef::EXT_REFP0);
+  _vrefVolts = 2.5f;
+  _conversionPeriodMs = 50; // 20 SPS default
+  _nextConversionMs = 0;
+
+  // Start in continuous conversion mode.
   _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
   _adc.start();
   _present = true;
+
+  // Wait for and discard the first conversion to clear stale output buffer data.
+  _waitForFirstConversion();
+  _nextConversionMs = millis() + _conversionPeriodMs;
+
   return true;
 }
 
@@ -71,28 +85,40 @@ void AdsSession::reset()
   if (!_present)
     return;
   _adc.reset();
+
+  // Re-apply required configuration after reset.
+  _adc.setGain(ADS1220::Gain::G1);
+  _adc.setVoltageReference(ADS1220::VoltageRef::EXT_REFP0);
+  _vrefVolts = 2.5f;
+  _conversionPeriodMs = 50;
+  _nextConversionMs = 0;
+
   _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
   _adc.start();
   _lastVoltage = 0.0f;
   _lastTemperature = NAN;
   _lastRaw = 0;
-  _vrefVolts = 2.048f;
   setPdGainStage(0);
+
+  _waitForFirstConversion();
+  _nextConversionMs = millis() + _conversionPeriodMs;
 }
 
 // ── Continuous ADC polling ────────────────────────────────────────────────────
 
 bool AdsSession::ready() const
 {
-  return _present && _adc.dataReady();
+  // DRDY is not connected; use time-based polling at the configured data rate.
+  return _present && (millis() >= _nextConversionMs);
 }
 
 void AdsSession::pollAdc()
 {
   if (!_present)
     return;
-  _lastRaw = _adc.readRaw();
+  _lastRaw = _adc.readRawWithCommand();
   _lastVoltage = _computeVoltage(_lastRaw);
+  _nextConversionMs = millis() + _conversionPeriodMs;
 }
 
 // ── One-shot reads ────────────────────────────────────────────────────────────
@@ -113,12 +139,10 @@ float AdsSession::takeTemperatureReading(uint32_t timeoutMs)
     return NAN;
 
   _adc.enableTemperatureSensor(true);
-  // In continuous mode the next conversion will use the temperature sensor mux.
-  if (!_adc.waitForDataReady(timeoutMs))
-  {
-    _adc.enableTemperatureSensor(false);
-    return NAN;
-  }
+  // DRDY is not connected; wait one conversion period plus a safety margin.
+  // Cap the wait to the caller-supplied timeoutMs.
+  uint32_t waitMs = min(_conversionPeriodMs + 10, timeoutMs);
+  delay(waitMs);
   float temp = _adc.readTemperature();
   _lastTemperature = temp;
   _adc.enableTemperatureSensor(false);
@@ -170,6 +194,10 @@ void AdsSession::setDataRate(ADS1220::DataRate dr)
   if (!_present)
     return;
   _adc.setDataRate(dr);
+  // Keep conversion period in sync for time-based ready() polling.
+  static const uint16_t kSps[7] = {20, 45, 90, 175, 330, 600, 1000};
+  uint8_t idx = static_cast<uint8_t>(dr);
+  _conversionPeriodMs = (idx < 7) ? (1000u / kSps[idx]) : 50u;
 }
 
 void AdsSession::setOperatingMode(ADS1220::OperatingMode mode)
@@ -202,6 +230,13 @@ void AdsSession::enableTemperature(bool on)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+void AdsSession::_waitForFirstConversion()
+{
+  // DRDY is not connected; wait 2× the conversion period and discard.
+  delay(_conversionPeriodMs * 2);
+  _adc.readRawWithCommand();
+}
 
 float AdsSession::_computeVoltage(int32_t raw) const
 {
