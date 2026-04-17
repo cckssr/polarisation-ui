@@ -100,7 +100,7 @@ public:
 
     // Config register 3, I1MUX / I2MUX bits — IDAC routing
     enum class IDACRoute : uint8_t {
-        DISABLED       = 0x00,  // default
+        ROUTE_OFF      = 0x00,  // default (renamed: ESP32 HAL defines DISABLED as a macro)
         AIN0_REFP1     = 0x01,
         AIN1           = 0x02,
         AIN2           = 0x03,

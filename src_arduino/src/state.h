@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "config.h"
 
-// ── Error queue (SYST:ERR?) ───────────────────────────────────────────────
+// ── Error queue (SYST:ERR?) ───────────────────────────────────────────────────
 struct ErrorQueue
 {
   String  msgs[ERR_QUEUE_SIZE];
@@ -28,19 +28,18 @@ struct ErrorQueue
   void clear() { count = 0; }
 };
 
-// ── Acquisition statistics ─────────────────────────────────────────────────
+// ── Acquisition statistics (emitted on stream stop in debug mode) ─────────────
 struct AcqStats
 {
-  unsigned long startMs       = 0;
-  unsigned long endMs         = 0;
-  unsigned long dataPoints    = 0;
-  unsigned long parityErrors  = 0;
-  unsigned long efEvents      = 0;   // auto-cleared EF occurrences
-  unsigned long readAttempts  = 0;
+  unsigned long startMs      = 0;
+  unsigned long endMs        = 0;
+  unsigned long dataPoints   = 0;   // frames emitted
+  unsigned long parityErrors = 0;
+  unsigned long efEvents     = 0;
 
   void reset()
   {
-    startMs = endMs = dataPoints = parityErrors = efEvents = readAttempts = 0;
+    startMs = endMs = dataPoints = parityErrors = efEvents = 0;
   }
 
   void print() const
@@ -52,28 +51,43 @@ struct AcqStats
   }
 };
 
-// ── Acquisition mode ───────────────────────────────────────────────────────
-enum class AcqMode : uint8_t
+// ── Stream source bitmask (CONF:SRC) ──────────────────────────────────────────
+enum StreamSource : uint8_t
 {
-  Idle,
-  AngleA,
-  AngleB,
-  AngleBoth,
-  Magnitude,
-  Nop
+  SRC_NONE   = 0x00,
+  SRC_ENC_A  = 0x01,
+  SRC_ENC_B  = 0x02,
+  SRC_ADC    = 0x04,
+  SRC_ADC_T  = 0x08,
+  SRC_PDTIA  = 0x10,
 };
 
-// ── Application state ──────────────────────────────────────────────────────
+// ── Stream configuration (CONF:SRC / CONF:RATE) ───────────────────────────────
+struct StreamConfig
+{
+  uint8_t       sources    = DEFAULT_STREAM_SOURCES;
+  uint16_t      rateHz     = DEFAULT_STREAM_RATE_HZ;
+  unsigned long intervalMs = 1000UL / DEFAULT_STREAM_RATE_HZ;
+
+  void setRate(uint16_t hz)
+  {
+    rateHz     = hz;
+    intervalMs = (hz > 0) ? (1000UL / hz) : 50UL;
+  }
+};
+
+// ── Application state ─────────────────────────────────────────────────────────
 struct AppState
 {
-  AcqMode       mode        = AcqMode::Idle;
+  bool          streaming   = false;
+  bool          singleShot  = false;   // INIT — one frame on next tick
   unsigned long lastPollMs  = 0;
-  unsigned long pollMs      = DEFAULT_POLL_MS;
+  StreamConfig  stream;
   bool          encBPresent = true;
   bool          debug       = false;
 };
 
-// ── Global instances (defined in state.cpp) ────────────────────────────────
+// ── Global instances (defined in state.cpp) ───────────────────────────────────
 extern ErrorQueue  errorQueue;
 extern AcqStats    acqStats;
 extern AppState    appState;
