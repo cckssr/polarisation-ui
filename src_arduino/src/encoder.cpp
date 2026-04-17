@@ -19,7 +19,8 @@ void encoderInit()
 AS5048A_SPI::FrameResult encReadAngle(AS5048A_SPI &enc)
 {
   AS5048A_SPI::FrameResult r = enc.readAngleRawWithDiagnostics();
-  if (r.errorFlag) {
+  if (r.errorFlag)
+  {
     enc.clearErrorFlag();
     r = enc.readAngleRawWithDiagnostics();
   }
@@ -29,7 +30,8 @@ AS5048A_SPI::FrameResult encReadAngle(AS5048A_SPI &enc)
 AS5048A_SPI::FrameResult encReadMagn(AS5048A_SPI &enc)
 {
   AS5048A_SPI::FrameResult r = enc.readMagnitudeRawWithDiagnostics();
-  if (r.errorFlag) {
+  if (r.errorFlag)
+  {
     enc.clearErrorFlag();
     r = enc.readMagnitudeRawWithDiagnostics();
   }

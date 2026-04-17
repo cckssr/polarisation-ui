@@ -14,7 +14,8 @@ void setup()
 
   encoderInit();
 
-  if (!adsSession.begin()) {
+  if (!adsSession.begin())
+  {
     Serial.println("DATA:WARN ADS1220 not detected; ADC commands unavailable");
   }
 }
@@ -22,7 +23,8 @@ void setup()
 void loop()
 {
   // ── Process incoming SCPI commands (one line per call) ─────────────────────
-  if (Serial.available()) {
+  if (Serial.available())
+  {
     String line = Serial.readStringUntil('\n');
     line.trim();
     line.toUpperCase();
@@ -30,20 +32,24 @@ void loop()
   }
 
   // ── Poll ADS1220 whenever DRDY asserts (decoupled from stream rate) ─────────
-  if (adsSession.ready()) {
+  if (adsSession.ready())
+  {
     adsSession.pollAdc();
   }
 
   // ── Single-shot INIT frame ─────────────────────────────────────────────────
-  if (appState.singleShot) {
+  if (appState.singleShot)
+  {
     appState.singleShot = false;
     emitDataFrame();
   }
 
   // ── Continuous streaming at configured rate ────────────────────────────────
-  if (appState.streaming) {
+  if (appState.streaming)
+  {
     unsigned long now = millis();
-    if (now - appState.lastPollMs >= appState.stream.intervalMs) {
+    if (now - appState.lastPollMs >= appState.stream.intervalMs)
+    {
       appState.lastPollMs = now;
       emitDataFrame();
     }

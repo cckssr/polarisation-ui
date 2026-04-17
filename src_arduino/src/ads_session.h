@@ -39,8 +39,8 @@ public:
   // ── PD-TIA gain stage ─────────────────────────────────────────────────────
   // Returns false if stage >= PDTIA_NUM_STAGES.
   bool setPdGainStage(uint8_t stage);
-  uint8_t pdGainStage()   const { return _pdGainStage; }
-  uint8_t pdGainPattern() const;   // 4-bit GPIO pattern for current stage
+  uint8_t pdGainStage() const { return _pdGainStage; }
+  uint8_t pdGainPattern() const; // 4-bit GPIO pattern for current stage
 
   // ── Configuration setters (mirror CONF:ADC:* commands) ───────────────────
   void setMux(ADS1220::Mux mux);
@@ -52,25 +52,25 @@ public:
   void enableTemperature(bool on);
 
   // ── Cached state (used in streaming frames) ───────────────────────────────
-  float    lastVoltage()     const { return _lastVoltage; }
-  float    lastTemperature() const { return _lastTemperature; }
-  int32_t  lastRaw()         const { return _lastRaw; }
-  bool     adcPresent()      const { return _present; }
+  float lastVoltage() const { return _lastVoltage; }
+  float lastTemperature() const { return _lastTemperature; }
+  int32_t lastRaw() const { return _lastRaw; }
+  bool adcPresent() const { return _present; }
 
   // Read-only access to shadow registers (for SENS:ADC:* and DIAG:ADC?).
-  const ADS1220& adcRef() const { return _adc; }
+  const ADS1220 &adcRef() const { return _adc; }
 
   // String representation of current mux config (for SENS:ADC:MUX?).
-  const char* muxName() const;
+  const char *muxName() const;
 
 private:
-  ADS1220  _adc;
-  bool     _present        = false;
-  uint8_t  _pdGainStage    = 0;
-  float    _lastVoltage    = 0.0f;
-  float    _lastTemperature = NAN;
-  int32_t  _lastRaw        = 0;
-  float    _vrefVolts      = 2.048f;  // matches ADS1220 internal reference default
+  ADS1220 _adc;
+  bool _present = false;
+  uint8_t _pdGainStage = 0;
+  float _lastVoltage = 0.0f;
+  float _lastTemperature = NAN;
+  int32_t _lastRaw = 0;
+  float _vrefVolts = 2.048f; // matches ADS1220 internal reference default
 
   // Applies the 4-bit pattern for _pdGainStage to the four GPIO pins.
   void _applyPdGainGpio(uint8_t pattern);

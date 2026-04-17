@@ -5,7 +5,7 @@
 // ── Error queue (SYST:ERR?) ───────────────────────────────────────────────────
 struct ErrorQueue
 {
-  String  msgs[ERR_QUEUE_SIZE];
+  String msgs[ERR_QUEUE_SIZE];
   uint8_t count = 0;
 
   void push(const String &msg)
@@ -31,11 +31,11 @@ struct ErrorQueue
 // ── Acquisition statistics (emitted on stream stop in debug mode) ─────────────
 struct AcqStats
 {
-  unsigned long startMs      = 0;
-  unsigned long endMs        = 0;
-  unsigned long dataPoints   = 0;   // frames emitted
+  unsigned long startMs = 0;
+  unsigned long endMs = 0;
+  unsigned long dataPoints = 0; // frames emitted
   unsigned long parityErrors = 0;
-  unsigned long efEvents     = 0;
+  unsigned long efEvents = 0;
 
   void reset()
   {
@@ -44,7 +44,7 @@ struct AcqStats
 
   void print() const
   {
-    Serial.println("DATA:STAT DUR,"  + String(endMs - startMs));
+    Serial.println("DATA:STAT DUR," + String(endMs - startMs));
     Serial.println("DATA:STAT NPTS," + String(dataPoints));
     Serial.println("DATA:STAT PERR," + String(parityErrors));
     Serial.println("DATA:STAT EERR," + String(efEvents));
@@ -54,24 +54,24 @@ struct AcqStats
 // ── Stream source bitmask (CONF:SRC) ──────────────────────────────────────────
 enum StreamSource : uint8_t
 {
-  SRC_NONE   = 0x00,
-  SRC_ENC_A  = 0x01,
-  SRC_ENC_B  = 0x02,
-  SRC_ADC    = 0x04,
-  SRC_ADC_T  = 0x08,
-  SRC_PDTIA  = 0x10,
+  SRC_NONE = 0x00,
+  SRC_ENC_A = 0x01,
+  SRC_ENC_B = 0x02,
+  SRC_ADC = 0x04,
+  SRC_ADC_T = 0x08,
+  SRC_PDTIA = 0x10,
 };
 
 // ── Stream configuration (CONF:SRC / CONF:RATE) ───────────────────────────────
 struct StreamConfig
 {
-  uint8_t       sources    = DEFAULT_STREAM_SOURCES;
-  uint16_t      rateHz     = DEFAULT_STREAM_RATE_HZ;
+  uint8_t sources = DEFAULT_STREAM_SOURCES;
+  uint16_t rateHz = DEFAULT_STREAM_RATE_HZ;
   unsigned long intervalMs = 1000UL / DEFAULT_STREAM_RATE_HZ;
 
   void setRate(uint16_t hz)
   {
-    rateHz     = hz;
+    rateHz = hz;
     intervalMs = (hz > 0) ? (1000UL / hz) : 50UL;
   }
 };
@@ -79,15 +79,15 @@ struct StreamConfig
 // ── Application state ─────────────────────────────────────────────────────────
 struct AppState
 {
-  bool          streaming   = false;
-  bool          singleShot  = false;   // INIT — one frame on next tick
-  unsigned long lastPollMs  = 0;
-  StreamConfig  stream;
-  bool          encBPresent = true;
-  bool          debug       = false;
+  bool streaming = false;
+  bool singleShot = false; // INIT — one frame on next tick
+  unsigned long lastPollMs = 0;
+  StreamConfig stream;
+  bool encBPresent = true;
+  bool debug = false;
 };
 
 // ── Global instances (defined in state.cpp) ───────────────────────────────────
-extern ErrorQueue  errorQueue;
-extern AcqStats    acqStats;
-extern AppState    appState;
+extern ErrorQueue errorQueue;
+extern AcqStats acqStats;
+extern AppState appState;
