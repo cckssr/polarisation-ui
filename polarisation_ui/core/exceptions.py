@@ -28,3 +28,8 @@ class AngleMismatchError(GoniometerError):
 class InvalidEncoderReading(GoniometerError):
     """Raised when encoder returns invalid or out-of-range values."""
     pass
+
+
+class IncompatibleFirmwareError(GoniometerError):
+    """Raised when firmware version is incompatible with the Python client (requires >= 2.0.0)."""
+    pass

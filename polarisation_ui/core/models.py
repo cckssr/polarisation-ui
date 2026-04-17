@@ -92,6 +92,8 @@ class MeasurementPoint:
     detector_stage_reading: EncoderReading  # Detector stage angle
     photodiode_reading: PhotodiodeReading
     timestamp: datetime = None
+    adc_voltage: Optional[float] = None
+    adc_temperature: Optional[float] = None
 
     def __post_init__(self) -> None:
         """Initialize timestamp if not provided."""

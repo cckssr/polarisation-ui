@@ -1,88 +1,177 @@
 """
-Dual AS5048A Encoder Interface via Serial Communication (SCPI Protocol).
+Dual AS5048A Encoder + ADS1220 ADC interface via SCPI 2.0.0.
 
-This module provides a high-level interface for communicating with an Arduino
-that controls two AS5048A magnetic encoders. It abstracts the SCPI serial
-protocol and provides convenient methods for reading encoder values and
-setting zero positions.
+SCPI 2.0.0 command subset used by this client:
 
-The interface communicates with the Arduino via SCPI commands defined in main.cpp:
-    - MEAS:ANGL? A/B/BOTH   Read angle(s) in degrees
-    - MEAS:MAGN? A/B/BOTH   Read raw magnitude(s)
-    - INIT:CONT ON,A/B/BOTH Start continuous angle streaming
-    - INIT:CONT ON,MAG      Start continuous magnitude streaming
-    - ABOR                  Stop continuous streaming
-    - CONF:ZERO A/B/BOTH    Set zero position
-    - SENS:INT <ms>         Set poll interval
-    - SYST:DIAG? A/B        Read encoder diagnostics
-    - *IDN?                 Identification
-    - *RST                  Reset
-    - SYST:ERR?             Query error queue
+    *IDN?                               Identification (version check on connect)
+    *RST / *CLS                         Reset / clear errors
+    MEAS:ENC:ANGL? A|B|BOTH             One-shot encoder angle (degrees)
+    MEAS:ENC:MAGN? A|B|BOTH             One-shot encoder magnitude (raw 14-bit)
+    MEAS:ADC:VOLT? [CH]                 One-shot ADC voltage (V)
+    MEAS:ADC:TEMP?                      Internal temperature (°C)
+    CONF:ENC:ZERO A|B|BOTH              Set zero position
+    CONF:ENC:ERR  A|B|BOTH              Clear encoder error flag
+    CONF:ADC:GAIN 1|2|4|8|16|32|64|128 ADS1220 PGA gain
+    CONF:ADC:MUX  <ch>                  Input mux channel
+    CONF:ADC:RATE <sps>                 ADC sample rate
+    CONF:ADC:MODE NORM|TURBO            ADC operating mode
+    CONF:ADC:FIR  OFF|50|60|BOTH        FIR filter
+    CONF:ADC:VREF INT|EXT|AVDD          Reference source
+    CONF:ADC:TEMP ON|OFF                Enable temperature channel
+    CONF:PDTIA:GAIN <stage>             PD-TIA discrete gain stage
+    CONF:PDTIA:GAIN?                    Query current stage + GPIO bit pattern
+    CONF:SRC <src>[,<src>...]           Streaming source set (e.g. ENC:BOTH,ADC)
+    CONF:RATE <hz>                      Streaming rate
+    INIT:CONT ON|OFF                    Arm / disarm streaming
+    ABOR                                Stop streaming
+    DIAG:ENC? A|B                       AS5048A diagnostics
+    SYST:ERR?                           Error queue
+    SYST:VERS?                          Firmware version string
 
-Architecture:
-    - Pure Python, no PySide6 dependencies
-    - Built on SerialDevice for low-level communication
-    - Handles protocol parsing and error recovery
+Firmware < 2.0.0 is rejected with IncompatibleFirmwareError.
+
+Architecture: pure Python — no PySide6, no serial imports beyond pyserial.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
 import serial
 
+from polarisation_ui.core.exceptions import IncompatibleFirmwareError
 from polarisation_ui.infrastructure.serial_device import SerialDevice
 from polarisation_ui.infrastructure.logging import Debug
 
 
 class EncoderID(Enum):
-    """Encoder identifier."""
-
     A = "A"
     B = "B"
 
 
 @dataclass
 class EncoderValue:
-    """Single encoder reading."""
-
     encoder_id: EncoderID
     angle_deg: float
     angle_raw: Optional[int] = None
 
     def __repr__(self) -> str:
-        """String representation."""
         raw_str = f", raw={self.angle_raw}" if self.angle_raw is not None else ""
         return f"EncoderValue({self.encoder_id.value}, {self.angle_deg}°{raw_str})"
 
 
 @dataclass
 class DualEncoderValue:
-    """Reading from both encoders."""
-
     angle_a: float
     angle_b: float
 
     def __repr__(self) -> str:
-        """String representation."""
         return f"DualEncoderValue(A={self.angle_a}°, B={self.angle_b}°)"
 
 
+# ── ADC client facet ──────────────────────────────────────────────────────────
+
+class ADCClient:
+    """
+    ADC sub-interface of DualEncoderArduino.
+
+    Exposes CONF:ADC:*, CONF:PDTIA:*, MEAS:ADC:* commands as typed methods.
+    Accessed via the parent's `.adc` attribute::
+
+        dev.adc.configure(gain=8)
+        voltage = dev.adc.read_voltage()
+    """
+
+    def __init__(self, parent: "DualEncoderArduino") -> None:
+        self._dev = parent
+
+    def configure(
+        self,
+        gain: int = 1,
+        mux: str = "DIFF01",
+        rate: int = 20,
+        mode: str = "NORM",
+        fir: str = "OFF",
+        vref: str = "INT",
+    ) -> bool:
+        """Send a batch of CONF:ADC:* commands; returns True if all succeeded."""
+        cmds = [
+            f"CONF:ADC:GAIN {gain}",
+            f"CONF:ADC:MUX {mux}",
+            f"CONF:ADC:RATE {rate}",
+            f"CONF:ADC:MODE {mode}",
+            f"CONF:ADC:FIR {fir}",
+            f"CONF:ADC:VREF {vref}",
+        ]
+        return all(self._dev._send_command_no_response(c) for c in cmds)
+
+    def set_gain(self, gain: int) -> bool:
+        """Set ADS1220 PGA gain (1,2,4,8,16,32,64,128)."""
+        return self._dev._send_command_no_response(f"CONF:ADC:GAIN {gain}")
+
+    def set_pdtia_gain(self, stage: int) -> bool:
+        """Set PD-TIA discrete gain stage (integer; mapped to GPIO pattern in firmware)."""
+        return self._dev._send_command_no_response(f"CONF:PDTIA:GAIN {stage}")
+
+    def get_pdtia_gain(self) -> Optional[str]:
+        """Query current PD-TIA stage; returns '<stage>,0b<bits>' or None."""
+        if not self._dev._device.send_command("CONF:PDTIA:GAIN?", add_newline=True):
+            return None
+        return self._dev._device.read_value(
+            timeout=self._dev.timeout, return_type="str"
+        )
+
+    def read_voltage(self, channel: str = "DIFF01") -> Optional[float]:
+        """One-shot ADC voltage read via MEAS:ADC:VOLT?; returns volts or None."""
+        cmd = f"MEAS:ADC:VOLT? {channel}"
+        if not self._dev._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
+            return None
+        response = self._dev._device.read_value(
+            timeout=self._dev.timeout, return_type="str"
+        )
+        if not response:
+            Debug.error("No response for MEAS:ADC:VOLT?")
+            return None
+        try:
+            return float(response.strip())
+        except ValueError:
+            Debug.error(f"Failed to parse ADC voltage: '{response}'")
+            return None
+
+    def read_temperature(self) -> Optional[float]:
+        """One-shot internal temperature read via MEAS:ADC:TEMP?; returns °C or None."""
+        if not self._dev._device.send_command("MEAS:ADC:TEMP?", add_newline=True):
+            Debug.error("Failed to send: MEAS:ADC:TEMP?")
+            return None
+        response = self._dev._device.read_value(
+            timeout=self._dev.timeout, return_type="str"
+        )
+        if not response:
+            Debug.error("No response for MEAS:ADC:TEMP?")
+            return None
+        try:
+            return float(response.strip())
+        except ValueError:
+            Debug.error(f"Failed to parse ADC temperature: '{response}'")
+            return None
+
+
+# ── Main device class ─────────────────────────────────────────────────────────
+
 class DualEncoderArduino:
     """
-    High-level interface for dual AS5048A encoders via Arduino (SCPI protocol).
+    High-level SCPI 2.0.0 interface for dual AS5048A encoders + ADS1220 ADC.
 
-    Manages serial communication with Arduino running the AS5048A control firmware.
-    Provides methods to read encoder positions, set zero points, and manage
-    continuous polling modes.
+    Raises IncompatibleFirmwareError on connect() when the firmware reports
+    a version older than 2.0.0.
 
     Attributes:
-        DEFAULT_TIMEOUT (float): Default timeout for serial read operations.
-        DEFAULT_POLL_INTERVAL (int): Default continuous polling interval in ms.
+        adc: ADCClient — sub-interface for all ADC / PD-TIA operations.
     """
 
     DEFAULT_TIMEOUT = 1.0
-    DEFAULT_POLL_INTERVAL = 50
+    DEFAULT_POLL_INTERVAL_MS = 50
 
     def __init__(
         self,
@@ -90,98 +179,72 @@ class DualEncoderArduino:
         baudrate: int = 115200,
         timeout: float = DEFAULT_TIMEOUT,
         encoder_b_present: bool = True,
-    ):
-        """
-        Initialize dual encoder interface.
-
-        Args:
-            port (str): Serial port (e.g., '/dev/ttyUSB0', 'COM3').
-            baudrate (int): Serial communication speed. Default 115200.
-            timeout (float): Timeout for serial read operations. Default 1.0s.
-            encoder_b_present (bool): Whether second encoder is present. Default True.
-        """
+    ) -> None:
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
         self.encoder_b_present = encoder_b_present
 
         self._device = SerialDevice(port, baudrate, timeout)
-        self._config: Dict[str, Any] = {
-            "encoder_b_present": encoder_b_present,
-            "poll_interval": self.DEFAULT_POLL_INTERVAL,
-        }
+        self.adc = ADCClient(self)
+
+    # ── Connection ────────────────────────────────────────────────────────────
 
     def connect(self) -> bool:
         """
-        Establish connection to Arduino.
+        Connect and verify firmware version.
+
+        Raises:
+            IncompatibleFirmwareError: if firmware < 2.0.0.
 
         Returns:
-            bool: True if connected successfully, False otherwise.
+            True on success, False on serial error.
         """
         try:
             self._device.reconnect()
+            if not self._device.connected:
+                return False
+            idn = self.identify()
+            if idn:
+                self._check_firmware_version(idn)
             Debug.info(f"DualEncoderArduino connected to {self.port}")
-            return self._device.connected
+            return True
+        except IncompatibleFirmwareError:
+            self._device.close()
+            raise
         except serial.SerialException as e:
             Debug.error(f"Failed to connect to encoder Arduino: {e}")
             return False
 
     def disconnect(self) -> None:
-        """Close serial connection."""
         self._device.close()
         Debug.info(f"DualEncoderArduino disconnected from {self.port}")
 
     def is_connected(self) -> bool:
-        """
-        Check if serial connection is active.
-
-        Returns:
-            bool: True if connected, False otherwise.
-        """
         return self._device.connected and self._device.serial is not None
 
-    def read_encoder_a(self) -> Optional[float]:
-        """
-        Read current angle from encoder A.
+    # ── Encoder reads ─────────────────────────────────────────────────────────
 
-        Returns:
-            float: Angle in degrees, or None on error.
-        """
-        value = self.read_single(EncoderID.A)
-        return value.angle_deg if value else None
+    def read_encoder_a(self) -> Optional[float]:
+        v = self.read_single(EncoderID.A)
+        return v.angle_deg if v else None
 
     def read_encoder_b(self) -> Optional[float]:
-        """
-        Read current angle from encoder B.
-
-        Returns:
-            float: Angle in degrees, or None on error.
-        """
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return None
-        value = self.read_single(EncoderID.B)
-        return value.angle_deg if value else None
+        v = self.read_single(EncoderID.B)
+        return v.angle_deg if v else None
 
     def read_single(self, encoder_id: EncoderID) -> Optional[EncoderValue]:
-        """
-        Read single value from one encoder.
-
-        Sends 'MEAS:ANGL? A' or 'MEAS:ANGL? B' command to Arduino.
-
-        Args:
-            encoder_id (EncoderID): Which encoder to read.
-
-        Returns:
-            EncoderValue: Parsed value with angle_deg, or None on error.
-        """
+        """MEAS:ENC:ANGL? A|B → EncoderValue."""
         if encoder_id == EncoderID.B and not self.encoder_b_present:
             Debug.warning("Encoder B not available")
             return None
 
-        command = f"MEAS:ANGL? {encoder_id.value}"
-        if not self._device.send_command(command, add_newline=True):
-            Debug.error(f"Failed to send command: {command}")
+        cmd = f"MEAS:ENC:ANGL? {encoder_id.value}"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
             return None
 
         response = self._device.read_value(timeout=self.timeout, return_type="str")
@@ -193,155 +256,153 @@ class DualEncoderArduino:
         return self._parse_single_response(response, encoder_id)
 
     def read_both(self) -> Optional[DualEncoderValue]:
-        """
-        Read values from both encoders simultaneously.
-
-        Sends 'MEAS:ANGL? BOTH' command to Arduino.
-
-        Returns:
-            DualEncoderValue: Both angles, or None on error.
-        """
+        """MEAS:ENC:ANGL? BOTH → DualEncoderValue."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return None
 
-        command = "MEAS:ANGL? BOTH"
-        if not self._device.send_command(command, add_newline=True):
-            Debug.error(f"Failed to send command: {command}")
+        cmd = "MEAS:ENC:ANGL? BOTH"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
             return None
 
         response = self._device.read_value(timeout=self.timeout, return_type="str")
         if not response:
-            Debug.error("No response for MEAS:ANGL? BOTH command")
+            Debug.error("No response for MEAS:ENC:ANGL? BOTH")
             self._query_and_log_error()
             return None
 
         return self._parse_both_response(response)
 
-    def start_continuous_a(self) -> bool:
-        """Start continuous angle streaming for encoder A."""
-        return self._send_command_no_response("INIT:CONT ON,A")
+    def read_magnitude(self, encoder_id: EncoderID) -> Optional[int]:
+        """MEAS:ENC:MAGN? A|B → raw 14-bit magnitude or None."""
+        if encoder_id == EncoderID.B and not self.encoder_b_present:
+            Debug.warning("Encoder B not available")
+            return None
 
-    def stop_continuous_a(self) -> bool:
-        """Stop continuous streaming."""
-        return self._send_command_no_response("ABOR")
+        cmd = f"MEAS:ENC:MAGN? {encoder_id.value}"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
+            return None
+
+        response = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not response:
+            Debug.error(f"No response for {cmd}")
+            return None
+
+        try:
+            return int(response.strip())
+        except ValueError as e:
+            Debug.error(f"Failed to parse magnitude: '{response}' ({e})")
+            return None
+
+    # ── Continuous streaming ──────────────────────────────────────────────────
+
+    def start_continuous_a(self) -> bool:
+        """Configure source ENC:A and arm streaming."""
+        return (
+            self._send_command_no_response("CONF:SRC ENC:A")
+            and self._send_command_no_response("INIT:CONT ON")
+        )
 
     def start_continuous_b(self) -> bool:
-        """Start continuous angle streaming for encoder B."""
+        """Configure source ENC:B and arm streaming."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("INIT:CONT ON,B")
-
-    def stop_continuous_b(self) -> bool:
-        """Stop continuous streaming."""
-        return self._send_command_no_response("ABOR")
+        return (
+            self._send_command_no_response("CONF:SRC ENC:B")
+            and self._send_command_no_response("INIT:CONT ON")
+        )
 
     def start_continuous_both(self) -> bool:
-        """Start continuous angle streaming for both encoders."""
+        """Configure source ENC:BOTH,ADC and arm streaming."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("INIT:CONT ON,BOTH")
+        return (
+            self._send_command_no_response("CONF:SRC ENC:BOTH,ADC")
+            and self._send_command_no_response("INIT:CONT ON")
+        )
+
+    def stop_continuous_a(self) -> bool:
+        return self._send_command_no_response("ABOR")
+
+    def stop_continuous_b(self) -> bool:
+        return self._send_command_no_response("ABOR")
 
     def stop_continuous_both(self) -> bool:
-        """Stop continuous streaming."""
         return self._send_command_no_response("ABOR")
 
     def abort(self) -> bool:
-        """Stop any active continuous streaming."""
         return self._send_command_no_response("ABOR")
 
+    # ── Zero / error-flag ─────────────────────────────────────────────────────
+
     def reset_zero_a(self) -> bool:
-        """Set zero position for encoder A (CONF:ZERO A)."""
-        return self._send_command_no_response("CONF:ZERO A")
+        return self._send_command_no_response("CONF:ENC:ZERO A")
 
     def reset_zero_b(self) -> bool:
-        """Set zero position for encoder B (CONF:ZERO B)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ZERO B")
+        return self._send_command_no_response("CONF:ENC:ZERO B")
 
     def reset_zero_both(self) -> bool:
-        """Set zero position for both encoders (CONF:ZERO BOTH)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ZERO BOTH")
+        return self._send_command_no_response("CONF:ENC:ZERO BOTH")
 
     def clear_error_flag_a(self) -> bool:
-        """
-        Clear hardware Error Flag on encoder A (CONF:ERR A).
-
-        The AS5048A EF bit is self-latching. It is auto-cleared during debug-mode
-        reads, but can be manually cleared here when needed.
-        """
-        return self._send_command_no_response("CONF:ERR A")
+        return self._send_command_no_response("CONF:ENC:ERR A")
 
     def clear_error_flag_b(self) -> bool:
-        """Clear hardware Error Flag on encoder B (CONF:ERR B)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ERR B")
+        return self._send_command_no_response("CONF:ENC:ERR B")
 
     def clear_error_flag_both(self) -> bool:
-        """Clear hardware Error Flag on both encoders (CONF:ERR BOTH)."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ERR BOTH")
+        return self._send_command_no_response("CONF:ENC:ERR BOTH")
+
+    # ── Poll rate ─────────────────────────────────────────────────────────────
 
     def set_poll_interval(self, interval_ms: int) -> bool:
         """
-        Set continuous polling interval.
+        Set the streaming poll interval.
 
-        Args:
-            interval_ms (int): Poll interval in milliseconds (1-9999).
-
-        Returns:
-            bool: True if command sent successfully, False otherwise.
+        Converts milliseconds to Hz and sends CONF:RATE.  Valid range: 1–9999 ms.
         """
         if interval_ms < 1 or interval_ms > 9999:
             Debug.error(f"Invalid poll interval: {interval_ms} ms")
             return False
+        hz = max(1, round(1000 / interval_ms))
+        return self._send_command_no_response(f"CONF:RATE {hz}")
 
-        if self._send_command_no_response(f"SENS:INT {interval_ms}"):
-            self._config["poll_interval"] = interval_ms
-            Debug.info(f"Poll interval set to {interval_ms} ms")
-            return True
-        return False
+    # ── Diagnostics ───────────────────────────────────────────────────────────
 
-    def get_diagnostics_a(self) -> Optional[Dict[str, Any]]:
-        """Read diagnostics from encoder A."""
+    def get_diagnostics_a(self) -> Optional[dict[str, Any]]:
         return self.get_diagnostics(EncoderID.A)
 
-    def get_diagnostics_b(self) -> Optional[Dict[str, Any]]:
-        """Read diagnostics from encoder B."""
+    def get_diagnostics_b(self) -> Optional[dict[str, Any]]:
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return None
         return self.get_diagnostics(EncoderID.B)
 
-    def get_diagnostics(self, encoder_id: EncoderID) -> Optional[Dict[str, Any]]:
-        """
-        Read diagnostics from one encoder.
-
-        Args:
-            encoder_id (EncoderID): Which encoder to read diagnostics from.
-
-        Returns:
-            Dict with keys: compHigh, compLow, cof, ocf, agc.
-            Returns None on error.
-        """
+    def get_diagnostics(self, encoder_id: EncoderID) -> Optional[dict[str, Any]]:
+        """DIAG:ENC? A|B → dict with compHigh, compLow, cof, ocf (bool), agc (int)."""
         if encoder_id == EncoderID.B and not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return None
 
-        command = f"SYST:DIAG? {encoder_id.value}"
-        if not self._device.send_command(command, add_newline=True):
-            Debug.error(f"Failed to send command: {command}")
+        cmd = f"DIAG:ENC? {encoder_id.value}"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
             return None
 
         response = self._device.read_value(timeout=self.timeout, return_type="str")
@@ -351,98 +412,50 @@ class DualEncoderArduino:
 
         return self._parse_diagnostics_response(response, encoder_id)
 
+    # ── Misc ──────────────────────────────────────────────────────────────────
+
     def query_error(self) -> Optional[str]:
-        """
-        Query next error from error queue (SYST:ERR?).
-
-        Returns:
-            Error string (e.g. '0,"No error"') or None on comm failure.
-        """
-        command = "SYST:ERR?"
-        if not self._device.send_command(command, add_newline=True):
-            return None
-        return self._device.read_value(timeout=self.timeout, return_type="str")
-
-    def read_magnitude(self, encoder_id: EncoderID) -> Optional[int]:
-        """
-        Read raw magnitude from one encoder (MEAS:MAGN? A/B).
-
-        Returns the 14-bit raw magnetic field magnitude (0–16383).
-        High values indicate a strong field; low values a weak one.
-
-        Args:
-            encoder_id: Which encoder to query.
-
-        Returns:
-            Raw magnitude integer, or None on error.
-        """
-        if encoder_id == EncoderID.B and not self.encoder_b_present:
-            Debug.warning("Encoder B not available")
-            return None
-
-        command = f"MEAS:MAGN? {encoder_id.value}"
-        if not self._device.send_command(command, add_newline=True):
-            Debug.error(f"Failed to send command: {command}")
-            return None
-
-        response = self._device.read_value(timeout=self.timeout, return_type="str")
-        if not response:
-            Debug.error(f"No response for {command}")
-            return None
-
-        try:
-            return int(response.strip())
-        except ValueError as e:
-            Debug.error(f"Failed to parse magnitude response: '{response}' ({e})")
-            return None
-
-    def send_query(self, command: str) -> Optional[str]:
-        """
-        Send an arbitrary SCPI command and return the response line.
-
-        For query commands (ending with '?') the response is returned.
-        For control commands the Arduino sends no response; None is returned
-        after a short timeout.  Use this primarily from the debug terminal.
-
-        Args:
-            command: Raw SCPI command string.
-
-        Returns:
-            Response string, or None if nothing was received / send failed.
-        """
-        if not self._device.send_command(command, add_newline=True):
-            Debug.error(f"Failed to send raw query: {command}")
+        if not self._device.send_command("SYST:ERR?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
     def identify(self) -> Optional[str]:
-        """
-        Query device identification (*IDN?).
-
-        Returns:
-            Identification string or None on error.
-        """
         if not self._device.send_command("*IDN?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
     def reset(self) -> bool:
-        """Reset device to defaults (*RST)."""
         return self._send_command_no_response("*RST")
 
     def flush_buffer(self) -> bool:
-        """Clear input buffer (removes stale data)."""
         return self._device.flush_input_buffer()
 
-    def _query_and_log_error(self) -> None:
-        """
-        Query the device error queue and log the result.
+    def send_query(self, command: str) -> Optional[str]:
+        """Send an arbitrary SCPI command and return the response (debug terminal use)."""
+        if not self._device.send_command(command, add_newline=True):
+            Debug.error(f"Failed to send raw query: {command}")
+            return None
+        return self._device.read_value(timeout=self.timeout, return_type="str")
 
-        Called after a read timeout so the caller knows whether the Arduino
-        reported an error (e.g. unknown command, hardware fault) or simply
-        had no data to send.  Flushes stale bytes first so the SYST:ERR?
-        response is not contaminated by the previous timed-out command.
-        """
+    # ── Internal helpers ──────────────────────────────────────────────────────
+
+    def _check_firmware_version(self, idn: str) -> None:
+        """Raise IncompatibleFirmwareError if firmware version is < 2.0.0."""
+        parts = idn.strip().split(",")
+        if len(parts) < 4:
+            return  # non-standard IDN — skip check
+        version = parts[3].strip()
+        try:
+            major, minor, *_rest = version.split(".")
+            if (int(major), int(minor)) < (2, 0):
+                raise IncompatibleFirmwareError(
+                    f"Firmware {version} is incompatible; requires >= 2.0.0. "
+                    "Please flash the latest firmware."
+                )
+        except ValueError:
+            return  # non-semver version string — skip check
+
+    def _query_and_log_error(self) -> None:
         self._device.flush_input_buffer()
         error = self.query_error()
         if error is None:
@@ -453,56 +466,37 @@ class DualEncoderArduino:
             Debug.error(f"SYST:ERR? → {error}")
 
     def _send_command_no_response(self, command: str) -> bool:
-        """
-        Send a SCPI command that does not produce a response.
-
-        Args:
-            command (str): SCPI command string.
-
-        Returns:
-            bool: True if sent successfully, False otherwise.
-        """
         if not self._device.send_command(command, add_newline=True):
             Debug.error(f"Failed to send command: {command}")
             return False
         Debug.debug(f"Command sent: {command}")
         return True
 
+    @staticmethod
+    def _parse_data_frame(line: str) -> dict[str, str]:
+        """Parse a DATA:FRAME key=value line; unknown keys are silently included."""
+        if not line.startswith("DATA:FRAME "):
+            return {}
+        payload = line[len("DATA:FRAME "):]
+        result: dict[str, str] = {}
+        for part in payload.split(","):
+            if "=" in part:
+                k, _, v = part.partition("=")
+                result[k.strip()] = v.strip()
+        return result
+
     def _parse_single_response(
         self, response: str, encoder_id: EncoderID
     ) -> Optional[EncoderValue]:
-        """
-        Parse single encoder query response.
-
-        MEAS:ANGL? A  →  '45.23'
-
-        Args:
-            response (str): Response string from Arduino.
-            encoder_id (EncoderID): Expected encoder ID.
-
-        Returns:
-            EncoderValue or None if parsing failed.
-        """
         try:
             angle_deg = float(response.strip())
-            Debug.debug(f"Parsed encoder {encoder_id.value}: {angle_deg}°")
+            Debug.debug(f"Encoder {encoder_id.value}: {angle_deg}°")
             return EncoderValue(encoder_id, angle_deg)
         except ValueError as e:
             Debug.error(f"Failed to parse encoder response: '{response}' ({e})")
             return None
 
     def _parse_both_response(self, response: str) -> Optional[DualEncoderValue]:
-        """
-        Parse dual encoder query response.
-
-        MEAS:ANGL? BOTH  →  '45.23,12.67'
-
-        Args:
-            response (str): Response string from Arduino.
-
-        Returns:
-            DualEncoderValue or None if parsing failed.
-        """
         try:
             parts = response.strip().split(",")
             if len(parts) < 2:
@@ -510,7 +504,7 @@ class DualEncoderArduino:
                 return None
             angle_a = float(parts[0])
             angle_b = float(parts[1])
-            Debug.debug(f"Parsed both encoders: A={angle_a}°, B={angle_b}°")
+            Debug.debug(f"Both encoders: A={angle_a}°, B={angle_b}°")
             return DualEncoderValue(angle_a, angle_b)
         except (IndexError, ValueError) as e:
             Debug.error(f"Failed to parse dual encoder response: '{response}' ({e})")
@@ -518,34 +512,20 @@ class DualEncoderArduino:
 
     def _parse_diagnostics_response(
         self, response: str, encoder_id: EncoderID
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Parse diagnostics query response.
-
-        SYST:DIAG? A  →  '0,0,0,1,200'  (compHigh,compLow,cof,ocf,agc)
-
-        Args:
-            response (str): Response string from Arduino.
-            encoder_id (EncoderID): Expected encoder ID.
-
-        Returns:
-            Dict with keys compHigh/compLow/cof/ocf (bool) and agc (int 0-255).
-            Returns None if parsing failed.
-        """
+    ) -> Optional[dict[str, Any]]:
+        """DIAG:ENC? → 'compH,compL,cof,ocf,agc' → typed dict."""
         try:
             parts = response.strip().split(",")
             if len(parts) < 5:
                 Debug.error(f"Invalid diagnostics response: '{response}'")
                 return None
-
             flag_keys = ["compHigh", "compLow", "cof", "ocf"]
-            diag_dict: Dict[str, Any] = {
-                key: bool(int(parts[i].strip())) for i, key in enumerate(flag_keys)
+            diag: dict[str, Any] = {
+                k: bool(int(parts[i].strip())) for i, k in enumerate(flag_keys)
             }
-            diag_dict["agc"] = int(parts[4].strip())
-            Debug.debug(f"Parsed diagnostics for {encoder_id.value}: {diag_dict}")
-            return diag_dict
-
+            diag["agc"] = int(parts[4].strip())
+            Debug.debug(f"Diagnostics {encoder_id.value}: {diag}")
+            return diag
         except (IndexError, ValueError) as e:
-            Debug.error(f"Failed to parse diagnostics response: '{response}' ({e})")
+            Debug.error(f"Failed to parse diagnostics: '{response}' ({e})")
             return None

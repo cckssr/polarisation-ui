@@ -269,6 +269,28 @@ class GoniometerDeviceManager:
             Debug.error(f"Error reading detector angle: {e}")
             return None
 
+    def read_adc_voltage(self) -> Optional[float]:
+        """Read photodiode voltage via MEAS:ADC:VOLT? (requires firmware >= 2.0.0)."""
+        device = self.get_encoder_device()
+        if device is None:
+            return None
+        try:
+            return device.adc.read_voltage()
+        except Exception as e:
+            Debug.error(f"Error reading ADC voltage: {e}")
+            return None
+
+    def read_adc_temperature(self) -> Optional[float]:
+        """Read internal ADC temperature via MEAS:ADC:TEMP?."""
+        device = self.get_encoder_device()
+        if device is None:
+            return None
+        try:
+            return device.adc.read_temperature()
+        except Exception as e:
+            Debug.error(f"Error reading ADC temperature: {e}")
+            return None
+
     def read_diagnostics_both(
         self,
     ) -> Optional[tuple[Optional[dict], Optional[dict]]]:

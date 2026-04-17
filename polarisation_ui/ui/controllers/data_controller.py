@@ -96,7 +96,10 @@ class DataController(QObject):
     connection_lost = Signal()
 
     def __init__(
-        self, device_manager: GoniometerDeviceManager, parent: Optional[QObject] = None
+        self,
+        device_manager: GoniometerDeviceManager,
+        parent: Optional[QObject] = None,
+        use_mock_intensity: bool = False,
     ):
         """
         Initialize data controller.
@@ -140,6 +143,10 @@ class DataController(QObject):
             maxlen=self._acq_settings.samp_averages
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
+
+        # When True, fall back to Gaussian simulation instead of querying ADC.
+        # Set to True in unit tests that don't have a mock device attached.
+        self._use_mock_intensity = use_mock_intensity
 
         Debug.debug("Data controller initialized")
 
@@ -263,14 +270,20 @@ class DataController(QObject):
         """
         Return the current photodiode intensity (a.u.).
 
-        Currently a mock: Gaussian peak centred at _MOCK_PEAK_ANGLE.
-        Replace the body with a real ADC read when hardware is available.
+        Reads real ADC voltage via MEAS:ADC:VOLT?.  Falls back to a Gaussian
+        simulation when use_mock_intensity=True (tests without hardware).
         """
-        diff = detector_angle - self._MOCK_PEAK_ANGLE
-        signal = self._MOCK_AMPLITUDE * math.exp(
-            -(diff**2) / (2.0 * self._MOCK_SIGMA**2)
-        )
-        return signal + random.gauss(0.0, self._MOCK_NOISE)
+        if self._use_mock_intensity:
+            diff = detector_angle - self._MOCK_PEAK_ANGLE
+            signal = self._MOCK_AMPLITUDE * math.exp(
+                -(diff**2) / (2.0 * self._MOCK_SIGMA**2)
+            )
+            return signal + random.gauss(0.0, self._MOCK_NOISE)
+
+        voltage = self.device_manager.read_adc_voltage()
+        if voltage is None:
+            return 0.0
+        return voltage
 
     # ==================== Data Acquisition ====================
 
