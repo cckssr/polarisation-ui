@@ -17,9 +17,16 @@ void AS5048A_SPI::csHigh() { digitalWrite(_cs, HIGH); }
 
 bool AS5048A_SPI::evenParity16(uint16_t word)
 {
-// true if total number of 1-bits in 'word' is even
+    // true if total number of 1-bits in 'word' is even
 #if defined(__GNUC__)
     return (__builtin_popcount((unsigned)word) % 2) == 0;
+#else
+    uint16_t x = word;
+    x ^= x >> 8;
+    x ^= x >> 4;
+    x ^= x >> 2;
+    x ^= x >> 1;
+    return (x & 1u) == 0;
 #endif
 }
 

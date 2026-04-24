@@ -40,6 +40,7 @@ from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.session_journal import SessionJournal
 
 
 class DataController(QObject):
@@ -65,6 +66,9 @@ class DataController(QObject):
     frame_ready = Signal(Frame)  # consolidated per-sample frame
     # Per-encoder diagnostic results: (a_ok, a_desc, b_ok, b_desc)
     diagnostics_updated = Signal(bool, str, bool, str)
+    # Opt-in debug signal — raw DATA:FRAME string (off by default for perf).
+    # Enable via enable_raw_frame_signal(True) before opening the Raw Stream tab.
+    raw_frame = Signal(str)
 
     # Error signals
     error_occurred = Signal(str)  # error_message
@@ -76,8 +80,8 @@ class DataController(QObject):
     # Default polling interval (milliseconds)
     DEFAULT_POLL_INTERVAL = 100  # 10 Hz
 
-    # Delay before each reconnection attempt (milliseconds)
-    RETRY_DELAY_MS = 3000
+    # Exponential backoff delays (ms): 1 s, 2 s, 4 s, 8 s, then cap at 15 s.
+    _BACKOFF_DELAYS_MS: list[int] = [1000, 2000, 4000, 8000, 15000]
 
     # How often to run SYST:DIAG? checks (milliseconds)
     DIAG_INTERVAL_MS = 5000  # every 5 s
@@ -131,7 +135,8 @@ class DataController(QObject):
         # State tracking
         self._is_measuring = False
         self._error_count = 0
-        self._max_errors = 10  # Stop after this many consecutive errors
+        self._max_errors = 10  # Declare connection_lost after this many attempts
+        self._backoff_attempt = 0  # Which backoff delay to use next
 
         # When True, sample angle is corrected as (360 - raw) % 360 to account
         # for the diametrically flipped magnet on the sample stage.
@@ -149,6 +154,15 @@ class DataController(QObject):
         # When True, fall back to Gaussian simulation instead of querying ADC.
         # Set to True in unit tests that don't have a mock device attached.
         self._use_mock_intensity = use_mock_intensity
+
+        # When True, the raw_frame signal is emitted with the DATA:FRAME string
+        # on every poll.  Disabled by default — only enabled when the Raw Stream
+        # tab in the debug dialog is open, to avoid unnecessary string formatting.
+        self._raw_frame_enabled: bool = False
+
+        # Active session journal — created on start_measurement(), closed/finalized
+        # when the user explicitly exports or stops. Preserved across reconnects.
+        self._journal: Optional[SessionJournal] = None
 
         Debug.debug("Data controller initialized")
 
@@ -185,6 +199,18 @@ class DataController(QObject):
 
     # ==================== Polling Control ====================
 
+    def enable_raw_frame_signal(self, enabled: bool) -> None:
+        """
+        Enable or disable the opt-in ``raw_frame`` debug signal.
+
+        When *enabled* is True, each poll emits ``raw_frame(str)`` with a
+        synthetic ``DATA:FRAME`` string built from the latest sensor readings.
+        Disable when the Raw Stream debug tab is closed to avoid the overhead
+        of string formatting on every 100 ms tick.
+        """
+        self._raw_frame_enabled = enabled
+        Debug.debug(f"raw_frame signal {'enabled' if enabled else 'disabled'}")
+
     def set_poll_interval(self, interval_ms: int) -> None:
         """
         Set polling interval.
@@ -215,6 +241,7 @@ class DataController(QObject):
             return True
 
         self._error_count = 0
+        self._backoff_attempt = 0
         self.poll_timer.start(self.poll_interval)
         self._diag_timer.start(self.DIAG_INTERVAL_MS)
         Debug.info("Continuous reading started")
@@ -248,19 +275,27 @@ class DataController(QObject):
             return False
 
         self._is_measuring = True
+        self._start_journal()
         self.measurement_started.emit()
         Debug.info("Measurement session started")
         return True
 
     def stop_measurement(self) -> None:
-        """Stop measurement session."""
+        """Stop measurement session. Journal is closed but not finalized (recoverable)."""
         if not self._is_measuring:
             return
 
         self.stop_continuous_reading()
         self._is_measuring = False
+        if self._journal is not None and self._journal.is_active:
+            self._journal.close()
         self.measurement_stopped.emit()
         Debug.info("Measurement session stopped")
+
+    @property
+    def current_journal(self) -> Optional[SessionJournal]:
+        """The active (or most-recently closed) session journal, or None."""
+        return self._journal
 
     def is_measuring(self) -> bool:
         """Check if measurement is active."""
@@ -332,42 +367,47 @@ class DataController(QObject):
             intensity = self._read_intensity(detector_angle)
             self.intensity_updated.emit(intensity)
             self.angles_updated.emit(display_sample, display_det)
-            self.frame_ready.emit(
-                Frame(
-                    ts_ms=int(time.monotonic() * 1000),
-                    sample_angle=display_sample,
-                    detector_angle=display_det,
-                    intensity=intensity,
-                )
+            frame = Frame(
+                ts_ms=int(time.monotonic() * 1000),
+                sample_angle=display_sample,
+                detector_angle=display_det,
+                intensity=intensity,
             )
+            self.frame_ready.emit(frame)
+            if self._raw_frame_enabled:
+                raw = (
+                    f"DATA:FRAME tsMs={frame.ts_ms},"
+                    f"angA={frame.sample_angle:.4f},"
+                    f"angB={frame.detector_angle:.4f},"
+                    f"adcV={frame.intensity:.6f}"
+                )
+                self.raw_frame.emit(raw)
+            if self._is_measuring and self._journal is not None:
+                self._journal.append_frame(frame)
 
         except Exception as e:
             self._handle_read_error(f"Exception during sensor poll: {e}")
 
     def _handle_read_error(self, error_msg: str) -> None:
-        """
-        Handle sensor read errors.
-
-        Args:
-            error_msg: Error message
-        """
+        """Pause polling and schedule a reconnect with exponential backoff."""
         self._error_count += 1
-
         Debug.error(f"Read error ({self._error_count}/{self._max_errors}): {error_msg}")
-
-        # Emit error signal
         self.error_occurred.emit(error_msg)
-
-        # Pause polling and schedule a delayed reconnect attempt
         self.poll_timer.stop()
 
         if self._error_count >= self._max_errors:
-            Debug.error("Too many consecutive errors, giving up")
-            if self._is_measuring:
-                self.stop_measurement()
+            Debug.error("Max reconnect attempts exhausted — declaring connection lost")
+            # Close the journal (not finalized — stays recoverable)
+            if self._journal is not None and self._journal.is_active:
+                self._journal.close()
             self.connection_lost.emit()
         else:
-            self._retry_timer.start(self.RETRY_DELAY_MS)
+            delay_ms = self._BACKOFF_DELAYS_MS[
+                min(self._backoff_attempt, len(self._BACKOFF_DELAYS_MS) - 1)
+            ]
+            self._backoff_attempt += 1
+            Debug.info(f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})")
+            self._retry_timer.start(delay_ms)
 
     @Slot()
     def _attempt_reconnect(self) -> None:
@@ -379,8 +419,11 @@ class DataController(QObject):
             success = self.device_manager.reconnect_encoders()
             if success:
                 self._error_count = 0
-                self._sample_buffer.clear()
-                self._det_buffer.clear()
+                self._backoff_attempt = 0
+                # Buffers are intentionally preserved — data continuity across gaps.
+                # Write a gap marker so consumers can show a discontinuity on plots.
+                if self._journal is not None and self._journal.is_active:
+                    self._journal.append_gap()
                 self.poll_timer.start(self.poll_interval)
                 self._diag_timer.start(self.DIAG_INTERVAL_MS)
                 self.reconnect_succeeded.emit()
@@ -449,6 +492,19 @@ class DataController(QObject):
         else:
             Debug.debug(f"Sensor diagnostics OK: {a_desc} | {b_desc}")
 
+    # ==================== Journal Helpers ====================
+
+    def _start_journal(self) -> None:
+        """Create and start a new session journal for the current measurement."""
+        firmware = self.device_manager.get_firmware_version()
+        config = self.device_manager.get_desired_state().as_config_snapshot()
+        self._journal = SessionJournal(firmware_version=firmware, config_snapshot=config)
+        try:
+            self._journal.start()
+        except OSError as e:
+            Debug.error(f"Failed to start session journal: {e}")
+            self._journal = None
+
     # ==================== Cleanup ====================
 
     def cleanup(self) -> None:
@@ -459,5 +515,7 @@ class DataController(QObject):
 
         if self._is_measuring:
             self.stop_measurement()
+        elif self._journal is not None and self._journal.is_active:
+            self._journal.close()
 
         Debug.debug("Data controller cleaned up")

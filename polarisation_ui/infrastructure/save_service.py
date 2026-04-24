@@ -352,6 +352,64 @@ class MeasurementSaveService:
             Debug.error(f"Backup failed: {exc}", exc_info=exc)
             return None
 
+    def save_calibration_run(
+        self,
+        output_path: Path,
+        data: list[list[str]],
+        firmware_version: str = "unknown",
+        config_snapshot: Optional[dict] = None,
+    ) -> Path:
+        """
+        Save a calibration run CSV with a YAML-ish header.
+
+        The header carries the firmware version and the full ``CONF:*`` config
+        snapshot so the file is self-describing.  The body is written as plain
+        CSV with column headers on the first non-comment row.
+
+        Args:
+            output_path:      Destination file (absolute).  Parent dirs are
+                              created automatically.
+            data:             List of rows **including** the column-header row.
+                              Each row is a list of strings.
+            firmware_version: Firmware IDN version string, e.g. ``"2.0.0"``.
+            config_snapshot:  Dict of CONF:* settings captured at run start
+                              (e.g. from ``DesiredState.as_config_snapshot()``).
+
+        Returns:
+            The resolved absolute path of the written file.
+
+        Raises:
+            IOError: On any file I/O failure.
+        """
+        if config_snapshot is None:
+            config_snapshot = {}
+
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            with open(output_path, "w", newline="", encoding="utf-8") as fh:
+                # YAML-ish comment header
+                fh.write(f"# firmware_version: {firmware_version}\n")
+                fh.write(f"# saved_ts: {datetime.now().isoformat()}\n")
+                for key, value in config_snapshot.items():
+                    safe_val = str(value).replace("\n", " ")
+                    fh.write(f"# config_{key}: {safe_val}\n")
+
+                writer = csv.writer(fh)
+                writer.writerows(data)
+
+            Debug.info(
+                f"Calibration run saved: {output_path} "
+                f"({len(data) - 1 if data else 0} data rows, "
+                f"firmware={firmware_version})"
+            )
+        except Exception as exc:
+            Debug.error(f"Failed to save calibration run: {exc}", exc_info=exc)
+            raise IOError(f"Calibration save failed: {exc}") from exc
+
+        return output_path
+
     def cleanup_old_backups(self, backup_dir: Path, max_age_hours: int = 24):
         """
         Remove old backup files.

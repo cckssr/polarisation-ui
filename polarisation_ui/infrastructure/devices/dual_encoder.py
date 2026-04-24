@@ -45,12 +45,16 @@ from polarisation_ui.infrastructure.logging import Debug
 
 
 class EncoderID(Enum):
+    """Identifier for encoders; used in commands and responses."""
+
     A = "A"
     B = "B"
 
 
 @dataclass
 class EncoderValue:
+    """Represents a single encoder reading with optional raw magnitude."""
+
     encoder_id: EncoderID
     angle_deg: float
     angle_raw: Optional[int] = None
@@ -62,6 +66,8 @@ class EncoderValue:
 
 @dataclass
 class DualEncoderValue:
+    """Represents simultaneous readings from both encoders."""
+
     angle_a: float
     angle_b: float
 
@@ -70,7 +76,6 @@ class DualEncoderValue:
 
 
 # ── ADC client facet ──────────────────────────────────────────────────────────
-
 class ADCClient:
     """
     ADC sub-interface of DualEncoderArduino.
@@ -160,6 +165,7 @@ class ADCClient:
 
 
 # ── Main device class ─────────────────────────────────────────────────────────
+
 
 class DualEncoderArduino:
     """
@@ -304,30 +310,27 @@ class DualEncoderArduino:
 
     def start_continuous_a(self) -> bool:
         """Configure source ENC:A and arm streaming."""
-        return (
-            self._send_command_no_response("CONF:SRC ENC:A")
-            and self._send_command_no_response("INIT:CONT ON")
-        )
+        return self._send_command_no_response(
+            "CONF:SRC ENC:A"
+        ) and self._send_command_no_response("INIT:CONT ON")
 
     def start_continuous_b(self) -> bool:
         """Configure source ENC:B and arm streaming."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return (
-            self._send_command_no_response("CONF:SRC ENC:B")
-            and self._send_command_no_response("INIT:CONT ON")
-        )
+        return self._send_command_no_response(
+            "CONF:SRC ENC:B"
+        ) and self._send_command_no_response("INIT:CONT ON")
 
     def start_continuous_both(self) -> bool:
         """Configure source ENC:BOTH,ADC and arm streaming."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return (
-            self._send_command_no_response("CONF:SRC ENC:BOTH,ADC")
-            and self._send_command_no_response("INIT:CONT ON")
-        )
+        return self._send_command_no_response(
+            "CONF:SRC ENC:BOTH,ADC"
+        ) and self._send_command_no_response("INIT:CONT ON")
 
     def stop_continuous_a(self) -> bool:
         return self._send_command_no_response("ABOR")
@@ -551,7 +554,7 @@ class DualEncoderArduino:
         """Parse a DATA:FRAME key=value line; unknown keys are silently included."""
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME "):]
+        payload = line[len("DATA:FRAME ") :]
         result: dict[str, str] = {}
         for part in payload.split(","):
             if "=" in part:

@@ -19,7 +19,10 @@ from enum import Enum
 from serial.tools import list_ports
 
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino
+from polarisation_ui.infrastructure.devices.dual_encoder import (
+    DesiredState,
+    DualEncoderArduino,
+)
 
 
 class DeviceState(Enum):
@@ -71,6 +74,9 @@ class GoniometerDeviceManager:
 
         # Status tracking
         self._encoder_status = DeviceStatus(state=DeviceState.DISCONNECTED)
+
+        # Last-known CONF:ADC:* / CONF:PDTIA:* state — reapplied after reconnect
+        self._desired_state: DesiredState = DesiredState()
 
         Debug.info(f"Device manager initialized (mock={use_mock})")
 
@@ -136,7 +142,10 @@ class GoniometerDeviceManager:
         Re-establish the encoder connection using the last known port/baudrate.
 
         Cleanly disconnects first, then calls connect_encoders() with the
-        stored parameters.  Returns False if no prior connection info exists.
+        stored parameters.  On success, reapplies the saved DesiredState so
+        the Arduino's CONF:ADC:* / CONF:PDTIA:* config is restored.
+
+        Returns False if no prior connection info exists.
         """
         port = self._encoder_status.port
         baudrate = self._encoder_status.baudrate or 115200
@@ -145,7 +154,23 @@ class GoniometerDeviceManager:
             return False
         Debug.info(f"Reconnecting to {port} at {baudrate} baud...")
         self.disconnect_encoders()
-        return self.connect_encoders(port=port, baudrate=baudrate)
+        success = self.connect_encoders(port=port, baudrate=baudrate)
+        if success and self._encoder_device is not None:
+            self._encoder_device.reapply_desired_state(self._desired_state)
+        return success
+
+    def set_desired_state(self, state: DesiredState) -> None:
+        """Update the desired-state snapshot used on reconnect."""
+        self._desired_state = state
+
+    def get_desired_state(self) -> DesiredState:
+        return self._desired_state
+
+    def get_firmware_version(self) -> str:
+        """Return the firmware version reported by the connected device, or 'unknown'."""
+        if self._encoder_device is None:
+            return "unknown"
+        return self._encoder_device.firmware_version
 
     def disconnect_encoders(self) -> None:
         """Disconnect from encoder Arduino."""

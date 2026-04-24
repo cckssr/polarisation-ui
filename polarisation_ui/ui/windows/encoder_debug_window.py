@@ -14,7 +14,10 @@ GoniometerDeviceManager.get_encoder_device() — acceptable for a debug-only
 dialog that lives entirely inside the UI layer.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QTimer, Slot
 from PySide6.QtWidgets import (
@@ -27,6 +30,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLCDNumber,
     QLineEdit,
+    QPlainTextEdit,
     QPushButton,
     QSizePolicy,
     QSpacerItem,
@@ -47,6 +51,9 @@ from polarisation_ui.ui.common.status_led import (
     LED_RED,
     LED_YELLOW,
 )
+
+if TYPE_CHECKING:
+    from polarisation_ui.ui.controllers.data_controller import DataController
 
 
 # ─── LED colour semantics ───────────────────────────────────────────────────
@@ -73,6 +80,7 @@ class EncoderDebugDialog(QDialog):
         self,
         device_manager: GoniometerDeviceManager,
         sample_inverted: bool = False,
+        data_controller: "DataController | None" = None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -81,6 +89,7 @@ class EncoderDebugDialog(QDialog):
 
         self._dm = device_manager
         self._sample_inverted = sample_inverted
+        self._data_controller = data_controller
 
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self._refresh)
@@ -90,6 +99,8 @@ class EncoderDebugDialog(QDialog):
         self._load_system_info()
 
         self._build_ads_tab()
+        self._build_raw_stream_tab()
+        self._build_self_test_tab()
 
         if self.ui.cbAutoRefresh.isChecked():
             self._refresh_timer.start(self.ui.spbRefreshInterval.value())
@@ -522,8 +533,118 @@ class EncoderDebugDialog(QDialog):
         self._le_adc_fir.setText(cfg.get("fir", "–"))
         self._le_adc_vref.setText(cfg.get("vref", "–"))
 
+    # ==================== Raw Stream Tab ====================
+
+    def _build_raw_stream_tab(self) -> None:
+        """
+        Create the Raw Stream tab — a scrolling log of DATA:FRAME strings.
+
+        Requires DataController with the raw_frame signal.  When no
+        DataController is provided the tab is created but shows a notice.
+        """
+        tab = QWidget()
+        vl = QVBoxLayout(tab)
+
+        if self._data_controller is None:
+            lbl = QLabel(
+                "Kein DataController verfügbar.\n"
+                "Öffne den Debug-Dialog über das Hauptfenster (Strg+D)."
+            )
+            lbl.setWordWrap(True)
+            vl.addWidget(lbl)
+            self.ui.tabWidget.addTab(tab, "Raw Stream")
+            return
+
+        # Scrolling log
+        self._te_raw_stream = QPlainTextEdit()
+        self._te_raw_stream.setReadOnly(True)
+        self._te_raw_stream.setMaximumBlockCount(500)  # keep last 500 lines
+        self._te_raw_stream.setPlaceholderText("Warte auf Frames …")
+        font = self._te_raw_stream.font()
+        font.setFamily("Monospace")
+        self._te_raw_stream.setFont(font)
+        vl.addWidget(self._te_raw_stream)
+
+        hl = QHBoxLayout()
+        btn_clear = QPushButton("Löschen")
+        btn_clear.clicked.connect(self._te_raw_stream.clear)
+        hl.addWidget(btn_clear)
+        hl.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        vl.addLayout(hl)
+
+        self.ui.tabWidget.addTab(tab, "Raw Stream")
+
+        # Connect DataController signal — enable signal when the dialog opens,
+        # disable it again when it closes (see closeEvent).
+        self._data_controller.raw_frame.connect(self._on_raw_frame)
+        self._data_controller.enable_raw_frame_signal(True)
+        Debug.debug("Raw Stream tab connected to DataController.raw_frame")
+
+    @Slot(str)
+    def _on_raw_frame(self, frame_str: str) -> None:
+        """Append one DATA:FRAME line to the raw stream log."""
+        if hasattr(self, "_te_raw_stream"):
+            ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            self._te_raw_stream.appendPlainText(f"[{ts}] {frame_str}")
+
+    # ==================== Self-Test Tab ====================
+
+    def _build_self_test_tab(self) -> None:
+        """Create the Self-Test tab — runs DIAG:SELF? and displays PASS/FAIL results."""
+        tab = QWidget()
+        vl = QVBoxLayout(tab)
+
+        lbl_info = QLabel(
+            "Führt DIAG:SELF? aus — überprüft alle Subsysteme (Encoder A/B, ADC, PD-TIA).\n"
+            "Jedes Subsystem meldet PASS oder FAIL."
+        )
+        lbl_info.setWordWrap(True)
+        vl.addWidget(lbl_info)
+
+        btn_run = QPushButton("Selbsttest ausführen  (DIAG:SELF?)")
+        btn_run.clicked.connect(self._run_self_test)
+        vl.addWidget(btn_run)
+
+        self._te_self_test = QPlainTextEdit()
+        self._te_self_test.setReadOnly(True)
+        self._te_self_test.setPlaceholderText("Noch kein Test durchgeführt.")
+        font = self._te_self_test.font()
+        font.setFamily("Monospace")
+        self._te_self_test.setFont(font)
+        vl.addWidget(self._te_self_test)
+
+        self.ui.tabWidget.addTab(tab, "Selbsttest")
+
+    @Slot()
+    def _run_self_test(self) -> None:
+        """Send DIAG:SELF? and display the multi-line result."""
+        device = self._device()
+        if device is None:
+            self._te_self_test.setPlainText("Fehler: Gerät nicht verbunden.")
+            return
+
+        ts = datetime.now().strftime("%H:%M:%S")
+        self._te_self_test.appendPlainText(f"\n[{ts}] DIAG:SELF? …")
+
+        response = device.send_query("DIAG:SELF?")
+        if response is None:
+            self._te_self_test.appendPlainText("  [Timeout — keine Antwort]")
+            return
+
+        # Firmware may return a single comma-separated line or multiple lines.
+        # Normalise to one result per display line.
+        lines = [part.strip() for part in response.replace(";", "\n").splitlines() if part.strip()]
+        for line in lines:
+            status = "✓" if "PASS" in line.upper() else ("✗" if "FAIL" in line.upper() else " ")
+            self._te_self_test.appendPlainText(f"  {status} {line}")
+
+        Debug.info(f"DIAG:SELF? response: {response!r}")
+
     # ==================== Lifecycle ====================
 
     def closeEvent(self, event) -> None:  # type: ignore[override]
         self._refresh_timer.stop()
+        # Disable the raw_frame debug signal — no need to emit when dialog is gone.
+        if self._data_controller is not None:
+            self._data_controller.enable_raw_frame_signal(False)
         super().closeEvent(event)

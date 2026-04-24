@@ -15,14 +15,22 @@ Responsibilities:
 """
 
 from collections.abc import Callable
+from pathlib import Path
 
-from PySide6.QtWidgets import QDialog, QMainWindow, QComboBox
+from PySide6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QMainWindow,
+    QComboBox,
+    QMessageBox,
+)
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QCloseEvent
 
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
 # UI components
@@ -108,6 +116,7 @@ class MainWindow(QMainWindow):
         self._setup_initial_state()
         self._setup_tabs()
         self._connect_signals()
+        self._check_orphan_journals()
 
         Debug.info("MainWindow initialized with Qt Designer UI")
 
@@ -421,6 +430,7 @@ class MainWindow(QMainWindow):
         dialog = EncoderDebugDialog(
             self.device_manager,
             sample_inverted=self._acq_settings.sample_stage_inverted,
+            data_controller=self.data_controller,
             parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -495,18 +505,28 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _save_data(self) -> None:
-        """Save measurement data to file."""
-        # Get save parameters from UI
-        group_letter = self.ui.cbGroupLetter.currentText()
-        suffix = self.ui.leSuffix.text()
-
-        if not group_letter:
-            show_error(self, "Save Error", "Please select a group letter.")
+        """Export the current session journal to a user-chosen CSV file."""
+        journal = self.data_controller.current_journal
+        if journal is None or journal.row_count == 0:
+            show_error(self, "Speichern", "Keine Messdaten vorhanden.")
             return
 
-        # TODO: Implement actual data saving using save_service
-        self.statusbar_manager.show_success("Data saved (placeholder)")
-        Debug.info(f"Data save requested: Group={group_letter}, Suffix={suffix}")
+        group_letter = self.ui.cbGroupLetter.currentText()
+        suffix = self.ui.leSuffix.text().strip()
+        default_name = f"messung_{group_letter}_{suffix}.csv" if suffix else f"messung_{group_letter}.csv"
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Messdaten speichern",
+            str(Path.home() / default_name),
+            "CSV-Dateien (*.csv);;Alle Dateien (*)",
+        )
+        if not path:
+            return
+
+        rows = journal.export_to_csv(Path(path), finalize=True)
+        self.statusbar_manager.show_success(f"{rows} Datenpunkte gespeichert: {path}")
+        Debug.info(f"Session data exported to {path} ({rows} rows)")
 
     # ==================== Error Handling ====================
 
@@ -617,7 +637,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _handle_connection_lost(self) -> None:
-        """Max reconnect attempts exhausted: show disconnected state, re-enable connect UI."""
+        """Max reconnect attempts exhausted: show disconnected state, offer data export."""
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
@@ -645,6 +665,61 @@ class MainWindow(QMainWindow):
             "Verbindung verloren – bitte Arduino neu verbinden"
         )
         Debug.error("Connection permanently lost; user must reconnect manually")
+
+        journal = self.data_controller.current_journal
+        if journal is not None and journal.row_count > 0:
+            self._offer_partial_export(journal)
+
+    # ==================== Session Journal Helpers ====================
+
+    def _check_orphan_journals(self) -> None:
+        """On startup, scan for unfinalized session journals and offer recovery."""
+        orphans = SessionJournal.find_orphans()
+        if not orphans:
+            return
+        n = len(orphans)
+        reply = QMessageBox.question(
+            self,
+            "Ungespeicherte Sitzungen",
+            f"{n} unvollständige Messsitzung(en) gefunden.\n"
+            "Möchten Sie die Daten jetzt exportieren?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        for session_dir in orphans:
+            path, _ = QFileDialog.getSaveFileName(
+                self,
+                f"Sitzung exportieren — {session_dir.name}",
+                str(Path.home() / f"recovery_{session_dir.name}.csv"),
+                "CSV-Dateien (*.csv);;Alle Dateien (*)",
+            )
+            if path:
+                rows = SessionJournal.export_orphan(session_dir, Path(path))
+                self.statusbar_manager.show_success(f"{rows} Zeilen exportiert: {path}")
+
+    def _offer_partial_export(self, journal: "SessionJournal") -> None:
+        """Show a modal offering to export partial data after connection_lost."""
+        reply = QMessageBox.question(
+            self,
+            "Verbindung verloren",
+            f"Verbindung nach {journal.row_count} Messpunkten verloren.\n"
+            "Teildaten jetzt exportieren?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Teildaten exportieren",
+            str(Path.home() / "messung_partial.csv"),
+            "CSV-Dateien (*.csv);;Alle Dateien (*)",
+        )
+        if path:
+            rows = journal.export_to_csv(Path(path), finalize=True)
+            self.statusbar_manager.show_success(f"{rows} Teildaten gespeichert: {path}")
 
     # ==================== Window Lifecycle ====================
 
