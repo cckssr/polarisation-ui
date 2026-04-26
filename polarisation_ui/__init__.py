@@ -1,9 +1,4 @@
-"""
-HRNGGUI Package
-====================
-
-A GUI application for GM-counter control and data acquisition.
-"""
+"""polarisation_ui — PySide6 desktop app for the polarisation / Malus-law goniometer bench."""
 
 __version__ = "0.0.1"
 __author__ = "C. Kessler"

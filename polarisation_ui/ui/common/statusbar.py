@@ -85,28 +85,6 @@ class StatusBarManager:
             timeout = 8000  # Errors stay even longer
         self.show_message(f"❌ {message}", timeout)
 
-    def show_connection_status(self, connected: bool, device_name: str) -> None:
-        """
-        Show device connection status.
-
-        Args:
-            connected: Whether device is connected
-            device_name: Name of the device
-        """
-        if connected:
-            self.show_success(f"{device_name} connected", timeout=2000)
-        else:
-            self.show_warning(f"{device_name} disconnected", timeout=None)
-
     def clear(self) -> None:
         """Clear status bar message."""
         self.status_bar.clearMessage()
-
-    def set_permanent(self, message: str) -> None:
-        """
-        Set permanent status message.
-
-        Args:
-            message: Message to display permanently
-        """
-        self.status_bar.showMessage(message, 0)

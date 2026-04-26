@@ -25,7 +25,8 @@
       "Bash(git stash *)",
       "Bash(.venv/bin/pytest tests/test_goniometer_system.py -q)",
       "Bash(.venv/bin/pytest tests/infrastructure/test_session_journal.py tests/infrastructure/test_reconnect.py -x -q)",
-      "Bash(.venv/bin/pytest tests/core/test_calibration_hooks.py tests/infrastructure/test_module_registry.py -v)"
+      "Bash(.venv/bin/pytest tests/core/test_calibration_hooks.py tests/infrastructure/test_module_registry.py -v)",
+      "Bash(.venv/bin/pytest tests/ -x -q)"
     ]
   }
 }

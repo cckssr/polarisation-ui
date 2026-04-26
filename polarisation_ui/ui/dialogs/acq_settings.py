@@ -26,6 +26,7 @@ class AcquisitionSettingsDialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        self._original_settings = settings
         self._apply_settings(settings)
 
     def _apply_settings(self, settings: AcquisitionSettings) -> None:
@@ -42,4 +43,5 @@ class AcquisitionSettingsDialog(QDialog):
             det_averages=self.ui.det_averages.value(),
             samp_average_on=self.ui.samp_averageOn.isChecked(),
             samp_averages=self.ui.samp_averages.value(),
+            sample_stage_inverted=self._original_settings.sample_stage_inverted,
         )

@@ -18,6 +18,7 @@ so the file is self-describing even when settings change mid-run.
 """
 
 import csv
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -26,7 +27,8 @@ from pathlib import Path
 from typing import Optional
 
 from polarisation_ui.core.models import Frame
-from polarisation_ui.infrastructure.logging import Debug
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -120,7 +122,7 @@ class CalibrationRecorder:
         f.flush()  # type: ignore[union-attr]
         self._last_fsync = time.monotonic()
         self._active = True
-        Debug.info(f"CalibrationRecorder started: {self._path}")
+        _log.info("CalibrationRecorder started: %s", self._path)
 
     def record(self, frame: CalibrationFrame) -> None:
         """Write one calibration frame row.  No-op when not active."""
@@ -196,6 +198,4 @@ class CalibrationRecorder:
             self._file = None
             self._writer = None
             self._active = False
-        Debug.info(
-            f"CalibrationRecorder stopped ({self._row_count} rows): {self._path}"
-        )
+        _log.info("CalibrationRecorder stopped (%d rows): %s", self._row_count, self._path)

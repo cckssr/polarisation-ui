@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 # Now import from the package
 from polarisation_ui.core.services import GoniometerService
 from polarisation_ui.core.models import GoniometerState
-from polarisation_ui.infrastructure.devices.base import EncoderMock, EncoderSerial
+from polarisation_ui.infrastructure.devices.base import EncoderMock
 
 
 def test_core_layer():

@@ -125,7 +125,7 @@ class TestContinuousMode:
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
 
-        assert encoder_client.stop_continuous_a()
+        assert encoder_client.abort()
         state = mock.get_state()
         assert not state["continuous_running"]
 
@@ -137,7 +137,7 @@ class TestContinuousMode:
         assert state["continuous_running"]
         assert "ENC:BOTH" in state["stream_sources"]
 
-        assert encoder_client.stop_continuous_both()
+        assert encoder_client.abort()
         assert not mock.get_state()["continuous_running"]
 
     def test_continuous_values_advance(self, encoder_client, mock_arduino):

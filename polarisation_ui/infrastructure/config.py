@@ -60,6 +60,3 @@ def import_config(language: str = "de") -> dict:
     return {}
 
 
-def get_config(language: str = "de") -> dict:
-    """Convenience function to get configuration."""
-    return import_config(language)

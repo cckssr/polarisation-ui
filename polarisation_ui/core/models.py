@@ -5,9 +5,9 @@ This module contains pure Python dataclasses representing the
 goniometer state without any Qt or UI dependencies.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 
 @dataclass
@@ -102,29 +102,6 @@ class MeasurementPoint:
 
 
 @dataclass
-class MeasurementSession:
-    """Complete measurement session with metadata."""
-
-    points: List[MeasurementPoint] = field(default_factory=list)
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    subterm: str = ""
-    group: str = ""
-
-    @property
-    def duration_seconds(self) -> float:
-        """Calculate duration in seconds."""
-        if self.start_time and self.end_time:
-            return (self.end_time - self.start_time).total_seconds()
-        return 0.0
-
-    @property
-    def count(self) -> int:
-        """Number of data points."""
-        return len(self.points)
-
-
-@dataclass
 class AcquisitionSettings:
     """
     Acquisition settings for the current session.
@@ -141,17 +118,6 @@ class AcquisitionSettings:
     # so the raw angle increases in the wrong direction.  When True the
     # DataController applies  corrected = (360 - raw) % 360  before emitting.
     sample_stage_inverted: bool = True
-
-
-@dataclass
-class DeviceInfo:
-    """Arduino device information and status."""
-
-    port: str
-    baudrate: int = 115200
-    connected: bool = False
-    firmware_version: str = ""
-    hardware_version: str = ""
 
 
 @dataclass

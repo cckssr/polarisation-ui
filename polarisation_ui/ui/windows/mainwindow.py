@@ -535,9 +535,12 @@ class MainWindow(QMainWindow):
         Each encoder's LED and display gate is updated independently so a
         fault on one stage doesn't affect the other.
         """
+        prev_a_ok = self._sensor_a_ok
+        prev_b_ok = self._sensor_b_ok
+
         self._update_encoder_health(
             ok=a_ok,
-            prev_ok=self._sensor_a_ok,
+            prev_ok=prev_a_ok,
             led=self.ui.ledSampleStatus,
             label=self.ui.lblSampleStatusValue,
             label_ok="Encoder A",
@@ -547,7 +550,7 @@ class MainWindow(QMainWindow):
 
         self._update_encoder_health(
             ok=b_ok,
-            prev_ok=self._sensor_b_ok,
+            prev_ok=prev_b_ok,
             led=self.ui.ledDetectorStageStatus,
             label=self.ui.lblDetectorStageStatusValue,
             label_ok="Encoder B",
@@ -559,8 +562,8 @@ class MainWindow(QMainWindow):
         if not a_ok or not b_ok:
             parts = [d for ok, d in ((a_ok, a_desc), (b_ok, b_desc)) if not ok]
             self.statusbar_manager.show_warning(f"Sensor-Diagnose: {' | '.join(parts)}")
-        elif not self._sensor_a_ok and not self._sensor_b_ok:
-            # Both just recovered
+        elif not prev_a_ok and not prev_b_ok:
+            # Both just recovered from fault
             self.statusbar_manager.show_success("Sensor-Diagnose OK")
 
     def _update_encoder_health(

@@ -352,15 +352,6 @@ class DualEncoderArduino:
             "CONF:SRC ENC:A"
         ) and self._send_command_no_response("INIT:CONT ON")
 
-    def start_continuous_b(self) -> bool:
-        """Configure source ENC:B and arm streaming."""
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return False
-        return self._send_command_no_response(
-            "CONF:SRC ENC:B"
-        ) and self._send_command_no_response("INIT:CONT ON")
-
     def start_continuous_both(self) -> bool:
         """Configure source ENC:BOTH,ADC and arm streaming."""
         if not self.encoder_b_present:
@@ -369,15 +360,6 @@ class DualEncoderArduino:
         return self._send_command_no_response(
             "CONF:SRC ENC:BOTH,ADC"
         ) and self._send_command_no_response("INIT:CONT ON")
-
-    def stop_continuous_a(self) -> bool:
-        return self._send_command_no_response("ABOR")
-
-    def stop_continuous_b(self) -> bool:
-        return self._send_command_no_response("ABOR")
-
-    def stop_continuous_both(self) -> bool:
-        return self._send_command_no_response("ABOR")
 
     def abort(self) -> bool:
         return self._send_command_no_response("ABOR")
@@ -616,10 +598,10 @@ class DualEncoderArduino:
 
     @staticmethod
     def _parse_data_frame(line: str) -> dict[str, str]:
-        """Parse a DATA:FRAME key=value line; unknown keys are silently included."""
+        """Parse a DATA:FRAME key=value line from the streaming mode."""
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME ") :]
+        payload = line[len("DATA:FRAME "):]
         result: dict[str, str] = {}
         for part in payload.split(","):
             if "=" in part:
