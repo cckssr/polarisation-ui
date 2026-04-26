@@ -18,14 +18,16 @@ import sys
 import threading
 import time
 import tty
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 from ..logging import Debug
+from ..mock_port_registry import register_mock_port, unregister_mock_port
 
 # ── Simulation constants ─────────────────────────────────────────────────────
 
-_V_REF = 2.048   # ADS1220 reference voltage (V)
+_V_REF = 2.048  # ADS1220 reference voltage (V)
 _TEMP_NOMINAL = 25.0  # °C — approximate room temperature
 
 
@@ -111,6 +113,7 @@ class MockArduino:
         self._stop_flag = False
         self._thread: Optional[threading.Thread] = None
         self._start_time = time.time()
+        self._port_file: Optional[Path] = None
 
     # ── Public control ────────────────────────────────────────────────────────
 
@@ -124,6 +127,7 @@ class MockArduino:
             self.pty_master, self.pty_slave = pty.openpty()
             self.pty_slave_path = os.ttyname(self.pty_slave)
             tty.setraw(self.pty_master)
+            self._port_file = register_mock_port(self.pty_slave_path)
 
             self._running = True
             self._stop_flag = False
@@ -143,6 +147,8 @@ class MockArduino:
     def stop(self) -> None:
         """Stop the simulator."""
         if not self._running:
+            unregister_mock_port(self._port_file)
+            self._port_file = None
             return
         self._stop_flag = True
         self._running = False
@@ -191,6 +197,8 @@ class MockArduino:
     # ── PTY loop ──────────────────────────────────────────────────────────────
 
     def _cleanup(self) -> None:
+        unregister_mock_port(self._port_file)
+        self._port_file = None
         for fd in (self.pty_master, self.pty_slave):
             if fd is not None:
                 try:
@@ -267,9 +275,7 @@ class MockArduino:
         # ── IEEE 488.2 common ────────────────────────────────────────────────
         if header == "*IDN":
             if is_query:
-                return (
-                    f"Polarisation-UI,GoniometerBench,0,{self._firmware_version}"
-                )
+                return f"Polarisation-UI,GoniometerBench,0,{self._firmware_version}"
             return None
 
         if header == "*RST":
@@ -384,7 +390,9 @@ class MockArduino:
 
         if header == "CONF:SRC":
             if not is_query:
-                self._stream_sources = {s.strip() for s in param.split(",") if s.strip()}
+                self._stream_sources = {
+                    s.strip() for s in param.split(",") if s.strip()
+                }
                 return None
             return ",".join(sorted(self._stream_sources))
 
@@ -560,12 +568,10 @@ class MockArduino:
         self.encoder_a.poll_count += 1
         self.encoder_b.poll_count += 1
         self.encoder_a.current_angle = (
-            self.encoder_a.base_angle
-            + self.encoder_a.poll_count * self.encoder_a_speed
+            self.encoder_a.base_angle + self.encoder_a.poll_count * self.encoder_a_speed
         )
         self.encoder_b.current_angle = (
-            self.encoder_b.base_angle
-            + self.encoder_b.poll_count * self.encoder_b_speed
+            self.encoder_b.base_angle + self.encoder_b.poll_count * self.encoder_b_speed
         )
 
         ts_ms = int((time.time() - self._start_time) * 1000)
@@ -593,9 +599,15 @@ def main() -> int:
     import signal
 
     parser = argparse.ArgumentParser(description="MockArduino SCPI 2.0.0 via PTY")
-    parser.add_argument("--speed-a", type=float, default=MockArduino.ENCODER_A_BASE_SPEED)
-    parser.add_argument("--speed-b", type=float, default=MockArduino.ENCODER_B_BASE_SPEED)
-    parser.add_argument("--interval", type=int, default=MockArduino.DEFAULT_POLL_INTERVAL_MS)
+    parser.add_argument(
+        "--speed-a", type=float, default=MockArduino.ENCODER_A_BASE_SPEED
+    )
+    parser.add_argument(
+        "--speed-b", type=float, default=MockArduino.ENCODER_B_BASE_SPEED
+    )
+    parser.add_argument(
+        "--interval", type=int, default=MockArduino.DEFAULT_POLL_INTERVAL_MS
+    )
     parser.add_argument("--start-a", type=float, default=0.0)
     parser.add_argument("--start-b", type=float, default=0.0)
     parser.add_argument(
@@ -612,7 +624,10 @@ def main() -> int:
         "WARNING": Debug.DEBUG_ERROR,
         "ERROR": Debug.DEBUG_ERROR,
     }
-    Debug.init(debug_level=level_map.get(args.log_level, Debug.DEBUG_INFO), app_name="MockArduino")
+    Debug.init(
+        debug_level=level_map.get(args.log_level, Debug.DEBUG_INFO),
+        app_name="MockArduino",
+    )
 
     mock = MockArduino(
         encoder_a_speed=args.speed_a,
@@ -631,6 +646,20 @@ def main() -> int:
         print(f"PTY Slave Path: {pty_path}")
     else:
         print(pty_path)
+
+    stop_requested = threading.Event()
+
+    def _request_stop(_signum, _frame) -> None:
+        stop_requested.set()
+
+    signal.signal(signal.SIGINT, _request_stop)
+    signal.signal(signal.SIGTERM, _request_stop)
+
+    try:
+        while not stop_requested.is_set():
+            time.sleep(0.1)
+    finally:
+        mock.stop()
 
     return 0
 

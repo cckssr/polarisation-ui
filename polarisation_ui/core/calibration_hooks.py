@@ -34,11 +34,11 @@ class CalibrationFrame:
     """One data point captured during a calibration run."""
 
     ts_ms: int
-    ang_a: float          # sample-stage angle (degrees)
-    ang_b: float          # detector-arm angle (degrees)
-    adc_v: float          # ADS1220 voltage (V)
-    adc_temp: Optional[float]   # ADS1220 internal temperature (°C), or None
-    pd_gain: int          # current PD-TIA discrete gain stage
+    ang_a: float  # sample-stage angle (degrees)
+    ang_b: float  # detector-arm angle (degrees)
+    adc_v: float  # ADS1220 voltage (V)
+    adc_temp: Optional[float]  # ADS1220 internal temperature (°C), or None
+    pd_gain: int  # current PD-TIA discrete gain stage
     config_snapshot: Optional[dict] = None  # CONF:* settings at this point
 
 
@@ -128,7 +128,10 @@ class CalibrationRecorder:
             return
 
         # Detect config change — insert an inline comment block before the row.
-        if frame.config_snapshot is not None and frame.config_snapshot != self._last_config:
+        if (
+            frame.config_snapshot is not None
+            and frame.config_snapshot != self._last_config
+        ):
             for key, value in frame.config_snapshot.items():
                 safe_val = str(value).replace("\n", " ")
                 self._file.write(  # type: ignore[union-attr]
@@ -136,14 +139,16 @@ class CalibrationRecorder:
                 )
             self._last_config = dict(frame.config_snapshot)
 
-        self._writer.writerow([
-            frame.ts_ms,
-            f"{frame.ang_a:.4f}",
-            f"{frame.ang_b:.4f}",
-            f"{frame.adc_v:.6f}",
-            f"{frame.adc_temp:.3f}" if frame.adc_temp is not None else "",
-            frame.pd_gain,
-        ])
+        self._writer.writerow(
+            [
+                frame.ts_ms,
+                f"{frame.ang_a:.4f}",
+                f"{frame.ang_b:.4f}",
+                f"{frame.adc_v:.6f}",
+                f"{frame.adc_temp:.3f}" if frame.adc_temp is not None else "",
+                frame.pd_gain,
+            ]
+        )
         self._row_count += 1
         self._file.flush()  # type: ignore[union-attr]
         now = time.monotonic()

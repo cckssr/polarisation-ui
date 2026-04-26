@@ -34,7 +34,7 @@ from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
 # UI components
-from polarisation_ui.core.models import AcquisitionSettings, Frame
+from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 
@@ -90,26 +90,17 @@ class MainWindow(QMainWindow):
         # Store device manager
         self.device_manager = device_manager
 
-        # Initialize data controller
+        # Initialisation
         self.data_controller = DataController(self.device_manager, self)
-
-        # Initialize status bar
         self.statusbar_manager = StatusBarManager(self.ui.statusBar)
-
-        # Measurement state
         self._is_measuring = False
 
-        # Load acquisition settings from config once; changes are session-only
         self._acq_settings: AcquisitionSettings = self._load_acq_settings_from_config()
 
-        # Per-encoder sensor health — gates the respective angle display independently
         self._sensor_a_ok: bool = True
         self._sensor_b_ok: bool = True
-
-        # Registered experiment tab instances (populated by _setup_tabs)
         self._tab_instances: list[PlotTabBase] = []
 
-        # Push loaded settings into the data controller before starting
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
@@ -155,7 +146,7 @@ class MainWindow(QMainWindow):
     def _setup_tabs(self) -> None:
         """Instantiate and register all available experiment tabs into tabWidget."""
         # Trigger tab registrations by importing the tabs package
-        import polarisation_ui.ui.widgets.tabs  # noqa: F401
+        import polarisation_ui.ui.widgets.tabs  # NOQA: F401
 
         for tab_cls in TabRegistry.available(modules={}):
             tab = tab_cls()
@@ -513,7 +504,11 @@ class MainWindow(QMainWindow):
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        default_name = f"messung_{group_letter}_{suffix}.csv" if suffix else f"messung_{group_letter}.csv"
+        default_name = (
+            f"messung_{group_letter}_{suffix}.csv"
+            if suffix
+            else f"messung_{group_letter}.csv"
+        )
 
         path, _ = QFileDialog.getSaveFileName(
             self,

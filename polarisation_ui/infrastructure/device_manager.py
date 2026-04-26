@@ -19,6 +19,7 @@ from enum import Enum
 from serial.tools import list_ports
 
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.mock_port_registry import discover_mock_ports
 from polarisation_ui.infrastructure.devices.dual_encoder import (
     DesiredState,
     DualEncoderArduino,
@@ -84,8 +85,10 @@ class GoniometerDeviceManager:
 
     @staticmethod
     def list_available_ports() -> list[str]:
-        """Return a list of available serial port device names."""
-        return [p.device for p in list_ports.comports()]
+        """Return serial ports plus mock PTY ports registered in temp files."""
+        ports = {p.device for p in list_ports.comports()}
+        ports.update(discover_mock_ports())
+        return sorted(ports)
 
     # ==================== Connection Management ====================
 
@@ -122,12 +125,12 @@ class GoniometerDeviceManager:
                 )
                 Debug.info("Encoder Arduino connected successfully")
                 return True
-            else:
-                self._encoder_status = DeviceStatus(
-                    state=DeviceState.ERROR, error_message="Connection failed"
-                )
-                Debug.error("Failed to connect to encoder Arduino")
-                return False
+
+            self._encoder_status = DeviceStatus(
+                state=DeviceState.ERROR, error_message="Connection failed"
+            )
+            Debug.error("Failed to connect to encoder Arduino")
+            return False
 
         except Exception as e:
             error_msg = f"Exception during encoder connection: {e}"
@@ -164,6 +167,7 @@ class GoniometerDeviceManager:
         self._desired_state = state
 
     def get_desired_state(self) -> DesiredState:
+        """Get the last-known desired state for encoders."""
         return self._desired_state
 
     def get_firmware_version(self) -> str:

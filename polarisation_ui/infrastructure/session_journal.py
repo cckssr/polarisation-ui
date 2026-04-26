@@ -92,7 +92,9 @@ class SessionJournal:
             safe_val = str(value).replace("\n", " ")
             f.write(f"# config_{key}: {safe_val}\n")
         self._writer = csv.writer(f)
-        self._writer.writerow(["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"])
+        self._writer.writerow(
+            ["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"]
+        )
         f.flush()
         self._last_fsync = time.monotonic()
         Debug.info(f"SessionJournal started: {self._journal_path}")
@@ -101,13 +103,15 @@ class SessionJournal:
         """Write one data row; flush Python buffer every call, fsync every ~1 s."""
         if self._writer is None or self._file is None:
             return
-        self._writer.writerow([
-            frame.ts_ms,
-            f"{frame.sample_angle:.4f}",
-            f"{frame.detector_angle:.4f}",
-            f"{frame.intensity:.6f}",
-            "",
-        ])
+        self._writer.writerow(
+            [
+                frame.ts_ms,
+                f"{frame.sample_angle:.4f}",
+                f"{frame.detector_angle:.4f}",
+                f"{frame.intensity:.6f}",
+                "",
+            ]
+        )
         self._row_count += 1
         f = self._file
         f.flush()  # type: ignore[union-attr]
@@ -120,10 +124,15 @@ class SessionJournal:
         """Record a reconnection gap; force-syncs to disk immediately."""
         if self._writer is None or self._file is None:
             return
-        self._writer.writerow([
-            int(time.monotonic() * 1000),
-            "", "", "", "1",
-        ])
+        self._writer.writerow(
+            [
+                int(time.monotonic() * 1000),
+                "",
+                "",
+                "",
+                "1",
+            ]
+        )
         f = self._file
         f.flush()  # type: ignore[union-attr]
         os.fsync(f.fileno())  # type: ignore[union-attr]
@@ -194,6 +203,7 @@ class SessionJournal:
 
 # ── module-level helper ────────────────────────────────────────────────────────
 
+
 def _copy_data_rows(src: Path, dst: Path) -> int:
     """
     Read *src* journal and write only non-gap data rows to *dst*.
@@ -206,7 +216,9 @@ def _copy_data_rows(src: Path, dst: Path) -> int:
         with open(src, "r", encoding="utf-8") as fh_in:
             with open(dst, "w", newline="", encoding="utf-8") as fh_out:
                 writer = csv.writer(fh_out)
-                writer.writerow(["ts_ms", "sample_angle", "detector_angle", "intensity"])
+                writer.writerow(
+                    ["ts_ms", "sample_angle", "detector_angle", "intensity"]
+                )
                 header_skipped = False
                 for raw_line in fh_in:
                     line = raw_line.rstrip("\n")

@@ -75,6 +75,38 @@ class DualEncoderValue:
         return f"DualEncoderValue(A={self.angle_a}°, B={self.angle_b}°)"
 
 
+@dataclass
+class DesiredState:
+    """
+    Snapshot of CONF:ADC:* and CONF:PDTIA:* settings.
+
+    Stored by GoniometerDeviceManager and reapplied automatically after every
+    successful reconnect so the Arduino config is never lost across a USB drop.
+    """
+
+    adc_gain: int = 1
+    adc_mux: str = "DIFF01"
+    adc_rate: int = 20
+    adc_mode: str = "NORM"
+    adc_fir: str = "OFF"
+    adc_vref: str = "EXT"
+    adc_temp: bool = False
+    pdtia_gain: int = 0
+
+    def as_config_snapshot(self) -> dict:
+        """Return a dict suitable for the SessionJournal config header."""
+        return {
+            "adc_gain": self.adc_gain,
+            "adc_mux": self.adc_mux,
+            "adc_rate": self.adc_rate,
+            "adc_mode": self.adc_mode,
+            "adc_fir": self.adc_fir,
+            "adc_vref": self.adc_vref,
+            "adc_temp": self.adc_temp,
+            "pdtia_gain": self.pdtia_gain,
+        }
+
+
 # ── ADC client facet ──────────────────────────────────────────────────────────
 class ADCClient:
     """
@@ -195,6 +227,11 @@ class DualEncoderArduino:
 
         self._device = SerialDevice(port, baudrate, timeout)
         self.adc = ADCClient(self)
+        self._firmware_version: str = "unknown"
+
+    @property
+    def firmware_version(self) -> str:
+        return self._firmware_version
 
     # ── Connection ────────────────────────────────────────────────────────────
 
@@ -215,7 +252,8 @@ class DualEncoderArduino:
             idn = self.identify()
             if idn:
                 self._check_firmware_version(idn)
-            # Apply required ADC configuration: gain=1, external vref (2.5 V), temp on.
+                self._firmware_version = self._parse_version(idn)
+            # Apply required ADC configuration: gain=1, external vref (2.5 V), temp off.
             self.adc.configure(gain=1, vref="EXT", temp=False)
             Debug.info(f"DualEncoderArduino connected to {self.port}")
             return True
@@ -514,14 +552,41 @@ class DualEncoderArduino:
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
+    def reapply_desired_state(self, state: "DesiredState") -> bool:
+        """
+        Reapply a DesiredState snapshot after reconnect.
+
+        Called by GoniometerDeviceManager immediately after a successful
+        reconnect so the Arduino retains the last-known CONF:ADC:* / PDTIA
+        settings without requiring the user to reconfigure.
+        """
+        ok = self.adc.configure(
+            gain=state.adc_gain,
+            mux=state.adc_mux,
+            rate=state.adc_rate,
+            mode=state.adc_mode,
+            fir=state.adc_fir,
+            vref=state.adc_vref,
+            temp=state.adc_temp,
+        )
+        if state.pdtia_gain != 0:
+            ok = self.adc.set_pdtia_gain(state.pdtia_gain) and ok
+        Debug.info(f"DesiredState reapplied (ok={ok}): {state}")
+        return ok
+
     # ── Internal helpers ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_version(idn: str) -> str:
+        """Extract the version field from an IDN string, or 'unknown'."""
+        parts = idn.strip().split(",")
+        return parts[3].strip() if len(parts) >= 4 else "unknown"
 
     def _check_firmware_version(self, idn: str) -> None:
         """Raise IncompatibleFirmwareError if firmware version is < 2.0.0."""
-        parts = idn.strip().split(",")
-        if len(parts) < 4:
-            return  # non-standard IDN — skip check
-        version = parts[3].strip()
+        version = self._parse_version(idn)
+        if version == "unknown":
+            return
         try:
             major, minor, *_rest = version.split(".")
             if (int(major), int(minor)) < (2, 0):

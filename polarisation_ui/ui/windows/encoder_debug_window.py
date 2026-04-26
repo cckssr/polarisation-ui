@@ -437,7 +437,9 @@ class EncoderDebugDialog(QDialog):
         self._led_adc_drdy.setMaximumSize(20, 20)
         self._led_adc_drdy.setFrameShape(QFrame.Shape.Box)
         self._led_adc_drdy.setStyleSheet(LED_GRAY)
-        self._led_adc_drdy.setToolTip("Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)")
+        self._led_adc_drdy.setToolTip(
+            "Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)"
+        )
         form_live.addRow("Bereit (zeitbasiert):", self._led_adc_drdy)
 
         vl.addWidget(gb_live)
@@ -462,12 +464,24 @@ class EncoderDebugDialog(QDialog):
 
         gb_cfg = QGroupBox("Konfiguration (CONF:ADC:*?)")
         form_cfg = QFormLayout(gb_cfg)
-        self._le_adc_mux = QLineEdit(); self._le_adc_mux.setReadOnly(True); self._le_adc_mux.setPlaceholderText("–")
-        self._le_adc_gain = QLineEdit(); self._le_adc_gain.setReadOnly(True); self._le_adc_gain.setPlaceholderText("–")
-        self._le_adc_rate = QLineEdit(); self._le_adc_rate.setReadOnly(True); self._le_adc_rate.setPlaceholderText("–")
-        self._le_adc_mode = QLineEdit(); self._le_adc_mode.setReadOnly(True); self._le_adc_mode.setPlaceholderText("–")
-        self._le_adc_fir = QLineEdit(); self._le_adc_fir.setReadOnly(True); self._le_adc_fir.setPlaceholderText("–")
-        self._le_adc_vref = QLineEdit(); self._le_adc_vref.setReadOnly(True); self._le_adc_vref.setPlaceholderText("–")
+        self._le_adc_mux = QLineEdit()
+        self._le_adc_mux.setReadOnly(True)
+        self._le_adc_mux.setPlaceholderText("–")
+        self._le_adc_gain = QLineEdit()
+        self._le_adc_gain.setReadOnly(True)
+        self._le_adc_gain.setPlaceholderText("–")
+        self._le_adc_rate = QLineEdit()
+        self._le_adc_rate.setReadOnly(True)
+        self._le_adc_rate.setPlaceholderText("–")
+        self._le_adc_mode = QLineEdit()
+        self._le_adc_mode.setReadOnly(True)
+        self._le_adc_mode.setPlaceholderText("–")
+        self._le_adc_fir = QLineEdit()
+        self._le_adc_fir.setReadOnly(True)
+        self._le_adc_fir.setPlaceholderText("–")
+        self._le_adc_vref = QLineEdit()
+        self._le_adc_vref.setReadOnly(True)
+        self._le_adc_vref.setPlaceholderText("–")
         form_cfg.addRow("MUX:", self._le_adc_mux)
         form_cfg.addRow("Gain:", self._le_adc_gain)
         form_cfg.addRow("Rate (SPS):", self._le_adc_rate)
@@ -484,13 +498,21 @@ class EncoderDebugDialog(QDialog):
         # ── PD-TIA ───────────────────────────────────────────────────────────
         gb_pdtia = QGroupBox("PD-TIA Verstärkung (DIAG:PDTIA?)")
         form_pdtia = QFormLayout(gb_pdtia)
-        self._le_pdtia_stage = QLineEdit(); self._le_pdtia_stage.setReadOnly(True); self._le_pdtia_stage.setPlaceholderText("–")
-        self._le_pdtia_pattern = QLineEdit(); self._le_pdtia_pattern.setReadOnly(True); self._le_pdtia_pattern.setPlaceholderText("–")
+        self._le_pdtia_stage = QLineEdit()
+        self._le_pdtia_stage.setReadOnly(True)
+        self._le_pdtia_stage.setPlaceholderText("–")
+        self._le_pdtia_pattern = QLineEdit()
+        self._le_pdtia_pattern.setReadOnly(True)
+        self._le_pdtia_pattern.setPlaceholderText("–")
         form_pdtia.addRow("Stufe:", self._le_pdtia_stage)
         form_pdtia.addRow("GPIO Muster:", self._le_pdtia_pattern)
         vl.addWidget(gb_pdtia)
 
-        vl.addItem(QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        vl.addItem(
+            QSpacerItem(
+                20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+            )
+        )
 
         self.ui.tabWidget.addTab(tab, "ADS1220")
 
@@ -569,7 +591,11 @@ class EncoderDebugDialog(QDialog):
         btn_clear = QPushButton("Löschen")
         btn_clear.clicked.connect(self._te_raw_stream.clear)
         hl.addWidget(btn_clear)
-        hl.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        hl.addItem(
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         vl.addLayout(hl)
 
         self.ui.tabWidget.addTab(tab, "Raw Stream")
@@ -633,9 +659,17 @@ class EncoderDebugDialog(QDialog):
 
         # Firmware may return a single comma-separated line or multiple lines.
         # Normalise to one result per display line.
-        lines = [part.strip() for part in response.replace(";", "\n").splitlines() if part.strip()]
+        lines = [
+            part.strip()
+            for part in response.replace(";", "\n").splitlines()
+            if part.strip()
+        ]
         for line in lines:
-            status = "✓" if "PASS" in line.upper() else ("✗" if "FAIL" in line.upper() else " ")
+            status = (
+                "✓"
+                if "PASS" in line.upper()
+                else ("✗" if "FAIL" in line.upper() else " ")
+            )
             self._te_self_test.appendPlainText(f"  {status} {line}")
 
         Debug.info(f"DIAG:SELF? response: {response!r}")

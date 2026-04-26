@@ -9,9 +9,14 @@ import math
 import random
 import time
 from collections import deque
+from typing import Optional
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
-from typing import Optional
+from polarisation_ui.core.models import AcquisitionSettings, Frame
+from polarisation_ui.core.utils import circular_mean_deg
+from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.session_journal import SessionJournal
 
 
 def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
@@ -34,13 +39,6 @@ def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
         faults.append("Kalibrierung ausstehend (OCF)")
     ok = len(faults) == 0
     return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
-
-
-from polarisation_ui.core.models import AcquisitionSettings, Frame
-from polarisation_ui.core.utils import circular_mean_deg
-from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
-from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.session_journal import SessionJournal
 
 
 class DataController(QObject):
@@ -406,7 +404,9 @@ class DataController(QObject):
                 min(self._backoff_attempt, len(self._BACKOFF_DELAYS_MS) - 1)
             ]
             self._backoff_attempt += 1
-            Debug.info(f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})")
+            Debug.info(
+                f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})"
+            )
             self._retry_timer.start(delay_ms)
 
     @Slot()
@@ -498,7 +498,9 @@ class DataController(QObject):
         """Create and start a new session journal for the current measurement."""
         firmware = self.device_manager.get_firmware_version()
         config = self.device_manager.get_desired_state().as_config_snapshot()
-        self._journal = SessionJournal(firmware_version=firmware, config_snapshot=config)
+        self._journal = SessionJournal(
+            firmware_version=firmware, config_snapshot=config
+        )
         try:
             self._journal.start()
         except OSError as e:
