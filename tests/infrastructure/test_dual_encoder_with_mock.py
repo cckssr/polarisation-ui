@@ -135,7 +135,10 @@ class TestContinuousMode:
         assert encoder_client.start_continuous_both()
         state = mock.get_state()
         assert state["continuous_running"]
-        assert "ENC:BOTH" in state["stream_sources"]
+        # ENC:BOTH is expanded to ENC:A + ENC:B + ADC + DIAG by start_continuous_both()
+        assert "ENC:A" in state["stream_sources"]
+        assert "ENC:B" in state["stream_sources"]
+        assert "DIAG" in state["stream_sources"]
 
         assert encoder_client.abort()
         assert not mock.get_state()["continuous_running"]

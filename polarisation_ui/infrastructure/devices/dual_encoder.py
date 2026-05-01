@@ -20,11 +20,11 @@ SCPI 2.0.0 command subset used by this client:
     CONF:ADC:TEMP ON|OFF                Enable temperature channel
     CONF:PDTIA:GAIN <stage>             PD-TIA discrete gain stage
     CONF:PDTIA:GAIN?                    Query current stage + GPIO bit pattern
-    CONF:SRC <src>[,<src>...]           Streaming source set (e.g. ENC:BOTH,ADC)
+    CONF:SRC <src>[,<src>...]           Streaming source set (e.g. ENC:BOTH,ADC,DIAG)
     CONF:RATE <hz>                      Streaming rate
     INIT:CONT ON|OFF                    Arm / disarm streaming
     ABOR                                Stop streaming
-    DIAG:ENC? A|B                       AS5048A diagnostics
+    DIAG:ENC? A|B|BOTH                  AS5048A diagnostics
     SYST:ERR?                           Error queue
     SYST:VERS?                          Firmware version string
 
@@ -353,12 +353,12 @@ class DualEncoderArduino:
         ) and self._send_command_no_response("INIT:CONT ON")
 
     def start_continuous_both(self) -> bool:
-        """Configure source ENC:BOTH,ADC and arm streaming."""
+        """Configure source ENC:BOTH,ADC,DIAG and arm streaming."""
         if not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
         return self._send_command_no_response(
-            "CONF:SRC ENC:BOTH,ADC"
+            "CONF:SRC ENC:BOTH,ADC,DIAG"
         ) and self._send_command_no_response("INIT:CONT ON")
 
     def abort(self) -> bool:
@@ -420,6 +420,45 @@ class DualEncoderArduino:
             Debug.warning("Encoder B not present")
             return None
         return self.get_diagnostics(EncoderID.B)
+
+    def get_diagnostics_both(self) -> tuple[Optional[dict[str, Any]], Optional[dict[str, Any]]]:
+        """DIAG:ENC? BOTH → (diag_a, diag_b) in a single SCPI round-trip."""
+        cmd = "DIAG:ENC? BOTH"
+        if not self._device.send_command(cmd, add_newline=True):
+            Debug.error(f"Failed to send: {cmd}")
+            return None, None
+        response = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not response:
+            Debug.error("No response for DIAG:ENC? BOTH")
+            return None, None
+        # Response: compHA=N,compLA=N,cofA=N,ocfA=N,agcA=N,compHB=N,...,agcB=N
+        try:
+            kv: dict[str, str] = {}
+            for token in response.strip().split(","):
+                if "=" in token:
+                    k, _, v = token.partition("=")
+                    kv[k.strip()] = v.strip()
+            diag_a: dict[str, Any] = {
+                "compHigh": bool(int(kv.get("compHA", "0"))),
+                "compLow":  bool(int(kv.get("compLA", "0"))),
+                "cof":      bool(int(kv.get("cofA",   "0"))),
+                "ocf":      bool(int(kv.get("ocfA",   "0"))),
+                "agc":      int(kv.get("agcA",  "0")),
+            }
+            if "agcB" in kv:
+                diag_b: Optional[dict[str, Any]] = {
+                    "compHigh": bool(int(kv.get("compHB", "0"))),
+                    "compLow":  bool(int(kv.get("compLB", "0"))),
+                    "cof":      bool(int(kv.get("cofB",   "0"))),
+                    "ocf":      bool(int(kv.get("ocfB",   "0"))),
+                    "agc":      int(kv.get("agcB", "0")),
+                }
+            else:
+                diag_b = None  # encB absent
+            return diag_a, diag_b
+        except (ValueError, KeyError) as e:
+            Debug.error(f"Failed to parse DIAG:ENC? BOTH: '{response}' ({e})")
+            return None, None
 
     def get_diagnostics(self, encoder_id: EncoderID) -> Optional[dict[str, Any]]:
         """DIAG:ENC? A|B → dict with compHigh, compLow, cof, ocf (bool), agc (int)."""
@@ -598,7 +637,14 @@ class DualEncoderArduino:
 
     @staticmethod
     def _parse_data_frame(line: str) -> dict[str, str]:
-        """Parse a DATA:FRAME key=value line from the streaming mode."""
+        """Parse a DATA:FRAME key=value line from the streaming mode.
+
+        Known keys: seq, tsMs, angA, angB, adcV, adcT, pdGain,
+                    agcA, agcB, dstatA, dstatB (when CONF:SRC includes DIAG),
+                    stat.
+        dstatX bits: 3=compHigh, 2=compLow, 1=cof, 0=ocf.
+        Unknown keys are preserved — forward-compatible with future firmware.
+        """
         if not line.startswith("DATA:FRAME "):
             return {}
         payload = line[len("DATA:FRAME "):]

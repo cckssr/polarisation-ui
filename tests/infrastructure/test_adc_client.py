@@ -149,11 +149,14 @@ class TestStreamConfiguration:
 
     def test_conf_src_stored_in_mock(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
-        # start_continuous_both sends CONF:SRC ENC:BOTH,ADC + INIT:CONT ON
+        # start_continuous_both sends CONF:SRC ENC:BOTH,ADC,DIAG + INIT:CONT ON.
+        # The mock expands ENC:BOTH → ENC:A + ENC:B internally.
         encoder_client.start_continuous_both()
         state = mock.get_state()
-        assert "ENC:BOTH" in state["stream_sources"]
+        assert "ENC:A" in state["stream_sources"]
+        assert "ENC:B" in state["stream_sources"]
         assert "ADC" in state["stream_sources"]
+        assert "DIAG" in state["stream_sources"]
         encoder_client.abort()
 
     def test_conf_rate_updates_poll_interval(self, encoder_client, mock_arduino):

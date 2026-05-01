@@ -93,8 +93,9 @@ class MockArduino:
         # PD-TIA discrete gain stage (0 = lowest gain)
         self.pdtia_gain: int = 0
 
-        # Streaming state — set by CONF:SRC and INIT:CONT
-        self._stream_sources: set[str] = {"ENC:BOTH"}
+        # Streaming state — set by CONF:SRC and INIT:CONT.
+        # Use expanded token form internally (ENC:BOTH is expanded on CONF:SRC write).
+        self._stream_sources: set[str] = {"ENC:A", "ENC:B"}
         self.stream_rate_hz: int = 1000 // poll_interval_ms
         self.continuous_running: bool = False
 
@@ -103,6 +104,9 @@ class MockArduino:
 
         # Debug mode
         self._debug_mode: bool = False
+
+        # Frame sequence counter (mirrors firmware s_frameSeq)
+        self._frame_seq: int = 0
 
         # PTY pair
         self.pty_master: Optional[int] = None
@@ -390,9 +394,16 @@ class MockArduino:
 
         if header == "CONF:SRC":
             if not is_query:
-                self._stream_sources = {
-                    s.strip() for s in param.split(",") if s.strip()
-                }
+                # Expand ENC:BOTH shorthand to both tokens for internal tracking
+                tokens: set[str] = set()
+                for s in param.split(","):
+                    t = s.strip()
+                    if t == "ENC:BOTH":
+                        tokens.add("ENC:A")
+                        tokens.add("ENC:B")
+                    elif t:
+                        tokens.add(t)
+                self._stream_sources = tokens
                 return None
             return ",".join(sorted(self._stream_sources))
 
@@ -473,6 +484,11 @@ class MockArduino:
 
         # ── DIAG subsystem ───────────────────────────────────────────────────
         if header == "DIAG:ENC" and is_query:
+            if param == "BOTH":
+                return (
+                    "compHA=0,compLA=0,cofA=0,ocfA=1,agcA=200,"
+                    "compHB=0,compLB=0,cofB=0,ocfB=1,agcB=195"
+                )
             agc = 195 if param == "B" else 200
             return f"compH=0,compL=0,cof=0,ocf=1,agc={agc}"
 
@@ -548,7 +564,7 @@ class MockArduino:
 
     def _reset_state(self) -> None:
         self.continuous_running = False
-        self._stream_sources = {"ENC:BOTH"}
+        self._stream_sources = {"ENC:A", "ENC:B"}
         self.stream_rate_hz = 1000 // self.DEFAULT_POLL_INTERVAL_MS
         self.poll_interval_ms = self.DEFAULT_POLL_INTERVAL_MS
         self.adc_gain = 1
@@ -559,6 +575,7 @@ class MockArduino:
         self.adc_vref = "EXT"
         self.adc_temp_enabled = True
         self.pdtia_gain = 0
+        self._frame_seq = 0
 
     # ── Streaming ─────────────────────────────────────────────────────────────
 
@@ -574,20 +591,33 @@ class MockArduino:
             self.encoder_b.base_angle + self.encoder_b.poll_count * self.encoder_b_speed
         )
 
+        self._frame_seq += 1
         ts_ms = int((time.time() - self._start_time) * 1000)
-        parts = [f"DATA:FRAME tsMs={ts_ms}"]
+        parts = [f"DATA:FRAME seq={self._frame_seq}", f"tsMs={ts_ms}"]
 
         srcs = self._stream_sources
-        if "ENC:A" in srcs or "ENC:BOTH" in srcs:
+        enc_a_active = "ENC:A" in srcs or "ENC:BOTH" in srcs
+        enc_b_active = "ENC:B" in srcs or "ENC:BOTH" in srcs
+        diag_active = "DIAG" in srcs
+
+        if enc_a_active:
             parts.append(f"angA={self.encoder_a.get_effective_angle():.2f}")
-        if "ENC:B" in srcs or "ENC:BOTH" in srcs:
+            if diag_active:
+                parts.append("agcA=200")
+                parts.append("dstatA=1")  # ocf=1, all other flags clear
+        if enc_b_active:
             parts.append(f"angB={self.encoder_b.get_effective_angle():.2f}")
+            if diag_active:
+                parts.append("agcB=195")
+                parts.append("dstatB=1")
+
         if "ADC" in srcs:
             parts.append(f"adcV={self._compute_adc_voltage():.6f}")
         if "ADC:T" in srcs:
             parts.append(f"adcT={self._compute_adc_temperature():.2f}")
 
-        parts.append(f"pdGain={self.pdtia_gain}")
+        if "PDTIA" in srcs:
+            parts.append(f"pdGain={self.pdtia_gain}")
         parts.append("stat=0")
 
         self._write_response(",".join(parts) + "\n")

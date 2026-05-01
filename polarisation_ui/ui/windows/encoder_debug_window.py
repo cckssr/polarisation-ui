@@ -116,6 +116,10 @@ class EncoderDebugDialog(QDialog):
         if not standalone and self.ui.cbAutoRefresh.isChecked():
             self._refresh_timer.start(self.ui.spbRefreshInterval.value())
 
+        # Speed up DataController diagnostic polling while this dialog is open.
+        if self._data_controller is not None:
+            self._data_controller.set_diag_interval(500)
+
     # ==================== Setup ====================
 
     def _build_connection_panel(self) -> None:
@@ -850,4 +854,6 @@ class EncoderDebugDialog(QDialog):
             self._data_controller.angles_updated.disconnect(self._on_angles_updated)
             self._data_controller.intensity_updated.disconnect(self._on_intensity_updated)
             self._data_controller.enable_raw_frame_signal(False)
+            # Restore diagnostic polling to the background rate.
+            self._data_controller.set_diag_interval(5000)
         super().closeEvent(event)

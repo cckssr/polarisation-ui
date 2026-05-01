@@ -79,6 +79,11 @@ public:
     // Read current zero position registers (as stored in ZPOS shadow/OTP regs)
     uint16_t readZeroPosition();
 
+    // Apply the stored software-zero offset to an already-read raw14 value and
+    // convert to degrees.  Use in streaming paths where readAngleDeg() cannot
+    // be called again (it would issue a second SPI transaction).
+    float applyZero(uint16_t raw14) const;
+
 private:
     // ---- Registers (14-bit addresses) ----
     static constexpr uint16_t REG_NOP = 0x0000;

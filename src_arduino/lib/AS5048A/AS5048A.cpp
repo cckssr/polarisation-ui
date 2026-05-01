@@ -245,6 +245,14 @@ bool AS5048A_SPI::setZeroPositionVolatile()
     return (a2 <= 5u) || (a2 >= (16384u - 5u));
 }
 
+float AS5048A_SPI::applyZero(uint16_t raw14) const
+{
+    uint16_t r = raw14 & 0x3FFFu;
+    if (_swZeroEnabled)
+        r = (uint16_t)((r + 16384u - _swZeroOffset) & 0x3FFFu);
+    return r * (360.0f / 16384.0f);
+}
+
 bool AS5048A_SPI::burnZeroPositionToOTP()
 {
     // WARNING: one-time, irreversible (OTP).

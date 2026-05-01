@@ -49,12 +49,17 @@ static void errNoAdc()
 
 // ── DATA:FRAME emitter ────────────────────────────────────────────────────────
 
+// Monotonic frame sequence counter — wraps at 2^32 (~49 days at 1 kHz).
+static uint32_t s_frameSeq = 0;
+
 void emitDataFrame()
 {
   const uint8_t src = appState.stream.sources;
   uint8_t stat = 0;
 
-  Serial.print("DATA:FRAME tsMs=");
+  Serial.print("DATA:FRAME seq=");
+  Serial.print(++s_frameSeq);
+  Serial.print(",tsMs=");
   Serial.print(millis());
 
   if (src & SRC_ENC_A)
@@ -64,12 +69,24 @@ void emitDataFrame()
       stat |= 0x01;
     if (r.errorFlag)
       stat |= 0x04;
+    // Apply software zero so the streamed angle matches MEAS:ENC:ANGL? A.
     Serial.print(",angA=");
-    Serial.print(frameOk(r) ? rawToDeg(r.data14) : NAN, 2);
+    Serial.print(frameOk(r) ? encA.applyZero(r.data14) : NAN, 2);
     if (appState.debug && !r.parityOk)
       ++acqStats.parityErrors;
     if (appState.debug && r.errorFlag)
       ++acqStats.efEvents;
+    if (src & SRC_DIAG)
+    {
+      AS5048A_SPI::Diagnostics d = encA.readDiagnostics();
+      Serial.print(",agcA=");
+      Serial.print(d.agc);
+      // dstatA bits: 3=compHigh, 2=compLow, 1=cof, 0=ocf
+      uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u)
+                 | (d.cof ? 0x02u : 0u)       | (d.ocf ? 0x01u : 0u);
+      Serial.print(",dstatA=");
+      Serial.print(ds);
+    }
   }
 
   if (src & SRC_ENC_B)
@@ -82,10 +99,25 @@ void emitDataFrame()
         stat |= 0x02;
       if (r.errorFlag)
         stat |= 0x08;
-      angB = frameOk(r) ? rawToDeg(r.data14) : NAN;
+      angB = frameOk(r) ? encB.applyZero(r.data14) : NAN;
+      Serial.print(",angB=");
+      Serial.print(angB, 2);
+      if (src & SRC_DIAG)
+      {
+        AS5048A_SPI::Diagnostics d = encB.readDiagnostics();
+        Serial.print(",agcB=");
+        Serial.print(d.agc);
+        uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u)
+                   | (d.cof ? 0x02u : 0u)       | (d.ocf ? 0x01u : 0u);
+        Serial.print(",dstatB=");
+        Serial.print(ds);
+      }
     }
-    Serial.print(",angB=");
-    Serial.print(angB, 2);
+    else
+    {
+      Serial.print(",angB=");
+      Serial.print(angB, 2);
+    }
   }
 
   if (src & SRC_ADC)
@@ -159,15 +191,23 @@ static void handleMeasEncAngl(const String &param)
 
   if (p == "BOTH")
   {
-    float a = encA.readAngleDeg();
-    float b = appState.encBPresent ? encB.readAngleDeg() : NAN;
+    // Use encReadAngle() for EF recovery + parity check on both paths.
+    AS5048A_SPI::FrameResult rA = encReadAngle(encA);
+    float a = frameOk(rA) ? encA.applyZero(rA.data14) : NAN;
+    float b = NAN;
+    if (appState.encBPresent)
+    {
+      AS5048A_SPI::FrameResult rB = encReadAngle(encB);
+      b = frameOk(rB) ? encB.applyZero(rB.data14) : NAN;
+    }
     Serial.print(a, 4);
     Serial.print(',');
     Serial.println(b, 4);
   }
   else if (p == "A")
   {
-    Serial.println(encA.readAngleDeg(), 4);
+    AS5048A_SPI::FrameResult r = encReadAngle(encA);
+    Serial.println(frameOk(r) ? encA.applyZero(r.data14) : NAN, 4);
   }
   else if (p == "B")
   {
@@ -178,7 +218,8 @@ static void handleMeasEncAngl(const String &param)
     }
     else
     {
-      Serial.println(encB.readAngleDeg(), 4);
+      AS5048A_SPI::FrameResult r = encReadAngle(encB);
+      Serial.println(frameOk(r) ? encB.applyZero(r.data14) : NAN, 4);
     }
   }
   else
@@ -260,12 +301,23 @@ static void handleMeasAdcTemp()
 
 static void handleMeasAll()
 {
-  float angA = encA.readAngleDeg();
-  float angB = appState.encBPresent ? encB.readAngleDeg() : NAN;
-  AS5048A_SPI::FrameResult rA = encReadMagn(encA);
-  AS5048A_SPI::FrameResult rB = appState.encBPresent
-                                    ? encReadMagn(encB)
-                                    : AS5048A_SPI::FrameResult{};
+  // Use encReadAngle() on all paths for EF recovery + parity check.
+  AS5048A_SPI::FrameResult angRA = encReadAngle(encA);
+  float angA = frameOk(angRA) ? encA.applyZero(angRA.data14) : NAN;
+
+  float angB = NAN;
+  AS5048A_SPI::FrameResult angRB{};
+  if (appState.encBPresent)
+  {
+    angRB = encReadAngle(encB);
+    angB = frameOk(angRB) ? encB.applyZero(angRB.data14) : NAN;
+  }
+
+  AS5048A_SPI::FrameResult magA = encReadMagn(encA);
+  AS5048A_SPI::FrameResult magB{};
+  if (appState.encBPresent)
+    magB = encReadMagn(encB);
+
   float volt = adsSession.adcPresent() ? adsSession.takeVoltageReading() : NAN;
 
   Serial.print(millis());
@@ -274,9 +326,9 @@ static void handleMeasAll()
   Serial.print(',');
   Serial.print(angB, 4);
   Serial.print(',');
-  Serial.print(frameOk(rA) ? String(rA.data14) : "nan");
+  Serial.print(frameOk(magA) ? String(magA.data14) : "nan");
   Serial.print(',');
-  Serial.print(appState.encBPresent && frameOk(rB) ? String(rB.data14) : "nan");
+  Serial.print(appState.encBPresent && frameOk(magB) ? String(magB.data14) : "nan");
   Serial.print(',');
   Serial.println(volt, 6);
 }
@@ -623,6 +675,8 @@ static void handleConfSrc(const String &param)
       newSrc |= SRC_ADC_T;
     else if (tok == "PDTIA")
       newSrc |= SRC_PDTIA;
+    else if (tok == "DIAG")
+      newSrc |= SRC_DIAG;
     else if (tok.length() > 0)
     {
       errorQueue.push("-113,\"Undefined header; unknown source: " + tok + "\"");
@@ -713,6 +767,8 @@ static void handleSensSrc()
     s += "ADC:T,";
   if (src & SRC_PDTIA)
     s += "PDTIA,";
+  if (src & SRC_DIAG)
+    s += "DIAG,";
   if (s.length() > 0)
     s.remove(s.length() - 1);
   else
@@ -847,8 +903,9 @@ static void handleSystHelp()
   Serial.println("  CONF:ADC:TEMP?               query temp measurement state");
   Serial.println("  CONF:PDTIA:GAIN <stage>");
   Serial.println("  CONF:PDTIA:GAIN?             stage,0b<bits>");
-  Serial.println("  CONF:SRC ENC:A|ENC:B|ENC:BOTH|ADC|ADC:T|PDTIA");
+  Serial.println("  CONF:SRC ENC:A|ENC:B|ENC:BOTH|ADC|ADC:T|PDTIA|DIAG");
   Serial.println("  CONF:SRC?                    query active sources");
+  Serial.println("  (DIAG adds agcA/agcB/dstatA/dstatB to each DATA:FRAME)");
   Serial.println("  CONF:RATE <hz>               stream rate 1-1000 Hz");
   Serial.println("  CONF:RATE?                   query current rate");
   Serial.println("");
@@ -864,7 +921,7 @@ static void handleSystHelp()
   Serial.println("  READ? [ADC|ADC:T]");
   Serial.println("");
   Serial.println("Streaming:");
-  Serial.println("  DATA:FRAME tsMs=..,angA=..,angB=..,adcV=..,adcT=..,pdGain=..,stat=..");
+  Serial.println("  DATA:FRAME seq=..,tsMs=..,angA=..,angB=..,adcV=..,adcT=..,pdGain=..,agcA=..,dstatA=..,agcB=..,dstatB=..,stat=..");
   Serial.println("");
   Serial.println("SYSTem:");
   Serial.println("  SYST:ERR?      next queued error");
@@ -874,7 +931,7 @@ static void handleSystHelp()
   Serial.println("  SYST:HELP?     this message");
   Serial.println("");
   Serial.println("DIAGnostic:");
-  Serial.println("  DIAG:ENC? [A|B]");
+  Serial.println("  DIAG:ENC? [A|B|BOTH]");
   Serial.println("  DIAG:ADC?");
   Serial.println("  DIAG:PDTIA?");
   Serial.println("  DIAG:SELF?");
@@ -883,9 +940,49 @@ static void handleSystHelp()
 
 // ── DIAGnostic subsystem ──────────────────────────────────────────────────────
 
+static void printDiagLine(const AS5048A_SPI::Diagnostics &d)
+{
+  Serial.print("compH=");
+  Serial.print(d.compHigh);
+  Serial.print(",compL=");
+  Serial.print(d.compLow);
+  Serial.print(",cof=");
+  Serial.print(d.cof);
+  Serial.print(",ocf=");
+  Serial.print(d.ocf);
+  Serial.print(",agc=");
+  Serial.println(d.agc);
+}
+
 static void handleDiagEnc(const String &param)
 {
   String p = (param == "") ? "A" : param;
+
+  if (p == "BOTH")
+  {
+    // Single response line with A and B fields interleaved for easy parsing.
+    AS5048A_SPI::Diagnostics dA = encA.readDiagnostics();
+    Serial.print("compHA="); Serial.print(dA.compHigh);
+    Serial.print(",compLA="); Serial.print(dA.compLow);
+    Serial.print(",cofA=");  Serial.print(dA.cof);
+    Serial.print(",ocfA=");  Serial.print(dA.ocf);
+    Serial.print(",agcA=");  Serial.print(dA.agc);
+    if (appState.encBPresent)
+    {
+      AS5048A_SPI::Diagnostics dB = encB.readDiagnostics();
+      Serial.print(",compHB="); Serial.print(dB.compHigh);
+      Serial.print(",compLB="); Serial.print(dB.compLow);
+      Serial.print(",cofB=");   Serial.print(dB.cof);
+      Serial.print(",ocfB=");   Serial.print(dB.ocf);
+      Serial.print(",agcB=");   Serial.println(dB.agc);
+    }
+    else
+    {
+      Serial.println(",encB=absent");
+    }
+    return;
+  }
+
   AS5048A_SPI *enc = nullptr;
   if (p == "A")
     enc = &encA;
@@ -901,21 +998,11 @@ static void handleDiagEnc(const String &param)
   }
   else
   {
-    errorQueue.push("-113,\"Undefined header; expected A or B\"");
+    errorQueue.push("-113,\"Undefined header; expected A, B, or BOTH\"");
     Serial.println("nan");
     return;
   }
-  AS5048A_SPI::Diagnostics d = enc->readDiagnostics();
-  Serial.print("compH=");
-  Serial.print(d.compHigh);
-  Serial.print(",compL=");
-  Serial.print(d.compLow);
-  Serial.print(",cof=");
-  Serial.print(d.cof);
-  Serial.print(",ocf=");
-  Serial.print(d.ocf);
-  Serial.print(",agc=");
-  Serial.println(d.agc);
+  printDiagLine(enc->readDiagnostics());
 }
 
 static void handleDiagAdc()

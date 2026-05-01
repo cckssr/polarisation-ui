@@ -3,7 +3,7 @@
 // ── Encoder SPI ───────────────────────────────────────────────────────────────
 #define ENC_CS_A 9
 #define ENC_CS_B 10
-#define SPI_HZ 100000UL
+#define SPI_HZ 1000000UL
 
 // ── ADS1220 ADC ───────────────────────────────────────────────────────────────
 #define ADC_CS_PIN 8    // chip select  (active low)

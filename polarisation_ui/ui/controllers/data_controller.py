@@ -181,6 +181,9 @@ class DataController(QObject):
         # tab in the debug dialog is open, to avoid unnecessary string formatting.
         self._raw_frame_enabled: bool = False
 
+        # Last seen DATA:FRAME sequence number — used to detect gaps in the stream.
+        self._last_frame_seq: Optional[int] = None
+
         # Active session journal — created on start_measurement(), closed/finalized
         # when the user explicitly exports or stops. Preserved across reconnects.
         self._journal: Optional[SessionJournal] = None
@@ -240,6 +243,12 @@ class DataController(QObject):
         """
         self._raw_frame_enabled = enabled
         Debug.debug(f"raw_frame signal {'enabled' if enabled else 'disabled'}")
+
+    def set_diag_interval(self, interval_ms: int) -> None:
+        """Change the periodic diagnostic poll rate (ms). Call 500 when debug dialog opens."""
+        self._diag_interval_ms = interval_ms
+        if self._diag_timer.isActive():
+            self._diag_timer.setInterval(interval_ms)
 
     def set_poll_interval(self, interval_ms: int) -> None:
         """
@@ -456,8 +465,10 @@ class DataController(QObject):
             )
             self.frame_ready.emit(frame)
             if self._raw_frame_enabled:
+                self._last_frame_seq = (self._last_frame_seq or 0) + 1
                 raw = (
-                    f"DATA:FRAME tsMs={frame.ts_ms},"
+                    f"DATA:FRAME seq={self._last_frame_seq},"
+                    f"tsMs={frame.ts_ms},"
                     f"angA={frame.sample_angle:.4f},"
                     f"angB={frame.detector_angle:.4f},"
                     f"adcV={frame.intensity:.6f}"

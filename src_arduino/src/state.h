@@ -54,12 +54,16 @@ struct AcqStats
 // ── Stream source bitmask (CONF:SRC) ──────────────────────────────────────────
 enum StreamSource : uint8_t
 {
-  SRC_NONE = 0x00,
+  SRC_NONE  = 0x00,
   SRC_ENC_A = 0x01,
   SRC_ENC_B = 0x02,
-  SRC_ADC = 0x04,
+  SRC_ADC   = 0x04,
   SRC_ADC_T = 0x08,
   SRC_PDTIA = 0x10,
+  // Include AGC and diagnostic flags (compH/compL/cof/ocf) in each DATA:FRAME
+  // for active encoders.  Adds one readDiagnostics() SPI call per active encoder
+  // per frame (~160 µs overhead at 1 MHz SPI).
+  SRC_DIAG  = 0x20,
 };
 
 // ── Stream configuration (CONF:SRC / CONF:RATE) ───────────────────────────────
