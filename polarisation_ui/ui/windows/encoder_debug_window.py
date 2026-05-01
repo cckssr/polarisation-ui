@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QTimer, Slot
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QFormLayout,
     QFrame,
@@ -34,6 +35,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QSpacerItem,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -82,6 +84,7 @@ class EncoderDebugDialog(QDialog):
         sample_inverted: bool = False,
         data_controller: "DataController | None" = None,
         parent=None,
+        standalone: bool = False,
     ) -> None:
         super().__init__(parent)
         self.ui = Ui_EncoderDebugDialog()
@@ -90,22 +93,110 @@ class EncoderDebugDialog(QDialog):
         self._dm = device_manager
         self._sample_inverted = sample_inverted
         self._data_controller = data_controller
+        self._standalone = standalone
 
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self._refresh)
 
+        if standalone:
+            self._build_connection_panel()
+
         self._connect_signals()
         self._init_leds()
-        self._load_system_info()
+
+        if device_manager.is_encoder_connected():
+            self._load_system_info()
+        else:
+            self._set_tabs_enabled(False)
 
         self._build_ads_tab()
         self._build_raw_stream_tab()
         self._build_self_test_tab()
 
-        if self.ui.cbAutoRefresh.isChecked():
+        if not standalone and self.ui.cbAutoRefresh.isChecked():
             self._refresh_timer.start(self.ui.spbRefreshInterval.value())
 
     # ==================== Setup ====================
+
+    def _build_connection_panel(self) -> None:
+        """Prepend a port-selector bar for standalone (--debug-only) mode."""
+        from PySide6.QtGui import QIcon
+
+        panel = QGroupBox("Arduino-Verbindung")
+        hl = QHBoxLayout(panel)
+
+        hl.addWidget(QLabel("Port:"))
+
+        self._standalone_port_cb = QComboBox()
+        self._standalone_port_cb.setMinimumWidth(160)
+        self._populate_standalone_ports()
+        hl.addWidget(self._standalone_port_cb)
+
+        refresh_btn = QToolButton()
+        refresh_btn.setIcon(QIcon.fromTheme("view-refresh"))
+        refresh_btn.setToolTip("Ports neu laden")
+        refresh_btn.clicked.connect(self._populate_standalone_ports)
+        hl.addWidget(refresh_btn)
+
+        self._standalone_connect_btn = QPushButton("Verbinden")
+        self._standalone_connect_btn.setMinimumWidth(100)
+        self._standalone_connect_btn.clicked.connect(self._standalone_connect)
+        hl.addWidget(self._standalone_connect_btn)
+
+        self._standalone_status_lbl = QLabel("Nicht verbunden")
+        hl.addWidget(self._standalone_status_lbl)
+        hl.addStretch(1)
+
+        # Insert above all existing content
+        self.ui.verticalLayout_root.insertWidget(0, panel)
+        self.setWindowTitle("Encoder Debug (Standalone)")
+
+    def _populate_standalone_ports(self) -> None:
+        """Refresh the port combo from the device manager's port list."""
+        ports = self._dm.list_available_ports()
+        self._standalone_port_cb.clear()
+        if ports:
+            for p in ports:
+                self._standalone_port_cb.addItem(p)
+        else:
+            self._standalone_port_cb.addItem("Keine Ports gefunden")
+
+    @Slot()
+    def _standalone_connect(self) -> None:
+        """Connect to (or disconnect from) the selected port in standalone mode."""
+        if self._dm.is_encoder_connected():
+            self._refresh_timer.stop()
+            self._dm.disconnect_all()
+            self._standalone_connect_btn.setText("Verbinden")
+            self._standalone_status_lbl.setText("Getrennt")
+            self._set_tabs_enabled(False)
+            return
+
+        port = self._standalone_port_cb.currentText()
+        self._standalone_status_lbl.setText("Verbinde...")
+        self._standalone_connect_btn.setEnabled(False)
+
+        success = self._dm.connect_encoders(port=port)
+        self._standalone_connect_btn.setEnabled(True)
+
+        if success:
+            self._standalone_status_lbl.setText(f"Verbunden: {port}")
+            self._standalone_connect_btn.setText("Trennen")
+            self._set_tabs_enabled(True)
+            self._load_system_info()
+            if self.ui.cbAutoRefresh.isChecked():
+                self._refresh_timer.start(self.ui.spbRefreshInterval.value())
+            Debug.info(f"Standalone debug: connected to {port}")
+        else:
+            self._standalone_status_lbl.setText("Verbindung fehlgeschlagen")
+            Debug.error(f"Standalone debug: connection to {port} failed")
+
+    def _set_tabs_enabled(self, enabled: bool) -> None:
+        """Enable or disable the diagnostic tabs (tab widget in the UI)."""
+        if hasattr(self.ui, "tabWidget"):
+            self.ui.tabWidget.setEnabled(enabled)
+        # Also disable the refresh controls
+        self.ui.gbControl.setEnabled(enabled)
 
     def _connect_signals(self) -> None:
         self.ui.btnRefresh.clicked.connect(self._refresh)

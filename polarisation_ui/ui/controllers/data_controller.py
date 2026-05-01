@@ -16,6 +16,7 @@ from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.qt_threads import ReconnectWorker
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 
 
@@ -39,6 +40,12 @@ def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
         faults.append("Kalibrierung ausstehend (OCF)")
     ok = len(faults) == 0
     return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
+
+
+def _circular_delta(a: float, b: float) -> float:
+    """Smallest absolute angular difference between two angles in [0, 360)."""
+    diff = abs(a - b) % 360.0
+    return min(diff, 360.0 - diff)
 
 
 class DataController(QObject):
@@ -67,6 +74,9 @@ class DataController(QObject):
     # Opt-in debug signal — raw DATA:FRAME string (off by default for perf).
     # Enable via enable_raw_frame_signal(True) before opening the Raw Stream tab.
     raw_frame = Signal(str)
+    # Measured polling rate in Hz (emitted after each successful frame once
+    # enough samples are available for a stable estimate).
+    poll_rate_updated = Signal(float)
 
     # Error signals
     error_occurred = Signal(str)  # error_message
@@ -149,6 +159,13 @@ class DataController(QObject):
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
 
+        # Spike filter: last accepted angles for derivative check.
+        self._last_sample_angle: Optional[float] = None
+        self._last_det_angle: Optional[float] = None
+
+        # Poll-rate measurement: ring buffer of recent successful-frame timestamps.
+        self._poll_ts_deque: deque[float] = deque(maxlen=20)
+
         # When True, fall back to Gaussian simulation instead of querying ADC.
         # Set to True in unit tests that don't have a mock device attached.
         self._use_mock_intensity = use_mock_intensity
@@ -161,6 +178,9 @@ class DataController(QObject):
         # Active session journal — created on start_measurement(), closed/finalized
         # when the user explicitly exports or stops. Preserved across reconnects.
         self._journal: Optional[SessionJournal] = None
+
+        # Current ReconnectWorker instance — kept as attribute to prevent GC while running.
+        self._reconnect_worker: Optional[ReconnectWorker] = None
 
         Debug.debug("Data controller initialized")
 
@@ -184,16 +204,20 @@ class DataController(QObject):
             f"Acq settings updated: "
             f"samp={settings.samp_averages}× (on={settings.samp_average_on}), "
             f"det={settings.det_averages}× (on={settings.det_average_on}), "
-            f"inverted={settings.sample_stage_inverted}"
+            f"inverted={settings.sample_stage_inverted}, "
+            f"spike_filter={settings.spike_filter_enabled} "
+            f"(max_delta={settings.spike_max_delta_deg}°)"
         )
 
     def clear_sample_buffer(self) -> None:
         """Flush the sample-angle averaging buffer (e.g. on sensor recovery)."""
         self._sample_buffer.clear()
+        self._last_sample_angle = None
 
     def clear_det_buffer(self) -> None:
         """Flush the detector-angle averaging buffer (e.g. on sensor recovery)."""
         self._det_buffer.clear()
+        self._last_det_angle = None
 
     # ==================== Polling Control ====================
 
@@ -343,6 +367,33 @@ class DataController(QObject):
             if self.sample_inverted:
                 sample_angle = (360.0 - sample_angle) % 360.0
 
+            # Spike filter: reject frames where either angle jumps too far
+            if self._acq_settings.spike_filter_enabled:
+                threshold = self._acq_settings.spike_max_delta_deg
+                if (
+                    self._last_sample_angle is not None
+                    and _circular_delta(sample_angle, self._last_sample_angle)
+                    > threshold
+                ):
+                    Debug.debug(
+                        f"Spike rejected: sample Δ="
+                        f"{_circular_delta(sample_angle, self._last_sample_angle):.1f}°"
+                    )
+                    return
+                if (
+                    self._last_det_angle is not None
+                    and _circular_delta(detector_angle, self._last_det_angle)
+                    > threshold
+                ):
+                    Debug.debug(
+                        f"Spike rejected: detector Δ="
+                        f"{_circular_delta(detector_angle, self._last_det_angle):.1f}°"
+                    )
+                    return
+
+            self._last_sample_angle = sample_angle
+            self._last_det_angle = detector_angle
+
             # Reset error counter on successful read
             self._error_count = 0
 
@@ -383,6 +434,15 @@ class DataController(QObject):
             if self._is_measuring and self._journal is not None:
                 self._journal.append_frame(frame)
 
+            # Poll-rate measurement
+            now = time.monotonic()
+            self._poll_ts_deque.append(now)
+            if len(self._poll_ts_deque) >= 2:
+                span = self._poll_ts_deque[-1] - self._poll_ts_deque[0]
+                if span > 0:
+                    hz = (len(self._poll_ts_deque) - 1) / span
+                    self.poll_rate_updated.emit(hz)
+
         except Exception as e:
             self._handle_read_error(f"Exception during sensor poll: {e}")
 
@@ -411,27 +471,42 @@ class DataController(QObject):
 
     @Slot()
     def _attempt_reconnect(self) -> None:
-        """Try to re-establish the serial connection and resume polling."""
+        """Start a ReconnectWorker to re-establish the serial connection off the main thread."""
         self.retry_connecting.emit()
         Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
 
-        try:
-            success = self.device_manager.reconnect_encoders()
-            if success:
-                self._error_count = 0
-                self._backoff_attempt = 0
-                # Buffers are intentionally preserved — data continuity across gaps.
-                # Write a gap marker so consumers can show a discontinuity on plots.
-                if self._journal is not None and self._journal.is_active:
-                    self._journal.append_gap()
-                self.poll_timer.start(self.poll_interval)
-                self._diag_timer.start(self.DIAG_INTERVAL_MS)
-                self.reconnect_succeeded.emit()
-                Debug.info("Reconnected successfully")
-            else:
-                self._handle_read_error("Reconnect failed")
-        except Exception as e:
-            self._handle_read_error(f"Exception during reconnect: {e}")
+        # Clean up any previous worker that has already finished
+        if self._reconnect_worker is not None:
+            self._reconnect_worker.deleteLater()
+
+        worker = ReconnectWorker(self.device_manager, parent=self)
+        worker.succeeded.connect(self._on_reconnect_success)
+        worker.failed.connect(self._on_reconnect_failed)
+        # Auto-cleanup: delete QThread object once it finishes
+        worker.finished.connect(worker.deleteLater)
+        self._reconnect_worker = worker
+        worker.start()
+
+    @Slot()
+    def _on_reconnect_success(self) -> None:
+        """Called on the main thread when ReconnectWorker reports success."""
+        self._reconnect_worker = None
+        self._error_count = 0
+        self._backoff_attempt = 0
+        # Buffers are intentionally preserved — data continuity across gaps.
+        # Write a gap marker so consumers can show a discontinuity on plots.
+        if self._journal is not None and self._journal.is_active:
+            self._journal.append_gap()
+        self.poll_timer.start(self.poll_interval)
+        self._diag_timer.start(self.DIAG_INTERVAL_MS)
+        self.reconnect_succeeded.emit()
+        Debug.info("Reconnected successfully")
+
+    @Slot()
+    def _on_reconnect_failed(self) -> None:
+        """Called on the main thread when ReconnectWorker reports failure."""
+        self._reconnect_worker = None
+        self._handle_read_error("Reconnect failed")
 
     # ==================== Manual Reading ====================
 
@@ -514,6 +589,10 @@ class DataController(QObject):
         self._retry_timer.stop()
         self._diag_timer.stop()
         self.stop_continuous_reading()
+
+        if self._reconnect_worker is not None and self._reconnect_worker.isRunning():
+            self._reconnect_worker.quit()
+            self._reconnect_worker.wait(3000)
 
         if self._is_measuring:
             self.stop_measurement()

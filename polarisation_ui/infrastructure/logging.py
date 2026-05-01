@@ -273,6 +273,18 @@ class Debug:
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
     @classmethod
+    def add_handler(cls, handler: logging.Handler) -> None:
+        """Attach an additional logging.Handler at runtime (e.g. a log-window handler)."""
+        if cls.logger is not None:
+            cls.logger.addHandler(handler)
+
+    @classmethod
+    def remove_handler(cls, handler: logging.Handler) -> None:
+        """Detach a previously added handler."""
+        if cls.logger is not None:
+            cls.logger.removeHandler(handler)
+
+    @classmethod
     def _get_caller_info(cls):
         """
         Retrieve information about the caller (class and function).

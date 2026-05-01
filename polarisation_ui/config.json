@@ -7,7 +7,7 @@
       "author": "C. Kessler, K. Brandt"
     },
     "debug": {
-      "level_default": "verbose"
+      "level_default": "info"
     },
     "connection": {
       "max_retry_attempts": 10,
@@ -37,7 +37,9 @@
       "det_averages": 5,
       "samp_average_on": true,
       "samp_averages": 5,
-      "sample_stage_inverted": true
+      "sample_stage_inverted": true,
+      "spike_filter_enabled": true,
+      "spike_max_delta_deg": 10.0
     },
 
     "data_controller": {

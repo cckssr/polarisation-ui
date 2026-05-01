@@ -12,6 +12,7 @@ Responsibilities:
     - Handle user interactions via signals/slots
     - Update live displays with encoder readings
     - Manage measurement sessions
+    - Status indicators (LEDs)
 """
 
 from collections.abc import Callable
@@ -25,7 +26,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QAction, QCloseEvent
 
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
@@ -50,9 +51,12 @@ from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 from polarisation_ui.ui.widgets.tab_registry import TabRegistry
 
-
 # Import settings
 CONFIG = import_config()
+
+# ADC saturation thresholds (ADS1220, PGA=1, Vref=2.048V)
+_ADC_SAT_LOW = 0.02  # V — near GND
+_ADC_SAT_HIGH = 2.0  # V — near rail
 
 
 class MainWindow(QMainWindow):
@@ -94,12 +98,17 @@ class MainWindow(QMainWindow):
         self.data_controller = DataController(self.device_manager, self)
         self.statusbar_manager = StatusBarManager(self.ui.statusBar)
         self._is_measuring = False
+        self._is_connected = False
+        self._adc_saturated = False  # tracks last saturation state to avoid LED flicker
 
         self._acq_settings: AcquisitionSettings = self._load_acq_settings_from_config()
 
         self._sensor_a_ok: bool = True
         self._sensor_b_ok: bool = True
         self._tab_instances: list[PlotTabBase] = []
+
+        # Log window — created lazily on first open, reused thereafter
+        self._log_window = None
 
         self.data_controller.update_acq_settings(self._acq_settings)
 
@@ -163,6 +172,11 @@ class MainWindow(QMainWindow):
         self.ui.actionAcquisitionSettings.triggered.connect(self._open_acq_settings)
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
 
+        # Log window menu entry (added programmatically — no Qt Designer change needed)
+        self._action_log_window = QAction("Log-Ausgabe anzeigen", self)
+        self._action_log_window.triggered.connect(self._open_log_window)
+        self.ui.menuEinstellungen.addAction(self._action_log_window)
+
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
         self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
@@ -182,6 +196,8 @@ class MainWindow(QMainWindow):
 
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
+        self.data_controller.intensity_updated.connect(self._update_intensity_display)
+        self.data_controller.poll_rate_updated.connect(self._update_poll_rate)
         self.data_controller.diagnostics_updated.connect(
             self._handle_diagnostics_update
         )
@@ -295,6 +311,12 @@ class MainWindow(QMainWindow):
                 "Verbunden",
                 LED_GREEN,
             )
+            self._is_connected = True
+            # Toggle button to disconnect
+            self.ui.btnArduinoConnect.setText("Trennen")
+            self.ui.btnArduinoConnect.clicked.disconnect(self._connect_arduino)
+            self.ui.btnArduinoConnect.clicked.connect(self._disconnect_arduino)
+
             self._on_arduino_connected()
             self.statusbar_manager.show_success(f"Arduino verbunden auf {port}")
             Debug.info(f"Arduino connected on {port}")
@@ -314,10 +336,72 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_error(f"Verbindung fehlgeschlagen: {error}")
             Debug.error(f"Arduino connection failed: {error}")
 
+    @Slot()
+    def _disconnect_arduino(self) -> None:
+        """User-initiated disconnect from Arduino."""
+        self.data_controller.stop_continuous_reading()
+        self.device_manager.disconnect_all()
+        self._reset_connection_ui()
+        self.statusbar_manager.show_info("Arduino getrennt")
+        Debug.info("Arduino disconnected by user")
+
+    def _reset_connection_ui(self) -> None:
+        """Reset all connection-related UI elements to the disconnected state."""
+        self._is_connected = False
+        self._adc_saturated = False
+
+        # Restore connect button
+        try:
+            self.ui.btnArduinoConnect.clicked.disconnect(self._disconnect_arduino)
+        except RuntimeError:
+            pass  # not connected — safe to ignore
+        try:
+            self.ui.btnArduinoConnect.clicked.disconnect(self._connect_arduino)
+        except RuntimeError:
+            pass
+        self.ui.btnArduinoConnect.setText("Verbinden")
+        self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
+
+        # Re-enable port selection
+        self.ui.cbArduinoPort.setEnabled(True)
+        self.ui.btnRefreshPorts.setEnabled(True)
+
+        # Disable hardware groups
+        self.ui.gbSampleStage.setEnabled(False)
+        self.ui.gbDetectorStage.setEnabled(False)
+        self.ui.gbDetector.setEnabled(False)
+        self.ui.btnStartMeasurement.setEnabled(False)
+
+        set_connection_status(
+            self.ui.ledArduinoStatus,
+            self.ui.lblArduinoStatusValue,
+            "Getrennt",
+            LED_RED,
+        )
+        set_connection_status(
+            self.ui.ledSampleStatus,
+            self.ui.lblSampleStatusValue,
+            "Kein Signal",
+            LED_RED,
+        )
+        set_connection_status(
+            self.ui.ledDetectorStageStatus,
+            self.ui.lblDetectorStageStatusValue,
+            "Kein Signal",
+            LED_RED,
+        )
+        set_connection_status(
+            self.ui.ledDetectorStatus,
+            self.ui.lblDetectorStatusValue,
+            "Kein Signal",
+            LED_RED,
+        )
+
     def _on_arduino_connected(self) -> None:
         """Enable encoder UI sections and start data acquisition after connection."""
         self.ui.gbSampleStage.setEnabled(True)
         self.ui.gbDetectorStage.setEnabled(True)
+        self.ui.gbDetector.setEnabled(True)
         set_connection_status(
             self.ui.ledSampleStatus,
             self.ui.lblSampleStatusValue,
@@ -330,11 +414,19 @@ class MainWindow(QMainWindow):
             "Encoder B",
             LED_GREEN,
         )
+        set_connection_status(
+            self.ui.ledDetectorStatus,
+            self.ui.lblDetectorStatusValue,
+            "ADC",
+            LED_GREEN,
+        )
         self.ui.lcdSampleAngle.display(0.00)
         self.ui.lcdDetectorStageAngle.display(0.00)
+        self.ui.lcdDetectorVoltage.display(0.0000)
         self.ui.btnStartMeasurement.setEnabled(True)
         self._sensor_a_ok = True
         self._sensor_b_ok = True
+        self._adc_saturated = False
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
 
@@ -354,6 +446,8 @@ class MainWindow(QMainWindow):
             samp_average_on=acq.get("samp_average_on", True),
             samp_averages=acq.get("samp_averages", 5),
             sample_stage_inverted=acq.get("sample_stage_inverted", True),
+            spike_filter_enabled=acq.get("spike_filter_enabled", True),
+            spike_max_delta_deg=acq.get("spike_max_delta_deg", 10.0),
         )
 
     @Slot()
@@ -388,6 +482,35 @@ class MainWindow(QMainWindow):
 
         if self._sensor_b_ok:
             self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
+
+    @Slot(float)
+    def _update_intensity_display(self, voltage: float) -> None:
+        """Update the detector voltage LCD and check for ADC saturation."""
+        self.ui.lcdDetectorVoltage.display(f"{voltage:.4f}")
+
+        saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
+        if saturated != self._adc_saturated:
+            self._adc_saturated = saturated
+            if saturated:
+                set_connection_status(
+                    self.ui.ledDetectorStatus,
+                    self.ui.lblDetectorStatusValue,
+                    "Sättigung",
+                    LED_YELLOW,
+                )
+            else:
+                set_connection_status(
+                    self.ui.ledDetectorStatus,
+                    self.ui.lblDetectorStatusValue,
+                    "ADC",
+                    LED_GREEN,
+                )
+
+    @Slot(float)
+    def _update_poll_rate(self, hz: float) -> None:
+        """Show the measured poll rate in the detector status label when ADC is healthy."""
+        if not self._adc_saturated and self._is_connected:
+            self.ui.lblDetectorStatusValue.setText(f"ADC  {hz:.1f} Hz")
 
     # ==================== Encoder Control ====================
 
@@ -426,6 +549,22 @@ class MainWindow(QMainWindow):
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dialog.show()
+
+    @Slot()
+    def _open_log_window(self) -> None:
+        """Open or raise the live log output window."""
+        if self._log_window is None:
+            from polarisation_ui.ui.windows.log_window import LogWindow
+
+            self._log_window = LogWindow(parent=self)
+            self._log_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            self._log_window.destroyed.connect(self._on_log_window_closed)
+        self._log_window.show()
+        self._log_window.raise_()
+        self._log_window.activateWindow()
+
+    def _on_log_window_closed(self) -> None:
+        self._log_window = None
 
     # ==================== Measurement Control ====================
 
@@ -600,6 +739,12 @@ class MainWindow(QMainWindow):
             "Verbindungsfehler",
             LED_YELLOW,
         )
+        set_connection_status(
+            self.ui.ledDetectorStatus,
+            self.ui.lblDetectorStatusValue,
+            "Verbindungsfehler",
+            LED_YELLOW,
+        )
         self.statusbar_manager.show_error(f"Lesefehler: {error_msg}")
 
     @Slot()
@@ -630,35 +775,22 @@ class MainWindow(QMainWindow):
             "Encoder B",
             LED_GREEN,
         )
+        set_connection_status(
+            self.ui.ledDetectorStatus,
+            self.ui.lblDetectorStatusValue,
+            "ADC",
+            LED_GREEN,
+        )
+        self._adc_saturated = False
         self.statusbar_manager.show_success("Verbindung wiederhergestellt")
         Debug.info("Reconnect: UI status restored")
 
     @Slot()
     def _handle_connection_lost(self) -> None:
         """Max reconnect attempts exhausted: show disconnected state, offer data export."""
-        set_connection_status(
-            self.ui.ledArduinoStatus,
-            self.ui.lblArduinoStatusValue,
-            "Getrennt",
-            LED_RED,
-        )
-        set_connection_status(
-            self.ui.ledSampleStatus,
-            self.ui.lblSampleStatusValue,
-            "Kein Signal",
-            LED_RED,
-        )
-        set_connection_status(
-            self.ui.ledDetectorStageStatus,
-            self.ui.lblDetectorStageStatusValue,
-            "Kein Signal",
-            LED_RED,
-        )
+        self._reset_connection_ui()
         self.ui.gbSampleStage.setEnabled(False)
         self.ui.gbDetectorStage.setEnabled(False)
-        self.ui.btnStartMeasurement.setEnabled(False)
-        self.ui.cbArduinoPort.setEnabled(True)
-        self.ui.btnRefreshPorts.setEnabled(True)
         self.statusbar_manager.show_error(
             "Verbindung verloren – bitte Arduino neu verbinden"
         )

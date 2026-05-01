@@ -118,6 +118,8 @@ class AcquisitionSettings:
     # so the raw angle increases in the wrong direction.  When True the
     # DataController applies  corrected = (360 - raw) % 360  before emitting.
     sample_stage_inverted: bool = True
+    spike_filter_enabled: bool = True
+    spike_max_delta_deg: float = 10.0  # 100 °/s at default 10 Hz — rejects glitches
 
 
 @dataclass

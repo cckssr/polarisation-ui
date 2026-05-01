@@ -18,10 +18,12 @@ from polarisation_ui.infrastructure.devices.dual_encoder import DesiredState
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.core.models import Frame
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _make_device_manager(connected: bool = True, reconnect_result: bool = True) -> MagicMock:
+
+def _make_device_manager(
+    connected: bool = True, reconnect_result: bool = True
+) -> MagicMock:
     dm = MagicMock()
     dm.is_encoder_connected.return_value = connected
     dm.reconnect_encoders.return_value = reconnect_result
@@ -31,6 +33,7 @@ def _make_device_manager(connected: bool = True, reconnect_result: bool = True) 
 
 
 # ── DesiredState ──────────────────────────────────────────────────────────────
+
 
 class TestDesiredState:
 
@@ -48,7 +51,10 @@ class TestDesiredState:
         assert snap["pdtia_gain"] == 2
 
     def test_reapply_desired_state(self):
-        from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
         dev = MagicMock(spec=DualEncoderArduino)
         dev.adc = MagicMock()
         dev.adc.configure.return_value = True
@@ -59,13 +65,21 @@ class TestDesiredState:
         DualEncoderArduino.reapply_desired_state(dev, state)
 
         dev.adc.configure.assert_called_once_with(
-            gain=4, mux="DIFF01", rate=20, mode="NORM",
-            fir="OFF", vref="EXT", temp=False,
+            gain=4,
+            mux="DIFF01",
+            rate=20,
+            mode="NORM",
+            fir="OFF",
+            vref="EXT",
+            temp=False,
         )
         dev.adc.set_pdtia_gain.assert_called_once_with(1)
 
     def test_reapply_skips_pdtia_when_zero(self):
-        from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
         dev = MagicMock(spec=DualEncoderArduino)
         dev.adc = MagicMock()
         dev.adc.configure.return_value = True
@@ -77,10 +91,13 @@ class TestDesiredState:
 
 # ── DeviceManager reconnect with DesiredState ─────────────────────────────────
 
+
 class TestDeviceManagerReconnect:
 
     def test_reconnect_calls_reapply(self, tmp_path):
-        from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+        from polarisation_ui.infrastructure.device_manager import (
+            GoniometerDeviceManager,
+        )
 
         dm = GoniometerDeviceManager.__new__(GoniometerDeviceManager)
         dm.use_mock = False
@@ -95,8 +112,10 @@ class TestDeviceManagerReconnect:
         mock_device.adc.configure.return_value = True
         mock_device.firmware_version = "2.0.0"
 
-        with patch.object(dm, "disconnect_encoders"), \
-             patch.object(dm, "connect_encoders", return_value=True) as mock_connect:
+        with (
+            patch.object(dm, "disconnect_encoders"),
+            patch.object(dm, "connect_encoders", return_value=True) as mock_connect,
+        ):
             dm._encoder_device = mock_device
             result = dm.reconnect_encoders()
 
@@ -106,10 +125,12 @@ class TestDeviceManagerReconnect:
 
 # ── Backoff delay computation ─────────────────────────────────────────────────
 
+
 class TestBackoffDelays:
 
     def test_backoff_sequence(self):
         from polarisation_ui.ui.controllers.data_controller import DataController
+
         delays = DataController._BACKOFF_DELAYS_MS
         # Must be monotonically increasing up to the cap
         for i in range(len(delays) - 1):
@@ -130,6 +151,7 @@ class TestBackoffDelays:
         dm.read_angles.return_value = None  # trigger errors
 
         from polarisation_ui.ui.controllers.data_controller import DataController
+
         dc = DataController(dm, use_mock_intensity=True)
 
         delays_used: list[int] = []
@@ -155,6 +177,7 @@ class TestBackoffDelays:
 
 # ── Buffer preservation ───────────────────────────────────────────────────────
 
+
 class TestBufferPreservation:
 
     def test_buffers_preserved_after_reconnect(self):
@@ -167,6 +190,7 @@ class TestBufferPreservation:
         dm = _make_device_manager(connected=True, reconnect_result=True)
 
         from polarisation_ui.ui.controllers.data_controller import DataController
+
         dc = DataController(dm, use_mock_intensity=True)
 
         # Pre-populate both buffers
@@ -176,8 +200,11 @@ class TestBufferPreservation:
         sample_before = list(dc._sample_buffer)
         det_before = list(dc._det_buffer)
 
-        # Simulate a successful reconnect
+        # Simulate a successful reconnect (now runs on a QThread worker)
         dc._attempt_reconnect()
+        if dc._reconnect_worker is not None:
+            dc._reconnect_worker.wait()  # block until worker thread finishes
+        app.processEvents()  # deliver the succeeded/failed signal to main thread
 
         assert list(dc._sample_buffer) == sample_before
         assert list(dc._det_buffer) == det_before
@@ -185,6 +212,7 @@ class TestBufferPreservation:
 
 
 # ── Journal gap markers ───────────────────────────────────────────────────────
+
 
 class TestJournalGapMarker:
 
@@ -196,6 +224,7 @@ class TestJournalGapMarker:
         app = QApplication.instance() or QApplication(sys.argv)
 
         import polarisation_ui.infrastructure.session_journal as sj_mod
+
         original_base = sj_mod.JOURNAL_BASE
         sj_mod.JOURNAL_BASE = tmp_path / "sessions"
 
@@ -203,6 +232,7 @@ class TestJournalGapMarker:
             dm = _make_device_manager(connected=True, reconnect_result=True)
 
             from polarisation_ui.ui.controllers.data_controller import DataController
+
             dc = DataController(dm, use_mock_intensity=True)
 
             # Start a journal manually (simulating start_measurement)
@@ -210,11 +240,16 @@ class TestJournalGapMarker:
             dc._start_journal()
             assert dc._journal is not None
 
-            frame = Frame(ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0)
+            frame = Frame(
+                ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0
+            )
             dc._journal.append_frame(frame)
 
-            # Simulate reconnect
+            # Simulate reconnect (runs on a QThread worker)
             dc._attempt_reconnect()
+            if dc._reconnect_worker is not None:
+                dc._reconnect_worker.wait()  # block until worker thread finishes
+            app.processEvents()  # deliver the succeeded signal to main thread
 
             # Journal should have a gap row
             dc._journal.close()
@@ -224,6 +259,7 @@ class TestJournalGapMarker:
             assert len(lines) >= 3
             # Last data line (gap) should have "1" in column 5
             import csv
+
             rows = list(csv.reader(lines[1:]))  # skip header
             gap_rows = [r for r in rows if len(r) >= 5 and r[4] == "1"]
             assert len(gap_rows) == 1
