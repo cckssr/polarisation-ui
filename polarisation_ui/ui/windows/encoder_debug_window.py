@@ -217,6 +217,14 @@ class EncoderDebugDialog(QDialog):
 
         self.ui.buttonBox.rejected.connect(self.reject)
 
+        # When DataController is available, subscribe to its signals for live
+        # angles and intensity so we display the same processed values as the
+        # main window (inversion, averaging, spike filter applied) without
+        # competing on the serial port.
+        if self._data_controller is not None:
+            self._data_controller.angles_updated.connect(self._on_angles_updated)
+            self._data_controller.intensity_updated.connect(self._on_intensity_updated)
+
     def _init_leds(self) -> None:
         """Reset all LEDs to gray until the first successful read."""
         _conn_leds = ["ledConnA", "ledConnB"]
@@ -236,6 +244,21 @@ class EncoderDebugDialog(QDialog):
             getattr(self.ui, name).setStyleSheet(LED_GRAY)
         # ADS LEDs are instance vars created in _build_ads_tab — set after that call.
 
+    # ==================== DataController Signal Receivers ====================
+
+    @Slot(float, float)
+    def _on_angles_updated(self, sample_angle: float, detector_angle: float) -> None:
+        """Update angle displays at 10 Hz from DataController (same values as main window)."""
+        self.ui.lcdAngleA.display(round(sample_angle, 4))
+        self.ui.ledConnA.setStyleSheet(LED_GREEN)
+        self.ui.lcdAngleB.display(round(detector_angle, 4))
+        self.ui.ledConnB.setStyleSheet(LED_GREEN)
+
+    @Slot(float)
+    def _on_intensity_updated(self, intensity: float) -> None:
+        """Update ADC voltage display at 10 Hz from DataController."""
+        self._lcd_adc_voltage.display(intensity)
+
     # ==================== Device Access ====================
 
     def _device(self) -> "DualEncoderArduino | None":
@@ -253,9 +276,63 @@ class EncoderDebugDialog(QDialog):
         if device is None:
             self._set_disconnected_state()
             return
-        self._update_measurements(device)
-        self._update_diagnostics(device)
-        self._update_adc_tab(device)
+        if self._data_controller is None:
+            # Standalone: no shared serial port owner — do all reads directly.
+            self._update_measurements(device)
+            self._update_diagnostics(device)
+            self._update_adc_tab(device)
+        else:
+            # DataController present: angles and voltage arrive via signals.
+            # Remaining debug reads (magnitude, diagnostic flags, ADC registers,
+            # PDTIA) are done here with the poll timer paused to prevent
+            # interleaving on the serial port.
+            self._update_debug_reads(device)
+
+    def _update_debug_reads(self, device: "DualEncoderArduino") -> None:
+        """Magnitude, encoder diagnostics, ADC registers, PDTIA — pause poll timer."""
+        poll_timer = self._data_controller.poll_timer
+        was_active = poll_timer.isActive()
+        if was_active:
+            poll_timer.stop()
+        try:
+            mag_a = device.read_magnitude(EncoderID.A)
+            if mag_a is not None:
+                self.ui.lcdMagnitudeA.display(mag_a)
+                self.ui.pbarMagnitudeA.setValue(mag_a)
+            mag_b = device.read_magnitude(EncoderID.B)
+            if mag_b is not None:
+                self.ui.lcdMagnitudeB.display(mag_b)
+                self.ui.pbarMagnitudeB.setValue(mag_b)
+
+            diag_a = device.get_diagnostics_a()
+            if diag_a:
+                self._apply_diagnostics(diag_a, "A")
+            diag_b = device.get_diagnostics_b()
+            if diag_b:
+                self._apply_diagnostics(diag_b, "B")
+
+            adc_diag = device.get_adc_diagnostics()
+            if adc_diag is not None:
+                if adc_diag.get("absent"):
+                    self._led_adc_present.setStyleSheet(LED_RED)
+                    self._led_adc_drdy.setStyleSheet(LED_GRAY)
+                else:
+                    self._led_adc_present.setStyleSheet(LED_GREEN)
+                    drdy = bool(adc_diag.get("drdy", False))
+                    self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
+                    for i in range(4):
+                        self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
+                    self._le_adc_last_raw.setText(
+                        f"0x{adc_diag.get('last_raw', 0):06X}"
+                    )
+
+            pdtia = device.get_pdtia_diagnostics()
+            if pdtia is not None:
+                self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
+                self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
+        finally:
+            if was_active:
+                poll_timer.start(self._data_controller.poll_interval)
 
     def _set_disconnected_state(self) -> None:
         self.ui.ledConnA.setStyleSheet(LED_RED)
@@ -769,7 +846,8 @@ class EncoderDebugDialog(QDialog):
 
     def closeEvent(self, event) -> None:  # type: ignore[override]
         self._refresh_timer.stop()
-        # Disable the raw_frame debug signal — no need to emit when dialog is gone.
         if self._data_controller is not None:
+            self._data_controller.angles_updated.disconnect(self._on_angles_updated)
+            self._data_controller.intensity_updated.disconnect(self._on_intensity_updated)
             self._data_controller.enable_raw_frame_signal(False)
         super().closeEvent(event)

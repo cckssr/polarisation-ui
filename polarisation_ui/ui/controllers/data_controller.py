@@ -14,10 +14,13 @@ from typing import Optional
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.utils import circular_mean_deg
+from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.qt_threads import ReconnectWorker
 from polarisation_ui.infrastructure.session_journal import SessionJournal
+
+CONFIG = import_config()
 
 
 def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
@@ -85,15 +88,6 @@ class DataController(QObject):
     measurement_started = Signal()
     measurement_stopped = Signal()
 
-    # Default polling interval (milliseconds)
-    DEFAULT_POLL_INTERVAL = 100  # 10 Hz
-
-    # Exponential backoff delays (ms): 1 s, 2 s, 4 s, 8 s, then cap at 15 s.
-    _BACKOFF_DELAYS_MS: list[int] = [1000, 2000, 4000, 8000, 15000]
-
-    # How often to run SYST:DIAG? checks (milliseconds)
-    DIAG_INTERVAL_MS = 5000  # every 5 s
-
     # --- Mock intensity parameters -------------------------------------------
     # Replace _read_intensity() body with a real ADC read when hardware is ready.
     _MOCK_PEAK_ANGLE: float = 90.0  # degrees — centre of simulated Gaussian
@@ -126,25 +120,34 @@ class DataController(QObject):
 
         self.device_manager = device_manager
 
+        # Load tunable parameters from config so nothing is hardcoded here.
+        _timers = CONFIG.get("timers", {})
+        _conn = CONFIG.get("connection", {})
+        _acq_cfg = CONFIG.get("acquisition", {})
+
         # Polling timer
         self.poll_timer = QTimer(self)
         self.poll_timer.timeout.connect(self._poll_sensors)
-        self.poll_interval = self.DEFAULT_POLL_INTERVAL
+        self.poll_interval: int = int(_timers.get("acquisition_timer_interval", 100))
 
-        # Retry timer — fires once after RETRY_DELAY_MS when connection is lost
+        # Retry timer — fires once per backoff step when connection is lost
         self._retry_timer = QTimer(self)
         self._retry_timer.setSingleShot(True)
         self._retry_timer.timeout.connect(self._attempt_reconnect)
 
-        # Diagnostic timer — periodically sends SYST:DIAG? to both encoders
+        # Diagnostic timer — periodically sends DIAG:ENC? to both encoders
         self._diag_timer = QTimer(self)
         self._diag_timer.timeout.connect(self._check_diagnostics)
+        self._diag_interval_ms: int = int(_timers.get("diag_interval_ms", 5000))
 
         # State tracking
         self._is_measuring = False
         self._error_count = 0
-        self._max_errors = 10  # Declare connection_lost after this many attempts
-        self._backoff_attempt = 0  # Which backoff delay to use next
+        self._max_errors: int = int(_conn.get("max_retry_attempts", 10))
+        self._backoff_delays_ms: list[int] = list(
+            _conn.get("backoff_delays_ms", [1000, 2000, 4000, 8000, 15000])
+        )
+        self._backoff_attempt = 0
 
         # When True, sample angle is corrected as (360 - raw) % 360 to account
         # for the diametrically flipped magnet on the sample stage.
@@ -162,8 +165,11 @@ class DataController(QObject):
         # Spike filter: last accepted angles for derivative check.
         self._last_sample_angle: Optional[float] = None
         self._last_det_angle: Optional[float] = None
+        # Consecutive spike rejections; reference is cleared after this many in a row.
+        self._spike_reject_streak: int = 0
+        self._spike_reset_after: int = int(_acq_cfg.get("spike_reset_after", 5))
 
-        # Poll-rate measurement: ring buffer of recent successful-frame timestamps.
+        # Poll-rate measurement: ring buffer of raw-read (pre-spike-filter) timestamps.
         self._poll_ts_deque: deque[float] = deque(maxlen=20)
 
         # When True, fall back to Gaussian simulation instead of querying ADC.
@@ -213,11 +219,13 @@ class DataController(QObject):
         """Flush the sample-angle averaging buffer (e.g. on sensor recovery)."""
         self._sample_buffer.clear()
         self._last_sample_angle = None
+        self._spike_reject_streak = 0
 
     def clear_det_buffer(self) -> None:
         """Flush the detector-angle averaging buffer (e.g. on sensor recovery)."""
         self._det_buffer.clear()
         self._last_det_angle = None
+        self._spike_reject_streak = 0
 
     # ==================== Polling Control ====================
 
@@ -265,7 +273,7 @@ class DataController(QObject):
         self._error_count = 0
         self._backoff_attempt = 0
         self.poll_timer.start(self.poll_interval)
-        self._diag_timer.start(self.DIAG_INTERVAL_MS)
+        self._diag_timer.start(self._diag_interval_ms)
         Debug.info("Continuous reading started")
         return True
 
@@ -367,29 +375,53 @@ class DataController(QObject):
             if self.sample_inverted:
                 sample_angle = (360.0 - sample_angle) % 360.0
 
-            # Spike filter: reject frames where either angle jumps too far
+            # Track raw poll rate here, before the spike filter, so the displayed
+            # Hz reflects the true timer rate rather than the acceptance rate.
+            now = time.monotonic()
+            self._poll_ts_deque.append(now)
+            if len(self._poll_ts_deque) >= 2:
+                span = self._poll_ts_deque[-1] - self._poll_ts_deque[0]
+                if span > 0:
+                    hz = (len(self._poll_ts_deque) - 1) / span
+                    self.poll_rate_updated.emit(hz)
+
+            # Spike filter: reject frames where either angle jumps too far.
+            # After spike_reset_after consecutive rejects the reference is cleared
+            # so a bad initial reading cannot permanently lock out all future frames.
             if self._acq_settings.spike_filter_enabled:
                 threshold = self._acq_settings.spike_max_delta_deg
-                if (
+                sample_spike = (
                     self._last_sample_angle is not None
                     and _circular_delta(sample_angle, self._last_sample_angle)
                     > threshold
-                ):
-                    Debug.debug(
-                        f"Spike rejected: sample Δ="
-                        f"{_circular_delta(sample_angle, self._last_sample_angle):.1f}°"
-                    )
-                    return
-                if (
+                )
+                det_spike = (
                     self._last_det_angle is not None
                     and _circular_delta(detector_angle, self._last_det_angle)
                     > threshold
-                ):
-                    Debug.debug(
-                        f"Spike rejected: detector Δ="
-                        f"{_circular_delta(detector_angle, self._last_det_angle):.1f}°"
-                    )
+                )
+                if sample_spike or det_spike:
+                    self._spike_reject_streak += 1
+                    if sample_spike:
+                        Debug.debug(
+                            f"Spike rejected: sample Δ="
+                            f"{_circular_delta(sample_angle, self._last_sample_angle):.1f}°"  # type: ignore[arg-type]
+                        )
+                    else:
+                        Debug.debug(
+                            f"Spike rejected: detector Δ="
+                            f"{_circular_delta(detector_angle, self._last_det_angle):.1f}°"  # type: ignore[arg-type]
+                        )
+                    if self._spike_reject_streak >= self._spike_reset_after:
+                        Debug.info(
+                            f"Spike filter: {self._spike_reject_streak} consecutive "
+                            "rejects — resetting reference angles"
+                        )
+                        self._last_sample_angle = None
+                        self._last_det_angle = None
+                        self._spike_reject_streak = 0
                     return
+                self._spike_reject_streak = 0
 
             self._last_sample_angle = sample_angle
             self._last_det_angle = detector_angle
@@ -434,15 +466,6 @@ class DataController(QObject):
             if self._is_measuring and self._journal is not None:
                 self._journal.append_frame(frame)
 
-            # Poll-rate measurement
-            now = time.monotonic()
-            self._poll_ts_deque.append(now)
-            if len(self._poll_ts_deque) >= 2:
-                span = self._poll_ts_deque[-1] - self._poll_ts_deque[0]
-                if span > 0:
-                    hz = (len(self._poll_ts_deque) - 1) / span
-                    self.poll_rate_updated.emit(hz)
-
         except Exception as e:
             self._handle_read_error(f"Exception during sensor poll: {e}")
 
@@ -460,8 +483,8 @@ class DataController(QObject):
                 self._journal.close()
             self.connection_lost.emit()
         else:
-            delay_ms = self._BACKOFF_DELAYS_MS[
-                min(self._backoff_attempt, len(self._BACKOFF_DELAYS_MS) - 1)
+            delay_ms = self._backoff_delays_ms[
+                min(self._backoff_attempt, len(self._backoff_delays_ms) - 1)
             ]
             self._backoff_attempt += 1
             Debug.info(
@@ -498,7 +521,7 @@ class DataController(QObject):
         if self._journal is not None and self._journal.is_active:
             self._journal.append_gap()
         self.poll_timer.start(self.poll_interval)
-        self._diag_timer.start(self.DIAG_INTERVAL_MS)
+        self._diag_timer.start(self._diag_interval_ms)
         self.reconnect_succeeded.emit()
         Debug.info("Reconnected successfully")
 

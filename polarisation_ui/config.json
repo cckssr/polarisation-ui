@@ -11,8 +11,7 @@
     },
     "connection": {
       "max_retry_attempts": 10,
-      "initial_retry_delay_ms": 2000,
-      "max_retry_delay_ms": 10000
+      "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
     },
     "plot": {
       "max_points": 300,
@@ -29,7 +28,8 @@
       "control_update_interval": 1000,
       "statistics_update_interval": 2000,
       "acquisition_timer_interval": 100,
-      "gui_update_interval": 200
+      "gui_update_interval": 200,
+      "diag_interval_ms": 5000
     },
 
     "acquisition": {
@@ -38,8 +38,9 @@
       "samp_average_on": true,
       "samp_averages": 5,
       "sample_stage_inverted": true,
-      "spike_filter_enabled": true,
-      "spike_max_delta_deg": 10.0
+      "spike_filter_enabled": false,
+      "spike_max_delta_deg": 10.0,
+      "spike_reset_after": 5
     },
 
     "data_controller": {

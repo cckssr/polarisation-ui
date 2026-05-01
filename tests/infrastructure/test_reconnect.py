@@ -129,9 +129,13 @@ class TestDeviceManagerReconnect:
 class TestBackoffDelays:
 
     def test_backoff_sequence(self):
-        from polarisation_ui.ui.controllers.data_controller import DataController
+        from polarisation_ui.infrastructure.config import import_config
 
-        delays = DataController._BACKOFF_DELAYS_MS
+        delays = (
+            import_config()
+            .get("connection", {})
+            .get("backoff_delays_ms", [1000, 2000, 4000, 8000, 15000])
+        )
         # Must be monotonically increasing up to the cap
         for i in range(len(delays) - 1):
             assert delays[i] <= delays[i + 1]

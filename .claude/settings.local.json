@@ -6,28 +6,15 @@
       "Bash(pyside6-uic polarisation_ui/pyqt/encoder_debug.ui -o polarisation_ui/pyqt/ui_encoder_debug.py)",
       "Bash(git checkout:*)",
       "Bash(git merge feat/calibration-tool --no-ff -m ':*)",
-      "Bash(python -m pytest tests/ -q)",
-      "Bash(.venv/bin/pytest tests/ -q)",
       "Bash(pio run *)",
-      "Bash(.venv/bin/pytest tests/infrastructure/ -v)",
-      "Bash(.venv/bin/pytest tests/infrastructure/ -v --timeout=30)",
-      "Bash(.venv/bin/pytest tests/ -v)",
-      "Bash(.venv/bin/pytest tests/infrastructure/ -q)",
       "Bash(bash polarisation_ui/pyqt/pyuic.sh)",
       "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py tests/test_goniometer_system.py tests/infrastructure/ -v)",
       "Bash(.venv/bin/pip show *)",
       "Bash(.venv/bin/pip install *)",
-      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py tests/infrastructure/ -v)",
-      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py -v)",
       "Bash(.venv/bin/python -c \"from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog; print\\('OK'\\)\")",
       "Bash(.venv/bin/python -c \"from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino; print\\('OK'\\)\")",
-      "Bash(.venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py::TestDiagnostics -q)",
       "Bash(git stash *)",
-      "Bash(.venv/bin/pytest tests/test_goniometer_system.py -q)",
-      "Bash(.venv/bin/pytest tests/infrastructure/test_session_journal.py tests/infrastructure/test_reconnect.py -x -q)",
-      "Bash(.venv/bin/pytest tests/core/test_calibration_hooks.py tests/infrastructure/test_module_registry.py -v)",
-      "Bash(.venv/bin/pytest tests/ -x -q)",
-      "Bash(.venv/bin/pytest tests/infrastructure/test_reconnect.py -x -q)"
+      "Bash(.venv/bin/pytest tests/*)"
     ]
   }
 }
