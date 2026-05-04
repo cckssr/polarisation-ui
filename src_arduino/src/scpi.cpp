@@ -82,8 +82,7 @@ void emitDataFrame()
       Serial.print(",agcA=");
       Serial.print(d.agc);
       // dstatA bits: 3=compHigh, 2=compLow, 1=cof, 0=ocf
-      uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u)
-                 | (d.cof ? 0x02u : 0u)       | (d.ocf ? 0x01u : 0u);
+      uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u) | (d.cof ? 0x02u : 0u) | (d.ocf ? 0x01u : 0u);
       Serial.print(",dstatA=");
       Serial.print(ds);
     }
@@ -107,8 +106,7 @@ void emitDataFrame()
         AS5048A_SPI::Diagnostics d = encB.readDiagnostics();
         Serial.print(",agcB=");
         Serial.print(d.agc);
-        uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u)
-                   | (d.cof ? 0x02u : 0u)       | (d.ocf ? 0x01u : 0u);
+        uint8_t ds = (d.compHigh ? 0x08u : 0u) | (d.compLow ? 0x04u : 0u) | (d.cof ? 0x02u : 0u) | (d.ocf ? 0x01u : 0u);
         Serial.print(",dstatB=");
         Serial.print(ds);
       }
@@ -962,19 +960,29 @@ static void handleDiagEnc(const String &param)
   {
     // Single response line with A and B fields interleaved for easy parsing.
     AS5048A_SPI::Diagnostics dA = encA.readDiagnostics();
-    Serial.print("compHA="); Serial.print(dA.compHigh);
-    Serial.print(",compLA="); Serial.print(dA.compLow);
-    Serial.print(",cofA=");  Serial.print(dA.cof);
-    Serial.print(",ocfA=");  Serial.print(dA.ocf);
-    Serial.print(",agcA=");  Serial.print(dA.agc);
+    Serial.print("compHA=");
+    Serial.print(dA.compHigh);
+    Serial.print(",compLA=");
+    Serial.print(dA.compLow);
+    Serial.print(",cofA=");
+    Serial.print(dA.cof);
+    Serial.print(",ocfA=");
+    Serial.print(dA.ocf);
+    Serial.print(",agcA=");
+    Serial.print(dA.agc);
     if (appState.encBPresent)
     {
       AS5048A_SPI::Diagnostics dB = encB.readDiagnostics();
-      Serial.print(",compHB="); Serial.print(dB.compHigh);
-      Serial.print(",compLB="); Serial.print(dB.compLow);
-      Serial.print(",cofB=");   Serial.print(dB.cof);
-      Serial.print(",ocfB=");   Serial.print(dB.ocf);
-      Serial.print(",agcB=");   Serial.println(dB.agc);
+      Serial.print(",compHB=");
+      Serial.print(dB.compHigh);
+      Serial.print(",compLB=");
+      Serial.print(dB.compLow);
+      Serial.print(",cofB=");
+      Serial.print(dB.cof);
+      Serial.print(",ocfB=");
+      Serial.print(dB.ocf);
+      Serial.print(",agcB=");
+      Serial.println(dB.agc);
     }
     else
     {

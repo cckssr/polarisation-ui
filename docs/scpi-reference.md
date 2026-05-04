@@ -53,6 +53,8 @@ All MEAS commands trigger a fresh hardware read.
 | `MEAS:ALL?`                   | `<tsMs>,<angA>,<angB>,<magA>,<magB>,<volt>` | single-line snapshot                                                                       |
 
 ---
+CONF:ENC:ERR BOTH
+MEAS:ENC:MAGN? BOTH
 
 ## CONFigure — Setup Commands
 

@@ -10,7 +10,14 @@ def show_error(
     message: str,
     detailed_text: Optional[str] = None,
 ) -> None:
-    """Show a critical-error dialog."""
+    """Show a critical-error dialog.
+
+    Args:
+        parent (QWidget): The parent widget for the dialog.
+        title (str): The title of the error dialog.
+        message (str): The main error message to display.
+        detailed_text (str, optional): Additional details about the error. Defaults to None.
+    """
     dialog = QMessageBox(parent)
     dialog.setIcon(QMessageBox.Icon.Critical)
     dialog.setWindowTitle(title)

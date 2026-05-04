@@ -11,7 +11,7 @@ The AS5048A is a 14-bit Hall-effect magnetic rotary encoder. It measures the dir
 
 ### Internal signal chain
 
-```
+```shell
 Magnet field → Hall array → Analog front-end → CORDIC → 14-bit angle register
                                     ↑
                             AGC (Automatic Gain Control)
@@ -19,28 +19,28 @@ Magnet field → Hall array → Analog front-end → CORDIC → 14-bit angle reg
 
 Every step can introduce errors:
 
-| Stage | Failure mode | Observable symptom |
-|---|---|---|
-| Magnet field | Too weak (far away) | `compHigh=1`, `agc < 30`, angle jitter |
-| Magnet field | Too strong (close) | `compLow=1`, `agc > 230`, saturation |
-| Magnet field | Off-axis tilt | `cof=1` (CORDIC overflow), angle = 0 or garbage |
-| Hall array | Magnet not centred over chip | Large eccentricity error, non-linearity |
-| CORDIC | Overflow during computation | `cof=1` |
-| Offset compensation | Not finished after power-on | `ocf=0`, unreliable angle |
-| SPI framing | Parity error or wrong mode | `parityOk=false`, bad read not detected |
-| SPI noise | Glitches on shared bus | Occasional spikes, parity errors |
+| Stage               | Failure mode                 | Observable symptom                              |
+| ------------------- | ---------------------------- | ----------------------------------------------- |
+| Magnet field        | Too weak (far away)          | `compHigh=1`, `agc < 30`, angle jitter          |
+| Magnet field        | Too strong (close)           | `compLow=1`, `agc > 230`, saturation            |
+| Magnet field        | Off-axis tilt                | `cof=1` (CORDIC overflow), angle = 0 or garbage |
+| Hall array          | Magnet not centred over chip | Large eccentricity error, non-linearity         |
+| CORDIC              | Overflow during computation  | `cof=1`                                         |
+| Offset compensation | Not finished after power-on  | `ocf=0`, unreliable angle                       |
+| SPI framing         | Parity error or wrong mode   | `parityOk=false`, bad read not detected         |
+| SPI noise           | Glitches on shared bus       | Occasional spikes, parity errors                |
 
 ### Diagnostic register (0x3FFD)
 
 This is the single most important register for diagnosing problems.
 
-| Field | Bit(s) | Meaning when set |
-|---|---|---|
-| `compHigh` | 11 | AGC at maximum — field too **weak** (magnet too far) |
-| `compLow` | 10 | AGC at minimum — field too **strong** (magnet too close) |
-| `cof` | 9 | CORDIC overflow — angle is **invalid** |
-| `ocf` | 8 | Offset compensation finished — **must be 1** for valid readings |
-| `agc` | 7:0 | Current AGC value: 0 = max gain (weak), 255 = min gain (strong) |
+| Field      | Bit(s) | Meaning when set                                                |
+| ---------- | ------ | --------------------------------------------------------------- |
+| `compHigh` | 11     | AGC at maximum — field too **weak** (magnet too far)            |
+| `compLow`  | 10     | AGC at minimum — field too **strong** (magnet too close)        |
+| `cof`      | 9      | CORDIC overflow — angle is **invalid**                          |
+| `ocf`      | 8      | Offset compensation finished — **must be 1** for valid readings |
+| `agc`      | 7:0    | Current AGC value: 0 = max gain (weak), 255 = min gain (strong) |
 
 **Target AGC range: 50–200.** Values near 0 or 255 indicate marginal field strength.
 
@@ -52,11 +52,13 @@ All commands below work in a serial terminal (`pio device monitor` at 115200 bau
 
 ### 2.1 Immediate health check
 
-```
+```shell
 DIAG:SELF?
 ```
+
 Expected output (all subsystems healthy):
-```
+
+```shell
 DIAG:SELF ENC:A,PASS
 DIAG:SELF ENC:B,PASS
 DIAG:SELF ADC,PASS
@@ -65,11 +67,13 @@ DIAG:SELF PDTIA,PASS
 
 ### 2.2 Full diagnostics — both encoders in one call
 
-```
+```shell
 DIAG:ENC? BOTH
 ```
+
 Example response:
-```
+
+```shell
 compHA=0,compLA=0,cofA=0,ocfA=1,agcA=143,compHB=0,compLB=0,cofB=0,ocfB=1,agcB=167
 ```
 
@@ -77,71 +81,82 @@ Fields `*A` = encoder A (sample stage), `*B` = encoder B (detector arm).
 
 ### 2.3 Per-encoder diagnostics
 
-```
+```shell
 DIAG:ENC? A
 DIAG:ENC? B
 ```
+
 Response format: `compH=N,compL=N,cof=N,ocf=N,agc=N`
 
 ### 2.4 Live diagnostic stream
 
 Continuously stream angle + diagnostic registers for both encoders at 2 Hz:
-```
+
+```shell
 CONF:SRC ENC:BOTH,DIAG
 CONF:RATE 2
 INIT:CONT ON
 ```
 
 Example frame:
-```
+
+```shell
 DATA:FRAME seq=1,tsMs=1234,angA=45.23,agcA=143,dstatA=1,angB=90.51,agcB=167,dstatB=1,stat=0
 ```
 
 **`dstatX` bitmask** (decimal):
 
-| Value | Meaning |
-|---|---|
-| `1` | OCF set — **normal operation** |
-| `3` | OCF + COF — CORDIC overflow, angle invalid |
-| `5` | OCF + compLow — magnet too close |
-| `9` | OCF + compHigh — magnet too far |
-| `0` | OCF not set — offset compensation incomplete |
+| Value | Meaning                                      |
+| ----- | -------------------------------------------- |
+| `1`   | OCF set — **normal operation**               |
+| `3`   | OCF + COF — CORDIC overflow, angle invalid   |
+| `5`   | OCF + compLow — magnet too close             |
+| `9`   | OCF + compHigh — magnet too far              |
+| `0`   | OCF not set — offset compensation incomplete |
 
 Stop stream: `ABOR`
 
 ### 2.5 Parity and error-flag statistics
 
 Enable debug mode before streaming to count errors:
-```
+
+```shell
 SYST:DEB ON
 INIT:CONT ON
 ```
+
 On `ABOR` or `*RST`, the firmware prints:
-```
+
+```shell
 DATA:STAT DUR,30000        ← elapsed ms
 DATA:STAT NPTS,600         ← frames emitted
 DATA:STAT PERR,0           ← SPI parity errors
 DATA:STAT EERR,0           ← error-flag events
 ```
+
 Any non-zero `PERR` or `EERR` count indicates a hardware problem.
 
 ### 2.6 Check zero-position registers (read current SW zero)
 
 The software zero is applied transparently by the firmware after `CONF:ENC:ZERO A|B|BOTH`. Angles in the stream and in `MEAS:ENC:ANGL?` are both zero-referenced consistently. To clear:
-```
+
+```shell
 *RST           ← resets zero offsets (volatile) and all config
 ```
 
 ### 2.7 Clear latched error flags
 
 If the encoder latches an error flag (e.g. after a power glitch), clear it:
-```
+
+```shell
 CONF:ENC:ERR A
 CONF:ENC:ERR B
 CONF:ENC:ERR BOTH
 ```
+
 Then re-read to confirm the flag is gone:
-```
+
+```shell
 DIAG:ENC? BOTH
 ```
 
@@ -154,7 +169,8 @@ Work through these steps in order. Stop when the problem is identified.
 ### Step 1 — Read the diagnostic register (30 seconds)
 
 Connect via serial terminal or debug dialog and run:
-```
+
+```shell
 DIAG:ENC? BOTH
 ```
 
@@ -178,6 +194,7 @@ DIAG:ENC? BOTH
 `compHigh=1` means the AGC is at maximum gain and still cannot see the field. The magnet is either too far away, the wrong polarity, or missing.
 
 **Checklist:**
+
 1. **Distance:** The AS5048A datasheet specifies a nominal air gap of 0.5–3 mm depending on magnet diameter and magnetisation. Use a feeler gauge; anything beyond 3 mm will be unreliable.
 2. **Magnet polarity:** The magnet must be magnetised axially (pole faces towards the chip), not diametrically. Check with a compass or Hall probe — the field must be perpendicular to the chip surface, not parallel to it.
 3. **Magnet diameter:** Smaller diameter magnets produce weaker fields at the same distance. Use at minimum a Ø6 mm × 2.5 mm N52 diametrically (axially) magnetised magnet.
@@ -203,12 +220,12 @@ If you cannot increase the gap (mechanical constraint), use a weaker magnet grad
 
 **Causes and fixes:**
 
-| Cause | Fix |
-|---|---|
-| Magnet tilted (not parallel to chip surface) | Re-seat magnet on a flat face perpendicular to the rotation axis |
-| Magnet off-centre laterally by > 1 mm | Reposition on axis |
-| Two magnets too close (cross-talk) | Increase separation between sample-stage and detector-arm magnet assemblies; add a soft-iron shield if geometry allows |
-| Wrong magnet type (diametrically magnetised disc used as axially magnetised) | Replace with correct magnet |
+| Cause                                                                        | Fix                                                                                                                    |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Magnet tilted (not parallel to chip surface)                                 | Re-seat magnet on a flat face perpendicular to the rotation axis                                                       |
+| Magnet off-centre laterally by > 1 mm                                        | Reposition on axis                                                                                                     |
+| Two magnets too close (cross-talk)                                           | Increase separation between sample-stage and detector-arm magnet assemblies; add a soft-iron shield if geometry allows |
+| Wrong magnet type (diametrically magnetised disc used as axially magnetised) | Replace with correct magnet                                                                                            |
 
 **Oscilloscope test:** With `cof=1`, the AGC loop is saturated and the MISO line from the encoder will show the same data pattern on every read — a stuck value. A scope on MISO (with CS_A or CS_B as trigger) will confirm this: the 14-bit DATA field repeats identically instead of varying.
 
@@ -220,16 +237,19 @@ If the diagnostic flags are clean but angles are unstable, the problem is in the
 
 **Setup:** Enable SYST:DEB ON, stream at 20 Hz for 60 seconds, read stats on ABOR.
 
-```
+```shell
 SYST:DEB ON
 CONF:SRC ENC:BOTH
 CONF:RATE 20
 INIT:CONT ON
 ```
+
 (wait 60 s)
-```
+
+```shell
 ABOR
 ```
+
 Expected: `PERR=0`, `EERR=0`.
 
 **If PERR > 0 (parity errors):**
@@ -237,6 +257,7 @@ Expected: `PERR=0`, `EERR=0`.
 The SPI master received a corrupted frame from the encoder. This is almost always a wiring problem at 1 MHz.
 
 Checklist:
+
 - **Wire length:** Keep SPI wires < 20 cm on a breadboard. At 1 MHz, capacitive loading on long wires causes ringing on MISO.
 - **Ground:** Confirm Arduino GND and encoder GND are on the same node with a low-resistance path (< 1 Ω).
 - **Decoupling:** Place a 100 nF ceramic capacitor from VCC to GND directly at each AS5048A pin 1 (VDD3.3) and pin 8 (GND).
@@ -245,18 +266,19 @@ Checklist:
 
 **Oscilloscope probe points (per CS):**
 
-| Signal | Where | What to check |
-|---|---|---|
-| CS_A (pin D9) | Arduino → encoder | Low during transaction, no glitches while CS_B or ADC_CS switches |
-| SCLK | Shared bus | Clean edges, no ringing >10% of amplitude between transitions |
-| MISO | Encoder → Arduino | Stable during clock pulses; goes high-Z (or holds last bit) after CS high |
-| MOSI | Arduino → encoder | Stable during clock pulses |
+| Signal        | Where             | What to check                                                             |
+| ------------- | ----------------- | ------------------------------------------------------------------------- |
+| CS_A (pin D9) | Arduino → encoder | Low during transaction, no glitches while CS_B or ADC_CS switches         |
+| SCLK          | Shared bus        | Clean edges, no ringing >10% of amplitude between transitions             |
+| MISO          | Encoder → Arduino | Stable during clock pulses; goes high-Z (or holds last bit) after CS high |
+| MOSI          | Arduino → encoder | Stable during clock pulses                                                |
 
 **Probing during streaming:** The scope will show rapid CS toggling as ENC_A, ENC_B, and ADC are read in sequence. This is normal. Trigger on CS_A and check only the MISO data for encoder A's transactions.
 
 **If EERR > 0 (error-flag events):**
 
 The AS5048A internally set its error flag during normal operation. This means the chip itself detected an error (e.g. field temporarily out of range, power-supply glitch, or temperature spike). Run for longer and check if it correlates with:
+
 - Physical vibration of the setup (field disturbance)
 - Other USB devices connecting/disconnecting (power supply noise on 3.3 V rail)
 - ADS1220 SPI transactions (if CS_ADC glitches)
@@ -286,35 +308,41 @@ Monitor AGC over time with the diagnostic stream. A drift of ±10 in AGC over an
 ### 4.1 Verify stream values match expected angles
 
 With the stage physically at 0°, zero both encoders:
-```
+
+```shell
 CONF:ENC:ZERO BOTH
 ```
+
 Then stream and read:
-```
+
+```shell
 CONF:SRC ENC:BOTH
 INIT:CONT ON
 ```
+
 Both `angA` and `angB` should be ~0.00° after zeroing. If they're not zero in the stream but `MEAS:ENC:ANGL? BOTH` returns 0, the firmware had the SW-zero bug — this is fixed in the current firmware (v2.0.0 with the recent update).
 
 ### 4.2 Verify parity + EF checking is active
 
 Send a bad command to trigger an error flag, then stream:
-```
+
+```shell
 CONF:SRC ENC:BOTH,DIAG
 INIT:CONT ON
 ```
+
 Introduce a loose connection on MISO (touch and release). Frames with bad parity will show `stat=1` (ENC_A parity error) or `stat=2` (ENC_B). Without the fix, bad frames would have silently passed through `readAngleDeg()`.
 
 ### 4.3 Interpret the `stat` field
 
 The `stat` byte in each `DATA:FRAME` is a bitmask:
 
-| Bit | Mask | Meaning |
-|---|---|---|
-| 0 | `0x01` | Encoder A parity error |
-| 1 | `0x02` | Encoder B parity error |
-| 2 | `0x04` | Encoder A error flag (EF) |
-| 3 | `0x08` | Encoder B error flag (EF) |
+| Bit | Mask   | Meaning                   |
+| --- | ------ | ------------------------- |
+| 0   | `0x01` | Encoder A parity error    |
+| 1   | `0x02` | Encoder B parity error    |
+| 2   | `0x04` | Encoder A error flag (EF) |
+| 3   | `0x08` | Encoder B error flag (EF) |
 
 A frame with `stat≠0` delivers `angX=nan`. The UI spike filter will reject it.
 
@@ -322,12 +350,12 @@ A frame with `stat≠0` delivers `angX=nan`. The UI spike filter will reject it.
 
 `dstatA` and `dstatB` are only present when `CONF:SRC` includes `DIAG`.
 
-| Bit | Mask | Meaning |
-|---|---|---|
-| 0 | `0x01` | OCF — offset compensation finished (want = 1) |
-| 1 | `0x02` | COF — CORDIC overflow (bad) |
-| 2 | `0x04` | compLow — strong field (magnet too close) |
-| 3 | `0x08` | compHigh — weak field (magnet too far) |
+| Bit | Mask   | Meaning                                       |
+| --- | ------ | --------------------------------------------- |
+| 0   | `0x01` | OCF — offset compensation finished (want = 1) |
+| 1   | `0x02` | COF — CORDIC overflow (bad)                   |
+| 2   | `0x04` | compLow — strong field (magnet too close)     |
+| 3   | `0x08` | compHigh — weak field (magnet too far)        |
 
 Healthy frame: `dstatA=1` (only OCF set). Any other bit set indicates a hardware issue.
 
@@ -368,7 +396,7 @@ With the non-blocking serial accumulator now in the firmware, commands typed dur
 
 One `encReadAngle()` call produces two 16-bit SPI transactions:
 
-```
+```shell
 Transaction 1: CS low → 16 SCLK pulses → CS high   (sends READ ANGLE command)
 1 µs gap
 Transaction 2: CS low → 16 SCLK pulses → CS high   (sends NOP, receives ANGLE data)
@@ -382,9 +410,11 @@ At 100 kHz (old setting): each took 160 µs. Total: ~322 µs.
 ### 5.3 Detecting parity errors on the scope
 
 Set the scope to capture MISO at 16 bit resolution and manually count bits. The AS5048A response frame is:
-```
+
+```shell
 [PAR][EF][DATA13..DATA0]
 ```
+
 - Bit 15 (first received): even parity over all 16 bits
 - Bit 14: Error Flag (1 = error latched)
 - Bits 13–0: 14-bit angle
@@ -409,7 +439,7 @@ When no CS is asserted, MISO should be either driven by the last-selected device
 
 ## 6. Quick-reference card
 
-```
+```shell
 # --- Instant health check (copy-paste into pio device monitor) ---
 
 DIAG:ENC? BOTH
@@ -447,7 +477,7 @@ CONF:ENC:ERR BOTH
 
 ## 7. Fault decision tree
 
-```
+```shell
 DIAG:ENC? BOTH
 │
 ├─ ocf=0 → power-cycle, wait 500 ms, re-query
