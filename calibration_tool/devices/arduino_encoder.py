@@ -1,8 +1,8 @@
 """
-Arduino Encoder Communication for AS5048A (SCPI protocol).
+Arduino Encoder Communication for AS5048A (SCPI protocol, firmware 2.0.0).
 
 Communicates with the Arduino running the AS5048A firmware.
-Uses SCPI commands: MEAS:ANGL? A to read angle, CONF:ZERO A to set zero, etc.
+Uses SCPI commands: MEAS:ENC:ANGL? A to read angle, CONF:ENC:ZERO A to set zero, etc.
 """
 
 import re
@@ -17,8 +17,8 @@ class ArduinoEncoder:
     Interface to AS5048A encoder via Arduino (SCPI protocol).
 
     Protocol:
-        Send: MEAS:ANGL? A   (read angle encoder A)
-        Receive: 45.23       (bare float in degrees)
+        Send: MEAS:ENC:ANGL? A   (read angle encoder A)
+        Receive: 45.23           (bare float in degrees)
 
     Example:
         >>> encoder = ArduinoEncoder("/dev/cu.usbmodem1101")
@@ -123,7 +123,7 @@ class ArduinoEncoder:
         """
         Read angle from encoder.
 
-        Sends MEAS:ANGL? <id> and parses the bare float response.
+        Sends MEAS:ENC:ANGL? <id> and parses the bare float response.
 
         Args:
             encoder_id: 'A' or 'B'
@@ -135,7 +135,7 @@ class ArduinoEncoder:
             print("[ArduinoEncoder] Not connected")
             return None
 
-        self._send_command(f"MEAS:ANGL? {encoder_id}")
+        self._send_command(f"MEAS:ENC:ANGL? {encoder_id}")
 
         response = self._read_line(timeout=1.0)
         if not response:
@@ -152,7 +152,7 @@ class ArduinoEncoder:
         """
         Set current position as zero for encoder.
 
-        Sends CONF:ZERO <id> (no response expected).
+        Sends CONF:ENC:ZERO <id> (no response expected).
 
         Args:
             encoder_id: 'A' or 'B'
@@ -163,13 +163,13 @@ class ArduinoEncoder:
         if not self.connected:
             return False
 
-        self._send_command(f"CONF:ZERO {encoder_id}")
+        self._send_command(f"CONF:ENC:ZERO {encoder_id}")
         print(f"[ArduinoEncoder] Zero set for encoder {encoder_id}")
         return True
 
     def clear_error_flag(self, encoder_id: str = "A") -> bool:
         """
-        Clear hardware Error Flag on encoder (CONF:ERR <id>).
+        Clear hardware Error Flag on encoder (CONF:ENC:ERR <id>).
 
         The AS5048A EF is self-latching. Call this if the sensor keeps
         returning NAN despite no ongoing hardware problem.
@@ -183,7 +183,7 @@ class ArduinoEncoder:
         if not self.connected:
             return False
 
-        self._send_command(f"CONF:ERR {encoder_id}")
+        self._send_command(f"CONF:ENC:ERR {encoder_id}")
         print(f"[ArduinoEncoder] Error flag cleared for encoder {encoder_id}")
         return True
 
@@ -191,7 +191,7 @@ class ArduinoEncoder:
         """
         Read angles from both encoders.
 
-        Sends MEAS:ANGL? BOTH and parses the comma-separated response.
+        Sends MEAS:ENC:ANGL? BOTH and parses the comma-separated response.
 
         Returns:
             Tuple (angle_a, angle_b) or None if error
@@ -199,7 +199,7 @@ class ArduinoEncoder:
         if not self.connected:
             return None
 
-        self._send_command("MEAS:ANGL? BOTH")
+        self._send_command("MEAS:ENC:ANGL? BOTH")
         response = self._read_line(timeout=1.0)
 
         if not response:

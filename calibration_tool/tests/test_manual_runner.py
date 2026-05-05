@@ -62,13 +62,29 @@ class TestManualCalibrationControllerInit:
 
 
 class TestManualCalibrationControllerFlow:
-    def test_accept_records_correct_reference_angle(self):
+    def test_accept_records_correct_reference_angle_encoder_b(self):
         arduino = _make_arduino(angle=5.5)
-        ctrl = ManualCalibrationController(arduino, step_size_deg=10.0)
-        # First target is 0.0°
+        ctrl = ManualCalibrationController(arduino, step_size_deg=10.0, encoder_id="B")
+        # First target is 0.0°; encoder B: no reversal
         point = ctrl.accept_current()
         assert point.reference_deg == pytest.approx(0.0)
         assert point.measured_deg == pytest.approx(5.5)
+
+    def test_accept_encoder_a_reverses_reading(self):
+        arduino = _make_arduino(angle=90.0)
+        ctrl = ManualCalibrationController(arduino, step_size_deg=90.0, encoder_id="A")
+        point = ctrl.accept_current()
+        assert point.measured_deg == pytest.approx(270.0)  # (-90) % 360
+
+    def test_accept_encoder_a_zero_stays_zero(self):
+        arduino = _make_arduino(angle=0.0)
+        ctrl = ManualCalibrationController(arduino, step_size_deg=90.0, encoder_id="A")
+        point = ctrl.accept_current()
+        assert point.measured_deg == pytest.approx(0.0)
+
+    def test_invalid_encoder_id_raises(self):
+        with pytest.raises(ValueError, match="encoder_id"):
+            ManualCalibrationController(_make_arduino(), step_size_deg=10.0, encoder_id="C")
 
     def test_accept_advances_step(self):
         ctrl = ManualCalibrationController(_make_arduino(), step_size_deg=10.0)

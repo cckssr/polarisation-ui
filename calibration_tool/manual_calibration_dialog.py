@@ -19,16 +19,18 @@ from typing import Optional
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QSizePolicy,
+    QRadioButton,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -63,6 +65,7 @@ class ManualCalibrationDialog(QDialog):
         self._arduino = arduino
         self._controller: Optional[ManualCalibrationController] = None
         self._completed_run: Optional[CalibrationRun] = None
+        self._active_encoder_id: str = "A"
 
         self._live_timer = QTimer(self)
         self._live_timer.setInterval(150)
@@ -83,11 +86,13 @@ class ManualCalibrationDialog(QDialog):
         layout = QVBoxLayout(page)
         layout.setSpacing(12)
 
-        layout.addWidget(QLabel(
-            "<b>Manual encoder calibration</b><br>"
-            "You will be prompted to set the stage to each target angle "
-            "manually, then click Accept to record the encoder reading."
-        ))
+        layout.addWidget(
+            QLabel(
+                "<b>Manual encoder calibration</b><br>"
+                "You will be prompted to set the stage to each target angle "
+                "manually, then click Accept to record the encoder reading."
+            )
+        )
 
         # Step size
         step_row = QHBoxLayout()
@@ -112,10 +117,24 @@ class ManualCalibrationDialog(QDialog):
         self._step_spin.valueChanged.connect(self._update_step_preview)
         layout.addWidget(self._steps_preview)
 
+        # Encoder selection
+        enc_box = QGroupBox("Encoder")
+        enc_layout = QVBoxLayout(enc_box)
+        self._encoder_btn_group = QButtonGroup(self)
+        self._encoder_a_radio = QRadioButton("A — Sample encoder  (reading is reversed)")
+        self._encoder_b_radio = QRadioButton("B — Detector encoder")
+        self._encoder_a_radio.setChecked(True)
+        self._encoder_btn_group.addButton(self._encoder_a_radio, 0)
+        self._encoder_btn_group.addButton(self._encoder_b_radio, 1)
+        enc_layout.addWidget(self._encoder_a_radio)
+        enc_layout.addWidget(self._encoder_b_radio)
+        layout.addWidget(enc_box)
+
         # Run name
         name_row = QHBoxLayout()
         name_row.addWidget(QLabel("Run name:"))
         from datetime import datetime
+
         self._run_name_edit = QLineEdit(
             datetime.now().strftime("manual_cal_%Y%m%d_%H%M")
         )
@@ -219,6 +238,7 @@ class ManualCalibrationDialog(QDialog):
     def _update_step_preview(self) -> None:
         step = self._step_spin.value()
         import math
+
         n = math.floor(360.0 / step)
         self._steps_preview.setText(f"{n} steps, last angle: {(n - 1) * step:.1f}°")
 
@@ -232,11 +252,14 @@ class ManualCalibrationDialog(QDialog):
             )
             return
 
+        self._active_encoder_id = "A" if self._encoder_a_radio.isChecked() else "B"
+
         try:
             self._controller = ManualCalibrationController(
                 arduino=self._arduino,
                 step_size_deg=self._step_spin.value(),
                 run_name=self._run_name_edit.text().strip() or "",
+                encoder_id=self._active_encoder_id,
             )
         except ValueError as exc:
             QMessageBox.critical(self, "Invalid settings", str(exc))
@@ -272,8 +295,10 @@ class ManualCalibrationDialog(QDialog):
     def _poll_live(self) -> None:
         if self._arduino and self._arduino.connected:
             try:
-                angle = self._arduino.read_angle()
+                angle = self._arduino.read_angle(self._active_encoder_id)
                 if angle is not None:
+                    if self._active_encoder_id == "A":
+                        angle = (-angle) % 360.0
                     self._live_label.setText(f"{angle:8.3f}")
                     self._live_label.setStyleSheet("color: green;")
                     return
