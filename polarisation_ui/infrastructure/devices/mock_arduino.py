@@ -11,19 +11,23 @@ so the detector plot shows a real polarisation curve when sample angle varies.
 
 import math
 import os
-import pty
 import random
-import select
 import sys
 import threading
 import time
-import tty
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from ..logging import Debug
 from ..mock_port_registry import register_mock_port, unregister_mock_port
+
+# PTY is Unix-only (pty, tty, select on file descriptors are absent on Windows)
+_PTY_AVAILABLE = sys.platform != "win32"
+if _PTY_AVAILABLE:
+    import pty
+    import select
+    import tty
 
 # ── Simulation constants ─────────────────────────────────────────────────────
 
@@ -123,6 +127,11 @@ class MockArduino:
 
     def start(self) -> str:
         """Start simulator; returns PTY slave path."""
+        if not _PTY_AVAILABLE:
+            raise NotImplementedError(
+                "MockArduino requires PTY support (pty/tty/select) which is not "
+                "available on Windows. Run PTY-based tests on Linux or macOS."
+            )
         if self._running:
             Debug.warning("MockArduino already running")
             return self.pty_slave_path  # type: ignore[return-value]

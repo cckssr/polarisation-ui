@@ -8,10 +8,15 @@ Run with: .venv/bin/pytest tests/infrastructure/test_adc_client.py
 """
 
 import math
+import sys
 import pytest
 import time
 
 from polarisation_ui.infrastructure.devices import DualEncoderArduino, MockArduino
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="PTY not available on Windows"
+)
 
 
 @pytest.fixture

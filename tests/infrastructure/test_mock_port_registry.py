@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import sys
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.mock_arduino import MockArduino
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="PTY not available on Windows"
+)
 
 
 class TestMockPortRegistry:
