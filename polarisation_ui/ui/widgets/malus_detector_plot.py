@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 
@@ -23,11 +23,15 @@ class MalusDetectorPlot(QWidget):
     Accepts samples at the incoming poll rate but only appends a new point when
     the angle has moved by at least MIN_ANGLE_DELTA degrees, suppressing noise
     when the detector arm is stationary.  Keeps the last MAX_POINTS samples and
-    highlights the maximum-intensity point with a red star.
+    highlights the maximum-intensity point with a red star and a vertical line.
     """
 
     MAX_POINTS: int = 300
     MIN_ANGLE_DELTA: float = 0.05  # degrees
+
+    # Emitted on every refresh: (max_intensity, max_angle).  Both are nan when
+    # the buffer is empty.
+    peak_changed = Signal(float, float)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -45,7 +49,6 @@ class MalusDetectorPlot(QWidget):
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Detektorwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="a.u.")
-        self._plot_widget.setTitle("Max: —", color=(80, 80, 80), size="10pt")
 
         # All buffered points: small blue dots
         self._curve = self._plot_widget.plot(
@@ -67,6 +70,14 @@ class MalusDetectorPlot(QWidget):
             symbolBrush=pg.mkBrush(200, 30, 30, 220),
             symbolPen=pg.mkPen(None),
         )
+        # Vertical line at peak angle
+        self._peak_line = pg.InfiniteLine(
+            angle=90,
+            movable=False,
+            pen=pg.mkPen(color=(200, 30, 30), width=1.5, style=Qt.PenStyle.DashLine),
+        )
+        self._peak_line.setVisible(False)
+        self._plot_widget.addItem(self._peak_line)
 
         layout.addWidget(self._plot_widget)
 
@@ -98,7 +109,8 @@ class MalusDetectorPlot(QWidget):
         if not self._angles:
             self._curve.setData([], [])
             self._peak.setData([], [])
-            self._plot_widget.setTitle("Max: —", color=(80, 80, 80), size="10pt")
+            self._peak_line.setVisible(False)
+            self.peak_changed.emit(float("nan"), float("nan"))
             return
 
         angles = list(self._angles)
@@ -106,9 +118,10 @@ class MalusDetectorPlot(QWidget):
         self._curve.setData(angles, intensities)
 
         peak_idx = int(np.argmax(intensities))
-        self._peak.setData([angles[peak_idx]], [intensities[peak_idx]])
-        self._plot_widget.setTitle(
-            f"Max: {intensities[peak_idx]:.4f} V @ {angles[peak_idx]:.2f}°",
-            color=(180, 30, 30),
-            size="10pt",
-        )
+        peak_angle = angles[peak_idx]
+        peak_intensity = intensities[peak_idx]
+
+        self._peak.setData([peak_angle], [peak_intensity])
+        self._peak_line.setPos(peak_angle)
+        self._peak_line.setVisible(True)
+        self.peak_changed.emit(peak_intensity, peak_angle)

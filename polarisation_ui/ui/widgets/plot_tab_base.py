@@ -65,6 +65,12 @@ class PlotTabBase(QWidget):
     def on_deactivated(self) -> None:
         """Called when this tab is hidden (another tab activated)."""
 
+    def on_measurement_started(self) -> None:
+        """Called when a measurement session starts (enable plot interaction buttons)."""
+
+    def on_measurement_stopped(self) -> None:
+        """Called when a measurement session stops (disable plot interaction buttons)."""
+
     # --- inbound injection ---------------------------------------------------
 
     def inject_modules(self, modules: dict[str, object]) -> None:

@@ -621,6 +621,9 @@ class MainWindow(QMainWindow):
         self.ui.btnDetectorStageZero.setEnabled(False)
         self.ui.tabWidget.tabBar().setEnabled(False)
 
+        for tab in self._tab_instances:
+            tab.on_measurement_started()
+
     @Slot()
     def _on_measurement_stopped(self) -> None:
         """Handle measurement stopped event."""
@@ -639,6 +642,9 @@ class MainWindow(QMainWindow):
         malus_tab = self._get_malus_tab()
         has_points = malus_tab is not None and len(malus_tab.get_malus_points()) > 0
         self.ui.btnSave.setEnabled(has_points)
+
+        for tab in self._tab_instances:
+            tab.on_measurement_stopped()
 
     @Slot(int)
     def _on_malus_points_changed(self, count: int) -> None:

@@ -85,6 +85,21 @@ class MalusCurvePlot(QWidget):
         self._refresh()
         return True
 
+    def remove_point_at(self, index: int) -> bool:
+        """
+        Remove the point at *index*.
+
+        Returns:
+            True if a point was removed, False if the index is out of range.
+        """
+        if index < 0 or index >= len(self._sample_angles):
+            return False
+        del self._sample_angles[index]
+        del self._detector_angles[index]
+        del self._intensities[index]
+        self._refresh()
+        return True
+
     def get_points(self) -> list[tuple[float, float, float]]:
         """Return all saved (sample_angle, detector_angle, intensity) triples."""
         return list(zip(self._sample_angles, self._detector_angles, self._intensities))
