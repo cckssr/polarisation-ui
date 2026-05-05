@@ -486,13 +486,11 @@ class MainWindow(QMainWindow):
             sample_angle: Sample stage angle in degrees
             detector_angle: Detector stage angle in degrees
         """
-        # Values received from DataController are already averaged — display directly.
-        # Each encoder gates its own display independently via health flags.
-        if self._sensor_a_ok:
-            self.ui.lcdSampleAngle.display(f"{sample_angle:.2f}")
-
-        if self._sensor_b_ok:
-            self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
+        # Values received from DataController are already averaged — always display.
+        # The LED colour already indicates sensor health; freezing the value on a
+        # diagnostic fault is more confusing than showing a potentially noisy reading.
+        self.ui.lcdSampleAngle.display(f"{sample_angle:.2f}")
+        self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
 
     @Slot(float)
     def _update_intensity_display(self, voltage: float) -> None:
