@@ -34,8 +34,11 @@ class ManualCalibrationController:
     arduino: ArduinoEncoder
     step_size_deg: float
     run_name: str = ""
+    encoder_id: str = "A"
 
     def __post_init__(self) -> None:
+        if self.encoder_id not in ("A", "B"):
+            raise ValueError("encoder_id must be 'A' or 'B'")
         if not (0.1 <= self.step_size_deg <= 90.0):
             raise ValueError("step_size_deg must be between 0.1 and 90")
         if not self.run_name:
@@ -86,9 +89,14 @@ class ManualCalibrationController:
         if self.is_complete:
             raise RuntimeError("Calibration run is already complete")
 
-        measured = self.arduino.read_angle()
+        measured = self.arduino.read_angle(self.encoder_id)
         if measured is None:
             raise RuntimeError("Encoder read returned None — check connection")
+
+        # Encoder A (sample) is mounted such that rotation direction is opposite
+        # to the reference stage; negate to bring it into the same convention.
+        if self.encoder_id == "A":
+            measured = (-measured) % 360.0
 
         point = MeasurementPoint(
             timestamp=time.time(),
