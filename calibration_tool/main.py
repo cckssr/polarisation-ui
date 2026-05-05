@@ -73,6 +73,7 @@ from calibration.measurement import (
     MeasurementPoint,
 )
 from calibration.analysis import CalibrationAnalysis
+from manual_calibration_dialog import ManualCalibrationDialog
 from plotting.polar_plot import CalibrationPlotter
 
 
@@ -368,6 +369,15 @@ class CalibrationApp(QMainWindow):
 
         layout.addLayout(btn_layout)
 
+        # Manual calibration (alternative to KDC101)
+        manual_btn = QPushButton("Manual Cal...")
+        manual_btn.setToolTip(
+            "Step-by-step calibration without a motorized reference stage.\n"
+            "You set each angle manually; the tool records the encoder reading."
+        )
+        manual_btn.clicked.connect(self._start_manual_calibration)
+        layout.addWidget(manual_btn)
+
         return group
 
     def _create_analysis_panel(self) -> QGroupBox:
@@ -638,6 +648,22 @@ class CalibrationApp(QMainWindow):
                 f"Measurement stopped. {self._current_run.num_points} points collected."
             )
             self._update_plot()
+
+    @Slot()
+    def _start_manual_calibration(self):
+        """Open the manual step-through calibration dialog."""
+        dialog = ManualCalibrationDialog(arduino=self.arduino, parent=self)
+        if dialog.exec() == ManualCalibrationDialog.DialogCode.Accepted:
+            run = dialog.get_run()
+            if run and run.num_points > 0:
+                self._current_run = run
+                self.points_label.setText(str(run.num_points))
+                self.run_name_edit.setText(run.name)
+                self.status_bar.showMessage(
+                    f"Manual calibration complete: {run.num_points} points loaded."
+                )
+                self._update_plot()
+                self._analyze()
 
     # =========================================================================
     # Analysis
