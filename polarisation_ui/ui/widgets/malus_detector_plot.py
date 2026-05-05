@@ -45,6 +45,7 @@ class MalusDetectorPlot(QWidget):
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Detektorwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="a.u.")
+        self._plot_widget.setTitle("Max: —", color=(80, 80, 80), size="10pt")
 
         # All buffered points: small blue dots
         self._curve = self._plot_widget.plot(
@@ -97,6 +98,7 @@ class MalusDetectorPlot(QWidget):
         if not self._angles:
             self._curve.setData([], [])
             self._peak.setData([], [])
+            self._plot_widget.setTitle("Max: —", color=(80, 80, 80), size="10pt")
             return
 
         angles = list(self._angles)
@@ -105,3 +107,8 @@ class MalusDetectorPlot(QWidget):
 
         peak_idx = int(np.argmax(intensities))
         self._peak.setData([angles[peak_idx]], [intensities[peak_idx]])
+        self._plot_widget.setTitle(
+            f"Max: {intensities[peak_idx]:.4f} V @ {angles[peak_idx]:.2f}°",
+            color=(180, 30, 30),
+            size="10pt",
+        )

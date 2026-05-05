@@ -26,6 +26,7 @@ class MalusCurvePlot(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._sample_angles: list[float] = []
+        self._detector_angles: list[float] = []
         self._intensities: list[float] = []
         self._setup_plot()
 
@@ -62,9 +63,10 @@ class MalusCurvePlot(QWidget):
 
         layout.addWidget(self._plot_widget)
 
-    def add_point(self, sample_angle: float, intensity: float) -> None:
+    def add_point(self, sample_angle: float, detector_angle: float, intensity: float) -> None:
         """Append a new measurement point and refresh the plot."""
         self._sample_angles.append(sample_angle)
+        self._detector_angles.append(detector_angle)
         self._intensities.append(intensity)
         self._refresh()
 
@@ -78,17 +80,19 @@ class MalusCurvePlot(QWidget):
         if not self._sample_angles:
             return False
         self._sample_angles.pop()
+        self._detector_angles.pop()
         self._intensities.pop()
         self._refresh()
         return True
 
-    def get_points(self) -> list[tuple[float, float]]:
-        """Return all saved (sample_angle, intensity) pairs."""
-        return list(zip(self._sample_angles, self._intensities))
+    def get_points(self) -> list[tuple[float, float, float]]:
+        """Return all saved (sample_angle, detector_angle, intensity) triples."""
+        return list(zip(self._sample_angles, self._detector_angles, self._intensities))
 
     def clear(self) -> None:
         """Remove all saved points and clear the plot."""
         self._sample_angles.clear()
+        self._detector_angles.clear()
         self._intensities.clear()
         self._refresh()
 

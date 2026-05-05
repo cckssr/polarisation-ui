@@ -16,8 +16,10 @@ Responsibilities:
 """
 
 import csv
+import json
 import shutil
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtWidgets import (
@@ -33,6 +35,7 @@ from PySide6.QtGui import QAction, QCloseEvent
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.save_service import SENSOR_DESCRIPTIONS
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 
@@ -679,16 +682,38 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        with open(path, "w", newline="", encoding="utf-8") as fh:
+        saved_at = datetime.now()
+        csv_path = Path(path)
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as fh:
             writer = csv.writer(fh)
-            writer.writerow(["sample_angle_deg", "intensity"])
-            for sample_angle, intensity in points:
-                writer.writerow([f"{sample_angle:.4f}", f"{intensity:.6f}"])
+            writer.writerow(["sample_angle_deg", "detector_angle_deg", "intensity_V"])
+            for sample_angle, detector_angle, intensity in points:
+                writer.writerow(
+                    [f"{sample_angle:.4f}", f"{detector_angle:.4f}", f"{intensity:.6f}"]
+                )
+
+        metadata = {
+            "saved_at": saved_at.isoformat(),
+            "point_count": len(points),
+            "group": self.ui.cbGroupLetter.currentText(),
+            "suffix": self.ui.leSuffix.text().strip(),
+            "columns": ["sample_angle_deg", "detector_angle_deg", "intensity_V"],
+            "units": {
+                "sample_angle_deg": "degrees",
+                "detector_angle_deg": "degrees",
+                "intensity_V": "volts",
+            },
+            "sensors": SENSOR_DESCRIPTIONS,
+        }
+        metadata_path = csv_path.with_name(csv_path.stem + "_metadata.json")
+        with open(metadata_path, "w", encoding="utf-8") as fh:
+            json.dump(metadata, fh, indent=2)
 
         self.statusbar_manager.show_success(
             f"{len(points)} Datenpunkte gespeichert: {path}"
         )
-        Debug.info(f"Malus data exported to {path} ({len(points)} points)")
+        Debug.info(f"Malus data exported to {csv_path} ({len(points)} points)")
 
     # ==================== Error Handling ====================
 

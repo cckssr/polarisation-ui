@@ -25,24 +25,24 @@ def test_core_layer():
     service = GoniometerService()
     state = service.initialize_state(45.0)
 
-    assert state.probe_angle == 45.0, "Probe angle should be 45°"
-    assert state.detector_angle == 90.0, "Detector angle should be 90° (2x probe)"
+    assert state.sample_angle == 45.0, "Sample angle should be 45°"
+    assert state.detector_angle == 90.0, "Detector angle should be 90° (2x sample)"
     assert state.validate(), "State should be valid"
 
     print("  ✓ GoniometerService initialization")
 
     # Test angle update
-    service.update_probe_angle(60.0)
+    service.update_sample_angle(60.0)
     state = service.get_state()
-    assert state.probe_angle == 60.0
+    assert state.sample_angle == 60.0
     assert state.detector_angle == 120.0
 
     print("  ✓ Angle updates with 2x relationship")
 
     # Test encoder reading
-    service.process_encoder_reading("probe", 30.0)
+    service.process_encoder_reading("sample", 30.0)
     state = service.get_state()
-    assert state.probe_angle == 30.0
+    assert state.sample_angle == 30.0
     assert state.detector_angle == 60.0
 
     print("  ✓ Encoder reading processing")
@@ -110,11 +110,11 @@ def test_integration():
     detector_encoder.set_angle(90.0)
 
     # Process readings
-    service.process_encoder_reading("probe", probe_encoder.read())
+    service.process_encoder_reading("sample", probe_encoder.read())
     service.process_encoder_reading("detector", detector_encoder.read())
 
     state = service.get_state()
-    assert state.probe_angle == 45.0
+    assert state.sample_angle == 45.0
     assert state.detector_angle == 90.0
 
     print("  ✓ Encoder readings integrated into service")

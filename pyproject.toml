@@ -26,11 +26,8 @@ classifiers = [
 dependencies = [
     "PySide6>=6.5.0",
     "numpy>=1.24.0",
-    "matplotlib>=3.7.0",
     "pyqtgraph>=0.13.0",
-    "scipy>=1.10.0",
     "pyserial>=3.5",
-    "pillow>=9.5.0",
 ]
 
 [project.optional-dependencies]
@@ -65,7 +62,7 @@ where = ["."]
 include = ["polarisation_ui", "polarisation_ui.*"]
 
 [tool.setuptools.package-data]
-"polarisation_ui" = ["pyqt/*.ui", "config.json"]
+"polarisation_ui" = ["pyqt/*.ui", "config.json", "sensor_metadata.json"]
 
 [tool.black]
 line-length = 88

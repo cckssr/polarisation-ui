@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QGridLayout,
     QPushButton,
@@ -42,6 +42,7 @@ class MalusTab(PlotTabBase):
         self._curve_plot: Optional[MalusCurvePlot] = None
         self._btn_save: Optional[QPushButton] = None
         self._btn_delete: Optional[QPushButton] = None
+        self._btn_clear_detector: Optional[QPushButton] = None
 
     def build(self) -> None:
         layout = QGridLayout(self)
@@ -51,7 +52,14 @@ class MalusTab(PlotTabBase):
         layout.setColumnStretch(0, 1)
 
         self._detector_plot = MalusDetectorPlot()
-        layout.addWidget(self._detector_plot, 0, 0, 1, 2)
+        layout.addWidget(self._detector_plot, 0, 0)
+
+        self._btn_clear_detector = QPushButton("Detektorgraph\nlöschen")
+        self._btn_clear_detector.setToolTip(
+            "Löscht alle Punkte im oberen Detektorwinkel-Intensitäts-Graphen"
+        )
+        layout.addWidget(self._btn_clear_detector, 0, 1, Qt.AlignmentFlag.AlignTop)
+        self._btn_clear_detector.clicked.connect(self._clear_detector_plot)
 
         self._curve_plot = MalusCurvePlot()
         layout.addWidget(self._curve_plot, 1, 0, 3, 1)
@@ -96,8 +104,8 @@ class MalusTab(PlotTabBase):
     def inject_modules(self, modules: dict[str, object]) -> None:
         pass
 
-    def get_malus_points(self) -> list[tuple[float, float]]:
-        """Return all saved (sample_angle, intensity) pairs for export."""
+    def get_malus_points(self) -> list[tuple[float, float, float]]:
+        """Return all saved (sample_angle, detector_angle, intensity) triples for export."""
         if self._curve_plot is None:
             return []
         return self._curve_plot.get_points()
@@ -106,9 +114,16 @@ class MalusTab(PlotTabBase):
     def _save_point(self) -> None:
         if self._latest_frame is not None and self._curve_plot is not None:
             self._curve_plot.add_point(
-                self._latest_frame.sample_angle, self._latest_frame.intensity
+                self._latest_frame.sample_angle,
+                self._latest_frame.detector_angle,
+                self._latest_frame.intensity,
             )
             self.points_changed.emit(len(self._curve_plot.get_points()))
+
+    @Slot()
+    def _clear_detector_plot(self) -> None:
+        if self._detector_plot is not None:
+            self._detector_plot.clear()
 
     @Slot()
     def _delete_last_point(self) -> None:
