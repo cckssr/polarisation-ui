@@ -303,14 +303,15 @@ class DataController(QObject):
         """
         Start measurement session.
 
-        Returns:
-            bool: True if started successfully
+        Continuous reading must already be active (started on device connect).
+        Returns False if a measurement is already running.
         """
         if self._is_measuring:
             Debug.warning("Measurement already in progress")
             return False
 
-        if not self.start_continuous_reading():
+        if not self.device_manager.is_encoder_connected():
+            Debug.warning("Cannot start measurement: device not connected")
             return False
 
         self._is_measuring = True
@@ -320,11 +321,10 @@ class DataController(QObject):
         return True
 
     def stop_measurement(self) -> None:
-        """Stop measurement session. Journal is closed but not finalized (recoverable)."""
+        """Stop measurement session. Continuous reading keeps running. Journal closed but not finalized."""
         if not self._is_measuring:
             return
 
-        self.stop_continuous_reading()
         self._is_measuring = False
         if self._journal is not None and self._journal.is_active:
             self._journal.close()

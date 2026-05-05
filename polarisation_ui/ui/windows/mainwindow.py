@@ -15,6 +15,8 @@ Responsibilities:
     - Status indicators (LEDs)
 """
 
+import csv
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 
@@ -25,7 +27,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QAction, QCloseEvent
 
 from polarisation_ui.infrastructure.logging import Debug
@@ -116,7 +118,10 @@ class MainWindow(QMainWindow):
         self._setup_initial_state()
         self._setup_tabs()
         self._connect_signals()
-        self._check_orphan_journals()
+        # Defer until after the event loop starts so the window is fully shown
+        # before any modal dialog appears — otherwise the port combobox ends up
+        # in a broken state on macOS.
+        QTimer.singleShot(0, self._check_orphan_journals)
 
         Debug.info("MainWindow initialized with Qt Designer UI")
 
@@ -149,6 +154,7 @@ class MainWindow(QMainWindow):
         self.ui.btnStartMeasurement.setEnabled(False)
         self.ui.btnStopMeasurement.setEnabled(False)
         self.ui.btnResetMeasurement.setEnabled(False)
+        self.ui.btnSave.setEnabled(False)
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
@@ -161,6 +167,8 @@ class MainWindow(QMainWindow):
             tab = tab_cls()
             tab.build()
             tab.status_message.connect(self._handle_tab_status)
+            if hasattr(tab, "points_changed"):
+                tab.points_changed.connect(self._on_malus_points_changed)
             self.ui.tabWidget.addTab(tab, tab.tab_title)
             self._tab_instances.append(tab)
 
@@ -602,43 +610,56 @@ class MainWindow(QMainWindow):
         """Handle measurement started event."""
         self._is_measuring = True
 
-        # Update UI state
         self.ui.btnStartMeasurement.setEnabled(False)
         self.ui.btnStopMeasurement.setEnabled(True)
         self.ui.btnResetMeasurement.setEnabled(False)
+        self.ui.btnSave.setEnabled(False)
 
-        # Disable zeroing during measurement
+        # Disable zeroing and tab switching during a run
         self.ui.btnSampleZero.setEnabled(False)
         self.ui.btnDetectorStageZero.setEnabled(False)
-
-        # Enable save when measurement has data
-        self.ui.btnSave.setEnabled(False)  # Enable after first data point
+        self.ui.tabWidget.tabBar().setEnabled(False)
 
     @Slot()
     def _on_measurement_stopped(self) -> None:
         """Handle measurement stopped event."""
         self._is_measuring = False
 
-        # Update UI state
         self.ui.btnStartMeasurement.setEnabled(True)
         self.ui.btnStopMeasurement.setEnabled(False)
         self.ui.btnResetMeasurement.setEnabled(True)
 
-        # Re-enable zeroing
+        # Re-enable zeroing and tab switching
         self.ui.btnSampleZero.setEnabled(True)
         self.ui.btnDetectorStageZero.setEnabled(True)
+        self.ui.tabWidget.tabBar().setEnabled(True)
 
-        # Enable save if we have data
-        self.ui.btnSave.setEnabled(True)
+        # Enable save only when there are saved malus points
+        malus_tab = self._get_malus_tab()
+        has_points = malus_tab is not None and len(malus_tab.get_malus_points()) > 0
+        self.ui.btnSave.setEnabled(has_points)
+
+    @Slot(int)
+    def _on_malus_points_changed(self, count: int) -> None:
+        """Keep save button in sync with malus curve point count when not measuring."""
+        if not self._is_measuring:
+            self.ui.btnSave.setEnabled(count > 0)
 
     # ==================== Data Saving ====================
 
+    def _get_malus_tab(self):
+        """Return the first tab instance that exposes get_malus_points(), or None."""
+        return next(
+            (t for t in self._tab_instances if hasattr(t, "get_malus_points")), None
+        )
+
     @Slot()
     def _save_data(self) -> None:
-        """Export the current session journal to a user-chosen CSV file."""
-        journal = self.data_controller.current_journal
-        if journal is None or journal.row_count == 0:
-            show_error(self, "Speichern", "Keine Messdaten vorhanden.")
+        """Export manually saved malus curve points to a user-chosen CSV file."""
+        malus_tab = self._get_malus_tab()
+        points = malus_tab.get_malus_points() if malus_tab is not None else []
+        if not points:
+            show_error(self, "Speichern", "Keine Messpunkte gespeichert.")
             return
 
         group_letter = self.ui.cbGroupLetter.currentText()
@@ -658,9 +679,16 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        rows = journal.export_to_csv(Path(path), finalize=True)
-        self.statusbar_manager.show_success(f"{rows} Datenpunkte gespeichert: {path}")
-        Debug.info(f"Session data exported to {path} ({rows} rows)")
+        with open(path, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["sample_angle_deg", "intensity"])
+            for sample_angle, intensity in points:
+                writer.writerow([f"{sample_angle:.4f}", f"{intensity:.6f}"])
+
+        self.statusbar_manager.show_success(
+            f"{len(points)} Datenpunkte gespeichert: {path}"
+        )
+        Debug.info(f"Malus data exported to {path} ({len(points)} points)")
 
     # ==================== Error Handling ====================
 
@@ -817,6 +845,14 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes,
         )
         if reply != QMessageBox.StandardButton.Yes:
+            # User dismissed — delete all orphan directories so they don't
+            # reappear on the next launch.
+            for session_dir in orphans:
+                try:
+                    shutil.rmtree(session_dir)
+                    Debug.info(f"Orphan journal deleted: {session_dir}")
+                except OSError as e:
+                    Debug.warning(f"Could not delete orphan {session_dir}: {e}")
             return
         for session_dir in orphans:
             path, _ = QFileDialog.getSaveFileName(

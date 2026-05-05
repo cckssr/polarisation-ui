@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QGridLayout,
     QPushButton,
@@ -30,6 +30,10 @@ class MalusTab(PlotTabBase):
     tab_title = "Malus"
     required_sources: set[str] = {"ENC:BOTH", "ADC"}
     required_modules: set[str] = set()
+
+    points_changed = Signal(
+        int
+    )  # emits current point count after every add/remove/clear
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -53,8 +57,11 @@ class MalusTab(PlotTabBase):
         layout.addWidget(self._curve_plot, 1, 0, 3, 1)
 
         layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding),
-            1, 1,
+            QSpacerItem(
+                20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+            ),
+            1,
+            1,
         )
 
         self._btn_delete = QPushButton("Letzten Punkt\nlöschen")
@@ -75,6 +82,7 @@ class MalusTab(PlotTabBase):
             self._detector_plot.clear()
         if self._curve_plot is not None:
             self._curve_plot.clear()
+        self.points_changed.emit(0)
 
     def on_connection_state(self, state: ConnState) -> None:
         pass
@@ -100,6 +108,7 @@ class MalusTab(PlotTabBase):
             self._curve_plot.add_point(
                 self._latest_frame.sample_angle, self._latest_frame.intensity
             )
+            self.points_changed.emit(len(self._curve_plot.get_points()))
 
     @Slot()
     def _delete_last_point(self) -> None:
@@ -107,3 +116,5 @@ class MalusTab(PlotTabBase):
             return
         if not self._curve_plot.remove_last_point():
             self.status_message.emit("warning", "Keine Punkte zum Löschen")
+        else:
+            self.points_changed.emit(len(self._curve_plot.get_points()))

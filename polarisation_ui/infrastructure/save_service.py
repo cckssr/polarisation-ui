@@ -46,6 +46,10 @@ from .utils import (
     create_group_name,
 )
 
+_SENSOR_METADATA_PATH = Path(__file__).parent.parent / "sensor_metadata.json"
+with _SENSOR_METADATA_PATH.open("r", encoding="utf-8") as _f:
+    SENSOR_DESCRIPTIONS: dict = json.load(_f)
+
 
 class MeasurementSaveService:
     """
@@ -80,6 +84,7 @@ class MeasurementSaveService:
         self.index = 0
         self._backup_counter = 0
         self._unsaved = False
+        self.sensor_metadata = SENSOR_DESCRIPTIONS
 
         Debug.info(f"Measurement save service initialized: {self.base_dir}")
         try:
@@ -189,6 +194,7 @@ class MeasurementSaveService:
             "end_time": end_time.isoformat(),
             "identifier": identifier,
             "subgroup": subterm if subterm else "",
+            "sensors": self.sensor_metadata,
         }
         if extra_fields:
             metadata.update(extra_fields)
