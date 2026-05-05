@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pyside6-uic polarisation_ui/pyqt/encoder_debug.ui -o polarisation_ui/pyqt/ui_encoder_debug.py)",
+      "Bash(git checkout:*)",
+      "Bash(git merge feat/calibration-tool --no-ff -m ':*)",
+      "Bash(pio run *)",
+      "Bash(bash polarisation_ui/pyqt/pyuic.sh)",
+      "Bash(.venv/bin/pytest tests/ui/test_tab_registry.py tests/test_goniometer_system.py tests/infrastructure/ -v)",
+      "Bash(.venv/bin/pip show *)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/python -c \"from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog; print\\('OK'\\)\")",
+      "Bash(.venv/bin/python -c \"from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino; print\\('OK'\\)\")",
+      "Bash(git stash *)",
+      "Bash(.venv/bin/pytest tests/*)"
+    ]
+  }
+}

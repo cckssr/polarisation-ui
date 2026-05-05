@@ -1,0 +1,320 @@
+"""!/usr/bin/env python
+Logging and debugging utility module for the GM Counter application.
+
+This module provides a centralized Debug class that handles logging to both console
+and file outputs with configurable debug levels. It supports systematic logging of
+errors and program flow, and can globally handle unhandled exceptions.
+
+Features:
+    - Multiple debug levels (OFF, ERROR, INFO, VERBOSE)
+    - Dual output to console and file with customizable formatters
+    - Automatic caller information tracking (class and function names)
+    - Platform-independent temporary directory handling
+    - Global exception hook for unhandled exceptions
+    - UTF-8 encoded log file output
+
+Debug Levels:
+    - DEBUG_OFF (0): No debug output
+    - DEBUG_ERROR (1): Only errors are shown
+    - DEBUG_INFO (2): Errors and important information are shown
+    - DEBUG_VERBOSE (3): All information is shown, including caller details
+
+Debug methods:
+    - Debug.error(message, exc_info=None): Log an error message
+    - Debug.info(message): Log an informational message
+    - Debug.debug(message): Log detailed debug information
+    - Debug.warning(message): Log a warning message
+    - Debug.critical(message): Log a critical error message
+
+Usage:
+    Import the Debug class and initialize it before use:
+
+    >>> Debug.init(debug_level=Debug.DEBUG_VERBOSE, log_dir="/path/to/logs")
+    >>> Debug.info("Application started")
+    >>> Debug.error("An error occurred", exc_info=True)
+
+    To handle global exceptions add the following line after initialization:
+    >>> sys.excepthook = Debug.exception_hook
+"""
+
+import logging
+import os
+import tempfile
+from datetime import datetime
+import sys
+import traceback
+import inspect
+
+
+class Debug:
+    """
+    Debug utility class originally for fringe counter program.
+    This class provides central debug and logging functions,
+    to systematically log errors and program flow.
+    The logger will log messages to both the console and a file if debugging is enabled.
+    It also provides a method to handle unhandled exceptions globally.
+
+    Attribute:
+        logger: The logger used for debug output
+        DEBUG_LEVEL: Current debug level (0-3)
+        LOG_FILE: Path to the log file
+    """
+
+    # Debug level constants
+    DEBUG_OFF = 0  # No debug output
+    DEBUG_ERROR = 1  # Only errors are shown
+    DEBUG_INFO = 2  # Errors and important information are shown
+    DEBUG_VERBOSE = 3  # All information is shown
+
+    # Default values - debugging disabled by default
+    DEBUG_LEVEL = DEBUG_OFF
+    LOG_FILE = None
+    logger = None
+
+    @classmethod
+    def init(
+        cls,
+        debug_level=DEBUG_LEVEL,
+        log_dir=None,
+        app_name="Application",
+        supress_logfile=False,
+    ):
+        """
+        Initialise the logger with the specified debug level and log directory.
+        If no log directory is specified, a platform-specific temp directory is used.
+
+        Args:
+            debug_level: Debug level (0-3)
+            log_dir: Directory where logs should be stored
+            app_name: Application name used for the log file
+            supress_logfile: If True, no log file will be created even if debug_level > 0
+        """
+        cls.DEBUG_LEVEL = debug_level
+
+        # Create logger
+        cls.logger = logging.getLogger(app_name)
+        cls.logger.setLevel(logging.DEBUG)
+
+        # Handler for console output
+        console_handler = logging.StreamHandler()
+        console_formatter = logging.Formatter("%(levelname)s: %(message)s")
+        console_handler.setFormatter(console_formatter)
+
+        # Set debug level accordingly
+        if debug_level >= cls.DEBUG_VERBOSE:
+            console_handler.setLevel(logging.DEBUG)
+        elif debug_level >= cls.DEBUG_INFO:
+            console_handler.setLevel(logging.INFO)
+        elif debug_level >= cls.DEBUG_ERROR:
+            console_handler.setLevel(logging.ERROR)
+        else:
+            console_handler.setLevel(logging.CRITICAL)  # No output
+
+        cls.logger.addHandler(console_handler)
+
+        # Only set up log file if debugging is enabled
+        if debug_level != cls.DEBUG_OFF and not supress_logfile:
+            # Use provided directory if given,
+            # otherwise use platform-specific temp directory
+            if log_dir:
+                log_directory = log_dir
+            else:
+                # Use platform-independent temp directory
+                # Creates: /tmp/app_name_logs (Linux/Mac) or %TEMP%\app_name_logs (Windows)
+                log_directory = os.path.join(
+                    tempfile.gettempdir(), app_name.lower() + "_logs"
+                )
+
+            if not os.path.exists(log_directory):
+                try:
+                    os.makedirs(log_directory)
+                    print(f"Log directory created: {log_directory}")
+                except Exception as e:  # pylint: disable=broad-except
+                    print(f"Error creating log directory: {e}")
+                    return
+
+            # Always create a log.txt in the specified directory
+            cls.LOG_FILE = os.path.join(
+                log_directory,
+                f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{app_name}.txt",
+            )
+
+            file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8")
+            file_formatter = logging.Formatter(
+                "%(asctime)s - %(levelname)s: %(message)s"
+            )
+            file_handler.setFormatter(file_formatter)
+            file_handler.setLevel(logging.DEBUG)  # In Datei immer alles loggen
+            cls.logger.addHandler(file_handler)
+
+            cls.info(f"Log file created: {cls.LOG_FILE}")
+        else:
+            cls.LOG_FILE = None
+
+    @classmethod
+    def error(cls, message, exc_info=None):
+        """
+        Log an error message.
+
+        Args:
+            message: Error message to log
+            exc_info: Exception info (optional)
+        """
+        # Klassennamen und Funktionsnamen ermitteln
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+
+        if not cls.logger:
+            print(f"ERROR: {message}")
+            return
+
+        if exc_info:
+            cls.logger.error(message, exc_info=True)
+        else:
+            cls.logger.error(message)
+
+    @classmethod
+    def info(cls, message):
+        """
+        Log an informational message.
+
+        Args:
+            message: Information to log
+        """
+        # Klassennamen und Funktionsnamen ermitteln
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+
+        if not cls.logger:
+            if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
+                print(f"INFO: {message}")
+            return
+
+        cls.logger.info(message)
+
+    @classmethod
+    def debug(cls, message):
+        """
+        Log detailed debug information.
+
+        Args:
+            message: Debug information to log
+        """
+        # Klassennamen und Funktionsnamen ermitteln
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+
+        if not cls.logger:
+            if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+                print(f"DEBUG: {message}")
+            return
+
+        cls.logger.debug(message)
+
+    @classmethod
+    def warning(cls, message):
+        """
+        Log information as warning for non critical issues.
+
+        Args:
+            message: Warning information to log
+        """
+        # Klassennamen und Funktionsnamen ermitteln
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+
+        if not cls.logger:
+            if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
+                print(f"WARNING: {message}")
+            return
+
+        cls.logger.warning(message)
+
+    @classmethod
+    def critical(cls, message):
+        """
+        Log a critical error message.
+
+        Args:
+            message: Critical error message to log
+        """
+        # Klassennamen und Funktionsnamen ermitteln
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+
+        if not cls.logger:
+            print(f"CRITICAL: {message}")
+            return
+
+        cls.logger.critical(message)
+
+    @classmethod
+    def exception_hook(cls, exc_type, exc_value, exc_traceback):
+        """
+        Callback function for unhandled exceptions.
+        Logs the exception and forwards it to sys.__excepthook__.
+
+        Args:
+            exc_type: The exception type
+            exc_value: The exception value
+            exc_traceback: The traceback
+        """
+        error_msg = "".join(
+            traceback.format_exception(exc_type, exc_value, exc_traceback)
+        )
+        cls.critical(f"UNEXPECTED: {error_msg}")
+
+        # Standardbehandlung von Ausnahmen
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+    @classmethod
+    def add_handler(cls, handler: logging.Handler) -> None:
+        """Attach an additional logging.Handler at runtime (e.g. a log-window handler)."""
+        if cls.logger is not None:
+            cls.logger.addHandler(handler)
+
+    @classmethod
+    def remove_handler(cls, handler: logging.Handler) -> None:
+        """Detach a previously added handler."""
+        if cls.logger is not None:
+            cls.logger.removeHandler(handler)
+
+    @classmethod
+    def _get_caller_info(cls):
+        """
+        Retrieve information about the caller (class and function).
+
+        Returns:
+            str: Formatted information about the caller in the format [Class.Function]
+        """
+        # Inspiziere den Stack, um Aufruferinformationen zu erhalten
+        stack = inspect.stack()
+
+        # Position 0 is this method
+        # Position 1 is the calling debug method (debug, info, error, etc.)
+        # Position 2 is the actual caller we want to identify
+        if len(stack) > 2:
+            caller = stack[2]
+            frame = caller.frame
+
+            # Try to determine the class name
+            class_name = ""
+            if "self" in frame.f_locals:
+                instance = frame.f_locals["self"]
+                class_name = instance.__class__.__name__
+
+            # Get the function name
+            function_name = caller.function
+
+            # Create the formatted caller information
+            if class_name:
+                return f"[{class_name}.{function_name}]"
+            else:
+                return f"[{function_name}]"
+
+        return ""  # Fallback if caller information cannot be determined

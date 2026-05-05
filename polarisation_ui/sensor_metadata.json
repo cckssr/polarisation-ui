@@ -1,0 +1,40 @@
+{
+  "encoder_sample": {
+    "type": "AS5048A",
+    "channel": "A",
+    "interface": "SPI → Arduino Nano ESP32",
+    "resolution_bits": 14,
+    "raw_range": "0–16383",
+    "measurement": "sample-stage angle",
+    "units": "degrees",
+    "angle_range_deg": "0–360",
+    "description": "14-bit magnetic rotary encoder (ams AS5048A, channel A) mounted beneath the sample-holder stage. Raw count 0–16383 linearly mapped to 0°–360°. Software zero offset applied via CONF:ZERO A. Eccentricity/ellipticity corrections from the calibration tool may be applied as a lookup table."
+  },
+  "encoder_detector": {
+    "type": "AS5048A",
+    "channel": "B",
+    "interface": "SPI → Arduino Nano ESP32",
+    "resolution_bits": 14,
+    "raw_range": "0–16383",
+    "measurement": "detector-arm angle",
+    "units": "degrees",
+    "angle_range_deg": "0–360",
+    "description": "14-bit magnetic rotary encoder (ams AS5048A, channel B) mounted on the detector arm. Mechanically constrained to track 2× the sample angle (Malus-law geometry). Software zero offset applied via CONF:ZERO B."
+  },
+  "adc_intensity": {
+    "type": "ADS1220",
+    "interface": "SPI → Arduino Nano ESP32",
+    "resolution_bits": 24,
+    "measurement": "photodiode TIA output voltage → optical intensity",
+    "units": "volts (raw ADC); intensity proportional after TIA gain correction",
+    "description": "24-bit sigma-delta ADC (Texas Instruments ADS1220) reading the output of the photodiode transimpedance amplifier (PD-TIA). Conversion rate and reference voltage configurable via CONF:ADC:*. Full-scale range ±2.048 V (internal reference) or external reference. Gain-corrected voltage is proportional to optical power incident on the detector photodiode."
+  },
+  "pdtia_gain": {
+    "type": "discrete GPIO gain stage",
+    "interface": "4× Arduino Nano ESP32 GPIO → TIA feedback-resistor network",
+    "measurement": "photodiode TIA transimpedance gain",
+    "units": "dimensionless multiplier (Ω/Ω)",
+    "gain_states": 16,
+    "description": "Four GPIO output lines select one of 16 discrete gain settings on the photodiode transimpedance amplifier feedback-resistor network. Higher gain settings extend sensitivity at low light levels but saturate at high intensities. The active gain setting is stored in the measurement metadata so intensity readings can be normalised post-hoc."
+  }
+}

@@ -26,11 +26,8 @@ classifiers = [
 dependencies = [
     "PySide6>=6.5.0",
     "numpy>=1.24.0",
-    "matplotlib>=3.7.0",
     "pyqtgraph>=0.13.0",
-    "scipy>=1.10.0",
     "pyserial>=3.5",
-    "pillow>=9.5.0",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +45,7 @@ dev = [
     "flake8>=6.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-qt>=4.2.0",
 ]
 
 [project.urls]
@@ -57,14 +55,14 @@ Repository = "https://github.com/cckssr/polarisation-ui"
 Issues = "https://github.com/cckssr/polarisation-ui/issues"
 
 [project.gui-scripts]
-polarisation-ui = "polarisation-ui.main:main"
+polarisation-ui = "polarisation_ui.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["polarisation-ui", "polarisation-ui.*"]
+include = ["polarisation_ui", "polarisation_ui.*"]
 
 [tool.setuptools.package-data]
-"polarisation-ui" = ["pyqt/*.ui", "config.json"]
+"polarisation_ui" = ["pyqt/*.ui", "config.json", "sensor_metadata.json"]
 
 [tool.black]
 line-length = 88
