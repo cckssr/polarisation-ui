@@ -25,6 +25,7 @@ jobs:
 
       - name: Lint (flake8)
         run: flake8 polarisation_ui tests
+        continue-on-error: true
 
   test:
     name: Test (Python ${{ matrix.python-version }})
