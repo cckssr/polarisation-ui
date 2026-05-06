@@ -15,6 +15,22 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def _await_mock_state(mock, predicate, timeout: float = 2.0) -> bool:
+    """Poll mock.get_state() until predicate returns True or timeout expires.
+
+    Fire-and-forget SCPI commands are processed by the MockArduino PTY thread
+    asynchronously.  On Linux CI the scheduler may not switch to that thread
+    before the test asserts state, causing a race.  Polling at 10 ms intervals
+    is more robust than an arbitrary sleep.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if predicate(mock.get_state()):
+            return True
+        time.sleep(0.01)
+    return False
+
+
 @pytest.fixture
 def mock_arduino():
     mock = MockArduino(
@@ -126,11 +142,17 @@ class TestContinuousMode:
         mock, _ = mock_arduino
 
         assert encoder_client.start_continuous_a()
+        assert _await_mock_state(
+            mock, lambda s: s["continuous_running"]
+        ), "continuous mode not started"
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
 
         assert encoder_client.abort()
+        assert _await_mock_state(
+            mock, lambda s: not s["continuous_running"]
+        ), "continuous mode not stopped"
         state = mock.get_state()
         assert not state["continuous_running"]
 
@@ -138,6 +160,9 @@ class TestContinuousMode:
         mock, _ = mock_arduino
 
         assert encoder_client.start_continuous_both()
+        assert _await_mock_state(
+            mock, lambda s: s["continuous_running"]
+        ), "continuous mode not started"
         state = mock.get_state()
         assert state["continuous_running"]
         # ENC:BOTH is expanded to ENC:A + ENC:B + ADC + DIAG by start_continuous_both()
@@ -146,6 +171,9 @@ class TestContinuousMode:
         assert "DIAG" in state["stream_sources"]
 
         assert encoder_client.abort()
+        assert _await_mock_state(
+            mock, lambda s: not s["continuous_running"]
+        ), "continuous mode not stopped"
         assert not mock.get_state()["continuous_running"]
 
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
@@ -256,6 +284,9 @@ class TestMockArduinoState:
     def test_state_after_zero_reset(self, mock_arduino, encoder_client):
         mock, _ = mock_arduino
         encoder_client.reset_zero_a()
+        assert _await_mock_state(
+            mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0
+        ), "zero_offset not updated after reset_zero_a"
         state = mock.get_state()
         assert state["encoder_a"]["zero_offset"] == 10.0
         assert state["encoder_a"]["effective_angle"] == 0.0
