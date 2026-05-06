@@ -63,13 +63,7 @@ jobs:
           
           echo "Syncing version $VERSION to Python files..."
           
-          # Update src/__init__.py
-          if [ -f "src/__init__.py" ]; then
-            sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" src/__init__.py
-            echo "Updated src/__init__.py"
-          fi
-          
-          # Update any other Python files with __version__
+          # Update any Python files with __version__
           find . -name "*.py" -type f ! -path "./.venv/*" ! -path "./build/*" ! -path "./dist/*" | while read file; do
             if grep -q "__version__ = " "$file"; then
               sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$file"
@@ -77,10 +71,10 @@ jobs:
             fi
           done
           
-          # Update config.json
-          if [ -f "config.json" ]; then
-            jq --arg version "$VERSION" '.version = $version' config.json > tmp.$$.json && mv tmp.$$.json config.json
-            echo "Updated config.json"
+          # Update polarisation_ui/config.json
+          if [ -f "polarisation_ui/config.json" ]; then
+            jq --arg version "$VERSION" '. + {"version": $version}' polarisation_ui/config.json > tmp.$$.json && mv tmp.$$.json polarisation_ui/config.json
+            echo "Updated polarisation_ui/config.json"
           fi
           
           echo "Version sync complete"
@@ -111,7 +105,7 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Release v${{ steps.get_version.outputs.version }}
           body: |
-            ## HRNGGUI v${{ steps.get_version.outputs.version }}
+            ## Polarisation-UI v${{ steps.get_version.outputs.version }}
             
             ### Installation
             
