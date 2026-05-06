@@ -19,7 +19,16 @@ from enum import Enum
 from serial.tools import list_ports
 
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.mock_port_registry import discover_mock_ports
+
+try:
+    from polarisation_ui.infrastructure.mocks.mock_port_registry import (
+        discover_mock_ports as _discover_mock_ports,
+    )
+
+    _MOCK_REGISTRY_AVAILABLE = True
+except ImportError:
+    _MOCK_REGISTRY_AVAILABLE = False
+
 from polarisation_ui.infrastructure.devices.dual_encoder import (
     DesiredState,
     DualEncoderArduino,
@@ -87,7 +96,8 @@ class GoniometerDeviceManager:
     def list_available_ports() -> list[str]:
         """Return serial ports plus mock PTY ports registered in temp files."""
         ports = {p.device for p in list_ports.comports()}
-        ports.update(discover_mock_ports())
+        if _MOCK_REGISTRY_AVAILABLE:
+            ports.update(_discover_mock_ports())
         return sorted(ports)
 
     # ==================== Connection Management ====================

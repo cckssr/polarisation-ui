@@ -12,10 +12,10 @@ from polarisation_ui.core.models import Frame
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 from polarisation_ui.ui.widgets.tab_registry import TabRegistry
 
-
 # ---------------------------------------------------------------------------
 # Stub tabs
 # ---------------------------------------------------------------------------
+
 
 class _StubTab(PlotTabBase):
     tab_id = "stub"
@@ -57,6 +57,7 @@ class _KdcTab(PlotTabBase):
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def _clean_registry():
     """Isolate each test by clearing the registry before and after."""
@@ -68,6 +69,7 @@ def _clean_registry():
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 def test_register_once():
     TabRegistry.register(_StubTab)
@@ -90,6 +92,7 @@ def test_registration_order():
 # available() filtering by required_modules
 # ---------------------------------------------------------------------------
 
+
 def test_available_no_modules():
     TabRegistry.register(_StubTab)
     TabRegistry.register(_KdcTab)
@@ -109,6 +112,7 @@ def test_available_with_kdc_module():
 # ---------------------------------------------------------------------------
 # Lifecycle hooks
 # ---------------------------------------------------------------------------
+
 
 def test_on_frame_receives_data(qtbot):
     tab = _StubTab()
@@ -144,6 +148,7 @@ def test_on_connection_state(qtbot):
 # ---------------------------------------------------------------------------
 # status_message signal
 # ---------------------------------------------------------------------------
+
 
 def test_status_message_signal(qtbot):
     tab = _StubTab()

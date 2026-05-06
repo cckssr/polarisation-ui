@@ -9,7 +9,8 @@ from unittest.mock import patch
 import pytest
 
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
-from polarisation_ui.infrastructure.devices.mock_arduino import MockArduino
+from polarisation_ui.infrastructure.mocks.mock_arduino import MockArduino
+import polarisation_ui.infrastructure.mocks.mock_arduino as mock_arduino_module
 
 pytestmark = pytest.mark.skipif(
     sys.platform == "win32", reason="PTY not available on Windows"
@@ -51,10 +52,20 @@ class TestMockPortRegistry:
                 return_value=comports,
             ),
             patch(
-                "polarisation_ui.infrastructure.mock_port_registry.os.path.exists",
+                "polarisation_ui.infrastructure.mocks.mock_port_registry.os.path.exists",
                 return_value=True,
             ),
         ):
             ports = GoniometerDeviceManager.list_available_ports()
 
         assert ports == ["/dev/cu.usbmodem14101", "/dev/ttys999"]
+
+    def test_cli_exits_cleanly_without_pty_support(self, monkeypatch, capsys) -> None:
+        """The CLI should stop with a clear error when PTY support is absent."""
+        monkeypatch.setattr(mock_arduino_module, "_PTY_AVAILABLE", False)
+
+        exit_code = mock_arduino_module.main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 1
+        assert "PTY support is unavailable" in captured.err

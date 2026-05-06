@@ -325,7 +325,9 @@ class EncoderDebugDialog(QDialog):
                     drdy = bool(adc_diag.get("drdy", False))
                     self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
                     for i in range(4):
-                        self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
+                        self._le_adc_reg[i].setText(
+                            f"0x{adc_diag.get(f'reg{i}', 0):02X}"
+                        )
                     self._le_adc_last_raw.setText(
                         f"0x{adc_diag.get('last_raw', 0):06X}"
                     )
@@ -852,7 +854,9 @@ class EncoderDebugDialog(QDialog):
         self._refresh_timer.stop()
         if self._data_controller is not None:
             self._data_controller.angles_updated.disconnect(self._on_angles_updated)
-            self._data_controller.intensity_updated.disconnect(self._on_intensity_updated)
+            self._data_controller.intensity_updated.disconnect(
+                self._on_intensity_updated
+            )
             self._data_controller.enable_raw_frame_signal(False)
             # Restore diagnostic polling to the background rate.
             self._data_controller.set_diag_interval(5000)

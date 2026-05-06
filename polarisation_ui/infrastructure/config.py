@@ -58,5 +58,3 @@ def import_config(language: str = "de") -> dict:
 
     Debug.error("config.json not found. Please ensure it exists in the project root.")
     return {}
-
-
