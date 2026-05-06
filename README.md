@@ -56,7 +56,7 @@ pio run -t upload  # flash to Arduino Nano ESP32
 
 When linearly polarised light passes through a second polariser (analyser) at angle θ relative to the first, the transmitted intensity follows:
 
-```
+```math
 I(θ) = I₀ · cos²(θ)
 ```
 
@@ -64,7 +64,7 @@ The ADS1220 measures photodiode current proportional to I; Encoder A reads the p
 
 ### Measurement Geometry
 
-```
+```ascii
 Light source → Polariser (Encoder A) → Sample/medium → Analyser (Encoder B) → Photodetector (ADS1220)
 ```
 
@@ -158,23 +158,23 @@ Override the config at runtime by placing a custom `config.json` in the current 
 
 The application is organised into three strictly separated layers:
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  polarisation_ui                                                 │
-│                                                                  │
-│  ┌────────────────┐   ┌──────────────────┐   ┌───────────────┐  │
-│  │    ui/         │──▶│ infrastructure/  │──▶│    core/      │  │
-│  │                │   │                  │   │               │  │
-│  │ windows/       │   │ device_manager   │   │ models.py     │  │
-│  │ widgets/       │   │ devices/         │   │ services.py   │  │
-│  │ controllers/   │   │   dual_encoder   │   │ exceptions.py │  │
-│  │ dialogs/       │   │   base           │   │ utils.py      │  │
-│  └────────────────┘   │ serial_device    │   └───────────────┘  │
-│         │             │ qt_threads       │                       │
-│         └─────────────▶ config, logging  │                       │
-│                       │ save_service     │                       │
-│                       └──────────────────┘                       │
-└──────────────────────────────────────────────────────────────────┘
+```ascii
+┌────────────────────────────────────────────────────────────────────┐
+│  polarisation_ui                                                   │
+│                                                                    │
+│  ┌────────────────┐   ┌───────────────────┐   ┌─────────────────┐  │
+│  │ ui/.           │──▶│ infrastructure/   │──▶│ core/           │  │
+│  │                │   │                   │   │                 │  │
+│  │   windows/     │   │   device_manager  │   │   models.py     │  │
+│  │   widgets/     │   │   devices/        │   │   services.py   │  │
+│  │   controllers/ │   │     dual_encoder  │   │   exceptions.py │  │
+│  │   dialogs/     │   │     base          │   │   utils.py      │  │
+│  └────────────────┘   │   serial_device   │   └─────────────────┘  │
+│         │             │   qt_threads      │                        │
+│         └────────────▶│   config, logging │                        │
+│                       │   save_service    │                        │
+│                       └───────────────────┘                        │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 **Allowed dependencies:** `ui → infrastructure → core`, `ui → core` directly when needed.
@@ -187,7 +187,7 @@ The application is organised into three strictly separated layers:
 
 ### Data Flow
 
-```
+```ascii
 Arduino Nano ESP32 (SCPI 2.0.0 over USB serial)
   ↓
 DualEncoderArduino  ← parses SCPI responses, drives ADCClient
@@ -230,7 +230,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/pytest tests/ -v
 
 ### Project Layout
 
-```
+```ascii
 polarisation-ui/
 ├── polarisation_ui/          # Main Python package
 │   ├── core/                 # Pure Python — models, services, exceptions
