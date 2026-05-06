@@ -87,6 +87,7 @@ extend-exclude = '''
   | build
   | dist
   | docs/_build
+  | polarisation_ui/pyqt
 )/
 '''
 
