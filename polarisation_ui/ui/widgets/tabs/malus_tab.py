@@ -103,9 +103,7 @@ class MalusTab(PlotTabBase):
         self._points_table.setSelectionBehavior(
             QTableWidget.SelectionBehavior.SelectRows
         )
-        self._points_table.setSelectionMode(
-            QTableWidget.SelectionMode.SingleSelection
-        )
+        self._points_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self._points_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._points_table.setMinimumHeight(80)
         self._points_table.setMaximumHeight(200)

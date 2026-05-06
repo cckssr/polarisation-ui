@@ -25,6 +25,7 @@ def _clear_registry() -> None:
 
 # ── protocol conformance ───────────────────────────────────────────────────────
 
+
 def test_kdc101_stub_satisfies_host_module_protocol() -> None:
     """isinstance check via @runtime_checkable passes for Kdc101Stub."""
     stub = Kdc101Stub()
@@ -53,6 +54,7 @@ def test_kdc101_stub_disconnect_does_not_raise() -> None:
 
 
 # ── ModuleRegistry CRUD ───────────────────────────────────────────────────────
+
 
 def test_register_and_get() -> None:
     stub = Kdc101Stub()
@@ -100,6 +102,7 @@ def test_clear_removes_all_modules() -> None:
 
 
 # ── custom stub to test multi-module registry ─────────────────────────────────
+
 
 class _FakeModule:
     """Minimal stub satisfying HostModule for multi-module tests."""

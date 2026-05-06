@@ -63,7 +63,9 @@ class MalusCurvePlot(QWidget):
 
         layout.addWidget(self._plot_widget)
 
-    def add_point(self, sample_angle: float, detector_angle: float, intensity: float) -> None:
+    def add_point(
+        self, sample_angle: float, detector_angle: float, intensity: float
+    ) -> None:
         """Append a new measurement point and refresh the plot."""
         self._sample_angles.append(sample_angle)
         self._detector_angles.append(detector_angle)

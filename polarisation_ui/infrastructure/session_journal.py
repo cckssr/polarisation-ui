@@ -30,7 +30,6 @@ from typing import Optional
 from polarisation_ui.core.models import Frame
 from polarisation_ui.infrastructure.logging import Debug
 
-
 JOURNAL_BASE = Path.home() / ".polarisation-ui" / "sessions"
 _FINALIZED = "finalized"
 

@@ -16,11 +16,16 @@ import pytest
 from polarisation_ui.core.calibration_hooks import CalibrationFrame, CalibrationRecorder
 from polarisation_ui.core.models import Frame
 
-
 # ── helpers ────────────────────────────────────────────────────────────────────
 
-def _make_frame(ts_ms: int = 1000, ang_a: float = 10.0, ang_b: float = 20.0,
-                adc_v: float = 0.5, pd_gain: int = 0) -> CalibrationFrame:
+
+def _make_frame(
+    ts_ms: int = 1000,
+    ang_a: float = 10.0,
+    ang_b: float = 20.0,
+    adc_v: float = 0.5,
+    pd_gain: int = 0,
+) -> CalibrationFrame:
     return CalibrationFrame(
         ts_ms=ts_ms,
         ang_a=ang_a,
@@ -36,6 +41,7 @@ def _read_lines(path: Path) -> list[str]:
 
 
 # ── tests ──────────────────────────────────────────────────────────────────────
+
 
 def test_header_written_on_start(tmp_path: Path) -> None:
     """Header comment lines appear before the CSV column row."""
@@ -84,8 +90,8 @@ def test_record_writes_data_rows(tmp_path: Path) -> None:
     # First line is the column header
     rows = list(csv.reader(data_lines[1:]))
     assert len(rows) == 5
-    assert float(rows[0][1]) == pytest.approx(0.0)   # ang_a of frame 0
-    assert float(rows[4][1]) == pytest.approx(4.0)   # ang_a of frame 4
+    assert float(rows[0][1]) == pytest.approx(0.0)  # ang_a of frame 0
+    assert float(rows[4][1]) == pytest.approx(4.0)  # ang_a of frame 4
 
 
 def test_config_change_emits_inline_comment(tmp_path: Path) -> None:
@@ -99,8 +105,13 @@ def test_config_change_emits_inline_comment(tmp_path: Path) -> None:
     rec.record(_make_frame(ts_ms=100))
     # Second frame carries a changed config snapshot
     frame_v2 = CalibrationFrame(
-        ts_ms=200, ang_a=10.0, ang_b=20.0, adc_v=0.5, adc_temp=25.0,
-        pd_gain=0, config_snapshot=config_v2,
+        ts_ms=200,
+        ang_a=10.0,
+        ang_b=20.0,
+        adc_v=0.5,
+        adc_temp=25.0,
+        pd_gain=0,
+        config_snapshot=config_v2,
     )
     rec.record(frame_v2)
     rec.stop()
@@ -119,8 +130,13 @@ def test_no_config_change_no_extra_comments(tmp_path: Path) -> None:
     rec.start()
     for i in range(3):
         frame = CalibrationFrame(
-            ts_ms=i * 100, ang_a=0.0, ang_b=0.0, adc_v=0.0, adc_temp=None,
-            pd_gain=0, config_snapshot=config,
+            ts_ms=i * 100,
+            ang_a=0.0,
+            ang_b=0.0,
+            adc_v=0.0,
+            adc_temp=None,
+            pd_gain=0,
+            config_snapshot=config,
         )
         rec.record(frame)
     rec.stop()
@@ -136,7 +152,9 @@ def test_record_from_frame_converts_core_frame(tmp_path: Path) -> None:
     rec = CalibrationRecorder(output_path=out)
     rec.start()
 
-    core_frame = Frame(ts_ms=5000, sample_angle=45.0, detector_angle=90.0, intensity=0.123)
+    core_frame = Frame(
+        ts_ms=5000, sample_angle=45.0, detector_angle=90.0, intensity=0.123
+    )
     rec.record_from_frame(core_frame, pd_gain=3, adc_temp=26.5)
     rec.stop()
 
@@ -144,12 +162,12 @@ def test_record_from_frame_converts_core_frame(tmp_path: Path) -> None:
     rows = list(csv.reader(data_lines[1:]))
     assert len(rows) == 1
     row = rows[0]
-    assert int(row[0]) == 5000           # ts_ms
-    assert float(row[1]) == pytest.approx(45.0)   # ang_a = sample_angle
-    assert float(row[2]) == pytest.approx(90.0)   # ang_b = detector_angle
+    assert int(row[0]) == 5000  # ts_ms
+    assert float(row[1]) == pytest.approx(45.0)  # ang_a = sample_angle
+    assert float(row[2]) == pytest.approx(90.0)  # ang_b = detector_angle
     assert float(row[3]) == pytest.approx(0.123)  # adc_v = intensity
-    assert float(row[4]) == pytest.approx(26.5)   # adc_temp
-    assert int(row[5]) == 3                        # pd_gain
+    assert float(row[4]) == pytest.approx(26.5)  # adc_temp
+    assert int(row[5]) == 3  # pd_gain
 
 
 def test_adc_temp_none_written_as_empty(tmp_path: Path) -> None:
@@ -157,7 +175,11 @@ def test_adc_temp_none_written_as_empty(tmp_path: Path) -> None:
     out = tmp_path / "calib.csv"
     rec = CalibrationRecorder(output_path=out)
     rec.start()
-    rec.record(CalibrationFrame(ts_ms=1, ang_a=0.0, ang_b=0.0, adc_v=0.0, adc_temp=None, pd_gain=0))
+    rec.record(
+        CalibrationFrame(
+            ts_ms=1, ang_a=0.0, ang_b=0.0, adc_v=0.0, adc_temp=None, pd_gain=0
+        )
+    )
     rec.stop()
 
     data_lines = [ln for ln in _read_lines(out) if not ln.startswith("#")]
