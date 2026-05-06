@@ -137,6 +137,9 @@ class TestADCConfiguration:
         mock, _ = mock_arduino
         result = encoder_client.adc.configure(gain=4, mux="DIFF01", rate=90)
         assert result
+        assert _await_mock_state(
+            mock, lambda s: s["adc_gain"] == 4
+        ), "adc_gain not updated after configure()"
         state = mock.get_state()
         assert state["adc_gain"] == 4
 
