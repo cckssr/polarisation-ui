@@ -1,8 +1,13 @@
 """Device adapter implementations."""
 
 from .base import EncoderAdapter, EncoderMock
-from .dual_encoder import DualEncoderArduino, ADCClient, EncoderID, EncoderValue, DualEncoderValue
-from .mock_arduino import MockArduino
+from .dual_encoder import (
+    DualEncoderArduino,
+    ADCClient,
+    EncoderID,
+    EncoderValue,
+    DualEncoderValue,
+)
 
 __all__ = [
     "EncoderAdapter",
@@ -12,5 +17,4 @@ __all__ = [
     "EncoderID",
     "EncoderValue",
     "DualEncoderValue",
-    "MockArduino",
 ]

@@ -7,11 +7,8 @@ Run with: .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 import sys
 import pytest
 import time
-from polarisation_ui.infrastructure.devices import (
-    DualEncoderArduino,
-    MockArduino,
-    EncoderID,
-)
+from polarisation_ui.infrastructure.devices import DualEncoderArduino, EncoderID
+from polarisation_ui.infrastructure.mocks import MockArduino
 
 pytestmark = pytest.mark.skipif(
     sys.platform == "win32", reason="PTY not available on Windows"

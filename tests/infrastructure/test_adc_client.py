@@ -12,7 +12,8 @@ import sys
 import pytest
 import time
 
-from polarisation_ui.infrastructure.devices import DualEncoderArduino, MockArduino
+from polarisation_ui.infrastructure.devices import DualEncoderArduino
+from polarisation_ui.infrastructure.mocks import MockArduino
 
 pytestmark = pytest.mark.skipif(
     sys.platform == "win32", reason="PTY not available on Windows"

@@ -1,4 +1,5 @@
 {
+  "version": "0.0.1",
   "de": {
     "description": "Zentrale Konfigurationsdatei für die Polarisation-Anwendung. Stellt Konstanten und Standardwerte für die gesamte Anwendung bereit.",
 

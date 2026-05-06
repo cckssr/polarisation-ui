@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..logging import Debug
-from ..mock_port_registry import register_mock_port, unregister_mock_port
+from .mock_port_registry import register_mock_port, unregister_mock_port
 
 # PTY is Unix-only (pty, tty, select on file descriptors are absent on Windows)
 _PTY_AVAILABLE = sys.platform != "win32"
@@ -636,6 +636,13 @@ def main() -> int:
     """CLI entry point for manual testing."""
     import argparse
     import signal
+
+    if not _PTY_AVAILABLE:
+        print(
+            "MockArduino cannot run on Windows because PTY support is unavailable.",
+            file=sys.stderr,
+        )
+        return 1
 
     parser = argparse.ArgumentParser(description="MockArduino SCPI 2.0.0 via PTY")
     parser.add_argument(
