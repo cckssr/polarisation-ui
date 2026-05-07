@@ -16,12 +16,12 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
-    QGridLayout, QGroupBox, QHBoxLayout, QLCDNumber,
-    QLabel, QLayout, QLineEdit, QMainWindow,
-    QMenu, QMenuBar, QPushButton, QSizePolicy,
-    QSpacerItem, QStatusBar, QTabWidget, QToolButton,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QComboBox, QFormLayout,
+    QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+    QLCDNumber, QLabel, QLayout, QLineEdit,
+    QMainWindow, QMenu, QMenuBar, QPushButton,
+    QSizePolicy, QSpacerItem, QStatusBar, QTabWidget,
+    QToolButton, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -41,6 +41,11 @@ class Ui_MainWindow(object):
         self.actionAcquisitionSettings.setMenuRole(QAction.MenuRole.NoRole)
         self.actionEncoderDebug = QAction(MainWindow)
         self.actionEncoderDebug.setObjectName(u"actionEncoderDebug")
+        self.actionLogWindow = QAction(MainWindow)
+        self.actionLogWindow.setObjectName(u"actionLogWindow")
+        self.actionPowerCalibration = QAction(MainWindow)
+        self.actionPowerCalibration.setObjectName(u"actionPowerCalibration")
+        self.actionPowerCalibration.setMenuRole(QAction.MenuRole.NoRole)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout_5 = QGridLayout(self.centralwidget)
@@ -402,8 +407,118 @@ class Ui_MainWindow(object):
 
         self.formDetector.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage)
 
+        self.lblGainLabel = QLabel(self.gbDetector)
+        self.lblGainLabel.setObjectName(u"lblGainLabel")
+        sizePolicy.setHeightForWidth(self.lblGainLabel.sizePolicy().hasHeightForWidth())
+        self.lblGainLabel.setSizePolicy(sizePolicy)
+        self.lblGainLabel.setFont(font)
+
+        self.formDetector.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblGainLabel)
+
+        self.hlGainButtons = QHBoxLayout()
+        self.hlGainButtons.setSpacing(2)
+        self.hlGainButtons.setObjectName(u"hlGainButtons")
+        self.btnGain1 = QPushButton(self.gbDetector)
+        self.gainButtonGroup = QButtonGroup(MainWindow)
+        self.gainButtonGroup.setObjectName(u"gainButtonGroup")
+        self.gainButtonGroup.addButton(self.btnGain1)
+        self.btnGain1.setObjectName(u"btnGain1")
+        self.btnGain1.setMaximumSize(QSize(36, 16777215))
+        self.btnGain1.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain1)
+
+        self.btnGain2 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain2)
+        self.btnGain2.setObjectName(u"btnGain2")
+        self.btnGain2.setMaximumSize(QSize(36, 16777215))
+        self.btnGain2.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain2)
+
+        self.btnGain3 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain3)
+        self.btnGain3.setObjectName(u"btnGain3")
+        self.btnGain3.setMaximumSize(QSize(36, 16777215))
+        self.btnGain3.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain3)
+
+        self.btnGain4 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain4)
+        self.btnGain4.setObjectName(u"btnGain4")
+        self.btnGain4.setMaximumSize(QSize(36, 16777215))
+        self.btnGain4.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain4)
+
+        self.gainSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.hlGainButtons.addItem(self.gainSpacer)
+
+
+        self.formDetector.setLayout(2, QFormLayout.ItemRole.FieldRole, self.hlGainButtons)
+
+        self.lblWattage = QLabel(self.gbDetector)
+        self.lblWattage.setObjectName(u"lblWattage")
+        sizePolicy.setHeightForWidth(self.lblWattage.sizePolicy().hasHeightForWidth())
+        self.lblWattage.setSizePolicy(sizePolicy)
+        self.lblWattage.setMinimumSize(QSize(0, 40))
+        self.lblWattage.setFont(font)
+
+        self.formDetector.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblWattage)
+
+        self.lcdWattage = QLCDNumber(self.gbDetector)
+        self.lcdWattage.setObjectName(u"lcdWattage")
+        sizePolicy2.setHeightForWidth(self.lcdWattage.sizePolicy().hasHeightForWidth())
+        self.lcdWattage.setSizePolicy(sizePolicy2)
+        self.lcdWattage.setMinimumSize(QSize(0, 40))
+        self.lcdWattage.setFont(font)
+        self.lcdWattage.setLineWidth(2)
+        self.lcdWattage.setDigitCount(8)
+
+        self.formDetector.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lcdWattage)
+
 
         self.verticalLayout_2.addWidget(self.gbDetector)
+
+        self.gbPowerCal = QGroupBox(self.centralwidget)
+        self.gbPowerCal.setObjectName(u"gbPowerCal")
+        sizePolicy.setHeightForWidth(self.gbPowerCal.sizePolicy().hasHeightForWidth())
+        self.gbPowerCal.setSizePolicy(sizePolicy)
+        self.gbPowerCal.setFont(font1)
+        self.gbPowerCal.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.vboxPowerCal = QVBoxLayout(self.gbPowerCal)
+        self.vboxPowerCal.setSpacing(4)
+        self.vboxPowerCal.setObjectName(u"vboxPowerCal")
+        self.vboxPowerCal.setContentsMargins(6, 4, 6, 6)
+        self.cbProfile = QComboBox(self.gbPowerCal)
+        self.cbProfile.setObjectName(u"cbProfile")
+        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.cbProfile.sizePolicy().hasHeightForWidth())
+        self.cbProfile.setSizePolicy(sizePolicy4)
+
+        self.vboxPowerCal.addWidget(self.cbProfile)
+
+        self.hlProfileButtons = QHBoxLayout()
+        self.hlProfileButtons.setObjectName(u"hlProfileButtons")
+        self.btnReloadProfiles = QPushButton(self.gbPowerCal)
+        self.btnReloadProfiles.setObjectName(u"btnReloadProfiles")
+
+        self.hlProfileButtons.addWidget(self.btnReloadProfiles)
+
+        self.btnOpenCalibration = QPushButton(self.gbPowerCal)
+        self.btnOpenCalibration.setObjectName(u"btnOpenCalibration")
+
+        self.hlProfileButtons.addWidget(self.btnOpenCalibration)
+
+
+        self.vboxPowerCal.addLayout(self.hlProfileButtons)
+
+
+        self.verticalLayout_2.addWidget(self.gbPowerCal)
 
         self.verticalSpacer = QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -411,11 +526,11 @@ class Ui_MainWindow(object):
 
         self.gbSave = QGroupBox(self.centralwidget)
         self.gbSave.setObjectName(u"gbSave")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
-        self.gbSave.setSizePolicy(sizePolicy4)
+        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
+        self.gbSave.setSizePolicy(sizePolicy5)
         self.gbSave.setMinimumSize(QSize(0, 50))
         self.gbSave.setFont(font1)
         self.gbSave.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -460,11 +575,11 @@ class Ui_MainWindow(object):
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.setObjectName(u"cbGroupLetter")
-        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.cbGroupLetter.sizePolicy().hasHeightForWidth())
-        self.cbGroupLetter.setSizePolicy(sizePolicy5)
+        sizePolicy6 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+        sizePolicy6.setHorizontalStretch(0)
+        sizePolicy6.setVerticalStretch(0)
+        sizePolicy6.setHeightForWidth(self.cbGroupLetter.sizePolicy().hasHeightForWidth())
+        self.cbGroupLetter.setSizePolicy(sizePolicy6)
         self.cbGroupLetter.setFont(font)
         self.cbGroupLetter.setMaxCount(24)
         self.cbGroupLetter.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
@@ -479,8 +594,8 @@ class Ui_MainWindow(object):
 
         self.leSuffix = QLineEdit(self.gbSave)
         self.leSuffix.setObjectName(u"leSuffix")
-        sizePolicy5.setHeightForWidth(self.leSuffix.sizePolicy().hasHeightForWidth())
-        self.leSuffix.setSizePolicy(sizePolicy5)
+        sizePolicy6.setHeightForWidth(self.leSuffix.sizePolicy().hasHeightForWidth())
+        self.leSuffix.setSizePolicy(sizePolicy6)
         self.leSuffix.setFont(font)
         self.leSuffix.setText(u"")
         self.leSuffix.setMaxLength(20)
@@ -493,11 +608,11 @@ class Ui_MainWindow(object):
         self.btnSave = QPushButton(self.gbSave)
         self.btnSave.setObjectName(u"btnSave")
         self.btnSave.setEnabled(False)
-        sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy6.setHorizontalStretch(0)
-        sizePolicy6.setVerticalStretch(0)
-        sizePolicy6.setHeightForWidth(self.btnSave.sizePolicy().hasHeightForWidth())
-        self.btnSave.setSizePolicy(sizePolicy6)
+        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy7.setHorizontalStretch(0)
+        sizePolicy7.setVerticalStretch(0)
+        sizePolicy7.setHeightForWidth(self.btnSave.sizePolicy().hasHeightForWidth())
+        self.btnSave.setSizePolicy(sizePolicy7)
         self.btnSave.setMinimumSize(QSize(100, 30))
         self.btnSave.setMaximumSize(QSize(1000, 40))
         self.btnSave.setFont(font)
@@ -548,7 +663,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addLayout(self.hlMeasurementControls)
 
-        self.verticalLayout_2.setStretch(7, 1)
+        self.verticalLayout_2.setStretch(8, 1)
 
         self.gridLayout_5.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
 
@@ -581,6 +696,8 @@ class Ui_MainWindow(object):
         self.menuEinstellungen.addAction(self.actionAutoSaveEnabled)
         self.menuEinstellungen.addAction(self.actionAcquisitionSettings)
         self.menuEinstellungen.addAction(self.actionEncoderDebug)
+        self.menuEinstellungen.addAction(self.actionLogWindow)
+        self.menuEinstellungen.addAction(self.actionPowerCalibration)
 
         self.retranslateUi(MainWindow)
         self.actionAutoSaveEnabled.triggered["bool"].connect(self.lblSuffix.setVisible)
@@ -597,6 +714,8 @@ class Ui_MainWindow(object):
         self.actionAutoSaveEnabled.setText(QCoreApplication.translate("MainWindow", u"Automatische Speicherung aktiviert", None))
         self.actionAcquisitionSettings.setText(QCoreApplication.translate("MainWindow", u"Aquisations-Einstellungen", None))
         self.actionEncoderDebug.setText(QCoreApplication.translate("MainWindow", u"Encoder Debugging", None))
+        self.actionLogWindow.setText(QCoreApplication.translate("MainWindow", u"Log-Ausgabe anzeigen", None))
+        self.actionPowerCalibration.setText(QCoreApplication.translate("MainWindow", u"Leistungskalibrierung\u2026", None))
         self.gbArduinoConnection.setTitle(QCoreApplication.translate("MainWindow", u"Arduino-Verbindung", None))
         self.lblArduinoPort.setText(QCoreApplication.translate("MainWindow", u"Port", None))
         self.btnRefreshPorts.setText(QCoreApplication.translate("MainWindow", u"...", None))
@@ -621,6 +740,22 @@ class Ui_MainWindow(object):
         self.lblDetectorStatusValue.setText(QCoreApplication.translate("MainWindow", u"E12345", None))
         self.ledDetectorStatus.setText("")
         self.lblDetectorVoltage.setText(QCoreApplication.translate("MainWindow", u"Spannung (V)", None))
+        self.lblGainLabel.setText(QCoreApplication.translate("MainWindow", u"PD-TIA Gain", None))
+        self.btnGain1.setText(QCoreApplication.translate("MainWindow", u"1", None))
+        self.btnGain2.setText(QCoreApplication.translate("MainWindow", u"2", None))
+        self.btnGain3.setText(QCoreApplication.translate("MainWindow", u"3", None))
+        self.btnGain4.setText(QCoreApplication.translate("MainWindow", u"4", None))
+        self.lblWattage.setText(QCoreApplication.translate("MainWindow", u"Leistung (W)", None))
+        self.gbPowerCal.setTitle(QCoreApplication.translate("MainWindow", u"Detektor-Kalibrierung", None))
+        self.cbProfile.setPlaceholderText(QCoreApplication.translate("MainWindow", u"\u2014 Kein Profil geladen \u2014", None))
+        self.btnReloadProfiles.setText(QCoreApplication.translate("MainWindow", u"Aktualisieren", None))
+#if QT_CONFIG(tooltip)
+        self.btnReloadProfiles.setToolTip(QCoreApplication.translate("MainWindow", u"Profil-Liste aus dem Verzeichnis neu einlesen", None))
+#endif // QT_CONFIG(tooltip)
+        self.btnOpenCalibration.setText(QCoreApplication.translate("MainWindow", u"Kalibrierungstool\u2026", None))
+#if QT_CONFIG(tooltip)
+        self.btnOpenCalibration.setToolTip(QCoreApplication.translate("MainWindow", u"Leistungskalibrierungstool \u00f6ffnen", None))
+#endif // QT_CONFIG(tooltip)
         self.gbSave.setTitle(QCoreApplication.translate("MainWindow", u"Speicherung", None))
         self.lblGroupLetter.setText(QCoreApplication.translate("MainWindow", u"Gruppe*", None))
         self.cbGroupLetter.setItemText(0, QCoreApplication.translate("MainWindow", u"A", None))

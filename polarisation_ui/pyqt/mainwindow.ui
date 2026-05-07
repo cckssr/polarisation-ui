@@ -39,7 +39,7 @@
      <number>10</number>
     </property>
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,1,0,0">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,1,0,0">
       <property name="spacing">
        <number>-1</number>
       </property>
@@ -887,6 +887,249 @@
            </property>
           </widget>
          </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblGainLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>PD-TIA Gain</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <layout class="QHBoxLayout" name="hlGainButtons">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="btnGain1">
+             <property name="maximumSize">
+              <size>
+               <width>36</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>1</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">gainButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnGain2">
+             <property name="maximumSize">
+              <size>
+               <width>36</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>2</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">gainButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnGain3">
+             <property name="maximumSize">
+              <size>
+               <width>36</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>3</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">gainButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnGain4">
+             <property name="maximumSize">
+              <size>
+               <width>36</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>4</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">gainButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <spacer name="gainSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Policy::Expanding</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblWattage">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Leistung (W)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLCDNumber" name="lcdWattage">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="lineWidth">
+            <number>2</number>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbPowerCal">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+         </font>
+        </property>
+        <property name="title">
+         <string>Detektor-Kalibrierung</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <layout class="QVBoxLayout" name="vboxPowerCal">
+         <property name="leftMargin">
+          <number>6</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>6</number>
+         </property>
+         <property name="bottomMargin">
+          <number>6</number>
+         </property>
+         <property name="spacing">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="QComboBox" name="cbProfile">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="placeholderText">
+            <string>— Kein Profil geladen —</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="hlProfileButtons">
+           <item>
+            <widget class="QPushButton" name="btnReloadProfiles">
+             <property name="text">
+              <string>Aktualisieren</string>
+             </property>
+             <property name="toolTip">
+              <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnOpenCalibration">
+             <property name="text">
+              <string>Kalibrierungstool…</string>
+             </property>
+             <property name="toolTip">
+              <string>Leistungskalibrierungstool öffnen</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
        </widget>
       </item>
@@ -1334,6 +1577,8 @@
     <addaction name="actionAutoSaveEnabled"/>
     <addaction name="actionAcquisitionSettings"/>
     <addaction name="actionEncoderDebug"/>
+    <addaction name="actionLogWindow"/>
+    <addaction name="actionPowerCalibration"/>
    </widget>
    <addaction name="menuEinstellungen"/>
   </widget>
@@ -1362,8 +1607,28 @@
     <string>Encoder Debugging</string>
    </property>
   </action>
+  <action name="actionLogWindow">
+   <property name="text">
+    <string>Log-Ausgabe anzeigen</string>
+   </property>
+  </action>
+  <action name="actionPowerCalibration">
+   <property name="text">
+    <string>Leistungskalibrierung…</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <resources/>
+ <buttongroups>
+  <buttongroup name="gainButtonGroup">
+   <attribute name="exclusive">
+    <bool>true</bool>
+   </attribute>
+  </buttongroup>
+ </buttongroups>
  <connections>
   <connection>
    <sender>actionAutoSaveEnabled</sender>

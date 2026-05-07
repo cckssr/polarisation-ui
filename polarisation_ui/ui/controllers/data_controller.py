@@ -13,6 +13,7 @@ from typing import Optional
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from polarisation_ui.core.models import AcquisitionSettings, Frame
+from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
@@ -77,6 +78,9 @@ class DataController(QObject):
     # Opt-in debug signal — raw DATA:FRAME string (off by default for perf).
     # Enable via enable_raw_frame_signal(True) before opening the Raw Stream tab.
     raw_frame = Signal(str)
+    # Emitted every poll with the computed optical power in watts, or NaN when
+    # no calibration profile is loaded or the current gain has no calibration data.
+    power_updated = Signal(float)
     # Measured polling rate in Hz (emitted after each successful frame once
     # enough samples are available for a stable estimate).
     poll_rate_updated = Signal(float)
@@ -178,6 +182,9 @@ class DataController(QObject):
 
         # Current PDTIA gain stage (1–4; 0 = not set).
         self._current_pdtia_gain: int = 0
+
+        # Active detector calibration profile; None when not loaded.
+        self._calibration_profile: Optional[PowerCalibrationProfile] = None
 
         # When True, the raw_frame signal is emitted with the DATA:FRAME string
         # on every poll.  Disabled by default — only enabled when the Raw Stream
@@ -366,6 +373,20 @@ class DataController(QObject):
             Debug.info(f"DataController: PDTIA gain updated to stage {stage}")
         return ok
 
+    def update_calibration_profile(
+        self, profile: Optional[PowerCalibrationProfile]
+    ) -> None:
+        """Set the detector calibration profile used to convert voltage → watts."""
+        self._calibration_profile = profile
+        Debug.info(
+            f"Calibration profile updated: {profile.name if profile else 'None'}"
+        )
+
+    @property
+    def pdtia_gain(self) -> int:
+        """Currently active PDTIA gain stage (0 = not set)."""
+        return self._current_pdtia_gain
+
     # ==================== Intensity Reading ====================
 
     def _read_intensity(self, detector_angle: float) -> float:
@@ -483,12 +504,26 @@ class DataController(QObject):
             intensity = self._read_intensity(detector_angle)
             self.intensity_updated.emit(intensity)
             self.angles_updated.emit(display_sample, display_det)
+            # Compute optical power from calibration profile (if loaded).
+            conv_factor: Optional[float] = None
+            power_W: Optional[float] = None
+            if self._calibration_profile is not None:
+                conv_factor = self._calibration_profile.conversion_factor(
+                    self._current_pdtia_gain
+                )
+                if conv_factor is not None:
+                    power_W = intensity * conv_factor
+
+            self.power_updated.emit(power_W if power_W is not None else float("nan"))
+
             frame = Frame(
                 ts_ms=int(time.monotonic() * 1000),
                 sample_angle=display_sample,
                 detector_angle=display_det,
                 intensity=intensity,
                 pdtia_gain=self._current_pdtia_gain,
+                power_W=power_W,
+                conv_factor_W_per_V=conv_factor,
             )
             self.frame_ready.emit(frame)
             if self._raw_frame_enabled:

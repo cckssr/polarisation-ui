@@ -20,4 +20,3 @@ plt.title("Brewster'scher Winkel Messung")
 plt.legend()
 plt.grid()
 plt.show()
-

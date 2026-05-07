@@ -131,6 +131,8 @@ class Frame:
     detector_angle: float
     intensity: float
     pdtia_gain: int = 0
+    power_W: Optional[float] = None
+    conv_factor_W_per_V: Optional[float] = None
 
 
 @dataclass

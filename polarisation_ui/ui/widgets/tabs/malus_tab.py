@@ -33,7 +33,6 @@ from PySide6.QtWidgets import (
 )
 
 from polarisation_ui.core.models import Frame, MalusPoint
-from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.ui.widgets.malus_curve_plot import MalusCurvePlot
 from polarisation_ui.ui.widgets.malus_detector_plot import MalusDetectorPlot
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -52,7 +51,6 @@ class MalusTab(PlotTabBase):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._latest_frame: Optional[Frame] = None
-        self._calibration_profile: Optional[PowerCalibrationProfile] = None
         self._detector_plot: Optional[MalusDetectorPlot] = None
         self._curve_plot: Optional[MalusCurvePlot] = None
         self._btn_save_current: Optional[QPushButton] = None
@@ -160,12 +158,6 @@ class MalusTab(PlotTabBase):
         # Wire peak signal → labels and cached peak
         self._detector_plot.peak_changed.connect(self._update_max_labels)
 
-    def set_calibration_profile(
-        self, profile: Optional[PowerCalibrationProfile]
-    ) -> None:
-        """Inject the active detector calibration profile (called from MainWindow)."""
-        self._calibration_profile = profile
-
     def on_frame(self, frame: Frame) -> None:
         self._latest_frame = frame
         if self._detector_plot is not None:
@@ -221,31 +213,19 @@ class MalusTab(PlotTabBase):
 
     # ── Save helpers ──────────────────────────────────────────────────────────
 
-    def _compute_power(
-        self, voltage_V: float, gain: int
-    ) -> tuple[Optional[float], Optional[float]]:
-        """Return (power_W, conv_factor) for the given voltage and gain, or (None, None)."""
-        if self._calibration_profile is None:
-            return None, None
-        factor = self._calibration_profile.conversion_factor(gain)
-        if factor is None:
-            return None, None
-        return voltage_V * factor, factor
-
     @Slot()
     def _save_point_current(self) -> None:
         """Save the current live ADC reading and reset the detector scan."""
         if self._latest_frame is None or self._curve_plot is None:
             return
         frame = self._latest_frame
-        power_W, conv = self._compute_power(frame.intensity, frame.pdtia_gain)
         self._curve_plot.add_point(
             sample_angle=frame.sample_angle,
             detector_angle=frame.detector_angle,
             intensity_V=frame.intensity,
             pdtia_gain=frame.pdtia_gain,
-            power_W=power_W,
-            conv_factor_W_per_V=conv,
+            power_W=frame.power_W,
+            conv_factor_W_per_V=frame.conv_factor_W_per_V,
         )
         self._clear_detector_plot()
         self._refresh_table()
@@ -260,14 +240,19 @@ class MalusTab(PlotTabBase):
             self.status_message.emit("warning", "Kein Maximum verfügbar")
             return
         frame = self._latest_frame
-        power_W, conv = self._compute_power(self._peak_intensity, frame.pdtia_gain)
+        # Re-apply the current frame's conversion factor to the peak intensity.
+        peak_power_W = (
+            self._peak_intensity * frame.conv_factor_W_per_V
+            if frame.conv_factor_W_per_V is not None
+            else None
+        )
         self._curve_plot.add_point(
             sample_angle=frame.sample_angle,
             detector_angle=self._peak_angle,
             intensity_V=self._peak_intensity,
             pdtia_gain=frame.pdtia_gain,
-            power_W=power_W,
-            conv_factor_W_per_V=conv,
+            power_W=peak_power_W,
+            conv_factor_W_per_V=frame.conv_factor_W_per_V,
         )
         self._clear_detector_plot()
         self._refresh_table()

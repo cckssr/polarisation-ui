@@ -17,6 +17,7 @@ Responsibilities:
 
 import csv
 import json
+import math
 import shutil
 from collections.abc import Callable
 from datetime import datetime
@@ -24,28 +25,16 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtWidgets import (
-    QButtonGroup,
-    QComboBox,
     QDialog,
     QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLCDNumber,
-    QLabel,
     QMainWindow,
     QMessageBox,
-    QPushButton,
-    QSizePolicy,
-    QVBoxLayout,
 )
 from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QAction, QCloseEvent
+from PySide6.QtGui import QCloseEvent
 
 from polarisation_ui.core.models import AcquisitionSettings
-from polarisation_ui.core.power_calibration import (
-    PROFILES_DIR,
-    PowerCalibrationProfile,
-)
+from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
@@ -126,21 +115,10 @@ class MainWindow(QMainWindow):
         # Power calibration — lazily loaded from selected profile
         self._calibration_profile: Optional[PowerCalibrationProfile] = None
 
-        # PDTIA gain buttons (added programmatically to gbDetector)
-        self._gain_btn_group: Optional[QButtonGroup] = None
-        self._gain_buttons: dict[int, QPushButton] = {}
-
-        # Wattage LCD (added programmatically to gbDetector)
-        self._lcd_wattage: Optional[QLCDNumber] = None
-
-        # Profile selector combobox (added programmatically)
-        self._cb_profile: Optional[QComboBox] = None
-
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
         self._setup_initial_state()
-        self._setup_detector_extras()
         self._setup_tabs()
         self._connect_signals()
         # Defer until after the event loop starts so the window is fully shown
@@ -159,7 +137,7 @@ class MainWindow(QMainWindow):
         self.ui.cbArduinoPort.setEditable(True)
         self.ui.cbArduinoPort.lineEdit().setReadOnly(True)
         self.ui.cbArduinoPort.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+            self.ui.cbArduinoPort.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.ui.cbArduinoPort.setMinimumContentsLength(18)
         self._populate_ports()
@@ -183,87 +161,6 @@ class MainWindow(QMainWindow):
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
-    def _setup_detector_extras(self) -> None:
-        """Programmatically extend gbDetector with gain buttons, wattage LCD, and profile selector."""
-        form = self.ui.formDetector
-
-        # Row 2: PDTIA Gain label + 4 toggle buttons
-        gain_lbl = QLabel("PD-TIA Gain")
-        gain_lbl.setFont(self.ui.lblDetectorVoltage.font())
-
-        gain_widget = QWidget()
-        gain_hbox = QHBoxLayout(gain_widget)
-        gain_hbox.setContentsMargins(0, 0, 0, 0)
-        gain_hbox.setSpacing(2)
-
-        self._gain_btn_group = QButtonGroup(self)
-        self._gain_btn_group.setExclusive(True)
-
-        for stage in (1, 2, 3, 4):
-            btn = QPushButton(str(stage))
-            btn.setCheckable(True)
-            btn.setEnabled(False)
-            btn.setMaximumWidth(36)
-            btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-            self._gain_btn_group.addButton(btn, stage)
-            self._gain_buttons[stage] = btn
-            gain_hbox.addWidget(btn)
-        gain_hbox.addStretch()
-
-        self._gain_btn_group.idClicked.connect(self._on_gain_button_clicked)
-        form.addRow(gain_lbl, gain_widget)
-
-        # Row 3: Wattage label + LCD
-        watt_lbl = QLabel("Leistung (W)")
-        watt_lbl.setFont(self.ui.lblDetectorVoltage.font())
-        watt_lbl.setMinimumHeight(40)
-
-        self._lcd_wattage = QLCDNumber()
-        self._lcd_wattage.setDigitCount(8)
-        self._lcd_wattage.setLineWidth(2)
-        self._lcd_wattage.setMinimumHeight(40)
-        self._lcd_wattage.setSizePolicy(
-            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
-        )
-        self._lcd_wattage.setFont(self.ui.lcdDetectorVoltage.font())
-        form.addRow(watt_lbl, self._lcd_wattage)
-
-        # Power calibration profile group — inserted into verticalLayout_2
-        # between gbDetector and the expanding spacer.
-        gb_cal = QGroupBox("Detektor-Kalibrierung")
-        gb_cal.setFont(self.ui.gbDetector.font())
-        cal_vbox = QVBoxLayout(gb_cal)
-        cal_vbox.setContentsMargins(6, 4, 6, 6)
-        cal_vbox.setSpacing(4)
-
-        self._cb_profile = QComboBox()
-        self._cb_profile.setPlaceholderText("— Kein Profil geladen —")
-        self._cb_profile.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
-        self._cb_profile.currentIndexChanged.connect(self._on_profile_selected)
-        cal_vbox.addWidget(self._cb_profile)
-
-        profile_btn_row = QHBoxLayout()
-        btn_reload = QPushButton("Aktualisieren")
-        btn_reload.setToolTip("Profil-Liste aus dem Verzeichnis neu einlesen")
-        btn_reload.clicked.connect(self._reload_profiles)
-        btn_open_cal = QPushButton("Kalibrierungstool…")
-        btn_open_cal.setToolTip("Leistungskalibrierungstool öffnen")
-        btn_open_cal.clicked.connect(self._open_power_calibration)
-        profile_btn_row.addWidget(btn_reload)
-        profile_btn_row.addWidget(btn_open_cal)
-        cal_vbox.addLayout(profile_btn_row)
-
-        # Insert the calibration group right after gbDetector in verticalLayout_2.
-        # The layout order is: gbArduinoConnection(0), spacer(1), gbSampleStage(2),
-        # spacer(3), gbDetectorStage(4), spacer(5), gbDetector(6), spacer(7), gbSave(8), controls(9)
-        # We want to insert after gbDetector (index 6), which means index 7.
-        vl = self.ui.verticalLayout_2
-        vl.insertWidget(7, gb_cal)
-
-        self._reload_profiles()
-
     def _setup_tabs(self) -> None:
         """Instantiate and register all available experiment tabs into tabWidget."""
         # Trigger tab registrations by importing the tabs package
@@ -285,16 +182,19 @@ class MainWindow(QMainWindow):
         # Menu actions
         self.ui.actionAcquisitionSettings.triggered.connect(self._open_acq_settings)
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
+        self.ui.actionLogWindow.triggered.connect(self._open_log_window)
+        self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
 
-        # Log window menu entry (added programmatically — no Qt Designer change needed)
-        self._action_log_window = QAction("Log-Ausgabe anzeigen", self)
-        self._action_log_window.triggered.connect(self._open_log_window)
-        self.ui.menuEinstellungen.addAction(self._action_log_window)
+        # PDTIA gain button group — assign IDs 1–4 to match stage numbers
+        for stage in (1, 2, 3, 4):
+            self.ui.gainButtonGroup.setId(getattr(self.ui, f"btnGain{stage}"), stage)
+        self.ui.gainButtonGroup.idClicked.connect(self._on_gain_button_clicked)
 
-        # Power calibration tool menu entry
-        self._action_power_cal = QAction("Leistungskalibrierung…", self)
-        self._action_power_cal.triggered.connect(self._open_power_calibration)
-        self.ui.menuEinstellungen.addAction(self._action_power_cal)
+        # Power calibration profile controls
+        self.ui.cbProfile.currentIndexChanged.connect(self._on_profile_selected)
+        self.ui.btnReloadProfiles.clicked.connect(self._reload_profiles)
+        self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
+        self._reload_profiles()
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
@@ -316,7 +216,7 @@ class MainWindow(QMainWindow):
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.intensity_updated.connect(self._update_intensity_display)
-        self.data_controller.intensity_updated.connect(self._update_wattage_display)
+        self.data_controller.power_updated.connect(self._update_wattage_display)
         self.data_controller.poll_rate_updated.connect(self._update_poll_rate)
         self.data_controller.diagnostics_updated.connect(
             self._handle_diagnostics_update
@@ -491,8 +391,6 @@ class MainWindow(QMainWindow):
         self.ui.gbDetectorStage.setEnabled(False)
         self.ui.gbDetector.setEnabled(False)
         self.ui.btnStartMeasurement.setEnabled(False)
-        for btn in self._gain_buttons.values():
-            btn.setEnabled(False)
 
         set_connection_status(
             self.ui.ledArduinoStatus,
@@ -549,8 +447,6 @@ class MainWindow(QMainWindow):
         self._sensor_a_ok = True
         self._sensor_b_ok = True
         self._adc_saturated = False
-        for btn in self._gain_buttons.values():
-            btn.setEnabled(True)
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
 
@@ -641,13 +537,13 @@ class MainWindow(QMainWindow):
         """Set PDTIA gain stage on the device and visually select the button."""
         ok = self.data_controller.set_pdtia_gain(stage)
         if not ok:
-            # Deselect all buttons so state doesn't lie
-            if self._gain_btn_group is not None:
-                checked = self._gain_btn_group.checkedButton()
-                if checked is not None:
-                    self._gain_btn_group.setExclusive(False)
-                    checked.setChecked(False)
-                    self._gain_btn_group.setExclusive(True)
+            # Deselect all buttons so the UI doesn't show a wrong state
+            grp = self.ui.gainButtonGroup
+            checked = grp.checkedButton()
+            if checked is not None:
+                grp.setExclusive(False)
+                checked.setChecked(False)
+                grp.setExclusive(True)
             self.statusbar_manager.show_error(
                 f"PDTIA Gain {stage} konnte nicht gesetzt werden"
             )
@@ -657,48 +553,38 @@ class MainWindow(QMainWindow):
     # ==================== Power / Wattage Display ====================
 
     @Slot(float)
-    def _update_wattage_display(self, voltage: float) -> None:
-        if self._lcd_wattage is None:
-            return
-        if self._calibration_profile is None:
-            self._lcd_wattage.display("    ----")
-            return
-        gain = self.data_controller._current_pdtia_gain
-        power_W = self._calibration_profile.watts_from_voltage(voltage, gain)
-        if power_W is None:
-            self._lcd_wattage.display("    ----")
+    def _update_wattage_display(self, power_W: float) -> None:
+        if math.isnan(power_W):
+            self.ui.lcdWattage.display("    ----")
         else:
-            # Use scientific-notation string so small values are readable
-            self._lcd_wattage.display(f"{power_W:.3e}")
+            self.ui.lcdWattage.display(f"{power_W:.3e}")
 
     # ==================== Calibration Profile Management ====================
 
     def _reload_profiles(self) -> None:
-        """Refresh the profile combobox from PROFILES_DIR."""
-        if self._cb_profile is None:
-            return
-        self._cb_profile.blockSignals(True)
-        current_name = self._cb_profile.currentText()
-        self._cb_profile.clear()
+        """Refresh the profile combobox from the detector profiles directory."""
+        cb = self.ui.cbProfile
+        cb.blockSignals(True)
+        current_name = cb.currentText()
+        cb.clear()
         for path in PowerCalibrationProfile.list_profiles():
-            self._cb_profile.addItem(path.stem, userData=path)
-        # Restore previous selection if still present
-        idx = self._cb_profile.findText(current_name)
+            cb.addItem(path.stem, userData=path)
+        idx = cb.findText(current_name)
         if idx >= 0:
-            self._cb_profile.setCurrentIndex(idx)
-        self._cb_profile.blockSignals(False)
-        self._on_profile_selected(self._cb_profile.currentIndex())
+            cb.setCurrentIndex(idx)
+        cb.blockSignals(False)
+        self._on_profile_selected(cb.currentIndex())
 
     @Slot(int)
     def _on_profile_selected(self, index: int) -> None:
-        if self._cb_profile is None or index < 0:
+        if index < 0:
             self._calibration_profile = None
-            self._push_calibration_to_tabs()
+            self.data_controller.update_calibration_profile(None)
             return
-        path: Path = self._cb_profile.itemData(index)
+        path: Path = self.ui.cbProfile.itemData(index)
         if path is None:
             self._calibration_profile = None
-            self._push_calibration_to_tabs()
+            self.data_controller.update_calibration_profile(None)
             return
         try:
             self._calibration_profile = PowerCalibrationProfile.load(path)
@@ -706,12 +592,7 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             Debug.error(f"Failed to load calibration profile {path}: {exc}")
             self._calibration_profile = None
-        self._push_calibration_to_tabs()
-
-    def _push_calibration_to_tabs(self) -> None:
-        for tab in self._tab_instances:
-            if hasattr(tab, "set_calibration_profile"):
-                tab.set_calibration_profile(self._calibration_profile)
+        self.data_controller.update_calibration_profile(self._calibration_profile)
 
     def _open_power_calibration(self) -> None:
         from polarisation_ui.ui.windows.power_calibration_window import (

@@ -29,7 +29,9 @@ class ArduinoEncoder:
     """
 
     # Streaming data pattern: DATA:ANGL A,45.23
-    STREAM_ANGLE_PATTERN = re.compile(r"DATA:ANGL\s+([AB]|BOTH),(-?\d+\.?\d*)(?:,(-?\d+\.?\d*))?")
+    STREAM_ANGLE_PATTERN = re.compile(
+        r"DATA:ANGL\s+([AB]|BOTH),(-?\d+\.?\d*)(?:,(-?\d+\.?\d*))?"
+    )
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
         """
