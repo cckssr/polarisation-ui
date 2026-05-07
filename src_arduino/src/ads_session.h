@@ -73,6 +73,7 @@ private:
   float _vrefVolts = 2.5f;           // external reference voltage
   uint32_t _conversionPeriodMs = 50; // 1000 / data_rate_sps
   uint32_t _nextConversionMs = 0;
+  uint32_t _nextRecoveryAttemptMs = 0;
 
   // Applies the 4-bit pattern for _pdGainStage to the four GPIO pins.
   void _applyPdGainGpio(uint8_t pattern);
@@ -82,6 +83,28 @@ private:
 
   // Wait for first DRDY after start and discard stale output buffer data.
   void _waitForFirstConversion();
+
+  // Apply the desired ADC configuration and remember expected register bytes.
+  void _applyDefaultConfig();
+
+  // Verify device registers match the expected configuration. Returns true
+  // when device appears correctly configured and present.
+  bool _verifyConfiguration();
+
+  // Attempt to recover the ADC when it is not present (power or connection
+  // loss). Returns true on successful re-init and reconfiguration.
+  bool _attemptRecovery();
+
+  // Expected configuration snapshot (copied from ADS1220 shadow registers
+  // after applying configuration). Used to detect a hardware reset.
+  uint8_t _expectedReg[4] = {0, 0, 0, 0};
+
+  // Apply the firmware's default ADC configuration (gain, vref, mode,
+  // conversion period) and start continuous conversions.
+  void _configureAdcDefaults();
+
+  // Schedule the next recovery attempt after a failed probe.
+  void _scheduleRecoveryRetry();
 };
 
 extern AdsSession adsSession;

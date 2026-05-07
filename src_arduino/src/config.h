@@ -26,7 +26,7 @@
 #define DEVICE_MFR "Custom Arduino Nano ESP32"
 #define DEVICE_MODEL "Dual_AS5048A-ADS1220"
 #define DEVICE_SERIAL "0"
-#define FW_VERSION "2.0.0"
+#define FW_VERSION "2.0.1"
 
 // ── Streaming defaults ────────────────────────────────────────────────────────
 #define DEFAULT_STREAM_RATE_HZ 20   // 50 ms per frame

@@ -48,7 +48,7 @@ class MalusDetectorPlot(QWidget):
         self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Detektorwinkel", units="°")
-        self._plot_widget.setLabel("left", "Intensität", units="a.u.")
+        self._plot_widget.setLabel("left", "Intensität", units="V")
 
         # All buffered points: small blue dots
         self._curve = self._plot_widget.plot(
@@ -87,8 +87,11 @@ class MalusDetectorPlot(QWidget):
         Accept a new (angle, intensity) sample.
 
         A point is only appended when the detector angle has moved by at least
-        MIN_ANGLE_DELTA degrees since the last accepted sample.
+        MIN_ANGLE_DELTA degrees since the last accepted sample.  NaN intensity
+        (no ADC reading) is silently dropped.
         """
+        if np.isnan(intensity):
+            return
         if (
             self._last_angle is None
             or abs(detector_angle - self._last_angle) >= self.MIN_ANGLE_DELTA
@@ -107,8 +110,10 @@ class MalusDetectorPlot(QWidget):
 
     def _refresh(self) -> None:
         if not self._angles:
-            self._curve.setData([], [])
-            self._peak.setData([], [])
+            # Avoid setData([], []) on ScatterPlotItem — empty arrays trigger
+            # np.nanmin on an all-NaN slice and produce a RuntimeWarning.
+            self._curve.setVisible(False)
+            self._peak.setVisible(False)
             self._peak_line.setVisible(False)
             self.peak_changed.emit(float("nan"), float("nan"))
             return
@@ -116,12 +121,14 @@ class MalusDetectorPlot(QWidget):
         angles = list(self._angles)
         intensities = list(self._intensities)
         self._curve.setData(angles, intensities)
+        self._curve.setVisible(True)
 
         peak_idx = int(np.argmax(intensities))
         peak_angle = angles[peak_idx]
         peak_intensity = intensities[peak_idx]
 
         self._peak.setData([peak_angle], [peak_intensity])
+        self._peak.setVisible(True)
         self._peak_line.setPos(peak_angle)
         self._peak_line.setVisible(True)
         self.peak_changed.emit(peak_intensity, peak_angle)

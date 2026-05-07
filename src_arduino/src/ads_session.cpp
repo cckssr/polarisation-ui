@@ -69,8 +69,8 @@ bool AdsSession::begin()
   _nextConversionMs = 0;
 
   // Start in continuous conversion mode.
-  _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
-  _adc.start();
+  // Configure ADC defaults and snapshot expected config.
+  _configureAdcDefaults();
   _present = true;
 
   // Wait for and discard the first conversion to clear stale output buffer data.
@@ -80,6 +80,69 @@ bool AdsSession::begin()
   return true;
 }
 
+void AdsSession::_applyDefaultConfig()
+{
+  // After configuration calls, capture the ADS1220 shadow registers as the
+  // expected device state. This lets us detect a device reset/power loss.
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    _expectedReg[i] = _adc.getRegister(i);
+  }
+}
+
+bool AdsSession::_verifyConfiguration()
+{
+  // Read back device registers and compare to expected snapshot.
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    uint8_t val = _adc.readRegister(i);
+    if (val != _expectedReg[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool AdsSession::_attemptRecovery()
+{
+  // Try to re-initialize the ADS1220 (useful after power/connection loss).
+  if (_adc.begin(ADC_SPI_HZ))
+  {
+    // Re-apply default ADC configuration.
+    _configureAdcDefaults();
+
+    // Re-apply PD-TIA GPIO stage to ensure detector front-end is known state.
+    _applyPdGainGpio(kPdGainPatterns[_pdGainStage]);
+
+    // Discard first conversion and resync timing.
+    _waitForFirstConversion();
+    _nextConversionMs = millis() + _conversionPeriodMs;
+    _nextRecoveryAttemptMs = 0;
+    _present = true;
+    return true;
+  }
+  return false;
+}
+
+void AdsSession::_configureAdcDefaults()
+{
+  // Apply required configuration: gain=1, external reference (REFP0/REFN0, 2.5 V),
+  // 20 SPS, differential AIN0-AIN1. Keep conversion period in sync.
+  _adc.setGain(ADS1220::Gain::G1);
+  _adc.setVoltageReference(ADS1220::VoltageRef::EXT_REFP0);
+  _vrefVolts = 2.5f;
+  _conversionPeriodMs = 50; // 20 SPS default
+  _nextConversionMs = 0;
+
+  _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
+  _adc.start();
+
+  // Snapshot expected config and mark present.
+  _applyDefaultConfig();
+  _nextRecoveryAttemptMs = 0;
+}
+
 void AdsSession::reset()
 {
   if (!_present)
@@ -87,14 +150,7 @@ void AdsSession::reset()
   _adc.reset();
 
   // Re-apply required configuration after reset.
-  _adc.setGain(ADS1220::Gain::G1);
-  _adc.setVoltageReference(ADS1220::VoltageRef::EXT_REFP0);
-  _vrefVolts = 2.5f;
-  _conversionPeriodMs = 50;
-  _nextConversionMs = 0;
-
-  _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
-  _adc.start();
+  _configureAdcDefaults();
   _lastVoltage = 0.0f;
   _lastTemperature = NAN;
   _lastRaw = 0;
@@ -109,13 +165,36 @@ void AdsSession::reset()
 bool AdsSession::ready() const
 {
   // DRDY is not connected; use time-based polling at the configured data rate.
-  return _present && (millis() >= _nextConversionMs);
+  // When the ADC is absent, keep waking the loop periodically so recovery can
+  // still be attempted.
+  if (_present)
+    return millis() >= _nextConversionMs;
+  return millis() >= _nextRecoveryAttemptMs;
 }
 
 void AdsSession::pollAdc()
 {
+  // If ADC not present, try to recover (power/connection may have returned).
   if (!_present)
+  {
+    if (millis() < _nextRecoveryAttemptMs)
+      return;
+    if (!_attemptRecovery())
+    {
+      _scheduleRecoveryRetry();
+      return;
+    }
+  }
+
+  // Verify the ADC still matches the expected configuration. If not, mark
+  // as not present and let recovery logic in subsequent polls re-init it.
+  if (!_verifyConfiguration())
+  {
+    _present = false;
+    _scheduleRecoveryRetry();
     return;
+  }
+
   _lastRaw = _adc.readRawWithCommand();
   _lastVoltage = _computeVoltage(_lastRaw);
   _nextConversionMs = millis() + _conversionPeriodMs;
@@ -126,7 +205,17 @@ void AdsSession::pollAdc()
 float AdsSession::takeVoltageReading()
 {
   if (!_present)
-    return NAN;
+  {
+    if (millis() < _nextRecoveryAttemptMs)
+      return NAN;
+
+    // Try to recover once for synchronous one-shot reads.
+    if (!_attemptRecovery())
+    {
+      _scheduleRecoveryRetry();
+      return NAN;
+    }
+  }
   // RDATA command returns the last completed result without a DRDY wait.
   _lastRaw = _adc.readRawWithCommand();
   _lastVoltage = _computeVoltage(_lastRaw);
@@ -147,6 +236,13 @@ float AdsSession::takeTemperatureReading(uint32_t timeoutMs)
   _lastTemperature = temp;
   _adc.enableTemperatureSensor(false);
   return temp;
+}
+
+void AdsSession::_scheduleRecoveryRetry()
+{
+  // Retry at a modest cadence so we can recover after a replug without
+  // hammering the SPI bus every loop iteration.
+  _nextRecoveryAttemptMs = millis() + 1000;
 }
 
 // ── PD-TIA gain stage ─────────────────────────────────────────────────────────

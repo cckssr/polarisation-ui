@@ -17,46 +17,43 @@ Responsibilities:
 
 import csv
 import json
+import math
 import shutil
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QMainWindow,
-    QComboBox,
     QMessageBox,
 )
 from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QAction, QCloseEvent
+from PySide6.QtGui import QCloseEvent
 
-from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.save_service import SENSOR_DESCRIPTIONS
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
-
-# UI components
-from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.ui.common.dialogs import show_error
-from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
-
-from polarisation_ui.ui.common.statusbar import StatusBarManager
 from polarisation_ui.ui.common.status_led import (
-    set_connection_status,
     LED_GREEN,
     LED_RED,
     LED_YELLOW,
+    set_connection_status,
 )
+from polarisation_ui.ui.common.statusbar import StatusBarManager
 from polarisation_ui.ui.controllers.data_controller import DataController
-from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 from polarisation_ui.ui.widgets.tab_registry import TabRegistry
+from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 
-# Import settings
 CONFIG = import_config()
 
 # ADC saturation thresholds (ADS1220, PGA=1, Vref=2.048V)
@@ -115,6 +112,9 @@ class MainWindow(QMainWindow):
         # Log window — created lazily on first open, reused thereafter
         self._log_window = None
 
+        # Power calibration — lazily loaded from selected profile
+        self._calibration_profile: Optional[PowerCalibrationProfile] = None
+
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
         self.ui.cbArduinoPort.setEditable(True)
         self.ui.cbArduinoPort.lineEdit().setReadOnly(True)
         self.ui.cbArduinoPort.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+            self.ui.cbArduinoPort.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.ui.cbArduinoPort.setMinimumContentsLength(18)
         self._populate_ports()
@@ -182,11 +182,19 @@ class MainWindow(QMainWindow):
         # Menu actions
         self.ui.actionAcquisitionSettings.triggered.connect(self._open_acq_settings)
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
+        self.ui.actionLogWindow.triggered.connect(self._open_log_window)
+        self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
 
-        # Log window menu entry (added programmatically — no Qt Designer change needed)
-        self._action_log_window = QAction("Log-Ausgabe anzeigen", self)
-        self._action_log_window.triggered.connect(self._open_log_window)
-        self.ui.menuEinstellungen.addAction(self._action_log_window)
+        # PDTIA gain button group — assign IDs 1–4 to match stage numbers
+        for stage in (1, 2, 3, 4):
+            self.ui.gainButtonGroup.setId(getattr(self.ui, f"btnGain{stage}"), stage)
+        self.ui.gainButtonGroup.idClicked.connect(self._on_gain_button_clicked)
+
+        # Power calibration profile controls
+        self.ui.cbProfile.currentIndexChanged.connect(self._on_profile_selected)
+        self.ui.btnReloadProfiles.clicked.connect(self._reload_profiles)
+        self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
+        self._reload_profiles()
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
@@ -208,6 +216,7 @@ class MainWindow(QMainWindow):
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.intensity_updated.connect(self._update_intensity_display)
+        self.data_controller.power_updated.connect(self._update_wattage_display)
         self.data_controller.poll_rate_updated.connect(self._update_poll_rate)
         self.data_controller.diagnostics_updated.connect(
             self._handle_diagnostics_update
@@ -495,6 +504,10 @@ class MainWindow(QMainWindow):
     @Slot(float)
     def _update_intensity_display(self, voltage: float) -> None:
         """Update the detector voltage LCD and check for ADC saturation."""
+        if math.isnan(voltage):
+            self.ui.lcdDetectorVoltage.display("----")
+            return
+
         self.ui.lcdDetectorVoltage.display(f"{voltage:.4f}")
 
         saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
@@ -520,6 +533,83 @@ class MainWindow(QMainWindow):
         """Show the measured poll rate in the detector status label when ADC is healthy."""
         if not self._adc_saturated and self._is_connected:
             self.ui.lblDetectorStatusValue.setText(f"ADC  {hz:.1f} Hz")
+
+    # ==================== PDTIA Gain Control ====================
+
+    @Slot(int)
+    def _on_gain_button_clicked(self, stage: int) -> None:
+        """Set PDTIA gain stage on the device and visually select the button."""
+        ok = self.data_controller.set_pdtia_gain(stage)
+        if not ok:
+            # Deselect all buttons so the UI doesn't show a wrong state
+            grp = self.ui.gainButtonGroup
+            checked = grp.checkedButton()
+            if checked is not None:
+                grp.setExclusive(False)
+                checked.setChecked(False)
+                grp.setExclusive(True)
+            self.statusbar_manager.show_error(
+                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
+            )
+        else:
+            self.statusbar_manager.show_info(f"PDTIA Gain auf Stufe {stage} gesetzt")
+
+    # ==================== Power / Wattage Display ====================
+
+    @Slot(float)
+    def _update_wattage_display(self, power_W: float) -> None:
+        if math.isnan(power_W):
+            self.ui.lcdWattage.display("    ----")
+        else:
+            self.ui.lcdWattage.display(f"{power_W:.3e}")
+
+    # ==================== Calibration Profile Management ====================
+
+    def _reload_profiles(self) -> None:
+        """Refresh the profile combobox from the detector profiles directory."""
+        cb = self.ui.cbProfile
+        cb.blockSignals(True)
+        current_name = cb.currentText()
+        cb.clear()
+        for path in PowerCalibrationProfile.list_profiles():
+            cb.addItem(path.stem, userData=path)
+        idx = cb.findText(current_name)
+        if idx >= 0:
+            cb.setCurrentIndex(idx)
+        cb.blockSignals(False)
+        self._on_profile_selected(cb.currentIndex())
+
+    @Slot(int)
+    def _on_profile_selected(self, index: int) -> None:
+        if index < 0:
+            self._calibration_profile = None
+            self.data_controller.update_calibration_profile(None)
+            return
+        path: Path = self.ui.cbProfile.itemData(index)
+        if path is None:
+            self._calibration_profile = None
+            self.data_controller.update_calibration_profile(None)
+            return
+        try:
+            self._calibration_profile = PowerCalibrationProfile.load(path)
+            Debug.info(f"Loaded calibration profile: {path}")
+        except Exception as exc:
+            Debug.error(f"Failed to load calibration profile {path}: {exc}")
+            self._calibration_profile = None
+        self.data_controller.update_calibration_profile(self._calibration_profile)
+
+    def _open_power_calibration(self) -> None:
+        from polarisation_ui.ui.windows.power_calibration_window import (
+            PowerCalibrationWindow,
+        )
+
+        dialog = PowerCalibrationWindow(
+            data_controller=self.data_controller,
+            parent=self,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.profile_saved.connect(self._reload_profiles)
+        dialog.show()
 
     # ==================== Encoder Control ====================
 
@@ -691,23 +781,65 @@ class MainWindow(QMainWindow):
 
         with open(csv_path, "w", newline="", encoding="utf-8") as fh:
             writer = csv.writer(fh)
-            writer.writerow(["sample_angle_deg", "detector_angle_deg", "intensity_V"])
-            for sample_angle, detector_angle, intensity in points:
+            writer.writerow(
+                [
+                    "sample_angle_deg",
+                    "detector_angle_deg",
+                    "intensity_V",
+                    "pdtia_gain",
+                    "power_W",
+                    "conv_factor_W_per_V",
+                ]
+            )
+            for pt in points:
                 writer.writerow(
-                    [f"{sample_angle:.4f}", f"{detector_angle:.4f}", f"{intensity:.6f}"]
+                    [
+                        f"{pt.sample_angle:.4f}",
+                        f"{pt.detector_angle:.4f}",
+                        f"{pt.intensity_V:.6f}",
+                        str(pt.pdtia_gain) if pt.pdtia_gain else "",
+                        f"{pt.power_W:.6e}" if pt.power_W is not None else "",
+                        (
+                            f"{pt.conv_factor_W_per_V:.6e}"
+                            if pt.conv_factor_W_per_V is not None
+                            else ""
+                        ),
+                    ]
                 )
+
+        cal_meta: dict = {}
+        if self._calibration_profile is not None:
+            cal_meta = {
+                "profile_name": self._calibration_profile.name,
+                "calibrated_at": self._calibration_profile.calibrated_at,
+                "gain_conversion_factors": {
+                    str(stage): cal.conversion_factor_W_per_V()
+                    for stage, cal in self._calibration_profile.gains.items()
+                    if cal.conversion_factor_W_per_V() is not None
+                },
+            }
 
         metadata = {
             "saved_at": saved_at.isoformat(),
             "point_count": len(points),
             "group": self.ui.cbGroupLetter.currentText(),
             "suffix": self.ui.leSuffix.text().strip(),
-            "columns": ["sample_angle_deg", "detector_angle_deg", "intensity_V"],
+            "columns": [
+                "sample_angle_deg",
+                "detector_angle_deg",
+                "intensity_V",
+                "pdtia_gain",
+                "power_W",
+                "conv_factor_W_per_V",
+            ],
             "units": {
                 "sample_angle_deg": "degrees",
                 "detector_angle_deg": "degrees",
                 "intensity_V": "volts",
+                "power_W": "watts",
+                "conv_factor_W_per_V": "watts_per_volt",
             },
+            "power_calibration": cal_meta,
             "sensors": SENSOR_DESCRIPTIONS,
         }
         metadata_path = csv_path.with_name(csv_path.stem + "_metadata.json")
