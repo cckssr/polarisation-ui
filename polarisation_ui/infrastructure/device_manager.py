@@ -382,6 +382,21 @@ class GoniometerDeviceManager:
             Debug.error(f"Error zeroing detector encoder: {e}")
             return False
 
+    def set_pdtia_gain(self, stage: int) -> bool:
+        """Set PDTIA discrete gain stage (1–4) via CONF:PDTIA:GAIN."""
+        device = self.get_encoder_device()
+        if device is None:
+            return False
+        try:
+            ok = device.adc.set_pdtia_gain(stage)
+            if ok:
+                self._desired_state.pdtia_gain = stage
+                Debug.info(f"PDTIA gain set to stage {stage}")
+            return ok
+        except Exception as e:
+            Debug.error(f"Error setting PDTIA gain: {e}")
+            return False
+
     def zero_both_encoders(self) -> bool:
         """Set both encoder positions as zero."""
         if not self.is_encoder_connected():

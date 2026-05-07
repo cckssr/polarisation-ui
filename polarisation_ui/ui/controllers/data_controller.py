@@ -176,6 +176,9 @@ class DataController(QObject):
         # Set to True in unit tests that don't have a mock device attached.
         self._use_mock_intensity = use_mock_intensity
 
+        # Current PDTIA gain stage (1–4; 0 = not set).
+        self._current_pdtia_gain: int = 0
+
         # When True, the raw_frame signal is emitted with the DATA:FRAME string
         # on every poll.  Disabled by default — only enabled when the Raw Stream
         # tab in the debug dialog is open, to avoid unnecessary string formatting.
@@ -340,6 +343,29 @@ class DataController(QObject):
         """Check if measurement is active."""
         return self._is_measuring
 
+    # ==================== PDTIA Gain Control ====================
+
+    def set_pdtia_gain(self, stage: int) -> bool:
+        """
+        Set PDTIA discrete gain stage (1–4).
+
+        Pauses polling for the duration of the SCPI exchange (same pattern as
+        _check_diagnostics) so commands don't interleave with ongoing reads.
+        Updates the internal gain tracker used to annotate emitted Frames.
+        """
+        was_polling = self.poll_timer.isActive()
+        if was_polling:
+            self.poll_timer.stop()
+        try:
+            ok = self.device_manager.set_pdtia_gain(stage)
+        finally:
+            if was_polling:
+                self.poll_timer.start(self.poll_interval)
+        if ok:
+            self._current_pdtia_gain = stage
+            Debug.info(f"DataController: PDTIA gain updated to stage {stage}")
+        return ok
+
     # ==================== Intensity Reading ====================
 
     def _read_intensity(self, detector_angle: float) -> float:
@@ -462,6 +488,7 @@ class DataController(QObject):
                 sample_angle=display_sample,
                 detector_angle=display_det,
                 intensity=intensity,
+                pdtia_gain=self._current_pdtia_gain,
             )
             self.frame_ready.emit(frame)
             if self._raw_frame_enabled:

@@ -130,3 +130,16 @@ class Frame:
     sample_angle: float
     detector_angle: float
     intensity: float
+    pdtia_gain: int = 0
+
+
+@dataclass
+class MalusPoint:
+    """One saved point in the Malus-law curve, including power calibration columns."""
+
+    sample_angle: float
+    detector_angle: float
+    intensity_V: float
+    pdtia_gain: int = 0
+    power_W: Optional[float] = None
+    conv_factor_W_per_V: Optional[float] = None

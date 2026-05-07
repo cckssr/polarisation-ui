@@ -3,7 +3,14 @@ Malus-law experiment tab.
 
 Owns both plots (live detector scan + manually saved Malus curve) and the
 Save / Delete-point controls.  Data arrives via on_frame(); the tab stores
-the latest frame so the Save button can snapshot current values on demand.
+the latest frame so the Save buttons can snapshot values on demand.
+
+Two save modes:
+  - "Aktuell speichern": snapshot the *current* live ADC reading.
+  - "Maximum speichern": snapshot the *peak* intensity found in the detector
+    scan above and clear the detector curve afterwards.
+
+Both modes reset the detector scan after saving so the next sweep starts clean.
 """
 
 from __future__ import annotations
@@ -25,7 +32,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from polarisation_ui.core.models import Frame
+from polarisation_ui.core.models import Frame, MalusPoint
+from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.ui.widgets.malus_curve_plot import MalusCurvePlot
 from polarisation_ui.ui.widgets.malus_detector_plot import MalusDetectorPlot
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -44,15 +52,20 @@ class MalusTab(PlotTabBase):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._latest_frame: Optional[Frame] = None
+        self._calibration_profile: Optional[PowerCalibrationProfile] = None
         self._detector_plot: Optional[MalusDetectorPlot] = None
         self._curve_plot: Optional[MalusCurvePlot] = None
-        self._btn_save: Optional[QPushButton] = None
+        self._btn_save_current: Optional[QPushButton] = None
+        self._btn_save_max: Optional[QPushButton] = None
         self._btn_delete: Optional[QPushButton] = None
         self._btn_delete_selected: Optional[QPushButton] = None
         self._btn_clear_detector: Optional[QPushButton] = None
         self._lbl_max_intensity: Optional[QLabel] = None
         self._lbl_max_angle: Optional[QLabel] = None
         self._points_table: Optional[QTableWidget] = None
+        # cached peak from detector plot (intensity, angle)
+        self._peak_intensity: float = float("nan")
+        self._peak_angle: float = float("nan")
 
     def build(self) -> None:
         layout = QGridLayout(self)
@@ -95,8 +108,10 @@ class MalusTab(PlotTabBase):
         right_layout.addStretch(1)
 
         # Saved-points table
-        self._points_table = QTableWidget(0, 3)
-        self._points_table.setHorizontalHeaderLabels(["θ_S (°)", "θ_D (°)", "I (V)"])
+        self._points_table = QTableWidget(0, 5)
+        self._points_table.setHorizontalHeaderLabels(
+            ["θ_S (°)", "θ_D (°)", "I (V)", "Gain", "P (W)"]
+        )
         self._points_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
         )
@@ -124,15 +139,32 @@ class MalusTab(PlotTabBase):
         self._btn_delete.clicked.connect(self._delete_last_point)
         right_layout.addWidget(self._btn_delete)
 
-        self._btn_save = QPushButton("Punkt\nspeichern")
-        self._btn_save.setEnabled(False)
-        self._btn_save.clicked.connect(self._save_point)
-        right_layout.addWidget(self._btn_save)
+        self._btn_save_current = QPushButton("Aktuell\nspeichern")
+        self._btn_save_current.setToolTip(
+            "Aktuellen Messwert (live) als Punkt in der Malus-Kurve speichern"
+        )
+        self._btn_save_current.setEnabled(False)
+        self._btn_save_current.clicked.connect(self._save_point_current)
+        right_layout.addWidget(self._btn_save_current)
+
+        self._btn_save_max = QPushButton("Maximum\nspeichern")
+        self._btn_save_max.setToolTip(
+            "Maximum des Detektorscans als Punkt speichern und Scan zurücksetzen"
+        )
+        self._btn_save_max.setEnabled(False)
+        self._btn_save_max.clicked.connect(self._save_point_max)
+        right_layout.addWidget(self._btn_save_max)
 
         layout.addWidget(right_panel, 0, 1, 4, 1)
 
-        # Wire peak signal → labels
+        # Wire peak signal → labels and cached peak
         self._detector_plot.peak_changed.connect(self._update_max_labels)
+
+    def set_calibration_profile(
+        self, profile: Optional[PowerCalibrationProfile]
+    ) -> None:
+        """Inject the active detector calibration profile (called from MainWindow)."""
+        self._calibration_profile = profile
 
     def on_frame(self, frame: Frame) -> None:
         self._latest_frame = frame
@@ -160,11 +192,11 @@ class MalusTab(PlotTabBase):
         for btn in (
             self._btn_clear_detector,
             self._btn_delete,
-            self._btn_save,
+            self._btn_save_current,
+            self._btn_save_max,
         ):
             if btn is not None:
                 btn.setEnabled(True)
-        # delete-selected stays gated on table selection
         self._on_table_selection_changed()
 
     def on_measurement_stopped(self) -> None:
@@ -172,7 +204,8 @@ class MalusTab(PlotTabBase):
             self._btn_clear_detector,
             self._btn_delete,
             self._btn_delete_selected,
-            self._btn_save,
+            self._btn_save_current,
+            self._btn_save_max,
         ):
             if btn is not None:
                 btn.setEnabled(False)
@@ -180,22 +213,65 @@ class MalusTab(PlotTabBase):
     def inject_modules(self, modules: dict[str, object]) -> None:
         pass
 
-    def get_malus_points(self) -> list[tuple[float, float, float]]:
-        """Return all saved (sample_angle, detector_angle, intensity) triples for export."""
+    def get_malus_points(self) -> list[MalusPoint]:
+        """Return all saved MalusPoint entries for export."""
         if self._curve_plot is None:
             return []
         return self._curve_plot.get_points()
 
+    # ── Save helpers ──────────────────────────────────────────────────────────
+
+    def _compute_power(
+        self, voltage_V: float, gain: int
+    ) -> tuple[Optional[float], Optional[float]]:
+        """Return (power_W, conv_factor) for the given voltage and gain, or (None, None)."""
+        if self._calibration_profile is None:
+            return None, None
+        factor = self._calibration_profile.conversion_factor(gain)
+        if factor is None:
+            return None, None
+        return voltage_V * factor, factor
+
     @Slot()
-    def _save_point(self) -> None:
-        if self._latest_frame is not None and self._curve_plot is not None:
-            self._curve_plot.add_point(
-                self._latest_frame.sample_angle,
-                self._latest_frame.detector_angle,
-                self._latest_frame.intensity,
-            )
-            self._refresh_table()
-            self.points_changed.emit(len(self._curve_plot.get_points()))
+    def _save_point_current(self) -> None:
+        """Save the current live ADC reading and reset the detector scan."""
+        if self._latest_frame is None or self._curve_plot is None:
+            return
+        frame = self._latest_frame
+        power_W, conv = self._compute_power(frame.intensity, frame.pdtia_gain)
+        self._curve_plot.add_point(
+            sample_angle=frame.sample_angle,
+            detector_angle=frame.detector_angle,
+            intensity_V=frame.intensity,
+            pdtia_gain=frame.pdtia_gain,
+            power_W=power_W,
+            conv_factor_W_per_V=conv,
+        )
+        self._clear_detector_plot()
+        self._refresh_table()
+        self.points_changed.emit(len(self._curve_plot.get_points()))
+
+    @Slot()
+    def _save_point_max(self) -> None:
+        """Save the peak of the detector scan and reset the detector scan."""
+        if self._latest_frame is None or self._curve_plot is None:
+            return
+        if math.isnan(self._peak_intensity):
+            self.status_message.emit("warning", "Kein Maximum verfügbar")
+            return
+        frame = self._latest_frame
+        power_W, conv = self._compute_power(self._peak_intensity, frame.pdtia_gain)
+        self._curve_plot.add_point(
+            sample_angle=frame.sample_angle,
+            detector_angle=self._peak_angle,
+            intensity_V=self._peak_intensity,
+            pdtia_gain=frame.pdtia_gain,
+            power_W=power_W,
+            conv_factor_W_per_V=conv,
+        )
+        self._clear_detector_plot()
+        self._refresh_table()
+        self.points_changed.emit(len(self._curve_plot.get_points()))
 
     @Slot()
     def _clear_detector_plot(self) -> None:
@@ -228,6 +304,8 @@ class MalusTab(PlotTabBase):
 
     @Slot(float, float)
     def _update_max_labels(self, intensity: float, angle: float) -> None:
+        self._peak_intensity = intensity
+        self._peak_angle = angle
         if self._lbl_max_intensity is None or self._lbl_max_angle is None:
             return
         if math.isnan(intensity):
@@ -242,17 +320,33 @@ class MalusTab(PlotTabBase):
             return
         points = self._curve_plot.get_points()
         self._points_table.setRowCount(len(points))
-        for row, (sa, da, intensity) in enumerate(points):
-            self._points_table.setItem(row, 0, QTableWidgetItem(f"{sa:.3f}"))
-            self._points_table.setItem(row, 1, QTableWidgetItem(f"{da:.3f}"))
-            self._points_table.setItem(row, 2, QTableWidgetItem(f"{intensity:.6f}"))
+        for row, pt in enumerate(points):
+            self._points_table.setItem(
+                row, 0, QTableWidgetItem(f"{pt.sample_angle:.3f}")
+            )
+            self._points_table.setItem(
+                row, 1, QTableWidgetItem(f"{pt.detector_angle:.3f}")
+            )
+            self._points_table.setItem(
+                row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}")
+            )
+            self._points_table.setItem(
+                row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
+            )
+            if pt.power_W is not None:
+                self._points_table.setItem(
+                    row, 4, QTableWidgetItem(f"{pt.power_W:.3e}")
+                )
+            else:
+                self._points_table.setItem(row, 4, QTableWidgetItem("—"))
         self._on_table_selection_changed()
 
     @Slot()
     def _on_table_selection_changed(self) -> None:
         if self._btn_delete_selected is None or self._points_table is None:
             return
-        # Only enable if measurement is running (btn_save is a proxy for that state)
-        measuring = self._btn_save is not None and self._btn_save.isEnabled()
+        measuring = (
+            self._btn_save_current is not None and self._btn_save_current.isEnabled()
+        )
         has_selection = bool(self._points_table.selectedItems())
         self._btn_delete_selected.setEnabled(measuring and has_selection)
