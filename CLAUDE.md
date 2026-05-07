@@ -33,6 +33,28 @@ ui/  →  core/                 (direct when needed)
 
 **Forbidden**: `core/ → ui/`, `core/ → infrastructure/`, `infrastructure/ → ui/`.
 
+### UI / Qt Designer separation rule — MANDATORY
+
+**Every visual element in a window or dialog must be declared in its `.ui` file. Python code must never construct Qt widgets, layouts, or dialogs.**
+
+Rules:
+
+- All `QWidget`, `QLabel`, `QPushButton`, `QLayout`, `QGroupBox`, `QLCDNumber`, `QComboBox`, `QTableWidget`, `QAction` (menus), etc. go in `.ui` → regenerate with `pyuic.sh`.
+- Python files (`mainwindow.py`, `encoder_debug_window.py`, `acq_settings.py`, `log_window.py`, …) contain **only signal connections, slot logic, and state manipulation** — no widget construction.
+- Qt imports in those files are restricted to: base classes (`QMainWindow`, `QDialog`), modal helpers (`QFileDialog`, `QMessageBox`), event types (`QCloseEvent`), and `@Slot` / `QTimer`.
+- `QButtonGroup` may be constructed in Python because it is a non-visual logical helper; its buttons must still be declared in the `.ui` file.
+
+**Exceptions (explicitly permitted to build widgets in Python):**
+| File | Reason |
+|---|---|
+| `power_calibration_window.py` | User-approved exception — no `.ui` counterpart by design |
+| `malus_curve_plot.py`, `malus_detector_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets |
+| `PlotTabBase` subclasses (`malus_tab.py`, …) | Phase 4 tab-extensibility pattern: tabs use `build()` for layout by design |
+
+**Known pre-existing violation** (to be migrated, do not extend further):
+
+- `encoder_debug_window.py` — builds several programmatic tabs/panels on top of `encoder_debug.ui`; scope is large, tracked as tech-debt.
+
 ### `polarisation_ui/core/`
 
 Pure Python — **no PySide6, no Qt, no hardware I/O, no serial imports**.

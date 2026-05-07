@@ -9,15 +9,11 @@ even when records originate from worker threads (e.g. ReconnectWorker).
 import logging
 
 from PySide6.QtCore import QObject, Qt, Signal, Slot
-from PySide6.QtGui import QFont, QTextCursor
-from PySide6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QPlainTextEdit,
-    QVBoxLayout,
-)
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QDialog
 
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.pyqt.ui_log_window import Ui_LogWindow
 
 
 class _SignalEmitter(QObject):
@@ -55,28 +51,11 @@ class _LogWindowHandler(logging.Handler):
 class LogWindow(QDialog):
     """Non-modal dialog that shows the live application log."""
 
-    MAX_LINES = 2000
-
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Log-Ausgabe")
-        self.resize(820, 480)
-
-        self._text = QPlainTextEdit(self)
-        self._text.setReadOnly(True)
-        mono = QFont()
-        mono.setStyleHint(QFont.StyleHint.Monospace)
-        mono.setFamily("Menlo")
-        mono.setPointSize(11)
-        self._text.setFont(mono)
-        self._text.setMaximumBlockCount(self.MAX_LINES)
-
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
-        buttons.rejected.connect(self.hide)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self._text)
-        layout.addWidget(buttons)
+        self.ui = Ui_LogWindow()
+        self.ui.setupUi(self)
+        self.ui.buttonBox.rejected.connect(self.hide)
 
         self._handler = _LogWindowHandler()
         self._handler.connect(self._append_line)
@@ -84,10 +63,10 @@ class LogWindow(QDialog):
 
     @Slot(str)
     def _append_line(self, text: str) -> None:
-        self._text.appendPlainText(text)
-        cursor = self._text.textCursor()
+        self.ui.textLog.appendPlainText(text)
+        cursor = self.ui.textLog.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        self._text.setTextCursor(cursor)
+        self.ui.textLog.setTextCursor(cursor)
 
     def closeEvent(self, event) -> None:
         Debug.remove_handler(self._handler)
