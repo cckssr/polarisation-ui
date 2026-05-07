@@ -82,6 +82,25 @@ private:
 
   // Wait for first DRDY after start and discard stale output buffer data.
   void _waitForFirstConversion();
+
+  // Apply the desired ADC configuration and remember expected register bytes.
+  void _applyDefaultConfig();
+
+  // Verify device registers match the expected configuration. Returns true
+  // when device appears correctly configured and present.
+  bool _verifyConfiguration();
+
+  // Attempt to recover the ADC when it is not present (power or connection
+  // loss). Returns true on successful re-init and reconfiguration.
+  bool _attemptRecovery();
+
+  // Expected configuration snapshot (copied from ADS1220 shadow registers
+  // after applying configuration). Used to detect a hardware reset.
+  uint8_t _expectedReg[4] = {0, 0, 0, 0};
+
+  // Apply the firmware's default ADC configuration (gain, vref, mode,
+  // conversion period) and start continuous conversions.
+  void _configureAdcDefaults();
 };
 
 extern AdsSession adsSession;
