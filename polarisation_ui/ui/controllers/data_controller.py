@@ -405,7 +405,7 @@ class DataController(QObject):
 
         voltage = self.device_manager.read_adc_voltage()
         if voltage is None:
-            return 0.0
+            return float("nan")
         return voltage
 
     # ==================== Data Acquisition ====================

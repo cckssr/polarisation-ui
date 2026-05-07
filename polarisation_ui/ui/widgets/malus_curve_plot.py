@@ -112,11 +112,13 @@ class MalusCurvePlot(QWidget):
 
     def _refresh(self) -> None:
         if not self._points:
-            self._scatter.setData([], [])
-            self._last_marker.setData([], [])
+            self._scatter.setVisible(False)
+            self._last_marker.setVisible(False)
             return
 
         xs = [p.sample_angle for p in self._points]
         ys = [p.intensity_V for p in self._points]
         self._scatter.setData(xs, ys)
+        self._scatter.setVisible(True)
         self._last_marker.setData([xs[-1]], [ys[-1]])
+        self._last_marker.setVisible(True)

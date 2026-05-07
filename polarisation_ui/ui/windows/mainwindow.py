@@ -504,6 +504,10 @@ class MainWindow(QMainWindow):
     @Slot(float)
     def _update_intensity_display(self, voltage: float) -> None:
         """Update the detector voltage LCD and check for ADC saturation."""
+        if math.isnan(voltage):
+            self.ui.lcdDetectorVoltage.display("----")
+            return
+
         self.ui.lcdDetectorVoltage.display(f"{voltage:.4f}")
 
         saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
