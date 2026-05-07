@@ -73,6 +73,7 @@ private:
   float _vrefVolts = 2.5f;           // external reference voltage
   uint32_t _conversionPeriodMs = 50; // 1000 / data_rate_sps
   uint32_t _nextConversionMs = 0;
+  uint32_t _nextRecoveryAttemptMs = 0;
 
   // Applies the 4-bit pattern for _pdGainStage to the four GPIO pins.
   void _applyPdGainGpio(uint8_t pattern);
@@ -101,6 +102,9 @@ private:
   // Apply the firmware's default ADC configuration (gain, vref, mode,
   // conversion period) and start continuous conversions.
   void _configureAdcDefaults();
+
+  // Schedule the next recovery attempt after a failed probe.
+  void _scheduleRecoveryRetry();
 };
 
 extern AdsSession adsSession;

@@ -115,12 +115,10 @@ bool AdsSession::_attemptRecovery()
     // Re-apply PD-TIA GPIO stage to ensure detector front-end is known state.
     _applyPdGainGpio(kPdGainPatterns[_pdGainStage]);
 
-    // Snapshot expected regs from ADC shadow after applying config.
-    _applyDefaultConfig();
-
     // Discard first conversion and resync timing.
     _waitForFirstConversion();
     _nextConversionMs = millis() + _conversionPeriodMs;
+    _nextRecoveryAttemptMs = 0;
     _present = true;
     return true;
   }
@@ -142,6 +140,7 @@ void AdsSession::_configureAdcDefaults()
 
   // Snapshot expected config and mark present.
   _applyDefaultConfig();
+  _nextRecoveryAttemptMs = 0;
 }
 
 void AdsSession::reset()
@@ -157,9 +156,6 @@ void AdsSession::reset()
   _lastRaw = 0;
   setPdGainStage(0);
 
-  // Snapshot expected registers after reconfiguration.
-  _applyDefaultConfig();
-
   _waitForFirstConversion();
   _nextConversionMs = millis() + _conversionPeriodMs;
 }
@@ -169,7 +165,11 @@ void AdsSession::reset()
 bool AdsSession::ready() const
 {
   // DRDY is not connected; use time-based polling at the configured data rate.
-  return _present && (millis() >= _nextConversionMs);
+  // When the ADC is absent, keep waking the loop periodically so recovery can
+  // still be attempted.
+  if (_present)
+    return millis() >= _nextConversionMs;
+  return millis() >= _nextRecoveryAttemptMs;
 }
 
 void AdsSession::pollAdc()
@@ -177,8 +177,13 @@ void AdsSession::pollAdc()
   // If ADC not present, try to recover (power/connection may have returned).
   if (!_present)
   {
-    if (!_attemptRecovery())
+    if (millis() < _nextRecoveryAttemptMs)
       return;
+    if (!_attemptRecovery())
+    {
+      _scheduleRecoveryRetry();
+      return;
+    }
   }
 
   // Verify the ADC still matches the expected configuration. If not, mark
@@ -186,6 +191,7 @@ void AdsSession::pollAdc()
   if (!_verifyConfiguration())
   {
     _present = false;
+    _scheduleRecoveryRetry();
     return;
   }
 
@@ -200,9 +206,15 @@ float AdsSession::takeVoltageReading()
 {
   if (!_present)
   {
+    if (millis() < _nextRecoveryAttemptMs)
+      return NAN;
+
     // Try to recover once for synchronous one-shot reads.
     if (!_attemptRecovery())
+    {
+      _scheduleRecoveryRetry();
       return NAN;
+    }
   }
   // RDATA command returns the last completed result without a DRDY wait.
   _lastRaw = _adc.readRawWithCommand();
@@ -224,6 +236,13 @@ float AdsSession::takeTemperatureReading(uint32_t timeoutMs)
   _lastTemperature = temp;
   _adc.enableTemperatureSensor(false);
   return temp;
+}
+
+void AdsSession::_scheduleRecoveryRetry()
+{
+  // Retry at a modest cadence so we can recover after a replug without
+  // hammering the SPI bus every loop iteration.
+  _nextRecoveryAttemptMs = millis() + 1000;
 }
 
 // ── PD-TIA gain stage ─────────────────────────────────────────────────────────
