@@ -403,7 +403,7 @@ class Ui_MainWindow(object):
         self.lcdDetectorVoltage.setMinimumSize(QSize(0, 40))
         self.lcdDetectorVoltage.setFont(font)
         self.lcdDetectorVoltage.setLineWidth(2)
-        self.lcdDetectorVoltage.setDigitCount(6)
+        self.lcdDetectorVoltage.setDigitCount(8)
 
         self.formDetector.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage)
 
@@ -475,7 +475,7 @@ class Ui_MainWindow(object):
         self.lcdWattage.setMinimumSize(QSize(0, 40))
         self.lcdWattage.setFont(font)
         self.lcdWattage.setLineWidth(2)
-        self.lcdWattage.setDigitCount(8)
+        self.lcdWattage.setDigitCount(10)
 
         self.formDetector.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lcdWattage)
 
@@ -745,17 +745,17 @@ class Ui_MainWindow(object):
         self.btnGain2.setText(QCoreApplication.translate("MainWindow", u"2", None))
         self.btnGain3.setText(QCoreApplication.translate("MainWindow", u"3", None))
         self.btnGain4.setText(QCoreApplication.translate("MainWindow", u"4", None))
-        self.lblWattage.setText(QCoreApplication.translate("MainWindow", u"Leistung (W)", None))
+        self.lblWattage.setText(QCoreApplication.translate("MainWindow", u"Leistung (mW)", None))
         self.gbPowerCal.setTitle(QCoreApplication.translate("MainWindow", u"Detektor-Kalibrierung", None))
         self.cbProfile.setPlaceholderText(QCoreApplication.translate("MainWindow", u"\u2014 Kein Profil geladen \u2014", None))
-        self.btnReloadProfiles.setText(QCoreApplication.translate("MainWindow", u"Aktualisieren", None))
 #if QT_CONFIG(tooltip)
         self.btnReloadProfiles.setToolTip(QCoreApplication.translate("MainWindow", u"Profil-Liste aus dem Verzeichnis neu einlesen", None))
 #endif // QT_CONFIG(tooltip)
-        self.btnOpenCalibration.setText(QCoreApplication.translate("MainWindow", u"Kalibrierungstool\u2026", None))
+        self.btnReloadProfiles.setText(QCoreApplication.translate("MainWindow", u"Aktualisieren", None))
 #if QT_CONFIG(tooltip)
         self.btnOpenCalibration.setToolTip(QCoreApplication.translate("MainWindow", u"Leistungskalibrierungstool \u00f6ffnen", None))
 #endif // QT_CONFIG(tooltip)
+        self.btnOpenCalibration.setText(QCoreApplication.translate("MainWindow", u"Kalibrierungstool\u2026", None))
         self.gbSave.setTitle(QCoreApplication.translate("MainWindow", u"Speicherung", None))
         self.lblGroupLetter.setText(QCoreApplication.translate("MainWindow", u"Gruppe*", None))
         self.cbGroupLetter.setItemText(0, QCoreApplication.translate("MainWindow", u"A", None))

@@ -561,7 +561,8 @@ class MainWindow(QMainWindow):
         if math.isnan(power_W):
             self.ui.lcdWattage.display("    ----")
         else:
-            self.ui.lcdWattage.display(f"{power_W:.3e}")
+            power_mw = power_W * 1e3
+            self.ui.lcdWattage.display(f"{power_mw:.3f}")
 
     # ==================== Calibration Profile Management ====================
 

@@ -883,7 +883,7 @@
             <number>2</number>
            </property>
            <property name="digitCount">
-            <number>6</number>
+            <number>8</number>
            </property>
           </widget>
          </item>
@@ -1024,7 +1024,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Leistung (W)</string>
+            <string>Leistung (mW)</string>
            </property>
           </widget>
          </item>
@@ -1051,7 +1051,7 @@
             <number>2</number>
            </property>
            <property name="digitCount">
-            <number>8</number>
+            <number>10</number>
            </property>
           </widget>
          </item>
@@ -1078,6 +1078,9 @@
          <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <layout class="QVBoxLayout" name="vboxPowerCal">
+         <property name="spacing">
+          <number>4</number>
+         </property>
          <property name="leftMargin">
           <number>6</number>
          </property>
@@ -1089,9 +1092,6 @@
          </property>
          <property name="bottomMargin">
           <number>6</number>
-         </property>
-         <property name="spacing">
-          <number>4</number>
          </property>
          <item>
           <widget class="QComboBox" name="cbProfile">
@@ -1110,21 +1110,21 @@
           <layout class="QHBoxLayout" name="hlProfileButtons">
            <item>
             <widget class="QPushButton" name="btnReloadProfiles">
-             <property name="text">
-              <string>Aktualisieren</string>
-             </property>
              <property name="toolTip">
               <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
+             </property>
+             <property name="text">
+              <string>Aktualisieren</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="btnOpenCalibration">
-             <property name="text">
-              <string>Kalibrierungstool…</string>
-             </property>
              <property name="toolTip">
               <string>Leistungskalibrierungstool öffnen</string>
+             </property>
+             <property name="text">
+              <string>Kalibrierungstool…</string>
              </property>
             </widget>
            </item>
@@ -1622,13 +1622,6 @@
   </action>
  </widget>
  <resources/>
- <buttongroups>
-  <buttongroup name="gainButtonGroup">
-   <attribute name="exclusive">
-    <bool>true</bool>
-   </attribute>
-  </buttongroup>
- </buttongroups>
  <connections>
   <connection>
    <sender>actionAutoSaveEnabled</sender>
@@ -1663,4 +1656,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="gainButtonGroup"/>
+ </buttongroups>
 </ui>
