@@ -10,11 +10,6 @@
     <height>683</height>
    </rect>
   </property>
-  <property name="font">
-   <font>
-    <pointsize>11</pointsize>
-   </font>
-  </property>
   <property name="windowTitle">
    <string>Encoder Debug</string>
   </property>
