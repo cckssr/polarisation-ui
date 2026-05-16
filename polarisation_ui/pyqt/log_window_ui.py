@@ -29,8 +29,8 @@ class Ui_LogWindow(object):
         self.textLog.setObjectName(u"textLog")
         self.textLog.setReadOnly(True)
         font = QFont()
-        font.setFamilies([u"Menlo"])
-        font.setPointSize(11)
+        font.setFamilies([u"Courier New"])
+        font.setStyleStrategy(QFont.PreferDefault)
         self.textLog.setFont(font)
         self.textLog.setMaximumBlockCount(2000)
 

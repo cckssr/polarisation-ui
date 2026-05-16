@@ -27,10 +27,12 @@ if __package__ is None:
     # define package name to allow relative imports
     __package__ = "polarisation_ui"
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
+from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.ui.windows.mainwindow import MainWindow
 
@@ -56,6 +58,12 @@ def main():
     args, qt_argv = parser.parse_known_args()
     # Qt expects the program name as argv[0]
     qt_argv = [sys.argv[0]] + qt_argv
+
+    # Enable fractional DPI scaling so Windows at 125 %/150 % renders correctly.
+    # Must be called before QApplication is constructed.
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+    )
 
     # Load configuration
     config = import_config()
@@ -95,7 +103,6 @@ def main():
 
 def _run_main(app: "QApplication", device_manager: GoniometerDeviceManager) -> None:
     """Launch the full main window."""
-    from polarisation_ui.ui.windows.mainwindow import MainWindow
 
     main_window = MainWindow(device_manager)
     main_window.show()
@@ -107,8 +114,6 @@ def _run_debug_only(
     app: "QApplication", device_manager: GoniometerDeviceManager
 ) -> None:
     """Launch only the encoder debug window (standalone mode)."""
-    from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
-    from PySide6.QtCore import Qt
 
     Debug.info("Launching debug-only mode")
     dialog = EncoderDebugDialog(device_manager, standalone=True)

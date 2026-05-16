@@ -21,8 +21,8 @@
      </property>
      <property name="font">
       <font>
-       <family>Menlo</family>
-       <pointsize>11</pointsize>
+       <family>Courier New</family>
+       <styleStrategy>PreferDefault</styleStrategy>
       </font>
      </property>
      <property name="maximumBlockCount">
