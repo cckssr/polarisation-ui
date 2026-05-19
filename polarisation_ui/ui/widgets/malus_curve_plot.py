@@ -117,7 +117,15 @@ class MalusCurvePlot(QWidget):
             return
 
         xs = [p.analyser_angle for p in self._points]
-        ys = [p.intensity_V for p in self._points]
+
+        use_power = all(p.power_W is not None for p in self._points)
+        if use_power:
+            ys = [p.power_W * 1e3 for p in self._points]  # type: ignore[operator]
+            self._plot_widget.setLabel("left", "Leistung", units="mW")
+        else:
+            ys = [p.intensity_V for p in self._points]
+            self._plot_widget.setLabel("left", "Intensität", units="V")
+
         self._scatter.setData(xs, ys)
         self._scatter.setVisible(True)
         self._last_marker.setData([xs[-1]], [ys[-1]])

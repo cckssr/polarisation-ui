@@ -75,7 +75,8 @@ class MalusTab(PlotTabBase):
         layout = QGridLayout(self)
         layout.setContentsMargins(5, 10, 10, 5)
         layout.setRowStretch(0, 1)
-        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(0, 2)
+        layout.setColumnStretch(1, 1)
 
         self._curve_plot = MalusCurvePlot()
         layout.addWidget(self._curve_plot, 0, 0)
@@ -134,9 +135,7 @@ class MalusTab(PlotTabBase):
 
         right_layout.addWidget(entry_group)
 
-        right_layout.addStretch(1)
-
-        # Saved-points table
+        # Saved-points table — expands to fill remaining vertical space
         self._points_table = QTableWidget(0, 5)
         self._points_table.setHorizontalHeaderLabels(
             ["θ_A (°)", "θ_P (°)", "I (V)", "Gain", "P (W)"]
@@ -149,13 +148,12 @@ class MalusTab(PlotTabBase):
         )
         self._points_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self._points_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self._points_table.setMinimumHeight(80)
-        self._points_table.setMaximumHeight(200)
+        self._points_table.setMinimumHeight(120)
         self._points_table.verticalHeader().setVisible(False)
         self._points_table.itemSelectionChanged.connect(
             self._on_table_selection_changed
         )
-        right_layout.addWidget(self._points_table)
+        right_layout.addWidget(self._points_table, stretch=1)
 
         self._btn_delete_selected = QPushButton("Ausgewählten\nlöschen")
         self._btn_delete_selected.setToolTip("Markierten Punkt aus der Kurve löschen")
