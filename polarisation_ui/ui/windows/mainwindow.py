@@ -171,7 +171,7 @@ class MainWindow(QMainWindow):
             tab.build()
             tab.status_message.connect(self._handle_tab_status)
             if hasattr(tab, "points_changed"):
-                tab.points_changed.connect(self._on_malus_points_changed)
+                tab.points_changed.connect(self._on_tab_points_changed)
             self.ui.tabWidget.addTab(tab, tab.tab_title)
             self._tab_instances.append(tab)
 
@@ -259,6 +259,8 @@ class MainWindow(QMainWindow):
                 tab.on_activated()
             else:
                 tab.on_deactivated()
+        if not self._is_measuring:
+            self._sync_save_button()
 
     @Slot(str, str)
     def _handle_tab_status(self, level: str, msg: str) -> None:
@@ -729,44 +731,58 @@ class MainWindow(QMainWindow):
         self.ui.btnDetectorStageZero.setEnabled(True)
         self.ui.tabWidget.tabBar().setEnabled(True)
 
-        # Enable save only when there are saved malus points
-        malus_tab = self._get_malus_tab()
-        has_points = malus_tab is not None and len(malus_tab.get_malus_points()) > 0
-        self.ui.btnSave.setEnabled(has_points)
+        self._sync_save_button()
 
         for tab in self._tab_instances:
             tab.on_measurement_stopped()
 
     @Slot(int)
-    def _on_malus_points_changed(self, count: int) -> None:
-        """Keep save button in sync with malus curve point count when not measuring."""
+    def _on_tab_points_changed(self, count: int) -> None:
+        """Keep save button in sync with the active tab's point count when not measuring."""
         if not self._is_measuring:
-            self.ui.btnSave.setEnabled(count > 0)
+            self._sync_save_button()
+
+    def _sync_save_button(self) -> None:
+        """Enable Save iff the currently active tab has saved points."""
+        tab = self._get_active_export_tab()
+        has_points = tab is not None and len(tab.get_saved_points()) > 0
+        self.ui.btnSave.setEnabled(has_points)
 
     # ==================== Data Saving ====================
 
-    def _get_malus_tab(self):
-        """Return the first tab instance that exposes get_malus_points(), or None."""
-        return next(
-            (t for t in self._tab_instances if hasattr(t, "get_malus_points")), None
+    def _get_active_export_tab(self):
+        """Return the currently selected tab if it exposes the export contract, else None."""
+        idx = self.ui.tabWidget.currentIndex()
+        if idx < 0 or idx >= len(self._tab_instances):
+            return None
+        tab = self._tab_instances[idx]
+        return (
+            tab
+            if hasattr(tab, "build_export") and hasattr(tab, "get_saved_points")
+            else None
         )
 
     @Slot()
     def _save_data(self) -> None:
-        """Export manually saved malus curve points to a user-chosen CSV file."""
-        malus_tab = self._get_malus_tab()
-        points = malus_tab.get_malus_points() if malus_tab is not None else []
-        if not points:
+        """Export the active tab's saved points to a user-chosen CSV file."""
+        tab = self._get_active_export_tab()
+        if tab is None or not tab.get_saved_points():
+            show_error(self, "Speichern", "Keine Messpunkte gespeichert.")
+            return
+
+        exp = tab.build_export()
+        if not exp.rows:
             show_error(self, "Speichern", "Keine Messpunkte gespeichert.")
             return
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        default_name = (
-            f"messung_{group_letter}_{suffix}.csv"
+        stem = (
+            f"messung_{exp.filename_hint}_{group_letter}_{suffix}"
             if suffix
-            else f"messung_{group_letter}.csv"
+            else f"messung_{exp.filename_hint}_{group_letter}"
         )
+        default_name = f"{stem}.csv"
 
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -782,31 +798,9 @@ class MainWindow(QMainWindow):
 
         with open(csv_path, "w", newline="", encoding="utf-8") as fh:
             writer = csv.writer(fh)
-            writer.writerow(
-                [
-                    "sample_angle_deg",
-                    "detector_angle_deg",
-                    "intensity_V",
-                    "pdtia_gain",
-                    "power_W",
-                    "conv_factor_W_per_V",
-                ]
-            )
-            for pt in points:
-                writer.writerow(
-                    [
-                        f"{pt.sample_angle:.4f}",
-                        f"{pt.detector_angle:.4f}",
-                        f"{pt.intensity_V:.6f}",
-                        str(pt.pdtia_gain) if pt.pdtia_gain else "",
-                        f"{pt.power_W:.6e}" if pt.power_W is not None else "",
-                        (
-                            f"{pt.conv_factor_W_per_V:.6e}"
-                            if pt.conv_factor_W_per_V is not None
-                            else ""
-                        ),
-                    ]
-                )
+            writer.writerow(exp.columns)
+            for row in exp.rows:
+                writer.writerow(row)
 
         cal_meta: dict = {}
         if self._calibration_profile is not None:
@@ -822,35 +816,21 @@ class MainWindow(QMainWindow):
 
         metadata = {
             "saved_at": saved_at.isoformat(),
-            "point_count": len(points),
-            "group": self.ui.cbGroupLetter.currentText(),
-            "suffix": self.ui.leSuffix.text().strip(),
-            "columns": [
-                "sample_angle_deg",
-                "detector_angle_deg",
-                "intensity_V",
-                "pdtia_gain",
-                "power_W",
-                "conv_factor_W_per_V",
-            ],
-            "units": {
-                "sample_angle_deg": "degrees",
-                "detector_angle_deg": "degrees",
-                "intensity_V": "volts",
-                "power_W": "watts",
-                "conv_factor_W_per_V": "watts_per_volt",
-            },
+            "point_count": len(exp.rows),
+            "group": group_letter,
+            "suffix": suffix,
             "power_calibration": cal_meta,
             "sensors": SENSOR_DESCRIPTIONS,
+            **exp.metadata,
         }
         metadata_path = csv_path.with_name(csv_path.stem + "_metadata.json")
         with open(metadata_path, "w", encoding="utf-8") as fh:
             json.dump(metadata, fh, indent=2)
 
         self.statusbar_manager.show_success(
-            f"{len(points)} Datenpunkte gespeichert: {path}"
+            f"{len(exp.rows)} Datenpunkte gespeichert: {path}"
         )
-        Debug.info(f"Malus data exported to {csv_path} ({len(points)} points)")
+        Debug.info(f"Data exported to {csv_path} ({len(exp.rows)} points)")
 
     # ==================== Error Handling ====================
 

@@ -1,9 +1,9 @@
 """
-Malus-law curve plot for Malus tab.
+Brewster-angle curve plot for Brewster tab.
 
-Accumulates manually saved MalusPoint entries (user-entered analyser angles)
-and displays them as a scatter plot.  Points are added via add_point() and
-removed via remove_last_point() or remove_point_at().
+Accumulates manually saved BrewsterPoint entries and displays them as a scatter
+plot.  Points are added via add_point() (Save button) and removed via
+remove_last_point() or remove_point_at().
 """
 
 from typing import Optional
@@ -11,15 +11,15 @@ from typing import Optional
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
-from polarisation_ui.core.models import MalusPoint
+from polarisation_ui.core.models import BrewsterPoint
 
 
-class MalusCurvePlot(QWidget):
+class BrewsterCurvePlot(QWidget):
     """
-    Scatter plot of saved Malus-law measurement points.
+    Scatter plot of saved Brewster-angle measurement points.
 
-    X axis: analyser angle (degrees, user-entered)
-    Y axis: detector intensity (V, averaged over ~0.5 s window)
+    X axis: sample stage angle (degrees)
+    Y axis: detector intensity (V)
 
     All saved points are shown as green circles.  The most recently saved point
     is additionally outlined with a red ring so the user can see the last entry.
@@ -27,7 +27,7 @@ class MalusCurvePlot(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self._points: list[MalusPoint] = []
+        self._points: list[BrewsterPoint] = []
         self._setup_plot()
 
     def _setup_plot(self) -> None:
@@ -37,7 +37,7 @@ class MalusCurvePlot(QWidget):
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Analysatorwinkel", units="°")
+        self._plot_widget.setLabel("bottom", "Probenwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="V")
 
         # All saved points: filled green circles
@@ -65,8 +65,8 @@ class MalusCurvePlot(QWidget):
 
     def add_point(
         self,
-        analyser_angle: float,
-        polariser_angle: float,
+        sample_angle: float,
+        detector_angle: float,
         intensity_V: float,
         pdtia_gain: int = 0,
         power_W: Optional[float] = None,
@@ -74,9 +74,9 @@ class MalusCurvePlot(QWidget):
     ) -> None:
         """Append a new measurement point and refresh the plot."""
         self._points.append(
-            MalusPoint(
-                analyser_angle=analyser_angle,
-                polariser_angle=polariser_angle,
+            BrewsterPoint(
+                sample_angle=sample_angle,
+                detector_angle=detector_angle,
                 intensity_V=intensity_V,
                 pdtia_gain=pdtia_gain,
                 power_W=power_W,
@@ -101,8 +101,8 @@ class MalusCurvePlot(QWidget):
         self._refresh()
         return True
 
-    def get_points(self) -> list[MalusPoint]:
-        """Return all saved MalusPoint entries."""
+    def get_points(self) -> list[BrewsterPoint]:
+        """Return all saved BrewsterPoint entries."""
         return list(self._points)
 
     def clear(self) -> None:
@@ -116,7 +116,7 @@ class MalusCurvePlot(QWidget):
             self._last_marker.setVisible(False)
             return
 
-        xs = [p.analyser_angle for p in self._points]
+        xs = [p.sample_angle for p in self._points]
         ys = [p.intensity_V for p in self._points]
         self._scatter.setData(xs, ys)
         self._scatter.setVisible(True)
