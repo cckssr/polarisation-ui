@@ -146,22 +146,40 @@ class ArduinoEncoder:
         """
         if not self.connected:
             return None
-
+Í
         # Discard stale bytes before issuing a fresh query.
-        # Without this, back-to-back reads can accumulate buffered responses
-        # and desync when the caller is faster than the firmware.
         self._serial.reset_input_buffer()
-        self._send_command(f"MEAS:ENC:ANGL? {encoder_id}")
 
-        response = self._read_line(timeout=1.0)
+        cmd = f"MEAS:ENC:ANGL? {encoder_id}"
+        self._serial.write(f"{cmd}\n".encode("utf-8"))
+        self._serial.flush()
+
+        raw = self._serial.readline()
+
+        if not raw:
+            # readline() hit the timeout and returned b"" — no data at all.
+            print(
+                f"[ArduinoEncoder] Timeout: no response to '{cmd}' within "
+                f"{self.timeout}s — port={self.port}, "
+                f"is_open={self._serial.is_open}, "
+                f"in_waiting={self._serial.in_waiting}"
+            )
+            return None
+
+        try:
+            response = raw.decode("utf-8", errors="replace").strip()
+        except Exception as e:
+            print(f"[ArduinoEncoder] Decode error for '{cmd}': {e}, raw={raw!r}")
+            return None
+
         if not response:
-            print("[ArduinoEncoder] No response")
+            print(f"[ArduinoEncoder] Empty response for '{cmd}', raw={raw!r}")
             return None
 
         try:
             return float(response)
         except ValueError:
-            print(f"[ArduinoEncoder] Unexpected response: {response}")
+            print(f"[ArduinoEncoder] Cannot parse as float for '{cmd}': {response!r}")
             return None
 
     def set_zero(self, encoder_id: str = "A") -> bool:
