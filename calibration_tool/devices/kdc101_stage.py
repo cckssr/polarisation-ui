@@ -60,7 +60,7 @@ class KDC101Stage:
             True if connection successful, False otherwise
         """
         try:
-            self._stage = Thorlabs.KinesisMotor(self.port, scale="scale")
+            self._stage = Thorlabs.KinesisMotor(self.port, scale="step")
             self._stage.open()
             info = self._stage.get_device_info()
             print(f"[KDC101] Connected to {self.port}, SN: {info.serial_no}")
