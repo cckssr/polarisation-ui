@@ -135,8 +135,11 @@ class CalibrationApp(QMainWindow):
         self._measurement_worker: Optional[MeasurementWorker] = None
         self._current_run: Optional[CalibrationRun] = None
 
-        # Timers
+        # Single-shot timer for live position polling.
+        # Single-shot means it fires once and stops; _update_positions reschedules
+        # it only after the serial I/O completes, preventing queue build-up.
         self._live_timer = QTimer(self)
+        self._live_timer.setSingleShot(True)
         self._live_timer.timeout.connect(self._update_positions)
 
         # Build UI
@@ -606,7 +609,7 @@ class CalibrationApp(QMainWindow):
 
     @Slot()
     def _update_positions(self):
-        """Update live position display."""
+        """Update live position display, then reschedule the next poll."""
         try:
             ref_deg = None
             meas_deg = None
@@ -629,7 +632,6 @@ class CalibrationApp(QMainWindow):
             # Calculate error
             if ref_deg is not None and meas_deg is not None:
                 error = meas_deg - ref_deg
-                # Normalize
                 while error > 180:
                     error -= 360
                 while error < -180:
@@ -640,6 +642,11 @@ class CalibrationApp(QMainWindow):
 
         except Exception as e:
             print(f"Live update error: {e}")
+        finally:
+            # Reschedule only after I/O is done; checkbox guards against
+            # the timer firing after the user unchecks or disconnects.
+            if self.live_checkbox.isChecked():
+                self._live_timer.start(100)
 
     # =========================================================================
     # Measurement

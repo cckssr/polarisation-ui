@@ -145,9 +145,12 @@ class ArduinoEncoder:
             Angle in degrees (0-360) or None if error
         """
         if not self.connected:
-            print("[ArduinoEncoder] Not connected")
             return None
 
+        # Discard stale bytes before issuing a fresh query.
+        # Without this, back-to-back reads can accumulate buffered responses
+        # and desync when the caller is faster than the firmware.
+        self._serial.reset_input_buffer()
         self._send_command(f"MEAS:ENC:ANGL? {encoder_id}")
 
         response = self._read_line(timeout=1.0)
