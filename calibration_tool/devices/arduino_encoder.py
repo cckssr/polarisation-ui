@@ -55,10 +55,14 @@ class ArduinoEncoder:
 
     def connect(self) -> bool:
         """
-        Open serial connection to Arduino.
+        Open serial connection to Arduino and verify it responds.
+
+        Sends *IDN? after reset; requires a non-empty response to confirm
+        the device is alive and speaking SCPI. Does not check firmware version
+        (caller's responsibility if needed).
 
         Returns:
-            True if connection successful, False otherwise
+            True if connection successful and device responds, False otherwise
         """
         try:
             self._serial = serial.Serial(
@@ -69,13 +73,22 @@ class ArduinoEncoder:
                 parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
             )
-            # Wait for Arduino to reset after connection
+            # Wait for Arduino to reset after USB enumeration
             time.sleep(2.0)
-            # Flush any startup messages
             self._serial.reset_input_buffer()
             self._serial.reset_output_buffer()
+
+            # Verify the device responds to SCPI identification
+            self._serial.write(b"*IDN?\n")
+            self._serial.flush()
+            idn = self._serial.readline().decode("utf-8", errors="replace").strip()
+            if not idn:
+                print(f"[ArduinoEncoder] No IDN response on {self.port}")
+                self._serial.close()
+                return False
+
             self._connected = True
-            print(f"[ArduinoEncoder] Connected to {self.port}")
+            print(f"[ArduinoEncoder] Connected to {self.port}: {idn}")
             return True
         except serial.SerialException as e:
             print(f"[ArduinoEncoder] Failed to connect: {e}")

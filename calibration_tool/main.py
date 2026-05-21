@@ -227,7 +227,9 @@ class CalibrationApp(QMainWindow):
         arduino_layout = QHBoxLayout()
         arduino_layout.addWidget(QLabel("Arduino:"))
         self.arduino_port_combo = QComboBox()
-        self.arduino_port_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.arduino_port_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.arduino_port_combo.setMinimumWidth(180)
         arduino_layout.addWidget(self.arduino_port_combo, stretch=1)
         arduino_refresh_btn = QPushButton("⟳")
@@ -240,11 +242,23 @@ class CalibrationApp(QMainWindow):
         arduino_layout.addWidget(self.arduino_status)
         layout.addLayout(arduino_layout)
 
+        # Encoder selector row
+        enc_layout = QHBoxLayout()
+        enc_layout.addWidget(QLabel("Encoder:"))
+        self.encoder_combo = QComboBox()
+        self.encoder_combo.addItem("A — Sample angle", userData="A")
+        self.encoder_combo.addItem("B — Detector angle", userData="B")
+        enc_layout.addWidget(self.encoder_combo)
+        enc_layout.addStretch()
+        layout.addLayout(enc_layout)
+
         # KDC101 row
         kdc_layout = QHBoxLayout()
         kdc_layout.addWidget(QLabel("KDC101:"))
         self.kdc_device_combo = QComboBox()
-        self.kdc_device_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.kdc_device_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.kdc_device_combo.setMinimumWidth(180)
         kdc_layout.addWidget(self.kdc_device_combo, stretch=1)
         kdc_refresh_btn = QPushButton("⟳")
@@ -287,7 +301,9 @@ class CalibrationApp(QMainWindow):
         if ports:
             for p in ports:
                 desc = p.description or "Serial device"
-                self.arduino_port_combo.addItem(f"{p.device} — {desc}", userData=p.device)
+                self.arduino_port_combo.addItem(
+                    f"{p.device} — {desc}", userData=p.device
+                )
             self.arduino_port_combo.setEnabled(True)
         else:
             self.arduino_port_combo.addItem("No serial ports found")
@@ -524,7 +540,10 @@ class CalibrationApp(QMainWindow):
             and self.kdc101
             and self.kdc101.connected
         ):
-            self.measurement = CalibrationMeasurement(self.arduino, self.kdc101)
+            encoder_id = self.encoder_combo.currentData() or "A"
+            self.measurement = CalibrationMeasurement(
+                self.arduino, self.kdc101, encoder_id=encoder_id
+            )
             self.connect_btn.setEnabled(False)
             self.disconnect_btn.setEnabled(True)
             self.status_bar.showMessage(
@@ -569,8 +588,9 @@ class CalibrationApp(QMainWindow):
     def _zero_arduino(self):
         """Set Arduino encoder zero position."""
         if self.arduino and self.arduino.connected:
-            self.arduino.set_zero("A")
-            self.status_bar.showMessage("Arduino encoder zeroed.")
+            encoder_id = self.encoder_combo.currentData() or "A"
+            self.arduino.set_zero(encoder_id)
+            self.status_bar.showMessage(f"Encoder {encoder_id} zeroed.")
 
     # =========================================================================
     # Live Update
@@ -599,7 +619,8 @@ class CalibrationApp(QMainWindow):
                     self.ref_pos_label.setText("ERROR")
 
             if self.arduino and self.arduino.connected:
-                meas_deg = self.arduino.read_angle()
+                encoder_id = self.encoder_combo.currentData() or "A"
+                meas_deg = self.arduino.read_angle(encoder_id)
                 if meas_deg is not None:
                     self.meas_pos_label.setText(f"{meas_deg:8.3f}")
                 else:
