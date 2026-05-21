@@ -200,6 +200,7 @@ class CalibrationApp(QMainWindow):
         self._measurement_worker: Optional[MeasurementWorker] = None
         self._auto_worker: Optional[AutoCalibrationWorker] = None
         self._current_run: Optional[CalibrationRun] = None
+        self._auto_sweep_aborted = False
 
         # Single-shot timer for live position polling.
         # Single-shot means it fires once and stops; _update_positions reschedules
@@ -787,6 +788,7 @@ class CalibrationApp(QMainWindow):
         self._measuring = True
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
+        self.auto_start_btn.setEnabled(False)
 
         # Start run
         run_name = self.run_name_edit.text()
@@ -842,6 +844,7 @@ class CalibrationApp(QMainWindow):
 
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
+        self.auto_start_btn.setEnabled(True)
 
         if self._current_run:
             self.status_bar.showMessage(
@@ -888,6 +891,7 @@ class CalibrationApp(QMainWindow):
         self.auto_progress.setValue(0)
         self.auto_progress.setFormat(f"%v / {total} steps")
 
+        self._auto_sweep_aborted = False
         self._auto_worker = AutoCalibrationWorker(
             self.measurement, self.kdc101, angles, settle_ms=settle_ms, parent=self
         )
@@ -907,6 +911,7 @@ class CalibrationApp(QMainWindow):
     @Slot()
     def _stop_auto_calibration(self):
         """Stop the ongoing auto sweep."""
+        self._auto_sweep_aborted = True
         if self._auto_worker:
             self._auto_worker.stop()
             if self.kdc101 and self.kdc101.connected:
@@ -934,11 +939,21 @@ class CalibrationApp(QMainWindow):
 
     @Slot(str)
     def _on_auto_error(self, error_msg: str) -> None:
+        self._auto_sweep_aborted = True
         print(f"Auto sweep error: {error_msg}")
         self.status_bar.showMessage(f"Auto sweep error: {error_msg}")
+        if self.measurement:
+            self.measurement.stop_run()
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
 
     @Slot()
     def _on_auto_finished(self) -> None:
+        # _stop_auto_calibration already cleaned up; don't double-process
+        if self._auto_sweep_aborted:
+            self._auto_worker = None
+            return
         self._auto_worker = None
         if self.measurement:
             self.measurement.stop_run()
@@ -947,7 +962,7 @@ class CalibrationApp(QMainWindow):
         self.start_btn.setEnabled(True)
         pts = self._current_run.num_points if self._current_run else 0
         self.status_bar.showMessage(f"Auto sweep complete. {pts} points collected.")
-        if self._current_run and pts >= 2:
+        if self._current_run and pts >= 10:
             self._update_plot()
             self._analyze()
 

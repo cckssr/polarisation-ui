@@ -153,9 +153,13 @@ class CalibrationMeasurement:
         Returns:
             MeasurementPoint or None if error
         """
-        # Read KDC101 position (reference)
+        # Single round-trip: compute degrees from the same counts read
         ref_counts = self.kdc101.get_position_counts()
-        ref_deg = self.kdc101.get_position_degrees()
+        ref_deg = (
+            ref_counts / self.kdc101.ENCODER_COUNTS_PER_DEG
+            if ref_counts is not None
+            else None
+        )
 
         # Read the chosen AS5048A encoder (no ADC read — intensity is irrelevant here)
         measured_deg = self.arduino.read_angle(self.encoder_id)
