@@ -193,12 +193,14 @@ class KDC101Stage:
 
     def wait_until_stopped(self, timeout: float = 60.0) -> bool:
         """
-        Poll until the stage stops moving or timeout expires.
+        Poll position counts until stable for 3 consecutive reads (200 ms apart).
 
-        Uses flush_comm() before each is_moving() query to drain the
-        unsolicited background frames (0x0412 position, 0x0612 status)
-        that the KDC101 pushes proactively. wait_move() is not used here
-        because those background frames cause ThorlabsError inside it.
+        Avoids is_moving() and wait_move() entirely — both issue APT queries that
+        race with the KDC101's unsolicited background frames (0x0412, 0x0612) and
+        produce "read returned less data than expected" / "unexpected command"
+        errors. get_position_counts() already handles flush_comm() and silently
+        returns None on transient framing errors, so position-stability polling
+        is naturally tolerant of those glitches.
 
         Args:
             timeout: Maximum wait time in seconds
@@ -209,18 +211,24 @@ class KDC101Stage:
         if not self.connected:
             return False
         deadline = time.time() + timeout
+        prev_pos: Optional[int] = None
+        stable_count = 0
         while True:
             if time.time() > deadline:
                 print(f"[KDC101] wait_until_stopped: timed out after {timeout}s")
                 return False
-            try:
-                self._stage.flush_comm()
-                if not self._stage.is_moving(channel=self.CHANNEL):
+            time.sleep(0.2)
+            pos = self.get_position_counts()
+            if pos is None:
+                # Transient read error — keep waiting
+                continue
+            if pos == prev_pos:
+                stable_count += 1
+                if stable_count >= 3:
                     return True
-            except (ThorlabsError, ThorlabsTimeoutError) as e:
-                print(f"[KDC101] wait_until_stopped error: {e}")
-                return False
-            time.sleep(0.1)
+            else:
+                stable_count = 0
+                prev_pos = pos
 
     def stop_motion(self) -> None:
         """Stop any ongoing motion immediately."""
