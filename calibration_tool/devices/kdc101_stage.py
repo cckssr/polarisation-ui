@@ -2,7 +2,7 @@
 Thorlabs KDC101 via pylablib.
 
 Uses pylablib's KinesisMotor for APT serial communication.
-Works on macOS/Linux without requiring Kinesis DLLs.
+Works on macOS/Linux/Windows without requiring Kinesis DLLs.
 """
 
 import struct
@@ -38,7 +38,7 @@ class KDC101Stage:
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
         """
         Args:
-            port: Serial port (e.g., /dev/cu.usbserial-27000001)
+            port: Serial port path or Kinesis device serial number
             baudrate: Kept for API compatibility; pylablib configures this internally.
             timeout: Read timeout in seconds
         """
@@ -62,6 +62,8 @@ class KDC101Stage:
         try:
             self._stage = Thorlabs.KinesisMotor(self.port, scale="step")
             self._stage.open()
+            # Discard any unsolicited status frames that arrive on open
+            self._stage.flush_comm()
             info = self._stage.get_device_info()
             print(f"[KDC101] Connected to {self.port}, SN: {info.serial_no}")
             return True
@@ -113,6 +115,10 @@ class KDC101Stage:
         if not self.connected:
             return None
         try:
+            # Flush unsolicited background frames (e.g. periodic status 0x0612,
+            # info replies 0x0004) before issuing a position query so pylablib
+            # does not mistake them for the expected reply (0x0412).
+            self._stage.flush_comm()
             return self._stage.get_position(scale=False)
         except (ThorlabsError, ThorlabsTimeoutError) as e:
             print(f"[KDC101] Position read failed: {e}")
@@ -140,6 +146,7 @@ class KDC101Stage:
         if not self.connected:
             return None
         try:
+            self._stage.flush_comm()
             reply = self._stage.query(
                 self._MSG_MOT_REQ_ENCCOUNTER,
                 param1=self.CHANNEL,
@@ -150,6 +157,91 @@ class KDC101Stage:
         except (ThorlabsError, ThorlabsTimeoutError) as e:
             print(f"[KDC101] Encoder read failed: {e}")
             return None
+
+    # ── Motor control ─────────────────────────────────────────────────────────
+
+    def move_to_degrees(self, angle_deg: float) -> bool:
+        """
+        Move stage to an absolute position in degrees.
+
+        Args:
+            angle_deg: Target angle in degrees
+
+        Returns:
+            True if command was sent successfully
+        """
+        if not self.connected:
+            return False
+        try:
+            counts = int(round(angle_deg * self.ENCODER_COUNTS_PER_DEG))
+            self._stage.move_to(counts, channel=self.CHANNEL)
+            return True
+        except (ThorlabsError, ThorlabsTimeoutError) as e:
+            print(f"[KDC101] Move failed: {e}")
+            return False
+
+    def is_moving(self) -> bool:
+        """Return True if the stage is currently moving."""
+        if not self.connected:
+            return False
+        try:
+            return bool(self._stage.is_moving(channel=self.CHANNEL))
+        except (ThorlabsError, ThorlabsTimeoutError):
+            return False
+
+    def wait_until_stopped(self, timeout: float = 60.0) -> bool:
+        """
+        Block until the stage stops moving or timeout expires.
+
+        Args:
+            timeout: Maximum wait time in seconds
+
+        Returns:
+            True if stopped within timeout, False if timed out
+        """
+        if not self.connected:
+            return False
+        try:
+            self._stage.wait_move(channel=self.CHANNEL, timeout=timeout)
+            return True
+        except ThorlabsTimeoutError:
+            print(f"[KDC101] wait_until_stopped: timed out after {timeout}s")
+            return False
+        except (ThorlabsError, Exception) as e:
+            print(f"[KDC101] wait_until_stopped error: {e}")
+            return False
+
+    def stop_motion(self) -> None:
+        """Stop any ongoing motion immediately."""
+        if not self.connected:
+            return
+        try:
+            self._stage.stop(immediate=True, channel=self.CHANNEL)
+        except (ThorlabsError, ThorlabsTimeoutError):
+            pass
+
+    def home(self, timeout: float = 120.0) -> bool:
+        """
+        Home the stage (moves to hardware reference position).
+
+        Args:
+            timeout: Maximum time allowed for homing in seconds
+
+        Returns:
+            True if homing completed successfully
+        """
+        if not self.connected:
+            return False
+        try:
+            self._stage.home(sync=True, channel=self.CHANNEL, timeout=timeout)
+            print("[KDC101] Homing complete")
+            return True
+        except ThorlabsTimeoutError:
+            print(f"[KDC101] Homing timed out after {timeout}s")
+            return False
+        except (ThorlabsError, Exception) as e:
+            print(f"[KDC101] Homing failed: {e}")
+            return False
 
 
 # Simple test

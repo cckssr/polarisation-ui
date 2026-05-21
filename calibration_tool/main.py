@@ -41,6 +41,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QCheckBox,
     QComboBox,
+    QProgressBar,
     QTextEdit,
     QSplitter,
     QMessageBox,
@@ -106,6 +107,70 @@ class MeasurementWorker(QThread):
         self._running = False
 
 
+class AutoCalibrationWorker(QThread):
+    """
+    Background thread for motorised angle sweep.
+
+    Moves the KDC101 to each target angle in sequence, waits for it to stop,
+    waits an additional settle delay, then takes a single encoder reading.
+    """
+
+    point_recorded = Signal(MeasurementPoint)
+    progress_updated = Signal(int, int)  # (completed_steps, total_steps)
+    error_occurred = Signal(str)
+    finished = Signal()
+
+    def __init__(
+        self,
+        measurement: "CalibrationMeasurement",
+        kdc101: "KDC101Stage",
+        angles: list,
+        settle_ms: int = 300,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.measurement = measurement
+        self.kdc101 = kdc101
+        self.angles = angles
+        self.settle_ms = settle_ms
+        self._running = True
+
+    def run(self) -> None:
+        import time
+
+        total = len(self.angles)
+        for i, angle in enumerate(self.angles):
+            if not self._running:
+                break
+            try:
+                if not self.kdc101.move_to_degrees(angle):
+                    self.error_occurred.emit(f"Move to {angle:.1f}° failed")
+                    break
+
+                if not self.kdc101.wait_until_stopped(timeout=60.0):
+                    self.error_occurred.emit(
+                        f"Stage did not stop within 60 s at {angle:.1f}°"
+                    )
+                    break
+
+                time.sleep(self.settle_ms / 1000.0)
+
+                point = self.measurement.take_single_measurement()
+                if point:
+                    self.point_recorded.emit(point)
+
+                self.progress_updated.emit(i + 1, total)
+
+            except Exception as e:
+                self.error_occurred.emit(str(e))
+                break
+
+        self.finished.emit()
+
+    def stop(self) -> None:
+        self._running = False
+
+
 class CalibrationApp(QMainWindow):
     """
     Main application window for encoder calibration.
@@ -133,6 +198,7 @@ class CalibrationApp(QMainWindow):
         # State
         self._measuring = False
         self._measurement_worker: Optional[MeasurementWorker] = None
+        self._auto_worker: Optional[AutoCalibrationWorker] = None
         self._current_run: Optional[CalibrationRun] = None
 
         # Single-shot timer for live position polling.
@@ -436,7 +502,50 @@ class CalibrationApp(QMainWindow):
         manual_btn.clicked.connect(self._start_manual_calibration)
         layout.addWidget(manual_btn)
 
+        # ── Auto sweep ──────────────────────────────────────────────────────
+        layout.addWidget(self._make_separator("Auto Sweep (KDC101)"))
+
+        params_layout = QHBoxLayout()
+        params_layout.addWidget(QLabel("Step:"))
+        self.auto_step_edit = QLineEdit("5.0")
+        self.auto_step_edit.setMaximumWidth(48)
+        self.auto_step_edit.setToolTip("Angular step between positions (degrees)")
+        params_layout.addWidget(self.auto_step_edit)
+        params_layout.addWidget(QLabel("°  Settle:"))
+        self.auto_settle_edit = QLineEdit("300")
+        self.auto_settle_edit.setMaximumWidth(48)
+        self.auto_settle_edit.setToolTip(
+            "Wait time after motor stops before reading (ms)"
+        )
+        params_layout.addWidget(self.auto_settle_edit)
+        params_layout.addWidget(QLabel("ms"))
+        params_layout.addStretch()
+        layout.addLayout(params_layout)
+
+        auto_btn_layout = QHBoxLayout()
+        self.auto_start_btn = QPushButton("▶ Auto Sweep")
+        self.auto_start_btn.clicked.connect(self._start_auto_calibration)
+        auto_btn_layout.addWidget(self.auto_start_btn)
+        self.auto_stop_btn = QPushButton("■ Stop")
+        self.auto_stop_btn.clicked.connect(self._stop_auto_calibration)
+        self.auto_stop_btn.setEnabled(False)
+        auto_btn_layout.addWidget(self.auto_stop_btn)
+        layout.addLayout(auto_btn_layout)
+
+        self.auto_progress = QProgressBar()
+        self.auto_progress.setRange(0, 100)
+        self.auto_progress.setValue(0)
+        self.auto_progress.setTextVisible(True)
+        self.auto_progress.setFormat("%v / %m steps")
+        layout.addWidget(self.auto_progress)
+
         return group
+
+    @staticmethod
+    def _make_separator(text: str) -> QLabel:
+        label = QLabel(f"─── {text} ───")
+        label.setStyleSheet("color: gray; font-size: 9px;")
+        return label
 
     def _create_analysis_panel(self) -> QGroupBox:
         """Create analysis controls and results."""
@@ -559,6 +668,11 @@ class CalibrationApp(QMainWindow):
     def _disconnect_devices(self):
         """Disconnect from devices."""
         self._measuring = False
+
+        if self._auto_worker:
+            self._auto_worker.stop()
+            self._auto_worker.wait()
+            self._auto_worker = None
 
         if self._measurement_worker:
             self._measurement_worker.stop()
@@ -723,6 +837,108 @@ class CalibrationApp(QMainWindow):
                 f"Measurement stopped. {self._current_run.num_points} points collected."
             )
             self._update_plot()
+
+    @Slot()
+    def _start_auto_calibration(self):
+        """Start motorised angle sweep."""
+        if not self.measurement:
+            QMessageBox.warning(self, "Not Ready", "Connect to devices first!")
+            return
+        if not (self.kdc101 and self.kdc101.connected):
+            QMessageBox.warning(
+                self, "Not Ready", "KDC101 must be connected for auto sweep."
+            )
+            return
+
+        try:
+            step_deg = float(self.auto_step_edit.text())
+            settle_ms = int(self.auto_settle_edit.text())
+        except ValueError:
+            QMessageBox.warning(
+                self, "Invalid Parameters", "Step and settle must be numbers."
+            )
+            return
+
+        if step_deg <= 0 or step_deg > 360:
+            QMessageBox.warning(
+                self, "Invalid Parameters", "Step must be between 0° and 360°."
+            )
+            return
+
+        import numpy as np
+
+        angles = list(np.arange(0.0, 360.0, step_deg))
+        total = len(angles)
+
+        run_name = self.run_name_edit.text()
+        self._current_run = self.measurement.start_run(run_name)
+        self.points_label.setText("0")
+        self.auto_progress.setRange(0, total)
+        self.auto_progress.setValue(0)
+        self.auto_progress.setFormat(f"%v / {total} steps")
+
+        self._auto_worker = AutoCalibrationWorker(
+            self.measurement, self.kdc101, angles, settle_ms=settle_ms, parent=self
+        )
+        self._auto_worker.point_recorded.connect(self._on_point_recorded)
+        self._auto_worker.progress_updated.connect(self._on_auto_progress)
+        self._auto_worker.error_occurred.connect(self._on_auto_error)
+        self._auto_worker.finished.connect(self._on_auto_finished)
+        self._auto_worker.start()
+
+        self.auto_start_btn.setEnabled(False)
+        self.auto_stop_btn.setEnabled(True)
+        self.start_btn.setEnabled(False)
+        self.status_bar.showMessage(
+            f"Auto sweep started: {total} positions, {step_deg}° step, {settle_ms} ms settle."
+        )
+
+    @Slot()
+    def _stop_auto_calibration(self):
+        """Stop the ongoing auto sweep."""
+        if self._auto_worker:
+            self._auto_worker.stop()
+            if self.kdc101 and self.kdc101.connected:
+                self.kdc101.stop_motion()
+            self._auto_worker.wait()
+            self._auto_worker = None
+
+        if self.measurement:
+            self.measurement.stop_run()
+
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
+
+        if self._current_run:
+            self.status_bar.showMessage(
+                f"Auto sweep stopped. {self._current_run.num_points} points collected."
+            )
+            self._update_plot()
+
+    @Slot(int, int)
+    def _on_auto_progress(self, completed: int, total: int) -> None:
+        self.auto_progress.setValue(completed)
+        self.points_label.setText(str(completed))
+
+    @Slot(str)
+    def _on_auto_error(self, error_msg: str) -> None:
+        print(f"Auto sweep error: {error_msg}")
+        self.status_bar.showMessage(f"Auto sweep error: {error_msg}")
+
+    @Slot()
+    def _on_auto_finished(self) -> None:
+        self._auto_worker = None
+        if self.measurement:
+            self.measurement.stop_run()
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
+        pts = self._current_run.num_points if self._current_run else 0
+        self.status_bar.showMessage(f"Auto sweep complete. {pts} points collected.")
+        if self._current_run and pts >= 2:
+            self._update_plot()
+            self._analyze()
 
     @Slot()
     def _start_manual_calibration(self):
@@ -946,6 +1162,12 @@ class CalibrationApp(QMainWindow):
     def closeEvent(self, event):
         """Handle window close."""
         self._measuring = False
+
+        if self._auto_worker:
+            self._auto_worker.stop()
+            if self.kdc101 and self.kdc101.connected:
+                self.kdc101.stop_motion()
+            self._auto_worker.wait()
 
         if self._measurement_worker:
             self._measurement_worker.stop()

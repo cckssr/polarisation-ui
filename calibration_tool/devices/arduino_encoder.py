@@ -147,9 +147,6 @@ class ArduinoEncoder:
         if not self.connected:
             return None
 
-        # Discard stale bytes before issuing a fresh query.
-        self._serial.reset_input_buffer()
-
         cmd = f"MEAS:ENC:ANGL? {encoder_id}"
         self._serial.write(f"{cmd}\n".encode("utf-8"))
         self._serial.flush()
