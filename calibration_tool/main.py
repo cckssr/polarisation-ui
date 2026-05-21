@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QCheckBox,
+    QComboBox,
     QTextEdit,
     QSplitter,
     QMessageBox,
@@ -58,15 +59,11 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 
 # Local imports
-from config import (
-    ARDUINO_PORT,
-    ARDUINO_BAUDRATE,
-    KDC101_PORT,
-    KDC101_SERIAL,
-    POLL_INTERVAL,
-)
+from config import ARDUINO_BAUDRATE, POLL_INTERVAL
 from devices.arduino_encoder import ArduinoEncoder
 from devices.kdc101_stage import KDC101Stage
+from serial.tools import list_ports
+from pylablib.devices import Thorlabs
 from calibration.measurement import (
     CalibrationMeasurement,
     CalibrationRun,
@@ -226,29 +223,43 @@ class CalibrationApp(QMainWindow):
         group = QGroupBox("Device Connection")
         layout = QVBoxLayout(group)
 
-        # Arduino connection
+        # Arduino row
         arduino_layout = QHBoxLayout()
-        arduino_layout.addWidget(QLabel("Arduino Port:"))
-        self.arduino_port_edit = QLineEdit(ARDUINO_PORT)
-        self.arduino_port_edit.setMaximumWidth(150)
-        arduino_layout.addWidget(self.arduino_port_edit)
+        arduino_layout.addWidget(QLabel("Arduino:"))
+        self.arduino_port_combo = QComboBox()
+        self.arduino_port_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.arduino_port_combo.setMinimumWidth(180)
+        arduino_layout.addWidget(self.arduino_port_combo, stretch=1)
+        arduino_refresh_btn = QPushButton("⟳")
+        arduino_refresh_btn.setFixedWidth(28)
+        arduino_refresh_btn.setToolTip("Refresh serial ports")
+        arduino_refresh_btn.clicked.connect(self._refresh_arduino_ports)
+        arduino_layout.addWidget(arduino_refresh_btn)
         self.arduino_status = QLabel("●")
         self.arduino_status.setStyleSheet("color: gray; font-size: 16px;")
         arduino_layout.addWidget(self.arduino_status)
-        arduino_layout.addStretch()
         layout.addLayout(arduino_layout)
 
-        # KDC101 connection
+        # KDC101 row
         kdc_layout = QHBoxLayout()
-        kdc_layout.addWidget(QLabel("KDC101 Port:"))
-        self.kdc_port_edit = QLineEdit(KDC101_PORT)
-        self.kdc_port_edit.setMaximumWidth(150)
-        kdc_layout.addWidget(self.kdc_port_edit)
+        kdc_layout.addWidget(QLabel("KDC101:"))
+        self.kdc_device_combo = QComboBox()
+        self.kdc_device_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.kdc_device_combo.setMinimumWidth(180)
+        kdc_layout.addWidget(self.kdc_device_combo, stretch=1)
+        kdc_refresh_btn = QPushButton("⟳")
+        kdc_refresh_btn.setFixedWidth(28)
+        kdc_refresh_btn.setToolTip("Refresh Kinesis devices")
+        kdc_refresh_btn.clicked.connect(self._refresh_kdc_devices)
+        kdc_layout.addWidget(kdc_refresh_btn)
         self.kdc_status = QLabel("●")
         self.kdc_status.setStyleSheet("color: gray; font-size: 16px;")
         kdc_layout.addWidget(self.kdc_status)
-        kdc_layout.addStretch()
         layout.addLayout(kdc_layout)
+
+        # Populate dropdowns on first load
+        self._refresh_arduino_ports()
+        self._refresh_kdc_devices()
 
         # Connect buttons
         btn_layout = QHBoxLayout()
@@ -268,6 +279,34 @@ class CalibrationApp(QMainWindow):
         layout.addLayout(btn_layout)
 
         return group
+
+    def _refresh_arduino_ports(self) -> None:
+        """Repopulate the Arduino port combo from available serial ports."""
+        self.arduino_port_combo.clear()
+        ports = sorted(list_ports.comports(), key=lambda p: p.device)
+        if ports:
+            for p in ports:
+                desc = p.description or "Serial device"
+                self.arduino_port_combo.addItem(f"{p.device} — {desc}", userData=p.device)
+            self.arduino_port_combo.setEnabled(True)
+        else:
+            self.arduino_port_combo.addItem("No serial ports found")
+            self.arduino_port_combo.setEnabled(False)
+
+    def _refresh_kdc_devices(self) -> None:
+        """Repopulate the KDC101 combo from connected Kinesis devices."""
+        self.kdc_device_combo.clear()
+        try:
+            devices = Thorlabs.list_kinesis_devices()
+        except Exception:
+            devices = []
+        if devices:
+            for conn, desc in devices:
+                self.kdc_device_combo.addItem(f"{desc}  [{conn}]", userData=conn)
+            self.kdc_device_combo.setEnabled(True)
+        else:
+            self.kdc_device_combo.addItem("No Kinesis devices found")
+            self.kdc_device_combo.setEnabled(False)
 
     def _create_position_panel(self) -> QGroupBox:
         """Create live position display."""
@@ -441,34 +480,42 @@ class CalibrationApp(QMainWindow):
         QApplication.processEvents()
 
         # Connect Arduino
-        try:
-            self.arduino = ArduinoEncoder(
-                self.arduino_port_edit.text(), ARDUINO_BAUDRATE
-            )
-            if self.arduino.connect():
-                self.arduino_status.setStyleSheet("color: green; font-size: 16px;")
-            else:
-                self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
-                QMessageBox.warning(self, "Arduino", "Failed to connect to Arduino")
-        except Exception as e:
+        arduino_port = self.arduino_port_combo.currentData()
+        if arduino_port is None:
+            QMessageBox.warning(self, "Arduino", "No serial port selected.")
             self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
-            QMessageBox.critical(self, "Arduino Error", str(e))
+        else:
+            try:
+                self.arduino = ArduinoEncoder(arduino_port, ARDUINO_BAUDRATE)
+                if self.arduino.connect():
+                    self.arduino_status.setStyleSheet("color: green; font-size: 16px;")
+                else:
+                    self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
+                    QMessageBox.warning(self, "Arduino", "Failed to connect to Arduino")
+            except Exception as e:
+                self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
+                QMessageBox.critical(self, "Arduino Error", str(e))
 
         # Connect KDC101
-        try:
-            self.kdc101 = KDC101Stage(self.kdc_port_edit.text())
-            if self.kdc101.connect():
-                self.kdc_status.setStyleSheet("color: green; font-size: 16px;")
-            else:
-                self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
-                QMessageBox.warning(
-                    self,
-                    "KDC101",
-                    "Failed to connect to KDC101\nCheck port and try again.",
-                )
-        except Exception as e:
+        kdc_conn = self.kdc_device_combo.currentData()
+        if kdc_conn is None:
+            QMessageBox.warning(self, "KDC101", "No Kinesis device selected.")
             self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
-            QMessageBox.critical(self, "KDC101 Error", str(e))
+        else:
+            try:
+                self.kdc101 = KDC101Stage(kdc_conn)
+                if self.kdc101.connect():
+                    self.kdc_status.setStyleSheet("color: green; font-size: 16px;")
+                else:
+                    self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
+                    QMessageBox.warning(
+                        self,
+                        "KDC101",
+                        "Failed to connect to KDC101\nCheck device and try again.",
+                    )
+            except Exception as e:
+                self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
+                QMessageBox.critical(self, "KDC101 Error", str(e))
 
         # Create measurement instance if both connected
         if (
