@@ -174,6 +174,7 @@ class KDC101Stage:
             return False
         try:
             counts = int(round(angle_deg * self.ENCODER_COUNTS_PER_DEG))
+            self._stage.flush_comm()
             self._stage.move_to(counts, channel=self.CHANNEL)
             return True
         except (ThorlabsError, ThorlabsTimeoutError) as e:
@@ -185,13 +186,19 @@ class KDC101Stage:
         if not self.connected:
             return False
         try:
+            self._stage.flush_comm()
             return bool(self._stage.is_moving(channel=self.CHANNEL))
         except (ThorlabsError, ThorlabsTimeoutError):
             return False
 
     def wait_until_stopped(self, timeout: float = 60.0) -> bool:
         """
-        Block until the stage stops moving or timeout expires.
+        Poll until the stage stops moving or timeout expires.
+
+        Uses flush_comm() before each is_moving() query to drain the
+        unsolicited background frames (0x0412 position, 0x0612 status)
+        that the KDC101 pushes proactively. wait_move() is not used here
+        because those background frames cause ThorlabsError inside it.
 
         Args:
             timeout: Maximum wait time in seconds
@@ -201,15 +208,19 @@ class KDC101Stage:
         """
         if not self.connected:
             return False
-        try:
-            self._stage.wait_move(channel=self.CHANNEL, timeout=timeout)
-            return True
-        except ThorlabsTimeoutError:
-            print(f"[KDC101] wait_until_stopped: timed out after {timeout}s")
-            return False
-        except (ThorlabsError, Exception) as e:
-            print(f"[KDC101] wait_until_stopped error: {e}")
-            return False
+        deadline = time.time() + timeout
+        while True:
+            if time.time() > deadline:
+                print(f"[KDC101] wait_until_stopped: timed out after {timeout}s")
+                return False
+            try:
+                self._stage.flush_comm()
+                if not self._stage.is_moving(channel=self.CHANNEL):
+                    return True
+            except (ThorlabsError, ThorlabsTimeoutError) as e:
+                print(f"[KDC101] wait_until_stopped error: {e}")
+                return False
+            time.sleep(0.1)
 
     def stop_motion(self) -> None:
         """Stop any ongoing motion immediately."""

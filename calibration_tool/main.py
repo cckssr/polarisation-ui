@@ -503,7 +503,14 @@ class CalibrationApp(QMainWindow):
         layout.addWidget(manual_btn)
 
         # ── Auto sweep ──────────────────────────────────────────────────────
-        layout.addWidget(self._make_separator("Auto Sweep (KDC101)"))
+        layout.addWidget(self._make_separator("Automatic Full Sweep (KDC101)"))
+
+        auto_desc = QLabel(
+            "Moves the KDC101 through 0–360° automatically,\n"
+            "reads the encoder at each step, and records all points."
+        )
+        auto_desc.setStyleSheet("color: #555; font-size: 9px;")
+        layout.addWidget(auto_desc)
 
         params_layout = QHBoxLayout()
         params_layout.addWidget(QLabel("Step:"))
@@ -523,7 +530,11 @@ class CalibrationApp(QMainWindow):
         layout.addLayout(params_layout)
 
         auto_btn_layout = QHBoxLayout()
-        self.auto_start_btn = QPushButton("▶ Auto Sweep")
+        self.auto_start_btn = QPushButton("▶ Run Full Auto Sweep")
+        self.auto_start_btn.setToolTip(
+            "Connect both devices first, then click here to\n"
+            "automatically sweep through all angles and record calibration data."
+        )
         self.auto_start_btn.clicked.connect(self._start_auto_calibration)
         auto_btn_layout.addWidget(self.auto_start_btn)
         self.auto_stop_btn = QPushButton("■ Stop")
