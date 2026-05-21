@@ -146,7 +146,7 @@ class ArduinoEncoder:
         """
         if not self.connected:
             return None
-Í
+
         # Discard stale bytes before issuing a fresh query.
         self._serial.reset_input_buffer()
 
