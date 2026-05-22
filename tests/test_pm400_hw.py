@@ -19,7 +19,6 @@ import pytest
 from polarisation_ui.core.exceptions import PM400Error
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
-
 # ── Static / no-hardware tests ────────────────────────────────────────────────
 
 
@@ -88,9 +87,7 @@ def test_wavelength_roundtrip(connected_pm400: PM400PowerMeter) -> None:
     for wl in (532.0, 633.0, 780.0):
         connected_pm400.set_wavelength_nm(wl)
         got = connected_pm400.get_wavelength_nm()
-        assert abs(got - wl) < 1.0, (
-            f"Wavelength roundtrip failed: set {wl}, got {got}"
-        )
+        assert abs(got - wl) < 1.0, f"Wavelength roundtrip failed: set {wl}, got {got}"
 
 
 def test_attenuation_roundtrip(connected_pm400: PM400PowerMeter) -> None:
@@ -98,9 +95,9 @@ def test_attenuation_roundtrip(connected_pm400: PM400PowerMeter) -> None:
     for db in (0.0, 3.01, 6.0):
         connected_pm400.set_attenuation_dB(db)
         got = connected_pm400.get_attenuation_dB()
-        assert abs(got - db) < 0.1, (
-            f"Attenuation roundtrip failed: set {db} dB, got {got} dB"
-        )
+        assert (
+            abs(got - db) < 0.1
+        ), f"Attenuation roundtrip failed: set {db} dB, got {got} dB"
     # Restore to 0 dB so the instrument is in a known state after the test
     connected_pm400.set_attenuation_dB(0.0)
 
@@ -120,9 +117,9 @@ def test_multiple_power_readings_are_consistent(
     if mean < 1e-12:
         pytest.skip("Power too low for consistency check (beam blocked or very dark)")
     for r in readings:
-        assert abs(r - mean) / mean < 0.20, (
-            f"Reading {r:.3e} W deviates >20 % from mean {mean:.3e} W"
-        )
+        assert (
+            abs(r - mean) / mean < 0.20
+        ), f"Reading {r:.3e} W deviates >20 % from mean {mean:.3e} W"
 
 
 def test_zero_does_not_raise(connected_pm400: PM400PowerMeter) -> None:

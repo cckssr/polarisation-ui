@@ -203,7 +203,7 @@ class TestAlignPolariserWorker:
             pm=pm,
             start_deg=0.0,
             end_deg=180.0,
-            n_points=37,   # 5° steps — 0° should yield max cos²
+            n_points=37,  # 5° steps — 0° should yield max cos²
             settle_s=0.0,
         )
         worker.point_scanned.connect(
@@ -222,9 +222,9 @@ class TestAlignPolariserWorker:
         angle = finished_angles[0]
         near_0 = abs(angle) < 6.0
         near_180 = abs(angle - 180.0) < 6.0
-        assert near_0 or near_180, (
-            f"Expected max-power angle near 0° or 180°, got {angle:.1f}°"
-        )
+        assert (
+            near_0 or near_180
+        ), f"Expected max-power angle near 0° or 180°, got {angle:.1f}°"
         assert len(scanned_points) == 37
 
     def test_abort_stops_cleanly(self):
@@ -299,9 +299,9 @@ class TestAlignPolariserWorker:
 
         # Logical angles are 0, 45, 90.  KDC should have ended at 90 + 30 = 120°.
         final_stage_pos = kdc.get_position_deg()
-        assert abs(final_stage_pos - (90.0 + OFFSET)) < 0.5, (
-            f"Expected stage at {90 + OFFSET}°, got {final_stage_pos:.2f}°"
-        )
+        assert (
+            abs(final_stage_pos - (90.0 + OFFSET)) < 0.5
+        ), f"Expected stage at {90 + OFFSET}°, got {final_stage_pos:.2f}°"
 
         dm.disconnect_all()
         mock_arduino.stop()

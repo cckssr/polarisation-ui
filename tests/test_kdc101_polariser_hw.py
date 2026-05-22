@@ -75,9 +75,9 @@ def test_home(connected_kdc: KDC101Polariser) -> None:
     """Homing must complete without error and leave position near 0°."""
     connected_kdc.home(wait=True, timeout=120.0)
     pos = connected_kdc.get_position_deg()
-    assert abs(pos) < _POS_TOL_DEG, (
-        f"Position after home should be near 0°, got {pos:.3f}°"
-    )
+    assert (
+        abs(pos) < _POS_TOL_DEG
+    ), f"Position after home should be near 0°, got {pos:.3f}°"
 
 
 def test_move_to_45(connected_kdc: KDC101Polariser) -> None:
@@ -85,9 +85,7 @@ def test_move_to_45(connected_kdc: KDC101Polariser) -> None:
     connected_kdc.home()
     connected_kdc.move_to(45.0)
     pos = connected_kdc.get_position_deg()
-    assert abs(pos - 45.0) < _POS_TOL_DEG, (
-        f"Expected ~45°, got {pos:.3f}°"
-    )
+    assert abs(pos - 45.0) < _POS_TOL_DEG, f"Expected ~45°, got {pos:.3f}°"
 
 
 def test_move_to_90(connected_kdc: KDC101Polariser) -> None:
@@ -95,9 +93,7 @@ def test_move_to_90(connected_kdc: KDC101Polariser) -> None:
     connected_kdc.home()
     connected_kdc.move_to(90.0)
     pos = connected_kdc.get_position_deg()
-    assert abs(pos - 90.0) < _POS_TOL_DEG, (
-        f"Expected ~90°, got {pos:.3f}°"
-    )
+    assert abs(pos - 90.0) < _POS_TOL_DEG, f"Expected ~90°, got {pos:.3f}°"
 
 
 def test_move_sequence(connected_kdc: KDC101Polariser) -> None:
@@ -107,9 +103,7 @@ def test_move_sequence(connected_kdc: KDC101Polariser) -> None:
     for target in targets:
         connected_kdc.move_to(target)
         pos = connected_kdc.get_position_deg()
-        assert abs(pos - target) < _POS_TOL_DEG, (
-            f"Expected ~{target}°, got {pos:.3f}°"
-        )
+        assert abs(pos - target) < _POS_TOL_DEG, f"Expected ~{target}°, got {pos:.3f}°"
 
 
 def test_enable_disable(connected_kdc: KDC101Polariser) -> None:
