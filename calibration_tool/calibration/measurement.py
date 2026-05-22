@@ -164,6 +164,10 @@ class CalibrationMeasurement:
         # Read the chosen AS5048A encoder (no ADC read — intensity is irrelevant here)
         measured_deg = self.arduino.read_angle(self.encoder_id)
 
+        # Encoder A (sample stage): magnet placement reverses the count direction.
+        if measured_deg is not None and self.encoder_id == "A":
+            measured_deg = (360.0 - measured_deg) % 360.0
+
         if ref_deg is None or measured_deg is None:
             return None
 
