@@ -184,6 +184,9 @@ class MainWindow(QMainWindow):
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
         self.ui.actionLogWindow.triggered.connect(self._open_log_window)
         self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
+        self.ui.actionAutoPowerCalibration.triggered.connect(
+            self._open_auto_power_calibration
+        )
 
         # PDTIA gain button group — assign IDs 1–4 to match stage numbers
         for stage in (1, 2, 3, 4):
@@ -605,6 +608,19 @@ class MainWindow(QMainWindow):
         )
 
         dialog = PowerCalibrationWindow(
+            data_controller=self.data_controller,
+            parent=self,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.profile_saved.connect(self._reload_profiles)
+        dialog.show()
+
+    def _open_auto_power_calibration(self) -> None:
+        from polarisation_ui.ui.windows.auto_power_calibration_window import (
+            AutoPowerCalibrationWindow,
+        )
+
+        dialog = AutoPowerCalibrationWindow(
             data_controller=self.data_controller,
             parent=self,
         )
