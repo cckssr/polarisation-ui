@@ -16,7 +16,10 @@ from polarisation_ui.core.exceptions import PM400Error
 from polarisation_ui.infrastructure.logging import Debug
 
 try:
-    from pymeasure.instruments.thorlabs import PM400 as _ThorlabsPM400
+    from pymeasure.instruments.thorlabs import ThorlabsPM400 as _ThorlabsPM400
+    from polarisation_ui.infrastructure.modules.pm400 import (
+        ThorlabsPM400 as _ThorlabsPM400,
+    )
 
     _PYMEASURE_AVAILABLE = True
 except ImportError:
