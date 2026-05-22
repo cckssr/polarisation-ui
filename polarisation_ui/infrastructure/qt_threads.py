@@ -220,8 +220,8 @@ class AlignPolariserWorker(QThread):
     """
 
     point_scanned = Signal(float, float)  # (angle_deg, power_W)
-    progress = Signal(int, int)           # (done, total)
-    finished = Signal(float)             # angle_max_deg
+    progress = Signal(int, int)  # (done, total)
+    finished = Signal(float)  # angle_max_deg
     failed = Signal(str)
     log = Signal(str)
 
