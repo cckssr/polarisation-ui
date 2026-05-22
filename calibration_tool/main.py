@@ -750,6 +750,9 @@ class CalibrationApp(QMainWindow):
             if self.arduino and self.arduino.connected:
                 encoder_id = self.encoder_combo.currentData() or "A"
                 meas_deg = self.arduino.read_angle(encoder_id)
+                # Encoder A: magnet placement reverses count direction
+                if meas_deg is not None and encoder_id == "A":
+                    meas_deg = (360.0 - meas_deg) % 360.0
                 if meas_deg is not None:
                     self.meas_pos_label.setText(f"{meas_deg:8.3f}")
                 else:
