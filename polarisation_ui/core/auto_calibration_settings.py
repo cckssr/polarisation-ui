@@ -30,6 +30,13 @@ class AutoCalibrationConnectionSettings:
     pm400_visa_resource: str = ""
     beamsplitter_attenuation_dB: float = 0.0
     wavelength_nm: float = 633.0
+    angle_offset_deg: float = 0.0
+    """Physical stage angle (°) that corresponds to maximum transmission.
+
+    Determined by the polariser auto-alignment scan.  The calibration sweep
+    drives the stage to ``logical_angle + angle_offset_deg`` so that logical
+    0° always means maximum power regardless of how the polariser is mounted.
+    """
 
     def save(self, path: Path = _SETTINGS_PATH) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +57,7 @@ class AutoCalibrationConnectionSettings:
                     data.get("beamsplitter_attenuation_dB", 0.0)
                 ),
                 wavelength_nm=float(data.get("wavelength_nm", 633.0)),
+                angle_offset_deg=float(data.get("angle_offset_deg", 0.0)),
             )
         except Exception:
             return cls()
@@ -71,6 +79,10 @@ class AutoCalibrationParams:
     profile_name: str
     wavelength_nm: float
     beamsplitter_attenuation_dB: float
+    angle_offset_deg: float = 0.0
+    """Physical stage angle at maximum transmission.  Added to every logical
+    sweep angle before sending to the KDC so that sweep angles 0°…90° always
+    map to max→min transmission regardless of how the polariser is mounted."""
 
 
 def build_angle_grid(params: AutoCalibrationParams) -> list[float]:

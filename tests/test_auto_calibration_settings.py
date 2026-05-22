@@ -22,6 +22,7 @@ class TestAutoCalibrationConnectionSettings:
         assert s.pm400_visa_resource == ""
         assert s.wavelength_nm == pytest.approx(633.0)
         assert s.beamsplitter_attenuation_dB == pytest.approx(0.0)
+        assert s.angle_offset_deg == pytest.approx(0.0)
 
     def test_roundtrip_json(self, tmp_path):
         path = tmp_path / "settings.json"
@@ -30,6 +31,7 @@ class TestAutoCalibrationConnectionSettings:
             pm400_visa_resource="USB0::0x1313::0x8078::P0001::INSTR",
             beamsplitter_attenuation_dB=3.125,
             wavelength_nm=532.0,
+            angle_offset_deg=23.75,
         )
         s.save(path)
         loaded = AutoCalibrationConnectionSettings.load(path)
@@ -37,6 +39,18 @@ class TestAutoCalibrationConnectionSettings:
         assert loaded.pm400_visa_resource == "USB0::0x1313::0x8078::P0001::INSTR"
         assert loaded.beamsplitter_attenuation_dB == pytest.approx(3.125)
         assert loaded.wavelength_nm == pytest.approx(532.0)
+        assert loaded.angle_offset_deg == pytest.approx(23.75)
+
+    def test_angle_offset_defaults_to_zero_on_old_json(self, tmp_path):
+        """JSON files that predate angle_offset_deg must load with 0.0."""
+        path = tmp_path / "old.json"
+        path.write_text(
+            '{"kdc101_conn_id":"X","pm400_visa_resource":"Y",'
+            '"beamsplitter_attenuation_dB":3.0,"wavelength_nm":633.0}',
+            encoding="utf-8",
+        )
+        loaded = AutoCalibrationConnectionSettings.load(path)
+        assert loaded.angle_offset_deg == pytest.approx(0.0)
 
     def test_load_missing_file_returns_defaults(self, tmp_path):
         s = AutoCalibrationConnectionSettings.load(tmp_path / "nonexistent.json")

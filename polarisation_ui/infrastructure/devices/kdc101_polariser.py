@@ -67,6 +67,11 @@ class KDC101Polariser:
             Debug.info(f"KDC101Polariser: connected to {conn_id}")
         except ThorlabsError as exc:
             raise KDC101Error(f"KDC101 connect failed: {exc}") from exc
+        except Exception as exc:
+            # Catch backend/configuration errors (e.g. missing ft232 driver,
+            # invalid port string format) and normalise them to KDC101Error so
+            # callers never have to handle raw pylablib internals.
+            raise KDC101Error(f"KDC101 connect failed: {exc}") from exc
 
     def disconnect(self) -> None:
         if self._motor is not None:

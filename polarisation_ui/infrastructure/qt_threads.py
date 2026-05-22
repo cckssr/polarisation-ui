@@ -165,7 +165,7 @@ class AutoPowerCalibrationWorker(QThread):
                     return
 
                 try:
-                    self._kdc.move_to(angle)
+                    self._kdc.move_to(angle + p.angle_offset_deg)
                 except KDC101Error as exc:
                     self.failed.emit(f"KDC101 move failed: {exc}")
                     return
@@ -202,3 +202,101 @@ class AutoPowerCalibrationWorker(QThread):
 
         self.log.emit("Sweep complete.")
         self.finished.emit(profile)
+
+
+class AlignPolariserWorker(QThread):
+    """
+    Off-main-thread worker that scans the PM400 while rotating the KDC stage
+    to find the physical angle of maximum transmission.
+
+    The result (``angle_max_deg``) is the stage position where the mounted
+    polariser is parallel to the reference analyser — i.e. the physical angle
+    that corresponds to logical 0°.  Store it in
+    ``AutoCalibrationConnectionSettings.angle_offset_deg`` and pass it to
+    ``AutoCalibrationParams`` so subsequent sweeps are referenced correctly.
+
+    Signals are delivered to the main thread via Qt's queued-connection
+    mechanism.
+    """
+
+    point_scanned = Signal(float, float)  # (angle_deg, power_W)
+    progress = Signal(int, int)           # (done, total)
+    finished = Signal(float)             # angle_max_deg
+    failed = Signal(str)
+    log = Signal(str)
+
+    def __init__(
+        self,
+        kdc: "KDC101Polariser",
+        pm: "PM400PowerMeter",
+        start_deg: float,
+        end_deg: float,
+        n_points: int,
+        settle_s: float,
+        parent=None,
+    ) -> None:
+        super().__init__(parent)
+        self._kdc = kdc
+        self._pm = pm
+        self._start = start_deg
+        self._end = end_deg
+        self._n_points = max(n_points, 3)
+        self._settle = settle_s
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop."""
+        self._abort = True
+
+    def run(self) -> None:
+        Debug.info("AlignPolariserWorker: starting alignment scan")
+        try:
+            self._run_scan()
+        except Exception as exc:
+            Debug.error(f"AlignPolariserWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run_scan(self) -> None:
+        n = self._n_points
+        step = (self._end - self._start) / (n - 1)
+        angles = [self._start + i * step for i in range(n)]
+
+        self.log.emit(
+            f"Ausrichtungsscan: {self._start:.1f}°…{self._end:.1f}° "
+            f"({n} Punkte, Δθ={step:.2f}°)"
+        )
+
+        scan: list[tuple[float, float]] = []  # (angle_deg, power_W)
+
+        for i, angle in enumerate(angles):
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+
+            try:
+                self._kdc.move_to(angle)
+            except KDC101Error as exc:
+                self.failed.emit(f"KDC101 Bewegung fehlgeschlagen: {exc}")
+                return
+
+            time.sleep(self._settle)
+
+            try:
+                power = self._pm.read_power_W()
+            except PM400Error as exc:
+                self.failed.emit(f"PM400 Lesefehler: {exc}")
+                return
+
+            scan.append((angle, power))
+            self.point_scanned.emit(angle, power)
+            self.progress.emit(i + 1, n)
+            self.log.emit(f"  θ={angle:.1f}° | P={power:.3e} W")
+
+        # Find the angle at peak power
+        max_idx = max(range(len(scan)), key=lambda k: scan[k][1])
+        angle_max, power_max = scan[max_idx]
+        self.log.emit(
+            f"Maximum: θ={angle_max:.2f}° (P={power_max:.3e} W) "
+            f"→ Polarisator-Versatz auf {angle_max:.2f}° gesetzt"
+        )
+        self.finished.emit(angle_max)

@@ -25,7 +25,10 @@ from polarisation_ui.core.power_calibration import (
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+from polarisation_ui.infrastructure.qt_threads import (
+    AlignPolariserWorker,
+    AutoPowerCalibrationWorker,
+)
 from polarisation_ui.pyqt.ui_auto_power_calibration import Ui_AutoPowerCalibrationDialog
 
 
@@ -66,8 +69,10 @@ class AutoPowerCalibrationWindow(QDialog):
         self._kdc = KDC101Polariser()
         self._pm = PM400PowerMeter()
         self._worker: Optional[AutoPowerCalibrationWorker] = None
+        self._align_worker: Optional[AlignPolariserWorker] = None
         self._home_thread: Optional[_HomeThread] = None
         self._profile: Optional[PowerCalibrationProfile] = None
+        self._angle_offset_deg: float = 0.0
         self._settings = AutoCalibrationConnectionSettings.load()
 
         self._apply_settings()
@@ -86,6 +91,11 @@ class AutoPowerCalibrationWindow(QDialog):
             self.ui.comboPM400.setEditText(s.pm400_visa_resource)
         self.ui.spinWavelength.setValue(s.wavelength_nm)
         self.ui.spinAttenuation.setValue(s.beamsplitter_attenuation_dB)
+        if s.angle_offset_deg != 0.0:
+            self._angle_offset_deg = s.angle_offset_deg
+            self.ui.lblAngleOffset.setText(
+                f"Winkelversatz: {s.angle_offset_deg:.2f}° (aus letzter Sitzung)"
+            )
 
     def _connect_signals(self) -> None:
         self.ui.btnRefreshKDC.clicked.connect(self._refresh_kdc_list)
@@ -95,6 +105,9 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.btnRefreshPM400.clicked.connect(self._refresh_pm_list)
         self.ui.btnConnectPM400.clicked.connect(self._toggle_pm400)
         self.ui.btnZeroPM400.clicked.connect(self._zero_pm400)
+
+        self.ui.btnAlignPolariser.clicked.connect(self._start_align)
+        self.ui.btnAbortAlign.clicked.connect(self._abort_align)
 
         self.ui.lineProfileName.textChanged.connect(self._update_output_path)
         self.ui.btnStart.clicked.connect(self._start_sweep)
@@ -207,6 +220,76 @@ class AutoPowerCalibrationWindow(QDialog):
         except PM400Error as exc:
             QMessageBox.critical(self, "PM400 Fehler", str(exc))
 
+    # ── Polariser alignment ───────────────────────────────────────────────────
+
+    @Slot()
+    def _start_align(self) -> None:
+        """Scan the PM400 while rotating the stage to find the max-transmission angle."""
+        if not self._kdc.is_connected() or not self._pm.is_connected():
+            QMessageBox.warning(
+                self, "Ausrichtung", "KDC101 und PM400 müssen verbunden sein."
+            )
+            return
+
+        self._align_worker = AlignPolariserWorker(
+            kdc=self._kdc,
+            pm=self._pm,
+            start_deg=self.ui.spinAlignStart.value(),
+            end_deg=self.ui.spinAlignEnd.value(),
+            n_points=self.ui.spinAlignNPoints.value(),
+            settle_s=self.ui.spinAlignSettle.value(),
+            parent=self,
+        )
+        self._align_worker.point_scanned.connect(self._on_align_point)
+        self._align_worker.progress.connect(self._on_align_progress)
+        self._align_worker.finished.connect(self._on_align_finished)
+        self._align_worker.failed.connect(self._on_align_failed)
+        self._align_worker.log.connect(self._append_log)
+
+        total = self.ui.spinAlignNPoints.value()
+        self.ui.progressBar.setMaximum(total)
+        self.ui.progressBar.setValue(0)
+
+        self.ui.btnAlignPolariser.setEnabled(False)
+        self.ui.btnAbortAlign.setEnabled(True)
+        self.ui.btnStart.setEnabled(False)
+        self.ui.lblPhase.setText("Ausrichtungsscan läuft…")
+        self._align_worker.start()
+
+    @Slot()
+    def _abort_align(self) -> None:
+        if self._align_worker is not None and self._align_worker.isRunning():
+            self._align_worker.abort()
+            self.ui.btnAbortAlign.setEnabled(False)
+            self.ui.lblPhase.setText("Ausrichtung wird abgebrochen…")
+
+    @Slot(float, float)
+    def _on_align_point(self, angle_deg: float, power_W: float) -> None:
+        # The log already captures per-point details; nothing extra needed here.
+        pass
+
+    @Slot(int, int)
+    def _on_align_progress(self, done: int, total: int) -> None:
+        self.ui.progressBar.setValue(done)
+
+    @Slot(float)
+    def _on_align_finished(self, angle_max_deg: float) -> None:
+        self._angle_offset_deg = angle_max_deg
+        self.ui.lblAngleOffset.setText(
+            f"Polarisator 0°: {angle_max_deg:.2f}°  |  90°: {angle_max_deg + 90.0:.2f}°"
+        )
+        self.ui.lblPhase.setText("Ausrichtung abgeschlossen")
+        self.ui.btnAbortAlign.setEnabled(False)
+        self._update_start_button_state()
+
+    @Slot(str)
+    def _on_align_failed(self, message: str) -> None:
+        self.ui.lblPhase.setText("Ausrichtung fehlgeschlagen")
+        self.ui.btnAbortAlign.setEnabled(False)
+        self._update_start_button_state()
+        if "abgebrochen" not in message.lower():
+            QMessageBox.critical(self, "Ausrichtungsfehler", message)
+
     # ── Sweep control ─────────────────────────────────────────────────────────
 
     @Slot()
@@ -245,6 +328,7 @@ class AutoPowerCalibrationWindow(QDialog):
             profile_name=profile_name,
             wavelength_nm=self.ui.spinWavelength.value(),
             beamsplitter_attenuation_dB=self.ui.spinAttenuation.value(),
+            angle_offset_deg=self._angle_offset_deg,
         )
 
         self._data_controller.stop_continuous_reading()
@@ -347,17 +431,17 @@ class AutoPowerCalibrationWindow(QDialog):
         self._update_start_button_state()
 
     def _update_start_button_state(self) -> None:
-        ready = (
-            self._kdc.is_connected()
-            and self._pm.is_connected()
-            and bool(self.ui.lineProfileName.text().strip())
+        hw_ready = self._kdc.is_connected() and self._pm.is_connected()
+        self.ui.btnAlignPolariser.setEnabled(hw_ready)
+        self.ui.btnStart.setEnabled(
+            hw_ready and bool(self.ui.lineProfileName.text().strip())
         )
-        self.ui.btnStart.setEnabled(ready)
 
     def _set_running(self, running: bool) -> None:
         for w in (
             self.ui.gbConnections,
             self.ui.gbBeam,
+            self.ui.gbAlignment,
             self.ui.gbSweep,
             self.ui.gbProfile,
             self.ui.btnStart,
@@ -374,6 +458,7 @@ class AutoPowerCalibrationWindow(QDialog):
             pm400_visa_resource=self.ui.comboPM400.currentText().strip(),
             beamsplitter_attenuation_dB=self.ui.spinAttenuation.value(),
             wavelength_nm=self.ui.spinWavelength.value(),
+            angle_offset_deg=self._angle_offset_deg,
         )
         try:
             self._settings.save()
@@ -383,6 +468,9 @@ class AutoPowerCalibrationWindow(QDialog):
     # ── Qt lifecycle ──────────────────────────────────────────────────────────
 
     def closeEvent(self, event) -> None:
+        if self._align_worker is not None and self._align_worker.isRunning():
+            self._align_worker.abort()
+            self._align_worker.wait(5000)
         if self._worker is not None and self._worker.isRunning():
             self._worker.abort()
             self._worker.wait(5000)

@@ -161,6 +161,175 @@
       </widget>
      </item>
      <item>
+      <widget class="QGroupBox" name="gbAlignment">
+       <property name="title">
+        <string>Polarisator-Ausrichtung</string>
+       </property>
+       <layout class="QVBoxLayout" name="alignLayout">
+        <item>
+         <layout class="QFormLayout" name="alignForm">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblAlignStart">
+            <property name="text">
+             <string>Scanstart (°):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="spinAlignStart">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Startwinkel des Ausrichtungsscans (physikalische Stufenposition)</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.0</double>
+            </property>
+            <property name="maximum">
+             <double>360.0</double>
+            </property>
+            <property name="value">
+             <double>0.0</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblAlignEnd">
+            <property name="text">
+             <string>Scanende (°):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="spinAlignEnd">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Endwinkel des Ausrichtungsscans. 180° deckt eine volle cos²-Periode ab.</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.0</double>
+            </property>
+            <property name="maximum">
+             <double>360.0</double>
+            </property>
+            <property name="value">
+             <double>180.0</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblAlignNPoints">
+            <property name="text">
+             <string>Schritte:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="spinAlignNPoints">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Anzahl Messpunkte im Ausrichtungsscan (empfohlen: ≥36 für 5°-Auflösung über 180°)</string>
+            </property>
+            <property name="minimum">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <number>360</number>
+            </property>
+            <property name="value">
+             <number>36</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblAlignSettle">
+            <property name="text">
+             <string>Wartezeit (s):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="spinAlignSettle">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>0.0</double>
+            </property>
+            <property name="maximum">
+             <double>10.0</double>
+            </property>
+            <property name="singleStep">
+             <double>0.05</double>
+            </property>
+            <property name="value">
+             <double>0.2</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="alignButtonLayout">
+          <item>
+           <widget class="QPushButton" name="btnAlignPolariser">
+            <property name="text">
+             <string>Ausrichtung starten</string>
+            </property>
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAbortAlign">
+            <property name="text">
+             <string>Abbrechen</string>
+            </property>
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblAngleOffset">
+          <property name="text">
+           <string>Winkelversatz: nicht gesetzt</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
       <widget class="QGroupBox" name="gbBeam">
        <property name="title">
         <string>Licht / Leistungsmessung</string>
