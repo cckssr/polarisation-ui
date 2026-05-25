@@ -241,22 +241,25 @@ class AutoPowerCalibrationWorker(QThread):
                     idx += 1
                     continue
 
-                # First valid point after a saturated prefix: redistribute the
-                # remaining angles so they span evenly from here to angle_end.
+                # First valid point after a saturated prefix: rebuild the full
+                # p.n_points grid from this angle to angle_end so the usable
+                # range is sampled at the originally requested density.
+                # Example: 30 steps over 0–90°, first 10 saturated → rebuild
+                # 30 steps over 30–90°, giving 2° spacing instead of 3°.
                 if not first_valid_found and profile.gains[gain].n_saturated_skipped > 0:
-                    n_left = len(gain_angles) - idx - 1
-                    if n_left > 0:
-                        sub = dataclasses.replace(
-                            p,
-                            angle_start_deg=angle,
-                            angle_end_deg=p.angle_end_deg,
-                            n_points=n_left + 1,
-                        )
-                        gain_angles[idx + 1 :] = build_angle_grid(sub)[1:]
-                        self.log.emit(
-                            f"  Grid recalculated: {n_left} remaining points "
-                            f"redistributed from {angle:.1f}° to {p.angle_end_deg:.1f}°"
-                        )
+                    sub = dataclasses.replace(
+                        p,
+                        angle_start_deg=angle,
+                        angle_end_deg=p.angle_end_deg,
+                    )
+                    new_grid = build_angle_grid(sub)  # p.n_points points from `angle`
+                    gain_angles[idx + 1 :] = new_grid[1:]
+                    # Tail grew by idx entries; keep progress denominator consistent.
+                    total += idx
+                    self.log.emit(
+                        f"  Grid recalculated: {p.n_points} points from "
+                        f"{angle:.1f}° to {p.angle_end_deg:.1f}°"
+                    )
                 first_valid_found = True
 
                 try:
