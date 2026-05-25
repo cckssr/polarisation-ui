@@ -38,3 +38,21 @@ class IncompatibleFirmwareError(GoniometerError):
     """Raised when firmware version is incompatible with the Python client (requires >= 2.0.0)."""
 
     pass
+
+
+class KDC101Error(GoniometerError):
+    """Base exception for KDC101-related errors."""
+
+    pass
+
+
+class KDC101TimeoutError(GoniometerError):
+    """Raised when a KDC101 operation times out."""
+
+    pass
+
+
+class PM400Error(GoniometerError):
+    """Base exception for PM400-related errors."""
+
+    pass

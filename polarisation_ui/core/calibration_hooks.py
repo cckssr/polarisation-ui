@@ -198,4 +198,6 @@ class CalibrationRecorder:
             self._file = None
             self._writer = None
             self._active = False
-        _log.info("CalibrationRecorder stopped (%d rows): %s", self._row_count, self._path)
+        _log.info(
+            "CalibrationRecorder stopped (%d rows): %s", self._row_count, self._path
+        )

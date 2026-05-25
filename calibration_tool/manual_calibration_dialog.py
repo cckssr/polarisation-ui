@@ -121,7 +121,9 @@ class ManualCalibrationDialog(QDialog):
         enc_box = QGroupBox("Encoder")
         enc_layout = QVBoxLayout(enc_box)
         self._encoder_btn_group = QButtonGroup(self)
-        self._encoder_a_radio = QRadioButton("A — Sample encoder  (reading is reversed)")
+        self._encoder_a_radio = QRadioButton(
+            "A — Sample encoder  (reading is reversed)"
+        )
         self._encoder_b_radio = QRadioButton("B — Detector encoder")
         self._encoder_a_radio.setChecked(True)
         self._encoder_btn_group.addButton(self._encoder_a_radio, 0)

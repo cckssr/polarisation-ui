@@ -33,6 +33,7 @@ def encoder_client(mock_arduino):
 
 # ── Voltage reads ─────────────────────────────────────────────────────────────
 
+
 class TestVoltageRead:
 
     def test_read_voltage_returns_float(self, encoder_client):
@@ -80,6 +81,7 @@ class TestVoltageRead:
 
 # ── Temperature reads ─────────────────────────────────────────────────────────
 
+
 class TestTemperatureRead:
 
     def test_read_temperature_returns_float(self, encoder_client):
@@ -95,6 +97,7 @@ class TestTemperatureRead:
 
 
 # ── ADC configuration ─────────────────────────────────────────────────────────
+
 
 class TestADCConfiguration:
 
@@ -118,6 +121,7 @@ class TestADCConfiguration:
 
 
 # ── PD-TIA gain ───────────────────────────────────────────────────────────────
+
 
 class TestPdTiaGain:
 
@@ -144,6 +148,7 @@ class TestPdTiaGain:
 
 
 # ── CONF:SRC and CONF:RATE ────────────────────────────────────────────────────
+
 
 class TestStreamConfiguration:
 

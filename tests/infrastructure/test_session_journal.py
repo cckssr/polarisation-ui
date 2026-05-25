@@ -22,15 +22,19 @@ from polarisation_ui.infrastructure.session_journal import (
 def tmp_journal_base(tmp_path, monkeypatch):
     """Redirect JOURNAL_BASE to a temp directory so tests don't touch ~/.polarisation-ui."""
     import polarisation_ui.infrastructure.session_journal as sj_mod
+
     monkeypatch.setattr(sj_mod, "JOURNAL_BASE", tmp_path / "sessions")
     return tmp_path / "sessions"
 
 
-def _make_frame(ts_ms: int = 1000, sa: float = 10.0, da: float = 20.0, inten: float = 500.0) -> Frame:
+def _make_frame(
+    ts_ms: int = 1000, sa: float = 10.0, da: float = 20.0, inten: float = 500.0
+) -> Frame:
     return Frame(ts_ms=ts_ms, sample_angle=sa, detector_angle=da, intensity=inten)
 
 
 # ── Creation and basic I/O ────────────────────────────────────────────────────
+
 
 class TestJournalBasics:
 
@@ -78,17 +82,24 @@ class TestJournalBasics:
 
 # ── Data rows ─────────────────────────────────────────────────────────────────
 
+
 class TestDataRows:
 
     def test_frame_values_written(self, tmp_journal_base):
         j = SessionJournal()
         j.start()
-        j.append_frame(Frame(ts_ms=12345, sample_angle=45.0, detector_angle=90.0, intensity=800.0))
+        j.append_frame(
+            Frame(ts_ms=12345, sample_angle=45.0, detector_angle=90.0, intensity=800.0)
+        )
         j.close()
 
-        rows = list(csv.reader(
-            line for line in j.journal_path.read_text().splitlines() if not line.startswith("#")
-        ))
+        rows = list(
+            csv.reader(
+                line
+                for line in j.journal_path.read_text().splitlines()
+                if not line.startswith("#")
+            )
+        )
         # rows[0] = header, rows[1] = data
         assert len(rows) == 2
         assert rows[1][0] == "12345"
@@ -105,15 +116,20 @@ class TestDataRows:
         j.append_frame(_make_frame())
         j.close()
 
-        rows = list(csv.reader(
-            line for line in j.journal_path.read_text().splitlines() if not line.startswith("#")
-        ))
+        rows = list(
+            csv.reader(
+                line
+                for line in j.journal_path.read_text().splitlines()
+                if not line.startswith("#")
+            )
+        )
         data_rows = rows[1:]  # skip header
         gap_rows = [r for r in data_rows if len(r) >= 5 and r[4] == "1"]
         assert len(gap_rows) == 1
 
 
 # ── Finalized marker ──────────────────────────────────────────────────────────
+
 
 class TestFinalization:
 
@@ -131,6 +147,7 @@ class TestFinalization:
 
 
 # ── Export ────────────────────────────────────────────────────────────────────
+
 
 class TestExport:
 
@@ -173,6 +190,7 @@ class TestExport:
 
 
 # ── Orphan detection ──────────────────────────────────────────────────────────
+
 
 class TestOrphanDetection:
 
@@ -217,6 +235,7 @@ class TestOrphanDetection:
 
 
 # ── Crash simulation ──────────────────────────────────────────────────────────
+
 
 class TestCrashResilience:
 

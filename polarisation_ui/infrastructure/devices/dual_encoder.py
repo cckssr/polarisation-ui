@@ -421,7 +421,9 @@ class DualEncoderArduino:
             return None
         return self.get_diagnostics(EncoderID.B)
 
-    def get_diagnostics_both(self) -> tuple[Optional[dict[str, Any]], Optional[dict[str, Any]]]:
+    def get_diagnostics_both(
+        self,
+    ) -> tuple[Optional[dict[str, Any]], Optional[dict[str, Any]]]:
         """DIAG:ENC? BOTH → (diag_a, diag_b) in a single SCPI round-trip."""
         cmd = "DIAG:ENC? BOTH"
         if not self._device.send_command(cmd, add_newline=True):
@@ -440,18 +442,18 @@ class DualEncoderArduino:
                     kv[k.strip()] = v.strip()
             diag_a: dict[str, Any] = {
                 "compHigh": bool(int(kv.get("compHA", "0"))),
-                "compLow":  bool(int(kv.get("compLA", "0"))),
-                "cof":      bool(int(kv.get("cofA",   "0"))),
-                "ocf":      bool(int(kv.get("ocfA",   "0"))),
-                "agc":      int(kv.get("agcA",  "0")),
+                "compLow": bool(int(kv.get("compLA", "0"))),
+                "cof": bool(int(kv.get("cofA", "0"))),
+                "ocf": bool(int(kv.get("ocfA", "0"))),
+                "agc": int(kv.get("agcA", "0")),
             }
             if "agcB" in kv:
                 diag_b: Optional[dict[str, Any]] = {
                     "compHigh": bool(int(kv.get("compHB", "0"))),
-                    "compLow":  bool(int(kv.get("compLB", "0"))),
-                    "cof":      bool(int(kv.get("cofB",   "0"))),
-                    "ocf":      bool(int(kv.get("ocfB",   "0"))),
-                    "agc":      int(kv.get("agcB", "0")),
+                    "compLow": bool(int(kv.get("compLB", "0"))),
+                    "cof": bool(int(kv.get("cofB", "0"))),
+                    "ocf": bool(int(kv.get("ocfB", "0"))),
+                    "agc": int(kv.get("agcB", "0")),
                 }
             else:
                 diag_b = None  # encB absent
@@ -647,7 +649,7 @@ class DualEncoderArduino:
         """
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME "):]
+        payload = line[len("DATA:FRAME ") :]
         result: dict[str, str] = {}
         for part in payload.split(","):
             if "=" in part:

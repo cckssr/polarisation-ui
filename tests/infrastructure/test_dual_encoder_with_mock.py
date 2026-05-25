@@ -38,6 +38,7 @@ def encoder_client(mock_arduino):
 
 # ── Basic reads ───────────────────────────────────────────────────────────────
 
+
 class TestBasicReading:
 
     def test_read_encoder_a(self, encoder_client):
@@ -77,6 +78,7 @@ class TestBasicReading:
 
 # ── Zero reset ────────────────────────────────────────────────────────────────
 
+
 class TestZeroReset:
 
     def test_reset_zero_a(self, encoder_client, mock_arduino):
@@ -114,6 +116,7 @@ class TestZeroReset:
 
 
 # ── Continuous mode ───────────────────────────────────────────────────────────
+
 
 class TestContinuousMode:
 
@@ -172,6 +175,7 @@ class TestContinuousMode:
 
 # ── Poll rate ─────────────────────────────────────────────────────────────────
 
+
 class TestPollInterval:
 
     def test_set_poll_interval_valid(self, encoder_client):
@@ -192,6 +196,7 @@ class TestPollInterval:
 
 # ── Diagnostics ───────────────────────────────────────────────────────────────
 
+
 class TestDiagnostics:
 
     def test_diagnostics_a(self, encoder_client):
@@ -211,6 +216,7 @@ class TestDiagnostics:
 
 
 # ── Connection lifecycle ──────────────────────────────────────────────────────
+
 
 class TestConnectionManagement:
 
@@ -233,6 +239,7 @@ class TestConnectionManagement:
 
 
 # ── MockArduino state ─────────────────────────────────────────────────────────
+
 
 class TestMockArduinoState:
 
@@ -261,6 +268,7 @@ class TestMockArduinoState:
 
 # ── Firmware version check ────────────────────────────────────────────────────
 
+
 class TestFirmwareVersionCheck:
 
     def test_compatible_firmware_connects(self, mock_arduino):
@@ -284,10 +292,13 @@ class TestFirmwareVersionCheck:
 
 # ── DATA:FRAME parser ─────────────────────────────────────────────────────────
 
+
 class TestDataFrameParser:
 
     def test_parse_full_frame(self):
-        line = "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
+        line = (
+            "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
+        )
         result = DualEncoderArduino._parse_data_frame(line)
         assert result["tsMs"] == "1234"
         assert result["angA"] == "45.50"
