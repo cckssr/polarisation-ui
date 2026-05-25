@@ -720,6 +720,41 @@
               </property>
              </widget>
             </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="lblSaturationThreshold">
+              <property name="text">
+               <string>Sättigungsschwelle (V):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QDoubleSpinBox" name="spinSaturationThreshold">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>ADC-Spannung ab der ein Messpunkt als gesättigt gilt und nicht aufgezeichnet wird. Typisch ~2.35 V (ADS1220 Vollaussteuerung ≈2.4 V).</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>1.00</double>
+              </property>
+              <property name="maximum">
+               <double>3.30</double>
+              </property>
+              <property name="singleStep">
+               <double>0.05</double>
+              </property>
+              <property name="value">
+               <double>2.35</double>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item>

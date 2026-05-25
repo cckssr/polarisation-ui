@@ -393,6 +393,7 @@ class AutoPowerCalibrationWindow(QDialog):
             wavelength_nm=self.ui.spinWavelength.value(),
             beamsplitter_attenuation_dB=self.ui.spinAttenuation.value(),
             angle_offset_deg=self._angle_offset_deg,
+            adc_saturation_threshold_V=self.ui.spinSaturationThreshold.value(),
         )
 
         if self._data_controller is not None:

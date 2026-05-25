@@ -439,6 +439,23 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.spinDetectorSamples)
 
+        self.lblSaturationThreshold = QLabel(self.gbSweep)
+        self.lblSaturationThreshold.setObjectName(u"lblSaturationThreshold")
+
+        self.sweepForm.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblSaturationThreshold)
+
+        self.spinSaturationThreshold = QDoubleSpinBox(self.gbSweep)
+        self.spinSaturationThreshold.setObjectName(u"spinSaturationThreshold")
+        sizePolicy1.setHeightForWidth(self.spinSaturationThreshold.sizePolicy().hasHeightForWidth())
+        self.spinSaturationThreshold.setSizePolicy(sizePolicy1)
+        self.spinSaturationThreshold.setDecimals(2)
+        self.spinSaturationThreshold.setMinimum(1.000000000000000)
+        self.spinSaturationThreshold.setMaximum(3.300000000000000)
+        self.spinSaturationThreshold.setSingleStep(0.050000000000000)
+        self.spinSaturationThreshold.setValue(2.350000000000000)
+
+        self.sweepForm.setWidget(6, QFormLayout.ItemRole.FieldRole, self.spinSaturationThreshold)
+
 
         self.sweepLayout.addLayout(self.sweepForm)
 
@@ -660,6 +677,10 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.lblPointSettle.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Wartezeit / Punkt (s):", None))
         self.lblGainSettle.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Wartezeit / Gain (s):", None))
         self.lblDetectorSamples.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Detektor-Samples:", None))
+        self.lblSaturationThreshold.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"S\u00e4ttigungsschwelle (V):", None))
+#if QT_CONFIG(tooltip)
+        self.spinSaturationThreshold.setToolTip(QCoreApplication.translate("AutoPowerCalibrationDialog", u"ADC-Spannung ab der ein Messpunkt als ges\u00e4ttigt gilt und nicht aufgezeichnet wird. Typisch ~2.35 V (ADS1220 Vollaussteuerung \u22482.4 V).", None))
+#endif // QT_CONFIG(tooltip)
         self.lblGridMode.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Winkelraster:", None))
         self.radioLinearAngle.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Linear in \u03b8", None))
         self.radioLinearCos2.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", u"Linear in cos\u00b2(\u03b8)", None))

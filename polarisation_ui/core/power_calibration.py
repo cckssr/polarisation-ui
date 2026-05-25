@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -41,6 +41,7 @@ class GainCalibration:
 
     gain_stage: int
     points: list[tuple[float, float]] = field(default_factory=list)
+    n_saturated_skipped: int = 0
 
     def add_point(self, voltage_V: float, power_W: float) -> None:
         self.points.append((voltage_V, power_W))
@@ -72,7 +73,15 @@ class PowerCalibrationProfile:
     """Full detector calibration across all four PDTIA gain stages."""
 
     name: str
-    calibrated_at: str = field(default_factory=lambda: date.today().isoformat())
+    # Full ISO-8601 datetime string, e.g. "2025-06-01T14:30:00.123456"
+    calibrated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    # Instrument / beam metadata — populated by the auto-calibration worker
+    wavelength_nm: Optional[float] = None
+    beamsplitter_attenuation_dB: Optional[float] = None
+    adc_saturation_threshold_V: Optional[float] = None
+    # PM400 sensor identification (name, serial, calibration_message, type, subtype, flags)
+    sensor: dict = field(default_factory=dict)
+    units: dict = field(default_factory=lambda: {"voltage": "V", "power": "W"})
     gains: dict[int, GainCalibration] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -99,11 +108,21 @@ class PowerCalibrationProfile:
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = {
+        data: dict = {
             "name": self.name,
             "calibrated_at": self.calibrated_at,
+            "wavelength_nm": self.wavelength_nm,
+            "beamsplitter_attenuation_dB": self.beamsplitter_attenuation_dB,
+            "adc_saturation_threshold_V": self.adc_saturation_threshold_V,
+            "sensor": self.sensor,
+            "units": self.units,
             "gains": {
-                str(stage): {"points": list(cal.points)}
+                str(stage): {
+                    "points": list(cal.points),
+                    "n_points": len(cal.points),
+                    "n_saturated_skipped": cal.n_saturated_skipped,
+                    "conversion_factor_W_per_V": cal.conversion_factor_W_per_V(),
+                }
                 for stage, cal in self.gains.items()
             },
         }
@@ -117,6 +136,11 @@ class PowerCalibrationProfile:
         profile = cls(
             name=data.get("name", path.stem),
             calibrated_at=data.get("calibrated_at", ""),
+            wavelength_nm=data.get("wavelength_nm"),
+            beamsplitter_attenuation_dB=data.get("beamsplitter_attenuation_dB"),
+            adc_saturation_threshold_V=data.get("adc_saturation_threshold_V"),
+            sensor=data.get("sensor", {}),
+            units=data.get("units", {"voltage": "V", "power": "W"}),
         )
         for stage_str, cal_data in data.get("gains", {}).items():
             stage = int(stage_str)
@@ -124,6 +148,7 @@ class PowerCalibrationProfile:
             profile.gains[stage] = GainCalibration(
                 gain_stage=stage,
                 points=[(float(v), float(p)) for v, p in raw_points],
+                n_saturated_skipped=int(cal_data.get("n_saturated_skipped", 0)),
             )
         return profile
 

@@ -27,6 +27,17 @@ if TYPE_CHECKING:
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 
+_SENSOR_INFO_KEYS = ("name", "serial", "calibration_message", "type", "subtype", "flags")
+
+
+def _parse_sensor_info(raw: list) -> dict:
+    """Convert the flat PM400 sensor_info list to a labelled dict."""
+    return {
+        key: str(raw[i]).strip() if i < len(raw) else ""
+        for i, key in enumerate(_SENSOR_INFO_KEYS)
+    }
+
+
 class ReconnectWorker(QThread):
     """
     Off-main-thread reconnection worker.
@@ -132,6 +143,16 @@ class AutoPowerCalibrationWorker(QThread):
             self.failed.emit(f"PM400 configuration failed: {exc}")
             return
 
+        # Collect sensor identification for metadata
+        raw_sensor = self._pm.sensor_info()
+        sensor_meta = _parse_sensor_info(raw_sensor)
+        if sensor_meta:
+            self.log.emit(
+                f"PM400 sensor: {sensor_meta.get('name', '?')} "
+                f"S/N {sensor_meta.get('serial', '?')} "
+                f"({sensor_meta.get('type', '?')})"
+            )
+
         # Home the stage
         self.log.emit("KDC101: homing…")
         try:
@@ -143,7 +164,19 @@ class AutoPowerCalibrationWorker(QThread):
         angles = build_angle_grid(p)
         total = len(angles) * len(p.selected_gains)
         done = 0
-        profile = PowerCalibrationProfile(name=p.profile_name)
+        profile = PowerCalibrationProfile(
+            name=p.profile_name,
+            wavelength_nm=p.wavelength_nm,
+            beamsplitter_attenuation_dB=p.beamsplitter_attenuation_dB,
+            adc_saturation_threshold_V=p.adc_saturation_threshold_V,
+            sensor=sensor_meta,
+        )
+
+        sat_threshold = p.adc_saturation_threshold_V
+        self.log.emit(
+            f"Saturation threshold: {sat_threshold:.2f} V — "
+            f"points at or above this voltage will be skipped."
+        )
 
         for gain in p.selected_gains:
             if self._abort:
@@ -182,8 +215,21 @@ class AutoPowerCalibrationWorker(QThread):
                     self.log.emit(
                         f"  Warning: no ADC readings at θ={angle:.2f}°, skipping"
                     )
+                    done += 1
+                    self.progress.emit(done, total)
                     continue
                 voltage_mean = sum(voltages) / len(voltages)
+
+                # Saturation guard — skip PM400 read and don't record the point
+                if voltage_mean >= sat_threshold:
+                    profile.gains[gain].n_saturated_skipped += 1
+                    self.log.emit(
+                        f"  θ={angle:.1f}° | V={voltage_mean:.4f} V — "
+                        f"SATURATED (≥{sat_threshold:.2f} V), skipping"
+                    )
+                    done += 1
+                    self.progress.emit(done, total)
+                    continue
 
                 try:
                     power_W = self._pm.read_power_W()
@@ -198,6 +244,14 @@ class AutoPowerCalibrationWorker(QThread):
                 self.progress.emit(done, total)
                 self.log.emit(
                     f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W"
+                )
+
+            n_sat = profile.gains[gain].n_saturated_skipped
+            n_rec = len(profile.gains[gain].points)
+            if n_sat:
+                self.log.emit(
+                    f"Gain {gain}: {n_rec} points recorded, "
+                    f"{n_sat} skipped (saturated)"
                 )
 
         self.log.emit("Sweep complete.")
