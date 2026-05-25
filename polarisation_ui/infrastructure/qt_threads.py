@@ -5,6 +5,7 @@ Qt is allowed in this module only. All other infrastructure modules must remain
 free of PySide6 imports.
 """
 
+import dataclasses
 import time
 from typing import TYPE_CHECKING
 
@@ -192,10 +193,17 @@ class AutoPowerCalibrationWorker(QThread):
                 return
             time.sleep(p.gain_settle_s)
 
-            for angle in angles:
+            # Mutable per-gain angle list: allows tail redistribution after
+            # the first non-saturated point when the sweep starts in saturation.
+            gain_angles: list[float] = list(angles)
+            first_valid_found = False
+            idx = 0
+            while idx < len(gain_angles):
                 if self._abort:
                     self.failed.emit("Aborted by user")
                     return
+
+                angle = gain_angles[idx]
 
                 try:
                     self._kdc.move_to(angle + p.angle_offset_deg)
@@ -217,6 +225,7 @@ class AutoPowerCalibrationWorker(QThread):
                     )
                     done += 1
                     self.progress.emit(done, total)
+                    idx += 1
                     continue
                 voltage_mean = sum(voltages) / len(voltages)
 
@@ -229,7 +238,26 @@ class AutoPowerCalibrationWorker(QThread):
                     )
                     done += 1
                     self.progress.emit(done, total)
+                    idx += 1
                     continue
+
+                # First valid point after a saturated prefix: redistribute the
+                # remaining angles so they span evenly from here to angle_end.
+                if not first_valid_found and profile.gains[gain].n_saturated_skipped > 0:
+                    n_left = len(gain_angles) - idx - 1
+                    if n_left > 0:
+                        sub = dataclasses.replace(
+                            p,
+                            angle_start_deg=angle,
+                            angle_end_deg=p.angle_end_deg,
+                            n_points=n_left + 1,
+                        )
+                        gain_angles[idx + 1 :] = build_angle_grid(sub)[1:]
+                        self.log.emit(
+                            f"  Grid recalculated: {n_left} remaining points "
+                            f"redistributed from {angle:.1f}° to {p.angle_end_deg:.1f}°"
+                        )
+                first_valid_found = True
 
                 try:
                     power_W = self._pm.read_power_W()
@@ -245,6 +273,7 @@ class AutoPowerCalibrationWorker(QThread):
                 self.log.emit(
                     f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W"
                 )
+                idx += 1
 
             n_sat = profile.gains[gain].n_saturated_skipped
             n_rec = len(profile.gains[gain].points)
