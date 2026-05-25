@@ -41,6 +41,53 @@
        </property>
        <layout class="QVBoxLayout" name="connectionsLayout">
         <item>
+         <widget class="QGroupBox" name="gbArduino">
+          <property name="title">
+           <string>Arduino (Detektor &amp; Gain)</string>
+          </property>
+          <layout class="QGridLayout" name="arduinoGrid">
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblArduinoPort">
+             <property name="text">
+              <string>Port:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="comboArduinoPort">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="btnRefreshArduino">
+             <property name="text">
+              <string>Aktualisieren</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QLabel" name="lblArduinoStatus">
+             <property name="text">
+              <string>Nicht verbunden</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="btnConnectArduino">
+             <property name="text">
+              <string>Verbinden</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="gbKDC">
           <property name="title">
            <string>KDC101 Rotationsantrieb (PRM1/MZ8)</string>

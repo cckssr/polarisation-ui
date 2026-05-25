@@ -35,6 +35,9 @@ from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.ui.windows.mainwindow import MainWindow
+from polarisation_ui.ui.windows.auto_power_calibration_window import (
+    AutoPowerCalibrationWindow,
+)
 
 
 def main():
@@ -54,6 +57,14 @@ def main():
         "--debug-only",
         action="store_true",
         help="Launch only the encoder debug window (skips the main measurement UI)",
+    )
+    parser.add_argument(
+        "--power-cal",
+        action="store_true",
+        help=(
+            "Launch only the automatic power calibration window (standalone mode). "
+            "The Arduino connection is managed inside the window itself."
+        ),
     )
     args, qt_argv = parser.parse_known_args()
     # Qt expects the program name as argv[0]
@@ -97,6 +108,8 @@ def main():
 
     if args.debug_only:
         _run_debug_only(app, device_manager)
+    elif args.power_cal:
+        _run_power_cal(app)
     else:
         _run_main(app, device_manager)
 
@@ -107,6 +120,18 @@ def _run_main(app: "QApplication", device_manager: GoniometerDeviceManager) -> N
     main_window = MainWindow(device_manager)
     main_window.show()
     Debug.info("Main window displayed")
+    sys.exit(app.exec())
+
+
+def _run_power_cal(app: "QApplication") -> None:
+    """Launch the automatic power calibration window as a standalone main window."""
+    Debug.info("Launching standalone power calibration mode")
+    window = AutoPowerCalibrationWindow(data_controller=None)
+    window.setWindowTitle("Automatische Leistungskalibrierung (Standalone)")
+    # Make the dialog behave like a top-level window (own taskbar entry on Windows)
+    window.setWindowFlag(Qt.WindowType.Window, True)
+    window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+    window.show()
     sys.exit(app.exec())
 
 

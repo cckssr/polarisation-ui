@@ -10,27 +10,44 @@ register (SENS:CORR:LOSS:INP:MAGN) so the ``power`` property already returns
 the corrected value — no extra maths in the Python client.
 """
 
+import sys
 from typing import Optional
 
 from polarisation_ui.core.exceptions import PM400Error
 from polarisation_ui.infrastructure.logging import Debug
 
+_ThorlabsPM400 = None
+_PYMEASURE_AVAILABLE = False
+_PYMEASURE_IMPORT_ERROR: str = ""
+
+# Prefer the bundled local copy (avoids version-skew with the pymeasure package);
+# fall back to the installed pymeasure package if the local copy itself can't
+# import its base classes (e.g. different pymeasure version).
 try:
-    from pymeasure.instruments.thorlabs import ThorlabsPM400 as _ThorlabsPM400
     from polarisation_ui.infrastructure.modules.pm400 import (
         ThorlabsPM400 as _ThorlabsPM400,
     )
-
     _PYMEASURE_AVAILABLE = True
-except ImportError:
-    _PYMEASURE_AVAILABLE = False
+except ImportError as _local_exc:
+    # Local copy failed — probably because pymeasure base classes differ.
+    # Try the installed package directly.
+    try:
+        from pymeasure.instruments.thorlabs import ThorlabsPM400 as _ThorlabsPM400
+        _PYMEASURE_AVAILABLE = True
+    except ImportError as _pkg_exc:
+        _PYMEASURE_IMPORT_ERROR = (
+            f"Local driver: {_local_exc} | "
+            f"pymeasure package: {_pkg_exc}"
+        )
+
+_PYVISA_AVAILABLE = False
+_PYVISA_IMPORT_ERROR: str = ""
 
 try:
     import pyvisa as _pyvisa
-
     _PYVISA_AVAILABLE = True
-except ImportError:
-    _PYVISA_AVAILABLE = False
+except ImportError as _visa_exc:
+    _PYVISA_IMPORT_ERROR = str(_visa_exc)
 
 # Thorlabs vendor ID used to filter VISA resource list
 _THORLABS_VID = "0x1313"
@@ -62,7 +79,12 @@ class PM400PowerMeter:
         Raises ``PM400Error`` on failure.
         """
         if not _PYMEASURE_AVAILABLE:
-            raise PM400Error("pymeasure is not installed; cannot connect to PM400")
+            raise PM400Error(
+                f"PM400-Treiber nicht verfügbar — Import fehlgeschlagen:\n"
+                f"  {_PYMEASURE_IMPORT_ERROR}\n"
+                f"pymeasure in diesem Python-Umgebung installieren:\n"
+                f"  {sys.executable} -m pip install pymeasure"
+            )
         try:
             inst = _ThorlabsPM400(visa_resource)
             inst.configure = "POW"
@@ -174,6 +196,10 @@ class PM400PowerMeter:
         Returns an empty list if pyvisa is not installed or no devices found.
         """
         if not _PYVISA_AVAILABLE:
+            Debug.warning(
+                f"PM400.list_resources: pyvisa not available ({_PYVISA_IMPORT_ERROR}). "
+                f"Install with: {sys.executable} -m pip install pyvisa pyvisa-py"
+            )
             return []
         try:
             rm = _pyvisa.ResourceManager()

@@ -5,9 +5,12 @@ Drives a KDC101 + PRM1/MZ8 polariser rotation stage and a Thorlabs PM400
 power meter to record (voltage, power) pairs for all four PDTIA gain stages,
 then writes a PowerCalibrationProfile in the same format used by the manual
 calibration window.
+
+Standalone mode (data_controller=None): the dialog manages its own Arduino
+connection and shows the gbArduino section.  The Arduino is needed for ADC
+reads and PDTIA gain switching during the sweep.
 """
 
-from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import QThread, Signal, Slot
@@ -22,6 +25,7 @@ from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
     PowerCalibrationProfile as _Profile,
 )
+from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
@@ -54,18 +58,26 @@ class AutoPowerCalibrationWindow(QDialog):
     """
     Non-modal dialog for automated detector power calibration.
 
-    Opened from MainWindow._open_auto_power_calibration(), which wires
-    profile_saved so the main profile dropdown refreshes after a save.
+    When *data_controller* is provided the dialog is opened from MainWindow
+    and the existing DataController supplies the Arduino device manager.
+    When *data_controller* is None the dialog runs standalone: it shows the
+    gbArduino section so the user can connect to the Arduino directly.
     """
 
     profile_saved = Signal()
 
-    def __init__(self, data_controller, parent=None) -> None:
+    def __init__(self, data_controller=None, parent=None) -> None:
         super().__init__(parent)
         self.ui = Ui_AutoPowerCalibrationDialog()
         self.ui.setupUi(self)
 
         self._data_controller = data_controller
+        self._standalone = data_controller is None
+        # In standalone mode we own the device manager; otherwise we borrow it.
+        self._device_manager: Optional[GoniometerDeviceManager] = (
+            GoniometerDeviceManager(use_mock=False) if self._standalone else None
+        )
+
         self._kdc = KDC101Polariser()
         self._pm = PM400PowerMeter()
         self._worker: Optional[AutoPowerCalibrationWorker] = None
@@ -75,10 +87,15 @@ class AutoPowerCalibrationWindow(QDialog):
         self._angle_offset_deg: float = 0.0
         self._settings = AutoCalibrationConnectionSettings.load()
 
+        # The Arduino section is only relevant in standalone mode.
+        self.ui.gbArduino.setVisible(self._standalone)
+
         self._apply_settings()
         self._connect_signals()
         self._refresh_kdc_list()
         self._refresh_pm_list()
+        if self._standalone:
+            self._refresh_arduino_list()
         self._update_start_button_state()
 
     # ── Setup ─────────────────────────────────────────────────────────────────
@@ -98,6 +115,10 @@ class AutoPowerCalibrationWindow(QDialog):
             )
 
     def _connect_signals(self) -> None:
+        if self._standalone:
+            self.ui.btnRefreshArduino.clicked.connect(self._refresh_arduino_list)
+            self.ui.btnConnectArduino.clicked.connect(self._toggle_arduino)
+
         self.ui.btnRefreshKDC.clicked.connect(self._refresh_kdc_list)
         self.ui.btnConnectKDC.clicked.connect(self._toggle_kdc)
         self.ui.btnHomeKDC.clicked.connect(self._home_kdc)
@@ -113,6 +134,49 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.btnStart.clicked.connect(self._start_sweep)
         self.ui.btnAbort.clicked.connect(self._abort_sweep)
         self.ui.btnSave.clicked.connect(self._save_profile)
+
+    # ── Arduino (standalone mode) ─────────────────────────────────────────────
+
+    @Slot()
+    def _refresh_arduino_list(self) -> None:
+        current = self.ui.comboArduinoPort.currentText()
+        self.ui.comboArduinoPort.clear()
+        ports = GoniometerDeviceManager.list_available_ports()
+        for p in ports:
+            self.ui.comboArduinoPort.addItem(p)
+        if current and self.ui.comboArduinoPort.findText(current) < 0:
+            self.ui.comboArduinoPort.addItem(current)
+        if current:
+            idx = self.ui.comboArduinoPort.findText(current)
+            if idx >= 0:
+                self.ui.comboArduinoPort.setCurrentIndex(idx)
+        self._update_start_button_state()
+
+    @Slot()
+    def _toggle_arduino(self) -> None:
+        assert self._device_manager is not None
+        if self._device_manager.is_encoder_connected():
+            self._device_manager.disconnect_encoders()
+            self.ui.lblArduinoStatus.setText("Nicht verbunden")
+            self.ui.btnConnectArduino.setText("Verbinden")
+        else:
+            port = self.ui.comboArduinoPort.currentText().strip()
+            if not port:
+                QMessageBox.warning(self, "Arduino", "Kein Port ausgewählt.")
+                return
+            ok = self._device_manager.connect_encoders(port)
+            if ok:
+                self.ui.lblArduinoStatus.setText(f"Verbunden: {port}")
+                self.ui.btnConnectArduino.setText("Trennen")
+            else:
+                status = self._device_manager.get_encoder_status()
+                err = status.error_message or "Verbindung fehlgeschlagen"
+                QMessageBox.critical(
+                    self,
+                    "Arduino Verbindungsfehler",
+                    f"Verbindung zu {port} fehlgeschlagen:\n{err}",
+                )
+        self._update_start_button_state()
 
     # ── KDC101 ────────────────────────────────────────────────────────────────
 
@@ -331,10 +395,16 @@ class AutoPowerCalibrationWindow(QDialog):
             angle_offset_deg=self._angle_offset_deg,
         )
 
-        self._data_controller.stop_continuous_reading()
+        if self._data_controller is not None:
+            self._data_controller.stop_continuous_reading()
 
+        device_manager = (
+            self._device_manager
+            if self._standalone
+            else self._data_controller.device_manager
+        )
         self._worker = AutoPowerCalibrationWorker(
-            device_manager=self._data_controller.device_manager,
+            device_manager=device_manager,
             kdc=self._kdc,
             pm=self._pm,
             params=params,
@@ -388,14 +458,16 @@ class AutoPowerCalibrationWindow(QDialog):
         self._set_running(False)
         self.ui.lblPhase.setText("Kalibrierung abgeschlossen")
         self.ui.btnSave.setEnabled(True)
-        self._data_controller.start_continuous_reading()
+        if self._data_controller is not None:
+            self._data_controller.start_continuous_reading()
         self._append_log("Kalibrierung erfolgreich abgeschlossen.")
 
     @Slot(str)
     def _on_sweep_failed(self, message: str) -> None:
         self._set_running(False)
         self.ui.lblPhase.setText(f"Fehler: {message}")
-        self._data_controller.start_continuous_reading()
+        if self._data_controller is not None:
+            self._data_controller.start_continuous_reading()
         QMessageBox.critical(self, "Kalibrierung fehlgeschlagen", message)
 
     # ── Save ──────────────────────────────────────────────────────────────────
@@ -431,7 +503,11 @@ class AutoPowerCalibrationWindow(QDialog):
         self._update_start_button_state()
 
     def _update_start_button_state(self) -> None:
-        hw_ready = self._kdc.is_connected() and self._pm.is_connected()
+        arduino_ok = (
+            self._device_manager is not None
+            and self._device_manager.is_encoder_connected()
+        ) if self._standalone else True
+        hw_ready = self._kdc.is_connected() and self._pm.is_connected() and arduino_ok
         self.ui.btnAlignPolariser.setEnabled(hw_ready)
         self.ui.btnStart.setEnabled(
             hw_ready and bool(self.ui.lineProfileName.text().strip())
@@ -474,10 +550,13 @@ class AutoPowerCalibrationWindow(QDialog):
         if self._worker is not None and self._worker.isRunning():
             self._worker.abort()
             self._worker.wait(5000)
-            self._data_controller.start_continuous_reading()
+            if self._data_controller is not None:
+                self._data_controller.start_continuous_reading()
         if self._home_thread is not None and self._home_thread.isRunning():
             self._home_thread.wait(3000)
         self._kdc.disconnect()
         self._pm.disconnect()
+        if self._standalone and self._device_manager is not None:
+            self._device_manager.disconnect_all()
         self._persist_settings()
         super().closeEvent(event)
