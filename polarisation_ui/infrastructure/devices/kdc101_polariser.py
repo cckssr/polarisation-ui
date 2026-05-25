@@ -12,18 +12,38 @@ from typing import Optional
 from polarisation_ui.core.exceptions import KDC101Error, KDC101TimeoutError
 from polarisation_ui.infrastructure.logging import Debug
 
-try:
-    from pylablib.devices import Thorlabs as _Thorlabs
-    from pylablib.devices.Thorlabs import ThorlabsError, ThorlabsTimeoutError
-
-    _PYLABLIB_AVAILABLE = True
-except ImportError:
-    _PYLABLIB_AVAILABLE = False
-    ThorlabsError = Exception
-    ThorlabsTimeoutError = Exception
-
+# pylablib (and its hard dependency PyQt5) is imported lazily on first use so
+# that it does not load PyQt5 into the process at startup alongside PySide6,
+# which on macOS causes spurious ObjC class-duplication warnings.
+_Thorlabs = None
+_ThorlabsError: type = Exception       # falls back to bare Exception until loaded
+_ThorlabsTimeoutError: type = Exception
+_PYLABLIB_AVAILABLE: Optional[bool] = None  # None = not yet probed
+_PYLABLIB_IMPORT_ERROR: str = ""
 
 _PRM1_Z8_SCALE = "PRM1-Z8"  # built-in pylablib scale for the PRM1/MZ8 stage
+
+
+def _ensure_pylablib() -> bool:
+    """Import pylablib on first call; cache the result. Thread-safe for reads."""
+    global _Thorlabs, _ThorlabsError, _ThorlabsTimeoutError
+    global _PYLABLIB_AVAILABLE, _PYLABLIB_IMPORT_ERROR
+    if _PYLABLIB_AVAILABLE is not None:
+        return _PYLABLIB_AVAILABLE
+    try:
+        from pylablib.devices import Thorlabs as _th
+        from pylablib.devices.Thorlabs import (
+            ThorlabsError as _te,
+            ThorlabsTimeoutError as _tte,
+        )
+        _Thorlabs = _th
+        _ThorlabsError = _te
+        _ThorlabsTimeoutError = _tte
+        _PYLABLIB_AVAILABLE = True
+    except ImportError as exc:
+        _PYLABLIB_IMPORT_ERROR = str(exc)
+        _PYLABLIB_AVAILABLE = False
+    return _PYLABLIB_AVAILABLE
 
 
 class KDC101Polariser:
@@ -58,14 +78,17 @@ class KDC101Polariser:
 
         Raises ``KDC101Error`` on failure.
         """
-        if not _PYLABLIB_AVAILABLE:
-            raise KDC101Error("pylablib is not installed; cannot connect to KDC101")
+        if not _ensure_pylablib():
+            raise KDC101Error(
+                f"pylablib is not installed; cannot connect to KDC101 "
+                f"({_PYLABLIB_IMPORT_ERROR})"
+            )
         try:
             motor = _Thorlabs.KinesisMotor(conn_id, scale=_PRM1_Z8_SCALE)
             motor.open()
             self._motor = motor
             Debug.info(f"KDC101Polariser: connected to {conn_id}")
-        except ThorlabsError as exc:
+        except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 connect failed: {exc}") from exc
         except Exception as exc:
             # Catch backend/configuration errors (e.g. missing ft232 driver,
@@ -98,9 +121,9 @@ class KDC101Polariser:
         try:
             self._motor.home(sync=wait, timeout=timeout if wait else None)
             Debug.info("KDC101Polariser: homed")
-        except ThorlabsTimeoutError as exc:
+        except _ThorlabsTimeoutError as exc:
             raise KDC101TimeoutError(f"KDC101 home timed out: {exc}") from exc
-        except ThorlabsError as exc:
+        except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 home failed: {exc}") from exc
 
     def move_to(
@@ -116,11 +139,11 @@ class KDC101Polariser:
             self._motor.move_to(angle_deg)
             if wait:
                 self._motor.wait_move(timeout=timeout)
-        except ThorlabsTimeoutError as exc:
+        except _ThorlabsTimeoutError as exc:
             raise KDC101TimeoutError(
                 f"KDC101 move_to({angle_deg:.2f}°) timed out: {exc}"
             ) from exc
-        except ThorlabsError as exc:
+        except _ThorlabsError as exc:
             raise KDC101Error(
                 f"KDC101 move_to({angle_deg:.2f}°) failed: {exc}"
             ) from exc
@@ -130,7 +153,7 @@ class KDC101Polariser:
         self._require_connected()
         try:
             return float(self._motor.get_position())
-        except ThorlabsError as exc:
+        except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 get_position failed: {exc}") from exc
 
     def enable(self, state: bool) -> None:
@@ -141,7 +164,7 @@ class KDC101Polariser:
                 self._motor.enable_channel()
             else:
                 self._motor.disable_channel()
-        except ThorlabsError as exc:
+        except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 enable({state}) failed: {exc}") from exc
 
     # ── Discovery ─────────────────────────────────────────────────────────────
@@ -153,7 +176,7 @@ class KDC101Polariser:
         Returns an empty list if pylablib is not installed or no devices are
         found.
         """
-        if not _PYLABLIB_AVAILABLE:
+        if not _ensure_pylablib():
             return []
         try:
             return list(_Thorlabs.list_kinesis_devices())
