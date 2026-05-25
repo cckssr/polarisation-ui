@@ -6,888 +6,968 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1050</width>
-    <height>780</height>
+    <width>1100</width>
+    <height>660</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Automatische Leistungskalibrierung</string>
   </property>
-  <layout class="QHBoxLayout" name="mainLayout">
+  <layout class="QVBoxLayout" name="mainLayout">
    <property name="spacing">
-    <number>10</number>
+    <number>6</number>
    </property>
    <property name="leftMargin">
-    <number>10</number>
+    <number>8</number>
    </property>
    <property name="topMargin">
-    <number>10</number>
+    <number>8</number>
    </property>
    <property name="rightMargin">
-    <number>10</number>
+    <number>8</number>
    </property>
    <property name="bottomMargin">
-    <number>10</number>
+    <number>8</number>
    </property>
+   <!-- ── Top row: all three connection boxes side by side ── -->
    <item>
-    <layout class="QVBoxLayout" name="leftPanelLayout">
+    <widget class="QGroupBox" name="gbConnections">
+     <property name="title">
+      <string>Verbindungen</string>
+     </property>
+     <layout class="QHBoxLayout" name="connectionsLayout">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QGroupBox" name="gbArduino">
+        <property name="title">
+         <string>Arduino (Detektor &amp; Gain)</string>
+        </property>
+        <layout class="QGridLayout" name="arduinoGrid">
+         <property name="spacing">
+          <number>4</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblArduinoPort">
+           <property name="text">
+            <string>Port:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboArduinoPort">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="btnRefreshArduino">
+           <property name="text">
+            <string>Aktualisieren</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QLabel" name="lblArduinoStatus">
+           <property name="text">
+            <string>Nicht verbunden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="btnConnectArduino">
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbKDC">
+        <property name="title">
+         <string>KDC101 Rotationsantrieb (PRM1/MZ8)</string>
+        </property>
+        <layout class="QGridLayout" name="kdcGrid">
+         <property name="spacing">
+          <number>4</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblKDCDevice">
+           <property name="text">
+            <string>Gerät:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboKDC">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="btnRefreshKDC">
+           <property name="text">
+            <string>Aktualisieren</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QLabel" name="lblKDCStatus">
+           <property name="text">
+            <string>Nicht verbunden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="btnConnectKDC">
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="3">
+          <widget class="QPushButton" name="btnHomeKDC">
+           <property name="text">
+            <string>Referenzfahrt (Home)</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbPM400">
+        <property name="title">
+         <string>PM400 Leistungsmessgerät (S120C)</string>
+        </property>
+        <layout class="QGridLayout" name="pmGrid">
+         <property name="spacing">
+          <number>4</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblPMResource">
+           <property name="text">
+            <string>VISA:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboPM400">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="btnRefreshPM400">
+           <property name="text">
+            <string>Aktualisieren</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QLabel" name="lblPM400Status">
+           <property name="text">
+            <string>Nicht verbunden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="btnConnectPM400">
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="3">
+          <widget class="QPushButton" name="btnZeroPM400">
+           <property name="text">
+            <string>Nullabgleich (Zero)</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <!-- ── Bottom: controls (left) + plot (right) ── -->
+   <item>
+    <layout class="QHBoxLayout" name="workAreaLayout">
      <property name="spacing">
       <number>8</number>
      </property>
+     <!-- Left: parameter controls -->
      <item>
-      <widget class="QGroupBox" name="gbConnections">
-       <property name="title">
-        <string>Verbindungen</string>
+      <layout class="QVBoxLayout" name="leftPanelLayout">
+       <property name="spacing">
+        <number>5</number>
        </property>
-       <layout class="QVBoxLayout" name="connectionsLayout">
-        <item>
-         <widget class="QGroupBox" name="gbArduino">
-          <property name="title">
-           <string>Arduino (Detektor &amp; Gain)</string>
-          </property>
-          <layout class="QGridLayout" name="arduinoGrid">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblArduinoPort">
-             <property name="text">
-              <string>Port:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="comboArduinoPort">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>1</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="btnRefreshArduino">
-             <property name="text">
-              <string>Aktualisieren</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QLabel" name="lblArduinoStatus">
-             <property name="text">
-              <string>Nicht verbunden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="btnConnectArduino">
-             <property name="text">
-              <string>Verbinden</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="gbKDC">
-          <property name="title">
-           <string>KDC101 Rotationsantrieb (PRM1/MZ8)</string>
-          </property>
-          <layout class="QGridLayout" name="kdcGrid">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblKDCDevice">
-             <property name="text">
-              <string>Gerät:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="comboKDC">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>1</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="btnRefreshKDC">
-             <property name="text">
-              <string>Aktualisieren</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QLabel" name="lblKDCStatus">
-             <property name="text">
-              <string>Nicht verbunden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="btnConnectKDC">
-             <property name="text">
-              <string>Verbinden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="3">
-            <widget class="QPushButton" name="btnHomeKDC">
-             <property name="text">
-              <string>Referenzfahrt (Home)</string>
-             </property>
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="gbPM400">
-          <property name="title">
-           <string>PM400 Leistungsmessgerät (S120C)</string>
-          </property>
-          <layout class="QGridLayout" name="pmGrid">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblPMResource">
-             <property name="text">
-              <string>VISA:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="comboPM400">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>1</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="editable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="btnRefreshPM400">
-             <property name="text">
-              <string>Aktualisieren</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QLabel" name="lblPM400Status">
-             <property name="text">
-              <string>Nicht verbunden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="btnConnectPM400">
-             <property name="text">
-              <string>Verbinden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="3">
-            <widget class="QPushButton" name="btnZeroPM400">
-             <property name="text">
-              <string>Nullabgleich (Zero)</string>
-             </property>
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="gbAlignment">
-       <property name="title">
-        <string>Polarisator-Ausrichtung</string>
-       </property>
-       <layout class="QVBoxLayout" name="alignLayout">
-        <item>
-         <layout class="QFormLayout" name="alignForm">
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblAlignStart">
-            <property name="text">
-             <string>Scanstart (°):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="spinAlignStart">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Startwinkel des Ausrichtungsscans (physikalische Stufenposition)</string>
-            </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>360.0</double>
-            </property>
-            <property name="value">
-             <double>0.0</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblAlignEnd">
-            <property name="text">
-             <string>Scanende (°):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spinAlignEnd">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Endwinkel des Ausrichtungsscans. 180° deckt eine volle cos²-Periode ab.</string>
-            </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>360.0</double>
-            </property>
-            <property name="value">
-             <double>180.0</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="lblAlignNPoints">
-            <property name="text">
-             <string>Schritte:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="spinAlignNPoints">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Anzahl Messpunkte im Ausrichtungsscan (empfohlen: ≥36 für 5°-Auflösung über 180°)</string>
-            </property>
-            <property name="minimum">
+       <!-- Alignment and beam settings side by side -->
+       <item>
+        <layout class="QHBoxLayout" name="topControlsRow">
+         <property name="spacing">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QGroupBox" name="gbAlignment">
+           <property name="title">
+            <string>Polarisator-Ausrichtung</string>
+           </property>
+           <layout class="QVBoxLayout" name="alignLayout">
+            <property name="spacing">
              <number>3</number>
             </property>
-            <property name="maximum">
-             <number>360</number>
+            <item>
+             <layout class="QFormLayout" name="alignForm">
+              <property name="verticalSpacing">
+               <number>3</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblAlignStart">
+                <property name="text">
+                 <string>Scanstart (°):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="spinAlignStart">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Startwinkel des Ausrichtungsscans (physikalische Stufenposition)</string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>0.0</double>
+                </property>
+                <property name="maximum">
+                 <double>360.0</double>
+                </property>
+                <property name="value">
+                 <double>0.0</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblAlignEnd">
+                <property name="text">
+                 <string>Scanende (°):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="spinAlignEnd">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Endwinkel des Ausrichtungsscans. 180° deckt eine volle cos²-Periode ab.</string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>0.0</double>
+                </property>
+                <property name="maximum">
+                 <double>360.0</double>
+                </property>
+                <property name="value">
+                 <double>180.0</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lblAlignNPoints">
+                <property name="text">
+                 <string>Schritte:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="spinAlignNPoints">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Anzahl Messpunkte im Ausrichtungsscan (empfohlen: ≥36 für 5°-Auflösung über 180°)</string>
+                </property>
+                <property name="minimum">
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <number>360</number>
+                </property>
+                <property name="value">
+                 <number>36</number>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lblAlignSettle">
+                <property name="text">
+                 <string>Wartezeit (s):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="spinAlignSettle">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="minimum">
+                 <double>0.0</double>
+                </property>
+                <property name="maximum">
+                 <double>10.0</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.05</double>
+                </property>
+                <property name="value">
+                 <double>0.2</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="alignButtonLayout">
+              <property name="spacing">
+               <number>4</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="btnAlignPolariser">
+                <property name="text">
+                 <string>Ausrichtung starten</string>
+                </property>
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnAbortAlign">
+                <property name="text">
+                 <string>Abbrechen</string>
+                </property>
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblAngleOffset">
+              <property name="text">
+               <string>Winkelversatz: nicht gesetzt</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <!-- Beam + measurement settings, right of alignment -->
+         <item>
+          <widget class="QGroupBox" name="gbBeam">
+           <property name="title">
+            <string>Licht / Leistungsmessung</string>
+           </property>
+           <layout class="QFormLayout" name="beamForm">
+            <property name="verticalSpacing">
+             <number>3</number>
             </property>
-            <property name="value">
-             <number>36</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="lblAlignSettle">
-            <property name="text">
-             <string>Wartezeit (s):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QDoubleSpinBox" name="spinAlignSettle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="decimals">
-             <number>2</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>10.0</double>
-            </property>
-            <property name="singleStep">
-             <double>0.05</double>
-            </property>
-            <property name="value">
-             <double>0.2</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="alignButtonLayout">
-          <item>
-           <widget class="QPushButton" name="btnAlignPolariser">
-            <property name="text">
-             <string>Ausrichtung starten</string>
-            </property>
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnAbortAlign">
-            <property name="text">
-             <string>Abbrechen</string>
-            </property>
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblAngleOffset">
-          <property name="text">
-           <string>Winkelversatz: nicht gesetzt</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="gbBeam">
-       <property name="title">
-        <string>Licht / Leistungsmessung</string>
-       </property>
-       <layout class="QFormLayout" name="beamForm">
-        <item row="0" column="0">
-         <widget class="QLabel" name="lblWavelength">
-          <property name="text">
-           <string>Wellenlänge (nm):</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="spinWavelength">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="minimum">
-           <double>200.0</double>
-          </property>
-          <property name="maximum">
-           <double>1100.0</double>
-          </property>
-          <property name="value">
-           <double>633.0</double>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="lblAttenuation">
-          <property name="text">
-           <string>Strahlteiler Dämpfung (dB):</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="spinAttenuation">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>Dämpfung des Strahlteilers in dB. Wird direkt an das PM400 übergeben.</string>
-          </property>
-          <property name="decimals">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblWavelength">
+              <property name="text">
+               <string>Wellenlänge (nm):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="spinWavelength">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>200.0</double>
+              </property>
+              <property name="maximum">
+               <double>1100.0</double>
+              </property>
+              <property name="value">
+               <double>633.0</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblAttenuation">
+              <property name="text">
+               <string>Strahlteiler Dämpfung (dB):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="spinAttenuation">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Dämpfung des Strahlteilers in dB. Wird direkt an das PM400 übergeben.</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>-60.0</double>
+              </property>
+              <property name="maximum">
+               <double>90.0</double>
+              </property>
+              <property name="singleStep">
+               <double>0.1</double>
+              </property>
+              <property name="value">
+               <double>3.0</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblPmAveraging">
+              <property name="text">
+               <string>PM400 Mittelwerte:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QSpinBox" name="spinPmAveraging">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>300000</number>
+              </property>
+              <property name="value">
+               <number>100</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <!-- Sweep settings -->
+       <item>
+        <widget class="QGroupBox" name="gbSweep">
+         <property name="title">
+          <string>Sweep-Einstellungen</string>
+         </property>
+         <layout class="QVBoxLayout" name="sweepLayout">
+          <property name="spacing">
            <number>3</number>
           </property>
-          <property name="minimum">
-           <double>-60.0</double>
+          <item>
+           <layout class="QFormLayout" name="sweepForm">
+            <property name="verticalSpacing">
+             <number>3</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblAngleStart">
+              <property name="text">
+               <string>Startwinkel (°):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="spinAngleStart">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.0</double>
+              </property>
+              <property name="maximum">
+               <double>360.0</double>
+              </property>
+              <property name="value">
+               <double>0.0</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblAngleEnd">
+              <property name="text">
+               <string>Endwinkel (°):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="spinAngleEnd">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.0</double>
+              </property>
+              <property name="maximum">
+               <double>360.0</double>
+              </property>
+              <property name="value">
+               <double>90.0</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblNPoints">
+              <property name="text">
+               <string>Anzahl Punkte:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QSpinBox" name="spinNPoints">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimum">
+               <number>3</number>
+              </property>
+              <property name="maximum">
+               <number>200</number>
+              </property>
+              <property name="value">
+               <number>30</number>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblPointSettle">
+              <property name="text">
+               <string>Wartezeit / Punkt (s):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QDoubleSpinBox" name="spinPointSettle">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.0</double>
+              </property>
+              <property name="maximum">
+               <double>30.0</double>
+              </property>
+              <property name="singleStep">
+               <double>0.05</double>
+              </property>
+              <property name="value">
+               <double>0.2</double>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="lblGainSettle">
+              <property name="text">
+               <string>Wartezeit / Gain (s):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QDoubleSpinBox" name="spinGainSettle">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.0</double>
+              </property>
+              <property name="maximum">
+               <double>10.0</double>
+              </property>
+              <property name="singleStep">
+               <double>0.1</double>
+              </property>
+              <property name="value">
+               <double>0.5</double>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="lblDetectorSamples">
+              <property name="text">
+               <string>Detektor-Samples:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QSpinBox" name="spinDetectorSamples">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>5</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="gridModeLayout">
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblGridMode">
+              <property name="text">
+               <string>Winkelraster:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioLinearAngle">
+              <property name="text">
+               <string>Linear in θ</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioLinearCos2">
+              <property name="text">
+               <string>Linear in cos²(θ)</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="gainCheckboxLayout">
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblGains">
+              <property name="text">
+               <string>Gain-Stufen:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chkGain1">
+              <property name="text">
+               <string>1</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chkGain2">
+              <property name="text">
+               <string>2</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chkGain3">
+              <property name="text">
+               <string>3</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="chkGain4">
+              <property name="text">
+               <string>4</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <!-- Profile name -->
+       <item>
+        <widget class="QGroupBox" name="gbProfile">
+         <property name="title">
+          <string>Profil</string>
+         </property>
+         <layout class="QFormLayout" name="profileForm">
+          <property name="verticalSpacing">
+           <number>3</number>
           </property>
-          <property name="maximum">
-           <double>90.0</double>
-          </property>
-          <property name="singleStep">
-           <double>0.1</double>
-          </property>
-          <property name="value">
-           <double>3.0</double>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="lblPmAveraging">
-          <property name="text">
-           <string>PM400 Mittelwerte:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QSpinBox" name="spinPmAveraging">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>300000</number>
-          </property>
-          <property name="value">
-           <number>100</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="gbSweep">
-       <property name="title">
-        <string>Sweep-Einstellungen</string>
-       </property>
-       <layout class="QVBoxLayout" name="sweepLayout">
-        <item>
-         <layout class="QFormLayout" name="sweepForm">
           <item row="0" column="0">
-           <widget class="QLabel" name="lblAngleStart">
+           <widget class="QLabel" name="lblProfileName">
             <property name="text">
-             <string>Startwinkel (°):</string>
+             <string>Profilname:</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="spinAngleStart">
+           <widget class="QLineEdit" name="lineProfileName">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>360.0</double>
-            </property>
-            <property name="value">
-             <double>0.0</double>
+            <property name="placeholderText">
+             <string>z.B. Det-A_auto</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblAngleEnd">
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="lblOutputPath">
             <property name="text">
-             <string>Endwinkel (°):</string>
+             <string>–</string>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spinAngleEnd">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>360.0</double>
-            </property>
-            <property name="value">
-             <double>90.0</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="lblNPoints">
-            <property name="text">
-             <string>Anzahl Punkte:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="spinNPoints">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimum">
-             <number>3</number>
-            </property>
-            <property name="maximum">
-             <number>200</number>
-            </property>
-            <property name="value">
-             <number>30</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="lblPointSettle">
-            <property name="text">
-             <string>Wartezeit / Punkt (s):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QDoubleSpinBox" name="spinPointSettle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="decimals">
-             <number>2</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>30.0</double>
-            </property>
-            <property name="singleStep">
-             <double>0.05</double>
-            </property>
-            <property name="value">
-             <double>0.2</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="lblGainSettle">
-            <property name="text">
-             <string>Wartezeit / Gain (s):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QDoubleSpinBox" name="spinGainSettle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="decimals">
-             <number>2</number>
-            </property>
-            <property name="minimum">
-             <double>0.0</double>
-            </property>
-            <property name="maximum">
-             <double>10.0</double>
-            </property>
-            <property name="singleStep">
-             <double>0.1</double>
-            </property>
-            <property name="value">
-             <double>0.5</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="lblDetectorSamples">
-            <property name="text">
-             <string>Detektor-Samples:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QSpinBox" name="spinDetectorSamples">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>100</number>
-            </property>
-            <property name="value">
-             <number>5</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="gridModeLayout">
-          <item>
-           <widget class="QLabel" name="lblGridMode">
-            <property name="text">
-             <string>Winkelraster:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="radioLinearAngle">
-            <property name="text">
-             <string>Linear in θ</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="radioLinearCos2">
-            <property name="text">
-             <string>Linear in cos²(θ)</string>
-            </property>
-            <property name="checked">
+            <property name="wordWrap">
              <bool>true</bool>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="gainCheckboxLayout">
-          <item>
-           <widget class="QLabel" name="lblGains">
-            <property name="text">
-             <string>Gain-Stufen:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="chkGain1">
-            <property name="text">
-             <string>1</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="chkGain2">
-            <property name="text">
-             <string>2</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="chkGain3">
-            <property name="text">
-             <string>3</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="chkGain4">
-            <property name="text">
-             <string>4</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
+        </widget>
+       </item>
+       <!-- Action buttons -->
+       <item>
+        <layout class="QHBoxLayout" name="controlLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btnStart">
+           <property name="text">
+            <string>Starten</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAbort">
+           <property name="text">
+            <string>Abbrechen</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnSave">
+           <property name="text">
+            <string>Profil speichern</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="textVisible">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblPhase">
+         <property name="text">
+          <string>Bereit</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="leftSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>5</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
+     <!-- Right: plot + log -->
      <item>
-      <widget class="QGroupBox" name="gbProfile">
-       <property name="title">
-        <string>Profil</string>
+      <layout class="QVBoxLayout" name="rightPanelLayout">
+       <property name="spacing">
+        <number>5</number>
        </property>
-       <layout class="QFormLayout" name="profileForm">
-        <item row="0" column="0">
-         <widget class="QLabel" name="lblProfileName">
-          <property name="text">
-           <string>Profilname:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="lineProfileName">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="placeholderText">
-           <string>z.B. Det-A_auto</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0" colspan="2">
-         <widget class="QLabel" name="lblOutputPath">
-          <property name="text">
-           <string>–</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="controlLayout">
        <item>
-        <widget class="QPushButton" name="btnStart">
-         <property name="text">
-          <string>Starten</string>
+        <widget class="MultiGainCalibrationPlot" name="plotWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>3</verstretch>
+          </sizepolicy>
          </property>
-         <property name="enabled">
-          <bool>false</bool>
+         <property name="minimumSize">
+          <size>
+           <width>380</width>
+           <height>250</height>
+          </size>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btnAbort">
-         <property name="text">
-          <string>Abbrechen</string>
+        <widget class="QPlainTextEdit" name="plainTextLog">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>1</verstretch>
+          </sizepolicy>
          </property>
-         <property name="enabled">
-          <bool>false</bool>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>150</height>
+          </size>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnSave">
-         <property name="text">
-          <string>Profil speichern</string>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
-         <property name="enabled">
-          <bool>false</bool>
+         <property name="placeholderText">
+          <string>Log-Ausgabe…</string>
          </property>
         </widget>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QProgressBar" name="progressBar">
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="textVisible">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="lblPhase">
-       <property name="text">
-        <string>Bereit</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="leftSpacer">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="rightPanelLayout">
-     <property name="spacing">
-      <number>8</number>
-     </property>
-     <item>
-      <widget class="MultiGainCalibrationPlot" name="plotWidget" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>3</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>400</width>
-         <height>300</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPlainTextEdit" name="plainTextLog">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>1</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>180</height>
-        </size>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-       <property name="placeholderText">
-        <string>Log-Ausgabe…</string>
-       </property>
-      </widget>
      </item>
     </layout>
    </item>

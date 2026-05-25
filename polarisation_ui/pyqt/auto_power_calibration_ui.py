@@ -27,21 +27,21 @@ class Ui_AutoPowerCalibrationDialog(object):
     def setupUi(self, AutoPowerCalibrationDialog):
         if not AutoPowerCalibrationDialog.objectName():
             AutoPowerCalibrationDialog.setObjectName(u"AutoPowerCalibrationDialog")
-        AutoPowerCalibrationDialog.resize(1050, 780)
-        self.mainLayout = QHBoxLayout(AutoPowerCalibrationDialog)
-        self.mainLayout.setSpacing(10)
+        AutoPowerCalibrationDialog.resize(1100, 660)
+        self.mainLayout = QVBoxLayout(AutoPowerCalibrationDialog)
+        self.mainLayout.setSpacing(6)
         self.mainLayout.setObjectName(u"mainLayout")
-        self.mainLayout.setContentsMargins(10, 10, 10, 10)
-        self.leftPanelLayout = QVBoxLayout()
-        self.leftPanelLayout.setSpacing(8)
-        self.leftPanelLayout.setObjectName(u"leftPanelLayout")
+        self.mainLayout.setContentsMargins(8, 8, 8, 8)
         self.gbConnections = QGroupBox(AutoPowerCalibrationDialog)
         self.gbConnections.setObjectName(u"gbConnections")
-        self.connectionsLayout = QVBoxLayout(self.gbConnections)
+        self.connectionsLayout = QHBoxLayout(self.gbConnections)
+        self.connectionsLayout.setSpacing(6)
         self.connectionsLayout.setObjectName(u"connectionsLayout")
+        self.connectionsLayout.setContentsMargins(6, 4, 6, 6)
         self.gbArduino = QGroupBox(self.gbConnections)
         self.gbArduino.setObjectName(u"gbArduino")
         self.arduinoGrid = QGridLayout(self.gbArduino)
+        self.arduinoGrid.setSpacing(4)
         self.arduinoGrid.setObjectName(u"arduinoGrid")
         self.lblArduinoPort = QLabel(self.gbArduino)
         self.lblArduinoPort.setObjectName(u"lblArduinoPort")
@@ -79,6 +79,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.gbKDC = QGroupBox(self.gbConnections)
         self.gbKDC.setObjectName(u"gbKDC")
         self.kdcGrid = QGridLayout(self.gbKDC)
+        self.kdcGrid.setSpacing(4)
         self.kdcGrid.setObjectName(u"kdcGrid")
         self.lblKDCDevice = QLabel(self.gbKDC)
         self.lblKDCDevice.setObjectName(u"lblKDCDevice")
@@ -119,6 +120,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.gbPM400 = QGroupBox(self.gbConnections)
         self.gbPM400.setObjectName(u"gbPM400")
         self.pmGrid = QGridLayout(self.gbPM400)
+        self.pmGrid.setSpacing(4)
         self.pmGrid.setObjectName(u"pmGrid")
         self.lblPMResource = QLabel(self.gbPM400)
         self.lblPMResource.setObjectName(u"lblPMResource")
@@ -158,14 +160,25 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.connectionsLayout.addWidget(self.gbPM400)
 
 
-        self.leftPanelLayout.addWidget(self.gbConnections)
+        self.mainLayout.addWidget(self.gbConnections)
 
+        self.workAreaLayout = QHBoxLayout()
+        self.workAreaLayout.setSpacing(8)
+        self.workAreaLayout.setObjectName(u"workAreaLayout")
+        self.leftPanelLayout = QVBoxLayout()
+        self.leftPanelLayout.setSpacing(5)
+        self.leftPanelLayout.setObjectName(u"leftPanelLayout")
+        self.topControlsRow = QHBoxLayout()
+        self.topControlsRow.setSpacing(5)
+        self.topControlsRow.setObjectName(u"topControlsRow")
         self.gbAlignment = QGroupBox(AutoPowerCalibrationDialog)
         self.gbAlignment.setObjectName(u"gbAlignment")
         self.alignLayout = QVBoxLayout(self.gbAlignment)
+        self.alignLayout.setSpacing(3)
         self.alignLayout.setObjectName(u"alignLayout")
         self.alignForm = QFormLayout()
         self.alignForm.setObjectName(u"alignForm")
+        self.alignForm.setVerticalSpacing(3)
         self.lblAlignStart = QLabel(self.gbAlignment)
         self.lblAlignStart.setObjectName(u"lblAlignStart")
 
@@ -237,6 +250,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.alignLayout.addLayout(self.alignForm)
 
         self.alignButtonLayout = QHBoxLayout()
+        self.alignButtonLayout.setSpacing(4)
         self.alignButtonLayout.setObjectName(u"alignButtonLayout")
         self.btnAlignPolariser = QPushButton(self.gbAlignment)
         self.btnAlignPolariser.setObjectName(u"btnAlignPolariser")
@@ -255,16 +269,18 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.lblAngleOffset = QLabel(self.gbAlignment)
         self.lblAngleOffset.setObjectName(u"lblAngleOffset")
+        self.lblAngleOffset.setWordWrap(True)
 
         self.alignLayout.addWidget(self.lblAngleOffset)
 
 
-        self.leftPanelLayout.addWidget(self.gbAlignment)
+        self.topControlsRow.addWidget(self.gbAlignment)
 
         self.gbBeam = QGroupBox(AutoPowerCalibrationDialog)
         self.gbBeam.setObjectName(u"gbBeam")
         self.beamForm = QFormLayout(self.gbBeam)
         self.beamForm.setObjectName(u"beamForm")
+        self.beamForm.setVerticalSpacing(3)
         self.lblWavelength = QLabel(self.gbBeam)
         self.lblWavelength.setObjectName(u"lblWavelength")
 
@@ -314,14 +330,19 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.beamForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinPmAveraging)
 
 
-        self.leftPanelLayout.addWidget(self.gbBeam)
+        self.topControlsRow.addWidget(self.gbBeam)
+
+
+        self.leftPanelLayout.addLayout(self.topControlsRow)
 
         self.gbSweep = QGroupBox(AutoPowerCalibrationDialog)
         self.gbSweep.setObjectName(u"gbSweep")
         self.sweepLayout = QVBoxLayout(self.gbSweep)
+        self.sweepLayout.setSpacing(3)
         self.sweepLayout.setObjectName(u"sweepLayout")
         self.sweepForm = QFormLayout()
         self.sweepForm.setObjectName(u"sweepForm")
+        self.sweepForm.setVerticalSpacing(3)
         self.lblAngleStart = QLabel(self.gbSweep)
         self.lblAngleStart.setObjectName(u"lblAngleStart")
 
@@ -422,6 +443,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.sweepLayout.addLayout(self.sweepForm)
 
         self.gridModeLayout = QHBoxLayout()
+        self.gridModeLayout.setSpacing(6)
         self.gridModeLayout.setObjectName(u"gridModeLayout")
         self.lblGridMode = QLabel(self.gbSweep)
         self.lblGridMode.setObjectName(u"lblGridMode")
@@ -443,6 +465,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.sweepLayout.addLayout(self.gridModeLayout)
 
         self.gainCheckboxLayout = QHBoxLayout()
+        self.gainCheckboxLayout.setSpacing(6)
         self.gainCheckboxLayout.setObjectName(u"gainCheckboxLayout")
         self.lblGains = QLabel(self.gbSweep)
         self.lblGains.setObjectName(u"lblGains")
@@ -483,6 +506,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.gbProfile.setObjectName(u"gbProfile")
         self.profileForm = QFormLayout(self.gbProfile)
         self.profileForm.setObjectName(u"profileForm")
+        self.profileForm.setVerticalSpacing(3)
         self.lblProfileName = QLabel(self.gbProfile)
         self.lblProfileName.setObjectName(u"lblProfileName")
 
@@ -505,6 +529,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.leftPanelLayout.addWidget(self.gbProfile)
 
         self.controlLayout = QHBoxLayout()
+        self.controlLayout.setSpacing(6)
         self.controlLayout.setObjectName(u"controlLayout")
         self.btnStart = QPushButton(AutoPowerCalibrationDialog)
         self.btnStart.setObjectName(u"btnStart")
@@ -539,15 +564,15 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.leftPanelLayout.addWidget(self.lblPhase)
 
-        self.leftSpacer = QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.leftSpacer = QSpacerItem(20, 5, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.leftPanelLayout.addItem(self.leftSpacer)
 
 
-        self.mainLayout.addLayout(self.leftPanelLayout)
+        self.workAreaLayout.addLayout(self.leftPanelLayout)
 
         self.rightPanelLayout = QVBoxLayout()
-        self.rightPanelLayout.setSpacing(8)
+        self.rightPanelLayout.setSpacing(5)
         self.rightPanelLayout.setObjectName(u"rightPanelLayout")
         self.plotWidget = MultiGainCalibrationPlot(AutoPowerCalibrationDialog)
         self.plotWidget.setObjectName(u"plotWidget")
@@ -556,7 +581,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         sizePolicy2.setVerticalStretch(3)
         sizePolicy2.setHeightForWidth(self.plotWidget.sizePolicy().hasHeightForWidth())
         self.plotWidget.setSizePolicy(sizePolicy2)
-        self.plotWidget.setMinimumSize(QSize(400, 300))
+        self.plotWidget.setMinimumSize(QSize(380, 250))
 
         self.rightPanelLayout.addWidget(self.plotWidget)
 
@@ -567,13 +592,16 @@ class Ui_AutoPowerCalibrationDialog(object):
         sizePolicy3.setVerticalStretch(1)
         sizePolicy3.setHeightForWidth(self.plainTextLog.sizePolicy().hasHeightForWidth())
         self.plainTextLog.setSizePolicy(sizePolicy3)
-        self.plainTextLog.setMaximumSize(QSize(16777215, 180))
+        self.plainTextLog.setMaximumSize(QSize(16777215, 150))
         self.plainTextLog.setReadOnly(True)
 
         self.rightPanelLayout.addWidget(self.plainTextLog)
 
 
-        self.mainLayout.addLayout(self.rightPanelLayout)
+        self.workAreaLayout.addLayout(self.rightPanelLayout)
+
+
+        self.mainLayout.addLayout(self.workAreaLayout)
 
 
         self.retranslateUi(AutoPowerCalibrationDialog)
