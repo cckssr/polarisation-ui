@@ -45,7 +45,7 @@ class KDC101Stage:
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
-        self._stage: Optional[Thorlabs.KinesisMotor] = None
+        self._stage: Thorlabs.KinesisMotor
 
     @property
     def connected(self) -> bool:

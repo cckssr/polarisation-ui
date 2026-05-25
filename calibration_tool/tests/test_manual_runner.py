@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import sys, os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from calibration.manual_runner import ManualCalibrationController
@@ -84,7 +85,9 @@ class TestManualCalibrationControllerFlow:
 
     def test_invalid_encoder_id_raises(self):
         with pytest.raises(ValueError, match="encoder_id"):
-            ManualCalibrationController(_make_arduino(), step_size_deg=10.0, encoder_id="C")
+            ManualCalibrationController(
+                _make_arduino(), step_size_deg=10.0, encoder_id="C"
+            )
 
     def test_accept_advances_step(self):
         ctrl = ManualCalibrationController(_make_arduino(), step_size_deg=10.0)
@@ -102,9 +105,9 @@ class TestManualCalibrationControllerFlow:
     def test_mixed_accept_skip(self):
         ctrl = ManualCalibrationController(_make_arduino(angle=0.0), step_size_deg=90.0)
         ctrl.accept_current()  # 0°
-        ctrl.skip_current()    # 90° skipped
+        ctrl.skip_current()  # 90° skipped
         ctrl.accept_current()  # 180°
-        ctrl.skip_current()    # 270° skipped
+        ctrl.skip_current()  # 270° skipped
         run = ctrl.get_run()
         assert run.num_points == 2
         assert run.points[0].reference_deg == pytest.approx(0.0)

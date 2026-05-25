@@ -729,7 +729,7 @@ class CalibrationApp(QMainWindow):
     def _toggle_live(self, state: int):
         """Toggle live position update."""
         if state == Qt.Checked.value:
-            self._live_timer.start(100)
+            self._live_timer.start(200)
         else:
             self._live_timer.stop()
 
