@@ -27,7 +27,7 @@ class ManualCalibrationController:
         ctrl = ManualCalibrationController(arduino, step_size_deg=10.0)
         while not ctrl.is_complete:
             # show ctrl.current_target to the user
-            point = ctrl.accept_current()   # or ctrl.skip_current()
+            point = ctrl.accept_current()  # or ctrl.skip_current()
         run = ctrl.get_run()
     """
 

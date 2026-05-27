@@ -128,11 +128,11 @@ def _print_report(results: list[GainAnalysis], source_name: str) -> None:
         print(f"  Gain {r.gain_id}")
         print(f"    Voltage range   : {r.v_range[0]:.4f} V  →  {r.v_range[1]:.4f} V")
         print(f"    Power range     : {r.p_range[0]:.3e} W  →  {r.p_range[1]:.3e} W")
-        print(f"    Sensitivity     : {1/r.slope:.3e} V/W   (= 1/slope)")
+        print(f"    Sensitivity     : {1 / r.slope:.3e} V/W   (= 1/slope)")
         print(f"    Dark offset     : {r.intercept:.3e} W")
         print(f"    Linearity R²    : {r.r_squared:.8f}")
         print(
-            f"    RMSE            : {r.rmse:.3e} W  ({100*r.rmse/r.p_range[1]:.3f}% of full scale)"
+            f"    RMSE            : {r.rmse:.3e} W  ({100 * r.rmse / r.p_range[1]:.3f}% of full scale)"
         )
         print(f"    Max residual    : {r.max_abs_residual:.3e} W")
         print(f"    Dynamic range   : {r.dynamic_range_db:.1f} dB")
