@@ -136,8 +136,8 @@ class Frame:
 
 
 @dataclass
-class MalusPoint:
-    """One saved point in the Malus-law curve, including power calibration columns."""
+class BrewsterPoint:
+    """One saved point in the Brewster-angle curve, including power calibration columns."""
 
     sample_angle: float
     detector_angle: float
@@ -145,3 +145,25 @@ class MalusPoint:
     pdtia_gain: int = 0
     power_W: Optional[float] = None
     conv_factor_W_per_V: Optional[float] = None
+
+
+@dataclass
+class MalusPoint:
+    """One saved point in the Malus-law curve (manual analyser-angle entry)."""
+
+    analyser_angle: float
+    polariser_angle: float
+    intensity_V: float
+    pdtia_gain: int = 0
+    power_W: Optional[float] = None
+    conv_factor_W_per_V: Optional[float] = None
+
+
+@dataclass
+class TabExport:
+    """Bundle returned by a tab's build_export() for schema-agnostic CSV writing."""
+
+    filename_hint: str
+    columns: list
+    rows: list
+    metadata: dict

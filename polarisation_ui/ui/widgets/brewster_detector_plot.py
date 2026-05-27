@@ -1,5 +1,5 @@
 """
-Live detector scan plot for Malus tab.
+Live detector scan plot for Brewster tab.
 
 Shows detector arm angle (X) vs. intensity (Y) as the user sweeps the arm.
 A rolling buffer of recent samples forms the curve; angle debouncing suppresses
@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 
-class MalusDetectorPlot(QWidget):
+class BrewsterDetectorPlot(QWidget):
     """
     Live rolling scatter: detector angle vs. intensity.
 

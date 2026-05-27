@@ -48,8 +48,8 @@ Rules:
 | File | Reason |
 |---|---|
 | `power_calibration_window.py` | User-approved exception — no `.ui` counterpart by design |
-| `malus_curve_plot.py`, `malus_detector_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets |
-| `PlotTabBase` subclasses (`malus_tab.py`, …) | Phase 4 tab-extensibility pattern: tabs use `build()` for layout by design |
+| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets |
+| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …) | Tab-extensibility pattern: tabs use `build()` for layout by design |
 
 **Known pre-existing violation** (to be migrated, do not extend further):
 
@@ -88,7 +88,9 @@ PySide6 widgets. Thin event handlers — delegate all logic to core/infrastructu
 - `windows/mainwindow.py` — `MainWindow`.
 - `windows/encoder_debug_window.py` — `EncoderDebugDialog` (SCPI terminal, diagnostics).
 - `controllers/data_controller.py` — `DataController` polls at 10 Hz via `QTimer`, emits Qt signals (`angles_updated`, `intensity_updated`, `diagnostics_updated`, `error_occurred`, `retry_connecting`, `reconnect_succeeded`, `connection_lost`, `measurement_started/stopped`).
-- `widgets/malus_curve_plot.py`, `widgets/malus_detector_plot.py` — pyqtgraph plots.
+- `widgets/brewster_curve_plot.py`, `widgets/brewster_detector_plot.py`, `widgets/malus_curve_plot.py` — pyqtgraph plots.
+- `widgets/tabs/brewster_tab.py` — Brewster-angle tab (sample scan + peak finding).
+- `widgets/tabs/malus_tab.py` — Malus-law tab (manual analyser-angle entry, averaged intensity).
 - `dialogs/`, `common/`.
 - Qt Designer files live under `polarisation_ui/pyqt/` (`*.ui` sources, `*_ui.py` generated).
 - **(planned Phase 4)** `widgets/plot_tab_base.py`, `widgets/tab_registry.py`, `widgets/tabs/`.
