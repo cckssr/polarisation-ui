@@ -36,7 +36,6 @@ def _make_device_manager(
 
 
 class TestDesiredState:
-
     def test_default_state(self):
         s = DesiredState()
         assert s.adc_gain == 1
@@ -93,7 +92,6 @@ class TestDesiredState:
 
 
 class TestDeviceManagerReconnect:
-
     def test_reconnect_calls_reapply(self, tmp_path):
         from polarisation_ui.infrastructure.device_manager import (
             GoniometerDeviceManager,
@@ -127,7 +125,6 @@ class TestDeviceManagerReconnect:
 
 
 class TestBackoffDelays:
-
     def test_backoff_sequence(self):
         from polarisation_ui.infrastructure.config import import_config
 
@@ -183,7 +180,6 @@ class TestBackoffDelays:
 
 
 class TestBufferPreservation:
-
     def test_buffers_preserved_after_reconnect(self):
         """Ring buffers must NOT be cleared when a reconnect succeeds."""
         from PySide6.QtWidgets import QApplication
@@ -219,7 +215,6 @@ class TestBufferPreservation:
 
 
 class TestJournalGapMarker:
-
     def test_gap_written_on_reconnect(self, tmp_path):
         """A gap row must appear in the journal after a successful reconnect."""
         from PySide6.QtWidgets import QApplication

@@ -43,6 +43,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QButtonGroup,
     QComboBox,
     QFormLayout,
     QFrame,
@@ -71,11 +72,8 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1098, 901)
-        MainWindow.setMinimumSize(QSize(0, 860))
-        font = QFont()
-        font.setPointSize(13)
-        MainWindow.setFont(font)
+        MainWindow.resize(900, 750)
+        MainWindow.setMinimumSize(QSize(0, 0))
         self.actionAutoSaveEnabled = QAction(MainWindow)
         self.actionAutoSaveEnabled.setObjectName("actionAutoSaveEnabled")
         self.actionAutoSaveEnabled.setCheckable(True)
@@ -85,6 +83,14 @@ class Ui_MainWindow(object):
         self.actionAcquisitionSettings.setMenuRole(QAction.MenuRole.NoRole)
         self.actionEncoderDebug = QAction(MainWindow)
         self.actionEncoderDebug.setObjectName("actionEncoderDebug")
+        self.actionLogWindow = QAction(MainWindow)
+        self.actionLogWindow.setObjectName("actionLogWindow")
+        self.actionPowerCalibration = QAction(MainWindow)
+        self.actionPowerCalibration.setObjectName("actionPowerCalibration")
+        self.actionPowerCalibration.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionAutoPowerCalibration = QAction(MainWindow)
+        self.actionAutoPowerCalibration.setObjectName("actionAutoPowerCalibration")
+        self.actionAutoPowerCalibration.setMenuRole(QAction.MenuRole.NoRole)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout_5 = QGridLayout(self.centralwidget)
@@ -108,10 +114,7 @@ class Ui_MainWindow(object):
             self.gbArduinoConnection.sizePolicy().hasHeightForWidth()
         )
         self.gbArduinoConnection.setSizePolicy(sizePolicy)
-        self.gbArduinoConnection.setMinimumSize(QSize(0, 100))
-        font1 = QFont()
-        font1.setPointSize(15)
-        self.gbArduinoConnection.setFont(font1)
+        self.gbArduinoConnection.setMinimumSize(QSize(0, 0))
         self.gbArduinoConnection.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbArduinoConnection.setCheckable(False)
         self.formArduinoConnection = QFormLayout(self.gbArduinoConnection)
@@ -128,7 +131,7 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
         self.formArduinoConnection.setHorizontalSpacing(-1)
-        self.formArduinoConnection.setVerticalSpacing(10)
+        self.formArduinoConnection.setVerticalSpacing(6)
         self.formArduinoConnection.setContentsMargins(-1, 5, -1, 5)
         self.lblArduinoPort = QLabel(self.gbArduinoConnection)
         self.lblArduinoPort.setObjectName("lblArduinoPort")
@@ -136,7 +139,6 @@ class Ui_MainWindow(object):
             self.lblArduinoPort.sizePolicy().hasHeightForWidth()
         )
         self.lblArduinoPort.setSizePolicy(sizePolicy)
-        self.lblArduinoPort.setFont(font)
         self.lblArduinoPort.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
@@ -178,7 +180,6 @@ class Ui_MainWindow(object):
             self.lblArduinoStatus.sizePolicy().hasHeightForWidth()
         )
         self.lblArduinoStatus.setSizePolicy(sizePolicy)
-        self.lblArduinoStatus.setFont(font)
         self.lblArduinoStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
@@ -197,7 +198,6 @@ class Ui_MainWindow(object):
             self.lblArduinoStatusValue.sizePolicy().hasHeightForWidth()
         )
         self.lblArduinoStatusValue.setSizePolicy(sizePolicy)
-        self.lblArduinoStatusValue.setFont(font)
         self.lblArduinoStatusValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
             | Qt.AlignmentFlag.AlignTrailing
@@ -212,10 +212,10 @@ class Ui_MainWindow(object):
             self.ledArduinoStatus.sizePolicy().hasHeightForWidth()
         )
         self.ledArduinoStatus.setSizePolicy(sizePolicy)
-        self.ledArduinoStatus.setMinimumSize(QSize(20, 20))
-        self.ledArduinoStatus.setMaximumSize(QSize(20, 20))
+        self.ledArduinoStatus.setMinimumSize(QSize(16, 16))
+        self.ledArduinoStatus.setMaximumSize(QSize(16, 16))
         self.ledArduinoStatus.setStyleSheet(
-            "background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px"
+            "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
         )
 
         self.hlArduinoStatus.addWidget(self.ledArduinoStatus)
@@ -231,7 +231,6 @@ class Ui_MainWindow(object):
         )
         self.btnArduinoConnect.setSizePolicy(sizePolicy)
         self.btnArduinoConnect.setMinimumSize(QSize(0, 0))
-        self.btnArduinoConnect.setFont(font)
 
         self.formArduinoConnection.setWidget(
             2, QFormLayout.ItemRole.SpanningRole, self.btnArduinoConnect
@@ -240,7 +239,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.gbArduinoConnection)
 
         self.verticalSpacer_4 = QSpacerItem(
-            20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+            20, 6, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
         )
 
         self.verticalLayout_2.addItem(self.verticalSpacer_4)
@@ -257,8 +256,7 @@ class Ui_MainWindow(object):
             self.gbSampleStage.sizePolicy().hasHeightForWidth()
         )
         self.gbSampleStage.setSizePolicy(sizePolicy1)
-        self.gbSampleStage.setMinimumSize(QSize(0, 100))
-        self.gbSampleStage.setFont(font1)
+        self.gbSampleStage.setMinimumSize(QSize(0, 0))
         self.gbSampleStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbSampleStage.setCheckable(False)
         self.formSampleStage = QFormLayout(self.gbSampleStage)
@@ -273,7 +271,7 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
         self.formSampleStage.setHorizontalSpacing(-1)
-        self.formSampleStage.setVerticalSpacing(10)
+        self.formSampleStage.setVerticalSpacing(6)
         self.formSampleStage.setContentsMargins(-1, 5, -1, 5)
         self.lblSampleStatus = QLabel(self.gbSampleStage)
         self.lblSampleStatus.setObjectName("lblSampleStatus")
@@ -286,7 +284,6 @@ class Ui_MainWindow(object):
             self.lblSampleStatus.sizePolicy().hasHeightForWidth()
         )
         self.lblSampleStatus.setSizePolicy(sizePolicy2)
-        self.lblSampleStatus.setFont(font)
         self.lblSampleStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
@@ -305,7 +302,6 @@ class Ui_MainWindow(object):
             self.lblSampleStatusValue.sizePolicy().hasHeightForWidth()
         )
         self.lblSampleStatusValue.setSizePolicy(sizePolicy1)
-        self.lblSampleStatusValue.setFont(font)
         self.lblSampleStatusValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
             | Qt.AlignmentFlag.AlignTrailing
@@ -320,10 +316,10 @@ class Ui_MainWindow(object):
             self.ledSampleStatus.sizePolicy().hasHeightForWidth()
         )
         self.ledSampleStatus.setSizePolicy(sizePolicy)
-        self.ledSampleStatus.setMinimumSize(QSize(20, 20))
-        self.ledSampleStatus.setMaximumSize(QSize(20, 20))
+        self.ledSampleStatus.setMinimumSize(QSize(16, 16))
+        self.ledSampleStatus.setMaximumSize(QSize(16, 16))
         self.ledSampleStatus.setStyleSheet(
-            "background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px"
+            "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
         )
 
         self.hlSampleStatus.addWidget(self.ledSampleStatus)
@@ -338,8 +334,6 @@ class Ui_MainWindow(object):
             self.lblSampleAngle.sizePolicy().hasHeightForWidth()
         )
         self.lblSampleAngle.setSizePolicy(sizePolicy)
-        self.lblSampleAngle.setMinimumSize(QSize(0, 40))
-        self.lblSampleAngle.setFont(font)
 
         self.formSampleStage.setWidget(
             1, QFormLayout.ItemRole.LabelRole, self.lblSampleAngle
@@ -351,8 +345,7 @@ class Ui_MainWindow(object):
             self.lcdSampleAngle.sizePolicy().hasHeightForWidth()
         )
         self.lcdSampleAngle.setSizePolicy(sizePolicy2)
-        self.lcdSampleAngle.setMinimumSize(QSize(0, 40))
-        self.lcdSampleAngle.setFont(font)
+        self.lcdSampleAngle.setMinimumSize(QSize(0, 26))
         self.lcdSampleAngle.setLineWidth(2)
         self.lcdSampleAngle.setDigitCount(6)
 
@@ -372,7 +365,6 @@ class Ui_MainWindow(object):
         )
         self.btnSampleZero.setSizePolicy(sizePolicy3)
         self.btnSampleZero.setMinimumSize(QSize(0, 0))
-        self.btnSampleZero.setFont(font)
 
         self.formSampleStage.setWidget(
             2, QFormLayout.ItemRole.SpanningRole, self.btnSampleZero
@@ -381,7 +373,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.gbSampleStage)
 
         self.verticalSpacer_3 = QSpacerItem(
-            20, 5, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+            20, 4, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
         )
 
         self.verticalLayout_2.addItem(self.verticalSpacer_3)
@@ -393,8 +385,7 @@ class Ui_MainWindow(object):
             self.gbDetectorStage.sizePolicy().hasHeightForWidth()
         )
         self.gbDetectorStage.setSizePolicy(sizePolicy1)
-        self.gbDetectorStage.setMinimumSize(QSize(0, 100))
-        self.gbDetectorStage.setFont(font1)
+        self.gbDetectorStage.setMinimumSize(QSize(0, 0))
         self.gbDetectorStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formDetectorStage = QFormLayout(self.gbDetectorStage)
         self.formDetectorStage.setObjectName("formDetectorStage")
@@ -408,7 +399,7 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
         self.formDetectorStage.setHorizontalSpacing(-1)
-        self.formDetectorStage.setVerticalSpacing(10)
+        self.formDetectorStage.setVerticalSpacing(6)
         self.formDetectorStage.setContentsMargins(-1, 5, -1, 5)
         self.lblDetectorStageStatus = QLabel(self.gbDetectorStage)
         self.lblDetectorStageStatus.setObjectName("lblDetectorStageStatus")
@@ -416,7 +407,6 @@ class Ui_MainWindow(object):
             self.lblDetectorStageStatus.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorStageStatus.setSizePolicy(sizePolicy1)
-        self.lblDetectorStageStatus.setFont(font)
         self.lblDetectorStageStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
@@ -435,7 +425,6 @@ class Ui_MainWindow(object):
             self.lblDetectorStageStatusValue.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorStageStatusValue.setSizePolicy(sizePolicy1)
-        self.lblDetectorStageStatusValue.setFont(font)
         self.lblDetectorStageStatusValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
             | Qt.AlignmentFlag.AlignTrailing
@@ -450,10 +439,10 @@ class Ui_MainWindow(object):
             self.ledDetectorStageStatus.sizePolicy().hasHeightForWidth()
         )
         self.ledDetectorStageStatus.setSizePolicy(sizePolicy)
-        self.ledDetectorStageStatus.setMinimumSize(QSize(20, 20))
-        self.ledDetectorStageStatus.setMaximumSize(QSize(20, 20))
+        self.ledDetectorStageStatus.setMinimumSize(QSize(16, 16))
+        self.ledDetectorStageStatus.setMaximumSize(QSize(16, 16))
         self.ledDetectorStageStatus.setStyleSheet(
-            "background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px"
+            "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
         )
 
         self.hlDetectorStageStatus.addWidget(self.ledDetectorStageStatus)
@@ -468,8 +457,6 @@ class Ui_MainWindow(object):
             self.lblDetectorStageAngle.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorStageAngle.setSizePolicy(sizePolicy)
-        self.lblDetectorStageAngle.setMinimumSize(QSize(0, 40))
-        self.lblDetectorStageAngle.setFont(font)
 
         self.formDetectorStage.setWidget(
             1, QFormLayout.ItemRole.LabelRole, self.lblDetectorStageAngle
@@ -481,8 +468,7 @@ class Ui_MainWindow(object):
             self.lcdDetectorStageAngle.sizePolicy().hasHeightForWidth()
         )
         self.lcdDetectorStageAngle.setSizePolicy(sizePolicy2)
-        self.lcdDetectorStageAngle.setMinimumSize(QSize(0, 40))
-        self.lcdDetectorStageAngle.setFont(font)
+        self.lcdDetectorStageAngle.setMinimumSize(QSize(0, 26))
         self.lcdDetectorStageAngle.setLineWidth(2)
         self.lcdDetectorStageAngle.setDigitCount(6)
 
@@ -497,7 +483,6 @@ class Ui_MainWindow(object):
         )
         self.btnDetectorStageZero.setSizePolicy(sizePolicy3)
         self.btnDetectorStageZero.setMinimumSize(QSize(0, 0))
-        self.btnDetectorStageZero.setFont(font)
 
         self.formDetectorStage.setWidget(
             2, QFormLayout.ItemRole.SpanningRole, self.btnDetectorStageZero
@@ -506,7 +491,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.gbDetectorStage)
 
         self.verticalSpacer_2 = QSpacerItem(
-            20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+            20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
         )
 
         self.verticalLayout_2.addItem(self.verticalSpacer_2)
@@ -516,8 +501,7 @@ class Ui_MainWindow(object):
         self.gbDetector.setEnabled(False)
         sizePolicy1.setHeightForWidth(self.gbDetector.sizePolicy().hasHeightForWidth())
         self.gbDetector.setSizePolicy(sizePolicy1)
-        self.gbDetector.setMinimumSize(QSize(0, 125))
-        self.gbDetector.setFont(font1)
+        self.gbDetector.setMinimumSize(QSize(0, 0))
         self.gbDetector.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.formDetector = QFormLayout(self.gbDetector)
         self.formDetector.setObjectName("formDetector")
@@ -531,14 +515,13 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
         self.formDetector.setHorizontalSpacing(-1)
-        self.formDetector.setVerticalSpacing(10)
+        self.formDetector.setVerticalSpacing(6)
         self.lblDetectorStatus = QLabel(self.gbDetector)
         self.lblDetectorStatus.setObjectName("lblDetectorStatus")
         sizePolicy2.setHeightForWidth(
             self.lblDetectorStatus.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorStatus.setSizePolicy(sizePolicy2)
-        self.lblDetectorStatus.setFont(font)
         self.lblDetectorStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
@@ -557,7 +540,6 @@ class Ui_MainWindow(object):
             self.lblDetectorStatusValue.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorStatusValue.setSizePolicy(sizePolicy1)
-        self.lblDetectorStatusValue.setFont(font)
         self.lblDetectorStatusValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
             | Qt.AlignmentFlag.AlignTrailing
@@ -572,10 +554,10 @@ class Ui_MainWindow(object):
             self.ledDetectorStatus.sizePolicy().hasHeightForWidth()
         )
         self.ledDetectorStatus.setSizePolicy(sizePolicy)
-        self.ledDetectorStatus.setMinimumSize(QSize(20, 20))
-        self.ledDetectorStatus.setMaximumSize(QSize(20, 20))
+        self.ledDetectorStatus.setMinimumSize(QSize(16, 16))
+        self.ledDetectorStatus.setMaximumSize(QSize(16, 16))
         self.ledDetectorStatus.setStyleSheet(
-            "background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px"
+            "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
         )
 
         self.hlDetectorStatus.addWidget(self.ledDetectorStatus)
@@ -590,8 +572,6 @@ class Ui_MainWindow(object):
             self.lblDetectorVoltage.sizePolicy().hasHeightForWidth()
         )
         self.lblDetectorVoltage.setSizePolicy(sizePolicy)
-        self.lblDetectorVoltage.setMinimumSize(QSize(0, 40))
-        self.lblDetectorVoltage.setFont(font)
 
         self.formDetector.setWidget(
             1, QFormLayout.ItemRole.LabelRole, self.lblDetectorVoltage
@@ -603,16 +583,125 @@ class Ui_MainWindow(object):
             self.lcdDetectorVoltage.sizePolicy().hasHeightForWidth()
         )
         self.lcdDetectorVoltage.setSizePolicy(sizePolicy2)
-        self.lcdDetectorVoltage.setMinimumSize(QSize(0, 40))
-        self.lcdDetectorVoltage.setFont(font)
+        self.lcdDetectorVoltage.setMinimumSize(QSize(0, 26))
         self.lcdDetectorVoltage.setLineWidth(2)
-        self.lcdDetectorVoltage.setDigitCount(6)
+        self.lcdDetectorVoltage.setDigitCount(8)
 
         self.formDetector.setWidget(
             1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage
         )
 
+        self.lblGainLabel = QLabel(self.gbDetector)
+        self.lblGainLabel.setObjectName("lblGainLabel")
+        sizePolicy.setHeightForWidth(self.lblGainLabel.sizePolicy().hasHeightForWidth())
+        self.lblGainLabel.setSizePolicy(sizePolicy)
+
+        self.formDetector.setWidget(
+            2, QFormLayout.ItemRole.LabelRole, self.lblGainLabel
+        )
+
+        self.hlGainButtons = QHBoxLayout()
+        self.hlGainButtons.setSpacing(2)
+        self.hlGainButtons.setObjectName("hlGainButtons")
+        self.btnGain1 = QPushButton(self.gbDetector)
+        self.gainButtonGroup = QButtonGroup(MainWindow)
+        self.gainButtonGroup.setObjectName("gainButtonGroup")
+        self.gainButtonGroup.addButton(self.btnGain1)
+        self.btnGain1.setObjectName("btnGain1")
+        self.btnGain1.setMaximumSize(QSize(36, 16777215))
+        self.btnGain1.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain1)
+
+        self.btnGain2 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain2)
+        self.btnGain2.setObjectName("btnGain2")
+        self.btnGain2.setMaximumSize(QSize(36, 16777215))
+        self.btnGain2.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain2)
+
+        self.btnGain3 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain3)
+        self.btnGain3.setObjectName("btnGain3")
+        self.btnGain3.setMaximumSize(QSize(36, 16777215))
+        self.btnGain3.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain3)
+
+        self.btnGain4 = QPushButton(self.gbDetector)
+        self.gainButtonGroup.addButton(self.btnGain4)
+        self.btnGain4.setObjectName("btnGain4")
+        self.btnGain4.setMaximumSize(QSize(36, 16777215))
+        self.btnGain4.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGain4)
+
+        self.gainSpacer = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+
+        self.hlGainButtons.addItem(self.gainSpacer)
+
+        self.formDetector.setLayout(
+            2, QFormLayout.ItemRole.FieldRole, self.hlGainButtons
+        )
+
+        self.lblWattage = QLabel(self.gbDetector)
+        self.lblWattage.setObjectName("lblWattage")
+        sizePolicy.setHeightForWidth(self.lblWattage.sizePolicy().hasHeightForWidth())
+        self.lblWattage.setSizePolicy(sizePolicy)
+
+        self.formDetector.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblWattage)
+
+        self.lcdWattage = QLCDNumber(self.gbDetector)
+        self.lcdWattage.setObjectName("lcdWattage")
+        sizePolicy2.setHeightForWidth(self.lcdWattage.sizePolicy().hasHeightForWidth())
+        self.lcdWattage.setSizePolicy(sizePolicy2)
+        self.lcdWattage.setMinimumSize(QSize(0, 26))
+        self.lcdWattage.setLineWidth(2)
+        self.lcdWattage.setDigitCount(10)
+
+        self.formDetector.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lcdWattage)
+
         self.verticalLayout_2.addWidget(self.gbDetector)
+
+        self.gbPowerCal = QGroupBox(self.centralwidget)
+        self.gbPowerCal.setObjectName("gbPowerCal")
+        sizePolicy.setHeightForWidth(self.gbPowerCal.sizePolicy().hasHeightForWidth())
+        self.gbPowerCal.setSizePolicy(sizePolicy)
+        self.gbPowerCal.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.vboxPowerCal = QVBoxLayout(self.gbPowerCal)
+        self.vboxPowerCal.setSpacing(4)
+        self.vboxPowerCal.setObjectName("vboxPowerCal")
+        self.vboxPowerCal.setContentsMargins(6, 4, 6, 6)
+        self.cbProfile = QComboBox(self.gbPowerCal)
+        self.cbProfile.setObjectName("cbProfile")
+        sizePolicy4 = QSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.cbProfile.sizePolicy().hasHeightForWidth())
+        self.cbProfile.setSizePolicy(sizePolicy4)
+
+        self.vboxPowerCal.addWidget(self.cbProfile)
+
+        self.hlProfileButtons = QHBoxLayout()
+        self.hlProfileButtons.setObjectName("hlProfileButtons")
+        self.btnReloadProfiles = QPushButton(self.gbPowerCal)
+        self.btnReloadProfiles.setObjectName("btnReloadProfiles")
+
+        self.hlProfileButtons.addWidget(self.btnReloadProfiles)
+
+        self.btnOpenCalibration = QPushButton(self.gbPowerCal)
+        self.btnOpenCalibration.setObjectName("btnOpenCalibration")
+
+        self.hlProfileButtons.addWidget(self.btnOpenCalibration)
+
+        self.vboxPowerCal.addLayout(self.hlProfileButtons)
+
+        self.verticalLayout_2.addWidget(self.gbPowerCal)
 
         self.verticalSpacer = QSpacerItem(
             20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
@@ -622,15 +711,14 @@ class Ui_MainWindow(object):
 
         self.gbSave = QGroupBox(self.centralwidget)
         self.gbSave.setObjectName("gbSave")
-        sizePolicy4 = QSizePolicy(
+        sizePolicy5 = QSizePolicy(
             QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred
         )
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
-        self.gbSave.setSizePolicy(sizePolicy4)
-        self.gbSave.setMinimumSize(QSize(0, 50))
-        self.gbSave.setFont(font1)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
+        self.gbSave.setSizePolicy(sizePolicy5)
+        self.gbSave.setMinimumSize(QSize(0, 0))
         self.gbSave.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbSave.setFlat(False)
         self.gbSave.setCheckable(False)
@@ -645,7 +733,6 @@ class Ui_MainWindow(object):
         self.formSave.setContentsMargins(-1, -1, 0, 0)
         self.lblGroupLetter = QLabel(self.gbSave)
         self.lblGroupLetter.setObjectName("lblGroupLetter")
-        self.lblGroupLetter.setFont(font)
 
         self.formSave.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblGroupLetter)
 
@@ -675,16 +762,15 @@ class Ui_MainWindow(object):
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.setObjectName("cbGroupLetter")
-        sizePolicy5 = QSizePolicy(
+        sizePolicy6 = QSizePolicy(
             QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed
         )
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(
+        sizePolicy6.setHorizontalStretch(0)
+        sizePolicy6.setVerticalStretch(0)
+        sizePolicy6.setHeightForWidth(
             self.cbGroupLetter.sizePolicy().hasHeightForWidth()
         )
-        self.cbGroupLetter.setSizePolicy(sizePolicy5)
-        self.cbGroupLetter.setFont(font)
+        self.cbGroupLetter.setSizePolicy(sizePolicy6)
         self.cbGroupLetter.setMaxCount(24)
         self.cbGroupLetter.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
@@ -692,15 +778,13 @@ class Ui_MainWindow(object):
 
         self.lblSuffix = QLabel(self.gbSave)
         self.lblSuffix.setObjectName("lblSuffix")
-        self.lblSuffix.setFont(font)
 
         self.formSave.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSuffix)
 
         self.leSuffix = QLineEdit(self.gbSave)
         self.leSuffix.setObjectName("leSuffix")
-        sizePolicy5.setHeightForWidth(self.leSuffix.sizePolicy().hasHeightForWidth())
-        self.leSuffix.setSizePolicy(sizePolicy5)
-        self.leSuffix.setFont(font)
+        sizePolicy6.setHeightForWidth(self.leSuffix.sizePolicy().hasHeightForWidth())
+        self.leSuffix.setSizePolicy(sizePolicy6)
         self.leSuffix.setText("")
         self.leSuffix.setMaxLength(20)
 
@@ -711,14 +795,13 @@ class Ui_MainWindow(object):
         self.btnSave = QPushButton(self.gbSave)
         self.btnSave.setObjectName("btnSave")
         self.btnSave.setEnabled(False)
-        sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy6.setHorizontalStretch(0)
-        sizePolicy6.setVerticalStretch(0)
-        sizePolicy6.setHeightForWidth(self.btnSave.sizePolicy().hasHeightForWidth())
-        self.btnSave.setSizePolicy(sizePolicy6)
-        self.btnSave.setMinimumSize(QSize(100, 30))
-        self.btnSave.setMaximumSize(QSize(1000, 40))
-        self.btnSave.setFont(font)
+        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy7.setHorizontalStretch(0)
+        sizePolicy7.setVerticalStretch(0)
+        sizePolicy7.setHeightForWidth(self.btnSave.sizePolicy().hasHeightForWidth())
+        self.btnSave.setSizePolicy(sizePolicy7)
+        self.btnSave.setMinimumSize(QSize(100, 24))
+        self.btnSave.setMaximumSize(QSize(1000, 32))
 
         self.verticalLayout.addWidget(self.btnSave)
 
@@ -730,26 +813,21 @@ class Ui_MainWindow(object):
         self.btnStartMeasurement = QPushButton(self.centralwidget)
         self.btnStartMeasurement.setObjectName("btnStartMeasurement")
         self.btnStartMeasurement.setEnabled(False)
-        self.btnStartMeasurement.setMinimumSize(QSize(75, 30))
-        self.btnStartMeasurement.setMaximumSize(QSize(500, 40))
-        self.btnStartMeasurement.setFont(font)
+        self.btnStartMeasurement.setMinimumSize(QSize(60, 24))
+        self.btnStartMeasurement.setMaximumSize(QSize(500, 32))
 
         self.hlMeasurementControls.addWidget(self.btnStartMeasurement)
 
         self.btnStopMeasurement = QPushButton(self.centralwidget)
         self.btnStopMeasurement.setObjectName("btnStopMeasurement")
         self.btnStopMeasurement.setEnabled(False)
-        self.btnStopMeasurement.setMinimumSize(QSize(75, 30))
-        self.btnStopMeasurement.setMaximumSize(QSize(500, 40))
-        self.btnStopMeasurement.setFont(font)
+        self.btnStopMeasurement.setMinimumSize(QSize(60, 24))
+        self.btnStopMeasurement.setMaximumSize(QSize(500, 32))
 
         self.hlMeasurementControls.addWidget(self.btnStopMeasurement)
 
         self.lineMeasurementControls = QFrame(self.centralwidget)
         self.lineMeasurementControls.setObjectName("lineMeasurementControls")
-        font2 = QFont()
-        font2.setPointSize(11)
-        self.lineMeasurementControls.setFont(font2)
         self.lineMeasurementControls.setFrameShape(QFrame.Shape.VLine)
         self.lineMeasurementControls.setFrameShadow(QFrame.Shadow.Sunken)
 
@@ -758,19 +836,17 @@ class Ui_MainWindow(object):
         self.btnResetMeasurement = QPushButton(self.centralwidget)
         self.btnResetMeasurement.setObjectName("btnResetMeasurement")
         self.btnResetMeasurement.setEnabled(False)
-        self.btnResetMeasurement.setFont(font)
 
         self.hlMeasurementControls.addWidget(self.btnResetMeasurement)
 
         self.verticalLayout_2.addLayout(self.hlMeasurementControls)
 
-        self.verticalLayout_2.setStretch(7, 1)
+        self.verticalLayout_2.setStretch(8, 1)
 
         self.gridLayout_5.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
 
         self.line = QFrame(self.centralwidget)
         self.line.setObjectName("line")
-        self.line.setFont(font2)
         self.line.setFrameShadow(QFrame.Shadow.Plain)
         self.line.setFrameShape(QFrame.Shape.VLine)
 
@@ -785,7 +861,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName("menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1098, 39))
+        self.menubar.setGeometry(QRect(0, 0, 900, 22))
         self.menuEinstellungen = QMenu(self.menubar)
         self.menuEinstellungen.setObjectName("menuEinstellungen")
         MainWindow.setMenuBar(self.menubar)
@@ -797,6 +873,9 @@ class Ui_MainWindow(object):
         self.menuEinstellungen.addAction(self.actionAutoSaveEnabled)
         self.menuEinstellungen.addAction(self.actionAcquisitionSettings)
         self.menuEinstellungen.addAction(self.actionEncoderDebug)
+        self.menuEinstellungen.addAction(self.actionLogWindow)
+        self.menuEinstellungen.addAction(self.actionPowerCalibration)
+        self.menuEinstellungen.addAction(self.actionAutoPowerCalibration)
 
         self.retranslateUi(MainWindow)
         self.actionAutoSaveEnabled.triggered["bool"].connect(self.lblSuffix.setVisible)
@@ -822,6 +901,19 @@ class Ui_MainWindow(object):
         )
         self.actionEncoderDebug.setText(
             QCoreApplication.translate("MainWindow", "Encoder Debugging", None)
+        )
+        self.actionLogWindow.setText(
+            QCoreApplication.translate("MainWindow", "Log-Ausgabe anzeigen", None)
+        )
+        self.actionPowerCalibration.setText(
+            QCoreApplication.translate(
+                "MainWindow", "Leistungskalibrierung\u2026", None
+            )
+        )
+        self.actionAutoPowerCalibration.setText(
+            QCoreApplication.translate(
+                "MainWindow", "Automatische Leistungskalibrierung\u2026", None
+            )
         )
         self.gbArduinoConnection.setTitle(
             QCoreApplication.translate("MainWindow", "Arduino-Verbindung", None)
@@ -886,6 +978,44 @@ class Ui_MainWindow(object):
         self.ledDetectorStatus.setText("")
         self.lblDetectorVoltage.setText(
             QCoreApplication.translate("MainWindow", "Spannung (V)", None)
+        )
+        self.lblGainLabel.setText(
+            QCoreApplication.translate("MainWindow", "PD-TIA Gain", None)
+        )
+        self.btnGain1.setText(QCoreApplication.translate("MainWindow", "1", None))
+        self.btnGain2.setText(QCoreApplication.translate("MainWindow", "2", None))
+        self.btnGain3.setText(QCoreApplication.translate("MainWindow", "3", None))
+        self.btnGain4.setText(QCoreApplication.translate("MainWindow", "4", None))
+        self.lblWattage.setText(
+            QCoreApplication.translate("MainWindow", "Leistung (mW)", None)
+        )
+        self.gbPowerCal.setTitle(
+            QCoreApplication.translate("MainWindow", "Detektor-Kalibrierung", None)
+        )
+        self.cbProfile.setPlaceholderText(
+            QCoreApplication.translate(
+                "MainWindow", "\u2014 Kein Profil geladen \u2014", None
+            )
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnReloadProfiles.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Profil-Liste aus dem Verzeichnis neu einlesen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnReloadProfiles.setText(
+            QCoreApplication.translate("MainWindow", "Aktualisieren", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnOpenCalibration.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Leistungskalibrierungstool \u00f6ffnen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnOpenCalibration.setText(
+            QCoreApplication.translate("MainWindow", "Kalibrierungstool\u2026", None)
         )
         self.gbSave.setTitle(
             QCoreApplication.translate("MainWindow", "Speicherung", None)

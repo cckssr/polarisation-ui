@@ -16,7 +16,8 @@
       "Bash(git stash *)",
       "Bash(.venv/bin/pytest tests/*)",
       "Bash(.venv/bin/pytest calibration_tool/tests/*)",
-      "Bash(../.venv/bin/pytest tests/ -q)"
+      "Bash(../.venv/bin/pytest tests/ -q)",
+      "Bash(git -C /Users/cedric.kessler/GIT/polarisation-ui log --oneline -8)"
     ]
   }
 }

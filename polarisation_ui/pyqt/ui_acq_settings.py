@@ -47,6 +47,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
     QLabel,
@@ -139,6 +140,37 @@ class Ui_Dialog(object):
 
         self.verticalLayout.addWidget(self.sampRot_box)
 
+        self.gbSpikeFilter = QGroupBox(Dialog)
+        self.gbSpikeFilter.setObjectName("gbSpikeFilter")
+        self.formSpikeFilter = QFormLayout(self.gbSpikeFilter)
+        self.formSpikeFilter.setObjectName("formSpikeFilter")
+        self.spikeEnabled = QCheckBox(self.gbSpikeFilter)
+        self.spikeEnabled.setObjectName("spikeEnabled")
+
+        self.formSpikeFilter.setWidget(
+            0, QFormLayout.ItemRole.SpanningRole, self.spikeEnabled
+        )
+
+        self.lblSpikeMaxDelta = QLabel(self.gbSpikeFilter)
+        self.lblSpikeMaxDelta.setObjectName("lblSpikeMaxDelta")
+
+        self.formSpikeFilter.setWidget(
+            1, QFormLayout.ItemRole.LabelRole, self.lblSpikeMaxDelta
+        )
+
+        self.spikeMaxDelta = QDoubleSpinBox(self.gbSpikeFilter)
+        self.spikeMaxDelta.setObjectName("spikeMaxDelta")
+        self.spikeMaxDelta.setMinimum(1.000000000000000)
+        self.spikeMaxDelta.setMaximum(180.000000000000000)
+        self.spikeMaxDelta.setSingleStep(1.000000000000000)
+        self.spikeMaxDelta.setDecimals(1)
+
+        self.formSpikeFilter.setWidget(
+            1, QFormLayout.ItemRole.FieldRole, self.spikeMaxDelta
+        )
+
+        self.verticalLayout.addWidget(self.gbSpikeFilter)
+
         self.buttonBox = QDialogButtonBox(Dialog)
         self.buttonBox.setObjectName("buttonBox")
         self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
@@ -150,6 +182,7 @@ class Ui_Dialog(object):
 
         self.verticalLayout.setStretch(0, 1)
         self.verticalLayout.setStretch(1, 1)
+        self.verticalLayout.setStretch(2, 1)
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -178,6 +211,27 @@ class Ui_Dialog(object):
         )
         self.samp_averageOn.setText(
             QCoreApplication.translate("Dialog", "Mittelung aktiviert", None)
+        )
+        self.gbSpikeFilter.setTitle(
+            QCoreApplication.translate("Dialog", "Spike-Filter", None)
+        )
+        self.spikeEnabled.setText(
+            QCoreApplication.translate("Dialog", "Spike-Filter aktivieren", None)
+        )
+        self.lblSpikeMaxDelta.setText(
+            QCoreApplication.translate("Dialog", "Max. Winkelsprung", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.spikeMaxDelta.setToolTip(
+            QCoreApplication.translate(
+                "Dialog",
+                "Maximale erlaubte Winkel\u00e4nderung pro Abtastung (100 ms). Messungen mit gr\u00f6\u00dferer \u00c4nderung werden verworfen.",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.spikeMaxDelta.setSuffix(
+            QCoreApplication.translate("Dialog", " \u00b0/Poll", None)
         )
 
     # retranslateUi

@@ -568,7 +568,7 @@ class MagnetAnalyzer:
             )
             ax_residuals.set_xlabel("Angle (degrees)")
             ax_residuals.set_ylabel("Residual (mT)")
-            ax_residuals.set_title(f'Model residuals (R² = {fit["r2"]:.4f})')
+            ax_residuals.set_title(f"Model residuals (R² = {fit['r2']:.4f})")
             ax_residuals.legend(loc="upper right")
             ax_residuals.grid(True, alpha=0.3)
 

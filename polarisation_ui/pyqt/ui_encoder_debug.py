@@ -72,9 +72,6 @@ class Ui_EncoderDebugDialog(object):
         if not EncoderDebugDialog.objectName():
             EncoderDebugDialog.setObjectName("EncoderDebugDialog")
         EncoderDebugDialog.resize(860, 683)
-        font = QFont()
-        font.setPointSize(11)
-        EncoderDebugDialog.setFont(font)
         self.verticalLayout_root = QVBoxLayout(EncoderDebugDialog)
         self.verticalLayout_root.setSpacing(6)
         self.verticalLayout_root.setObjectName("verticalLayout_root")

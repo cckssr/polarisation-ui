@@ -59,7 +59,6 @@ def sensor_metadata():
 
 
 class TestUnsavedTracking:
-
     def test_initial_state_is_not_unsaved(self, svc):
         assert not svc.has_unsaved()
 
@@ -77,7 +76,6 @@ class TestUnsavedTracking:
 
 
 class TestGenerateFilename:
-
     def test_returns_string_with_folder_and_file(self, svc):
         name = svc.generate_filename("MySample", "A")
         parts = name.split("/")
@@ -129,7 +127,6 @@ class TestGenerateFilename:
 
 
 class TestCreateMetadata:
-
     def test_dublin_core_fields_present(self, svc, start_end):
         t0, t1 = start_end
         m = svc.create_metadata(t0, t1, "A", "SampleX")
@@ -218,7 +215,6 @@ class TestCreateMetadata:
 
 
 class TestSaveMeasurement:
-
     def test_csv_file_created(self, svc, sample_data, start_end, tmp_path):
         t0, t1 = start_end
         meta = svc.create_metadata(t0, t1, "A", "Test")
@@ -305,7 +301,6 @@ class TestSaveMeasurement:
 
 
 class TestAutoSave:
-
     def test_returns_path_on_success(self, svc, sample_data, start_end):
         t0, t1 = start_end
         result = svc.auto_save("MySample", "A", sample_data, t0, t1)
@@ -344,7 +339,6 @@ class TestAutoSave:
 
 
 class TestAutoBackup:
-
     def test_backup_file_created(self, svc, sample_data, start_end):
         t0, _ = start_end
         result = svc.auto_backup(sample_data, t0, identifier="Test", group_letter="A")
@@ -451,7 +445,6 @@ class TestCrashRecovery:
 
 
 class TestBackupCleanup:
-
     def test_old_backups_removed(self, tmp_path):
         backup_dir = tmp_path / ".backup"
         backup_dir.mkdir()
@@ -489,7 +482,6 @@ class TestBackupCleanup:
 
 
 class TestSaveCalibrationRun:
-
     def _make_data(self):
         return [
             ["ts_ms", "sample_angle", "detector_angle"],

@@ -1,9 +1,9 @@
 """
 Malus-law curve plot for Malus tab.
 
-Accumulates manually saved (sample angle, intensity) pairs and displays them
-as a scatter plot.  Points are added via add_point() (Save button) and removed
-one at a time via remove_last_point() (Delete button).
+Accumulates manually saved MalusPoint entries (user-entered analyser angles)
+and displays them as a scatter plot.  Points are added via add_point() and
+removed via remove_last_point() or remove_point_at().
 """
 
 from typing import Optional
@@ -11,13 +11,15 @@ from typing import Optional
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.core.models import MalusPoint
+
 
 class MalusCurvePlot(QWidget):
     """
     Scatter plot of saved Malus-law measurement points.
 
-    X axis: sample stage angle (degrees)
-    Y axis: detector intensity (a.u.)
+    X axis: analyser angle (degrees, user-entered)
+    Y axis: detector intensity (V, averaged over ~0.5 s window)
 
     All saved points are shown as green circles.  The most recently saved point
     is additionally outlined with a red ring so the user can see the last entry.
@@ -25,8 +27,7 @@ class MalusCurvePlot(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self._sample_angles: list[float] = []
-        self._intensities: list[float] = []
+        self._points: list[MalusPoint] = []
         self._setup_plot()
 
     def _setup_plot(self) -> None:
@@ -36,8 +37,8 @@ class MalusCurvePlot(QWidget):
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Probenwinkel", units="°")
-        self._plot_widget.setLabel("left", "Intensität", units="a.u.")
+        self._plot_widget.setLabel("bottom", "Analysatorwinkel", units="°")
+        self._plot_widget.setLabel("left", "Intensität", units="V")
 
         # All saved points: filled green circles
         self._scatter = self._plot_widget.plot(
@@ -62,41 +63,70 @@ class MalusCurvePlot(QWidget):
 
         layout.addWidget(self._plot_widget)
 
-    def add_point(self, sample_angle: float, intensity: float) -> None:
+    def add_point(
+        self,
+        analyser_angle: float,
+        polariser_angle: float,
+        intensity_V: float,
+        pdtia_gain: int = 0,
+        power_W: Optional[float] = None,
+        conv_factor_W_per_V: Optional[float] = None,
+    ) -> None:
         """Append a new measurement point and refresh the plot."""
-        self._sample_angles.append(sample_angle)
-        self._intensities.append(intensity)
+        self._points.append(
+            MalusPoint(
+                analyser_angle=analyser_angle,
+                polariser_angle=polariser_angle,
+                intensity_V=intensity_V,
+                pdtia_gain=pdtia_gain,
+                power_W=power_W,
+                conv_factor_W_per_V=conv_factor_W_per_V,
+            )
+        )
         self._refresh()
 
     def remove_last_point(self) -> bool:
-        """
-        Remove the most recently added point.
-
-        Returns:
-            True if a point was removed, False if the list was already empty.
-        """
-        if not self._sample_angles:
+        """Remove the most recently added point. Returns False if already empty."""
+        if not self._points:
             return False
-        self._sample_angles.pop()
-        self._intensities.pop()
+        self._points.pop()
         self._refresh()
         return True
 
-    def get_points(self) -> list[tuple[float, float]]:
-        """Return all saved (sample_angle, intensity) pairs."""
-        return list(zip(self._sample_angles, self._intensities))
+    def remove_point_at(self, index: int) -> bool:
+        """Remove the point at *index*. Returns False if out of range."""
+        if index < 0 or index >= len(self._points):
+            return False
+        del self._points[index]
+        self._refresh()
+        return True
+
+    def get_points(self) -> list[MalusPoint]:
+        """Return all saved MalusPoint entries."""
+        return list(self._points)
 
     def clear(self) -> None:
         """Remove all saved points and clear the plot."""
-        self._sample_angles.clear()
-        self._intensities.clear()
+        self._points.clear()
         self._refresh()
 
     def _refresh(self) -> None:
-        if not self._sample_angles:
-            self._scatter.setData([], [])
-            self._last_marker.setData([], [])
+        if not self._points:
+            self._scatter.setVisible(False)
+            self._last_marker.setVisible(False)
             return
 
-        self._scatter.setData(self._sample_angles, self._intensities)
-        self._last_marker.setData([self._sample_angles[-1]], [self._intensities[-1]])
+        xs = [p.analyser_angle for p in self._points]
+
+        use_power = all(p.power_W is not None for p in self._points)
+        if use_power:
+            ys = [p.power_W * 1e3 for p in self._points]  # type: ignore[operator]
+            self._plot_widget.setLabel("left", "Leistung", units="mW")
+        else:
+            ys = [p.intensity_V for p in self._points]
+            self._plot_widget.setLabel("left", "Intensität", units="V")
+
+        self._scatter.setData(xs, ys)
+        self._scatter.setVisible(True)
+        self._last_marker.setData([xs[-1]], [ys[-1]])
+        self._last_marker.setVisible(True)
