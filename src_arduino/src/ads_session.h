@@ -20,6 +20,12 @@ public:
   // Reset ADC to power-on defaults and restart continuous conversion.
   void reset();
 
+  // Send hardware POWERDOWN command and inhibit auto-recovery until powerUp().
+  void powerDown();
+
+  // Clear the power-down inhibit and attempt to re-initialise the ADC.
+  void powerUp();
+
   // ── Continuous ADC polling ────────────────────────────────────────────────
   // Call from loop() when ready() returns true.
   void pollAdc();
@@ -56,6 +62,7 @@ public:
   float lastTemperature() const { return _lastTemperature; }
   int32_t lastRaw() const { return _lastRaw; }
   bool adcPresent() const { return _present; }
+  bool adcPoweredDown() const { return _inhibitRecovery; }
 
   // Read-only access to shadow registers (for SENS:ADC:* and DIAG:ADC?).
   const ADS1220 &adcRef() const { return _adc; }
@@ -66,6 +73,7 @@ public:
 private:
   ADS1220 _adc;
   bool _present = false;
+  bool _inhibitRecovery = false;
   uint8_t _pdGainStage = 0;
   float _lastVoltage = 0.0f;
   float _lastTemperature = NAN;
