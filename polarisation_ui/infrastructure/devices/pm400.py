@@ -27,17 +27,18 @@ try:
     from polarisation_ui.infrastructure.modules.pm400 import (
         ThorlabsPM400 as _ThorlabsPM400,
     )
+
     _PYMEASURE_AVAILABLE = True
 except ImportError as _local_exc:
     # Local copy failed — probably because pymeasure base classes differ.
     # Try the installed package directly.
     try:
         from pymeasure.instruments.thorlabs import ThorlabsPM400 as _ThorlabsPM400
+
         _PYMEASURE_AVAILABLE = True
     except ImportError as _pkg_exc:
         _PYMEASURE_IMPORT_ERROR = (
-            f"Local driver: {_local_exc} | "
-            f"pymeasure package: {_pkg_exc}"
+            f"Local driver: {_local_exc} | pymeasure package: {_pkg_exc}"
         )
 
 _PYVISA_AVAILABLE = False
@@ -45,6 +46,7 @@ _PYVISA_IMPORT_ERROR: str = ""
 
 try:
     import pyvisa as _pyvisa
+
     _PYVISA_AVAILABLE = True
 except ImportError as _visa_exc:
     _PYVISA_IMPORT_ERROR = str(_visa_exc)
@@ -62,7 +64,7 @@ class PM400PowerMeter:
         pm = PM400PowerMeter()
         pm.connect("USB0::0x1313::0x8078::P0000001::INSTR")
         pm.set_wavelength_nm(633.0)
-        pm.set_attenuation_dB(3.0)   # beamsplitter loss
+        pm.set_attenuation_dB(3.0)  # beamsplitter loss
         pm.set_averaging(100)
         print(pm.read_power_W())
         pm.disconnect()

@@ -222,7 +222,6 @@ class MockArduino:
 
     def _run_loop(self) -> None:
         try:
-
             last_poll = time.time()
 
             while not self._stop_flag:

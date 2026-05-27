@@ -225,7 +225,7 @@ if __name__ == "__main__":
         for i in range(5):
             sample = encoder.read_angle("A")
             if sample is not None:
-                print(f"  Sample {i+1}: {sample:.2f}°")
+                print(f"  Sample {i + 1}: {sample:.2f}°")
             time.sleep(0.5)
 
         encoder.disconnect()

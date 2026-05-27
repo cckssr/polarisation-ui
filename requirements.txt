@@ -4,3 +4,4 @@ pyserial
 pyqtgraph
 numpy
 pyqtgraph
+ruff

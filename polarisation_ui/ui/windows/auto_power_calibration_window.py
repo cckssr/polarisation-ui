@@ -504,9 +504,13 @@ class AutoPowerCalibrationWindow(QDialog):
 
     def _update_start_button_state(self) -> None:
         arduino_ok = (
-            self._device_manager is not None
-            and self._device_manager.is_encoder_connected()
-        ) if self._standalone else True
+            (
+                self._device_manager is not None
+                and self._device_manager.is_encoder_connected()
+            )
+            if self._standalone
+            else True
+        )
         hw_ready = self._kdc.is_connected() and self._pm.is_connected() and arduino_ok
         self.ui.btnAlignPolariser.setEnabled(hw_ready)
         self.ui.btnStart.setEnabled(

@@ -386,9 +386,9 @@ if __name__ == "__main__":
             pos_deg = stage.get_position_degrees()
             pos_counts = stage.get_position_counts()
             if pos_deg is not None:
-                print(f"  Sample {i+1}: {pos_deg:.2f}° ({pos_counts} counts)")
+                print(f"  Sample {i + 1}: {pos_deg:.2f}° ({pos_counts} counts)")
             else:
-                print(f"  Sample {i+1}: Read failed")
+                print(f"  Sample {i + 1}: Read failed")
             time.sleep(0.5)
 
         stage.disconnect()
