@@ -1,8 +1,7 @@
 {
-  "version": "0.0.1",
+  "version": "1.0.0",
   "de": {
     "description": "Zentrale Konfigurationsdatei für die Polarisation-Anwendung. Stellt Konstanten und Standardwerte für die gesamte Anwendung bereit.",
-
     "application": {
       "name": "Polarisation UI",
       "author": "C. Kessler, K. Brandt"
@@ -12,7 +11,13 @@
     },
     "connection": {
       "max_retry_attempts": 10,
-      "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
+      "backoff_delays_ms": [
+        1000,
+        2000,
+        4000,
+        8000,
+        15000
+      ]
     },
     "plot": {
       "max_points": 300,
@@ -24,7 +29,6 @@
       "x_label": "Zeit / µs",
       "y_label": "Anzahl Ereignisse"
     },
-
     "timers": {
       "control_update_interval": 1000,
       "statistics_update_interval": 2000,
@@ -32,7 +36,6 @@
       "gui_update_interval": 200,
       "diag_interval_ms": 5000
     },
-
     "acquisition": {
       "det_average_on": true,
       "det_averages": 5,
@@ -43,7 +46,6 @@
       "spike_max_delta_deg": 10.0,
       "spike_reset_after": 5
     },
-
     "data_controller": {
       "max_history_size": 1000,
       "high_speed_mode": {
@@ -51,7 +53,6 @@
         "batch_history": 5
       }
     },
-
     "save": {
       "tk_designation": "TK41",
       "base_folder": "Polarisation"
@@ -71,7 +72,6 @@
       "orange": "orange",
       "blue": "blue"
     },
-
     "messages": {
       "app_init": "Anwendung wird initialisiert...",
       "device_not_connected": "Nicht verbunden..",

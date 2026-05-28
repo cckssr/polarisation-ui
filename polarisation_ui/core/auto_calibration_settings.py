@@ -1,5 +1,4 @@
-"""
-Automatic power calibration — settings and angle-grid builder.
+"""Automatic power calibration — settings and angle-grid builder.
 
 Stores connection parameters (KDC101, PM400, beamsplitter attenuation) as a
 JSON sidecar at ~/.config/polarisation-ui/auto_calibration_settings.json so
@@ -87,10 +86,12 @@ class AutoCalibrationParams:
     not recorded.  The PM400 read is also skipped for those points so that the
     sweep moves on immediately without spending measurement time in saturation.
     Typical ADS1220 full-scale is ~2.4 V; the default 2.35 V leaves a small
-    margin below clipping."""
-    """Physical stage angle at maximum transmission.  Added to every logical
+    margin below clipping.
+    
+    Physical stage angle at maximum transmission.  Added to every logical
     sweep angle before sending to the KDC so that sweep angles 0°…90° always
-    map to max→min transmission regardless of how the polariser is mounted."""
+    map to max→min transmission regardless of how the polariser is mounted.
+    """
 
 
 def build_angle_grid(params: AutoCalibrationParams) -> list[float]:

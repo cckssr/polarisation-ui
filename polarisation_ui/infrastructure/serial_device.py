@@ -19,15 +19,15 @@ Classes:
 Usage:
     Initialize and connect to a serial device:
 
-    >>> device = SerialDevice(port='/dev/ttyUSB0', baudrate=115200)
+    >>> device = SerialDevice(port="/dev/ttyUSB0", baudrate=115200)
     >>> device.reconnect()
     >>> if device.connected:
-    ...     device.send_command('Hello')
+    ...     device.send_command("Hello")
     ...     response = device.read_line()
 
     For virtual devices (testing):
 
-    >>> device = SerialDevice(port='/dev/pts/1', baudrate=115200)
+    >>> device = SerialDevice(port="/dev/pts/1", baudrate=115200)
     >>> device.reconnect()  # PTY devices don't require baudrate configuration
 """
 

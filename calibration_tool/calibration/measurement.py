@@ -88,16 +88,23 @@ class CalibrationMeasurement:
         5. Save and analyze data
     """
 
-    def __init__(self, arduino: ArduinoEncoder, kdc101: KDC101Stage):
+    def __init__(
+        self,
+        arduino: ArduinoEncoder,
+        kdc101: KDC101Stage,
+        encoder_id: str = "A",
+    ):
         """
         Initialize measurement session.
 
         Args:
             arduino: ArduinoEncoder instance
             kdc101: KDC101Stage instance
+            encoder_id: Which AS5048A to read — "A" (sample) or "B" (detector)
         """
         self.arduino = arduino
         self.kdc101 = kdc101
+        self.encoder_id = encoder_id
         self.current_run: Optional[CalibrationRun] = None
         self._running = False
 
@@ -146,12 +153,20 @@ class CalibrationMeasurement:
         Returns:
             MeasurementPoint or None if error
         """
-        # Read KDC101 position (reference)
+        # Single round-trip: compute degrees from the same counts read
         ref_counts = self.kdc101.get_position_counts()
-        ref_deg = self.kdc101.get_position_degrees()
+        ref_deg = (
+            ref_counts / self.kdc101.ENCODER_COUNTS_PER_DEG
+            if ref_counts is not None
+            else None
+        )
 
-        # Read Arduino encoder (device under test)
-        measured_deg = self.arduino.read_angle()
+        # Read the chosen AS5048A encoder (no ADC read — intensity is irrelevant here)
+        measured_deg = self.arduino.read_angle(self.encoder_id)
+
+        # Encoder A (sample stage): magnet placement reverses the count direction.
+        if measured_deg is not None and self.encoder_id == "A":
+            measured_deg = (360.0 - measured_deg) % 360.0
 
         if ref_deg is None or measured_deg is None:
             return None

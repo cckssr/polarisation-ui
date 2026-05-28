@@ -55,6 +55,6 @@ class Kdc101Stub:
 
 
 # Runtime assertion — caught at import time during tests.
-assert isinstance(
-    Kdc101Stub(), HostModule
-), "Kdc101Stub does not satisfy the HostModule protocol"
+assert isinstance(Kdc101Stub(), HostModule), (
+    "Kdc101Stub does not satisfy the HostModule protocol"
+)

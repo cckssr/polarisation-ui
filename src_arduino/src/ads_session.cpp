@@ -135,6 +135,11 @@ void AdsSession::_configureAdcDefaults()
   _conversionPeriodMs = 50; // 20 SPS default
   _nextConversionMs = 0;
 
+  // DRDYM=1: DOUT/DRDY acts as standard SPI MISO (only driven while CS is low).
+  // Without this, DRDYM=0 default drives MISO LOW on conversion-complete even
+  // when CS is high, corrupting encoder reads on the shared SPI bus.
+  _adc.setDRDYMode(true);
+
   _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
   _adc.start();
 
@@ -145,6 +150,7 @@ void AdsSession::_configureAdcDefaults()
 
 void AdsSession::reset()
 {
+  _inhibitRecovery = false;
   if (!_present)
     return;
   _adc.reset();
@@ -158,6 +164,20 @@ void AdsSession::reset()
 
   _waitForFirstConversion();
   _nextConversionMs = millis() + _conversionPeriodMs;
+}
+
+void AdsSession::powerDown()
+{
+  _inhibitRecovery = true;
+  if (_present)
+    _adc.powerDown();
+  _present = false;
+}
+
+void AdsSession::powerUp()
+{
+  _inhibitRecovery = false;
+  _scheduleRecoveryRetry(); // triggers _attemptRecovery() on the next pollAdc() tick
 }
 
 // ── Continuous ADC polling ────────────────────────────────────────────────────
@@ -174,10 +194,11 @@ bool AdsSession::ready() const
 
 void AdsSession::pollAdc()
 {
-  // If ADC not present, try to recover (power/connection may have returned).
+  // If ADC not present, try to recover (power/connection may have returned),
+  // unless a deliberate power-down is in effect.
   if (!_present)
   {
-    if (millis() < _nextRecoveryAttemptMs)
+    if (_inhibitRecovery || millis() < _nextRecoveryAttemptMs)
       return;
     if (!_attemptRecovery())
     {
@@ -206,7 +227,7 @@ float AdsSession::takeVoltageReading()
 {
   if (!_present)
   {
-    if (millis() < _nextRecoveryAttemptMs)
+    if (_inhibitRecovery || millis() < _nextRecoveryAttemptMs)
       return NAN;
 
     // Try to recover once for synchronous one-shot reads.

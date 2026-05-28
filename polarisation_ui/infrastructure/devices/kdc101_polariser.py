@@ -1,5 +1,4 @@
-"""
-KDC101 motorised polariser adapter using pylablib.
+"""KDC101 motorised polariser adapter using pylablib.
 
 Wraps pylablib's KinesisMotor with a simple connect/home/move/read API.
 Positions are always in degrees (PRM1-Z8 scale is applied automatically).
@@ -16,7 +15,7 @@ from polarisation_ui.infrastructure.logging import Debug
 # that it does not load PyQt5 into the process at startup alongside PySide6,
 # which on macOS causes spurious ObjC class-duplication warnings.
 _Thorlabs = None
-_ThorlabsError: type = Exception       # falls back to bare Exception until loaded
+_ThorlabsError: type = Exception  # falls back to bare Exception until loaded
 _ThorlabsTimeoutError: type = Exception
 _PYLABLIB_AVAILABLE: Optional[bool] = None  # None = not yet probed
 _PYLABLIB_IMPORT_ERROR: str = ""
@@ -36,6 +35,7 @@ def _ensure_pylablib() -> bool:
             ThorlabsError as _te,
             ThorlabsTimeoutError as _tte,
         )
+
         _Thorlabs = _th
         _ThorlabsError = _te
         _ThorlabsTimeoutError = _tte
@@ -47,8 +47,7 @@ def _ensure_pylablib() -> bool:
 
 
 class KDC101Polariser:
-    """
-    Drive a Thorlabs KDC101 + PRM1-Z8 rotation stage with a polariser mounted.
+    """Drive a Thorlabs KDC101 + PRM1-Z8 rotation stage with a polariser mounted.
 
     All positions are expressed in degrees.  The PRM1-Z8 encoder scale is
     applied automatically via pylablib so no manual counts-per-degree maths
@@ -129,8 +128,7 @@ class KDC101Polariser:
     def move_to(
         self, angle_deg: float, wait: bool = True, timeout: float = 60.0
     ) -> None:
-        """Move to *angle_deg* (degrees).  Blocks until the move completes
-        when *wait* is True.
+        """Move to *angle_deg* (degrees).  Blocks until the move completes when *wait* is True.
 
         Raises ``KDC101TimeoutError`` on timeout, ``KDC101Error`` on other errors.
         """

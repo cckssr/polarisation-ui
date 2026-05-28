@@ -188,6 +188,7 @@ docs/.buildinfo
 
 # Documentation dependencies
 docs/requirements.txt.bak
+calibration_tool/detector_files/
 
 # Additional documentation build artifacts
 *.epub

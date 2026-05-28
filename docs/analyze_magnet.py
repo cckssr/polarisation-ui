@@ -568,7 +568,7 @@ class MagnetAnalyzer:
             )
             ax_residuals.set_xlabel("Angle (degrees)")
             ax_residuals.set_ylabel("Residual (mT)")
-            ax_residuals.set_title(f'Model residuals (R² = {fit["r2"]:.4f})')
+            ax_residuals.set_title(f"Model residuals (R² = {fit['r2']:.4f})")
             ax_residuals.legend(loc="upper right")
             ax_residuals.grid(True, alpha=0.3)
 
@@ -650,12 +650,12 @@ Angle uncertainty: ±{self.ANGLE_UNCERTAINTY:.1f}°
 Field uncertainty: ±{self.FIELD_UNCERTAINTY:.1f} mT
 
 Symmetry score: {symmetry_text}
-  → {'SYMMETRIC' if result.is_symmetric else 'ASYMMETRIC'}
+  → {"SYMMETRIC" if result.is_symmetric else "ASYMMETRIC"}
 
 Pole balance: {result.pole_balance:.3f}
   → North: {result.north_pole_strength:.1f} mT
   → South: {result.south_pole_strength:.1f} mT
-  → {'BALANCED' if result.is_calibrated else 'UNBALANCED'}
+  → {"BALANCED" if result.is_calibrated else "UNBALANCED"}
 
 Fit R²: {result.model_fit_r2:.4f}
   → Amplitude: {result.fit_amplitude:.1f} mT
@@ -663,10 +663,10 @@ Fit R²: {result.model_fit_r2:.4f}
   → Mean combined uncertainty: {result.mean_combined_uncertainty:.2f} mT
 
 Residuals within tolerance:
-  → {'YES' if result.residuals_within_tolerance else 'NO'}
+  → {"YES" if result.residuals_within_tolerance else "NO"}
 
 Overall:
-  → {'CALIBRATED & SYMMETRIC' if result.is_calibrated and result.is_symmetric else 'REQUIRES ADJUSTMENT'}
+  → {"CALIBRATED & SYMMETRIC" if result.is_calibrated and result.is_symmetric else "REQUIRES ADJUSTMENT"}
             """
             ax_summary.text(
                 0.02,

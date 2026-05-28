@@ -14,7 +14,8 @@
       "Bash(.venv/bin/python -c \"from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog; print\\('OK'\\)\")",
       "Bash(.venv/bin/python -c \"from polarisation_ui.infrastructure.devices.dual_encoder import DualEncoderArduino; print\\('OK'\\)\")",
       "Bash(git stash *)",
-      "Bash(.venv/bin/pytest tests/*)"
+      "Bash(.venv/bin/pytest tests/*)",
+      "Bash(git -C /Users/cedric.kessler/GIT/polarisation-ui log --oneline -8)"
     ]
   }
 }

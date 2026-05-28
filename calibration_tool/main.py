@@ -40,6 +40,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QCheckBox,
+    QComboBox,
+    QProgressBar,
     QTextEdit,
     QSplitter,
     QMessageBox,
@@ -58,21 +60,18 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 
 # Local imports
-from config import (
-    ARDUINO_PORT,
-    ARDUINO_BAUDRATE,
-    KDC101_PORT,
-    KDC101_SERIAL,
-    POLL_INTERVAL,
-)
+from config import ARDUINO_BAUDRATE, POLL_INTERVAL
 from devices.arduino_encoder import ArduinoEncoder
 from devices.kdc101_stage import KDC101Stage
+from serial.tools import list_ports
+from pylablib.devices import Thorlabs
 from calibration.measurement import (
     CalibrationMeasurement,
     CalibrationRun,
     MeasurementPoint,
 )
 from calibration.analysis import CalibrationAnalysis
+from manual_calibration_dialog import ManualCalibrationDialog
 from plotting.polar_plot import CalibrationPlotter
 
 
@@ -108,6 +107,70 @@ class MeasurementWorker(QThread):
         self._running = False
 
 
+class AutoCalibrationWorker(QThread):
+    """
+    Background thread for motorised angle sweep.
+
+    Moves the KDC101 to each target angle in sequence, waits for it to stop,
+    waits an additional settle delay, then takes a single encoder reading.
+    """
+
+    point_recorded = Signal(MeasurementPoint)
+    progress_updated = Signal(int, int)  # (completed_steps, total_steps)
+    error_occurred = Signal(str)
+    finished = Signal()
+
+    def __init__(
+        self,
+        measurement: "CalibrationMeasurement",
+        kdc101: "KDC101Stage",
+        angles: list,
+        settle_ms: int = 300,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.measurement = measurement
+        self.kdc101 = kdc101
+        self.angles = angles
+        self.settle_ms = settle_ms
+        self._running = True
+
+    def run(self) -> None:
+        import time
+
+        total = len(self.angles)
+        for i, angle in enumerate(self.angles):
+            if not self._running:
+                break
+            try:
+                if not self.kdc101.move_to_degrees(angle):
+                    self.error_occurred.emit(f"Move to {angle:.1f}° failed")
+                    break
+
+                if not self.kdc101.wait_until_stopped(timeout=60.0):
+                    self.error_occurred.emit(
+                        f"Stage did not stop within 60 s at {angle:.1f}°"
+                    )
+                    break
+
+                time.sleep(self.settle_ms / 1000.0)
+
+                point = self.measurement.take_single_measurement()
+                if point:
+                    self.point_recorded.emit(point)
+
+                self.progress_updated.emit(i + 1, total)
+
+            except Exception as e:
+                self.error_occurred.emit(str(e))
+                break
+
+        self.finished.emit()
+
+    def stop(self) -> None:
+        self._running = False
+
+
 class CalibrationApp(QMainWindow):
     """
     Main application window for encoder calibration.
@@ -135,10 +198,15 @@ class CalibrationApp(QMainWindow):
         # State
         self._measuring = False
         self._measurement_worker: Optional[MeasurementWorker] = None
+        self._auto_worker: Optional[AutoCalibrationWorker] = None
         self._current_run: Optional[CalibrationRun] = None
+        self._auto_sweep_aborted = False
 
-        # Timers
+        # Single-shot timer for live position polling.
+        # Single-shot means it fires once and stops; _update_positions reschedules
+        # it only after the serial I/O completes, preventing queue build-up.
         self._live_timer = QTimer(self)
+        self._live_timer.setSingleShot(True)
         self._live_timer.timeout.connect(self._update_positions)
 
         # Build UI
@@ -225,29 +293,57 @@ class CalibrationApp(QMainWindow):
         group = QGroupBox("Device Connection")
         layout = QVBoxLayout(group)
 
-        # Arduino connection
+        # Arduino row
         arduino_layout = QHBoxLayout()
-        arduino_layout.addWidget(QLabel("Arduino Port:"))
-        self.arduino_port_edit = QLineEdit(ARDUINO_PORT)
-        self.arduino_port_edit.setMaximumWidth(150)
-        arduino_layout.addWidget(self.arduino_port_edit)
+        arduino_layout.addWidget(QLabel("Arduino:"))
+        self.arduino_port_combo = QComboBox()
+        self.arduino_port_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
+        self.arduino_port_combo.setMinimumWidth(180)
+        arduino_layout.addWidget(self.arduino_port_combo, stretch=1)
+        arduino_refresh_btn = QPushButton("⟳")
+        arduino_refresh_btn.setFixedWidth(28)
+        arduino_refresh_btn.setToolTip("Refresh serial ports")
+        arduino_refresh_btn.clicked.connect(self._refresh_arduino_ports)
+        arduino_layout.addWidget(arduino_refresh_btn)
         self.arduino_status = QLabel("●")
         self.arduino_status.setStyleSheet("color: gray; font-size: 16px;")
         arduino_layout.addWidget(self.arduino_status)
-        arduino_layout.addStretch()
         layout.addLayout(arduino_layout)
 
-        # KDC101 connection
+        # Encoder selector row
+        enc_layout = QHBoxLayout()
+        enc_layout.addWidget(QLabel("Encoder:"))
+        self.encoder_combo = QComboBox()
+        self.encoder_combo.addItem("A — Sample angle", userData="A")
+        self.encoder_combo.addItem("B — Detector angle", userData="B")
+        enc_layout.addWidget(self.encoder_combo)
+        enc_layout.addStretch()
+        layout.addLayout(enc_layout)
+
+        # KDC101 row
         kdc_layout = QHBoxLayout()
-        kdc_layout.addWidget(QLabel("KDC101 Port:"))
-        self.kdc_port_edit = QLineEdit(KDC101_PORT)
-        self.kdc_port_edit.setMaximumWidth(150)
-        kdc_layout.addWidget(self.kdc_port_edit)
+        kdc_layout.addWidget(QLabel("KDC101:"))
+        self.kdc_device_combo = QComboBox()
+        self.kdc_device_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
+        self.kdc_device_combo.setMinimumWidth(180)
+        kdc_layout.addWidget(self.kdc_device_combo, stretch=1)
+        kdc_refresh_btn = QPushButton("⟳")
+        kdc_refresh_btn.setFixedWidth(28)
+        kdc_refresh_btn.setToolTip("Refresh Kinesis devices")
+        kdc_refresh_btn.clicked.connect(self._refresh_kdc_devices)
+        kdc_layout.addWidget(kdc_refresh_btn)
         self.kdc_status = QLabel("●")
         self.kdc_status.setStyleSheet("color: gray; font-size: 16px;")
         kdc_layout.addWidget(self.kdc_status)
-        kdc_layout.addStretch()
         layout.addLayout(kdc_layout)
+
+        # Populate dropdowns on first load
+        self._refresh_arduino_ports()
+        self._refresh_kdc_devices()
 
         # Connect buttons
         btn_layout = QHBoxLayout()
@@ -267,6 +363,36 @@ class CalibrationApp(QMainWindow):
         layout.addLayout(btn_layout)
 
         return group
+
+    def _refresh_arduino_ports(self) -> None:
+        """Repopulate the Arduino port combo from available serial ports."""
+        self.arduino_port_combo.clear()
+        ports = sorted(list_ports.comports(), key=lambda p: p.device)
+        if ports:
+            for p in ports:
+                desc = p.description or "Serial device"
+                self.arduino_port_combo.addItem(
+                    f"{p.device} — {desc}", userData=p.device
+                )
+            self.arduino_port_combo.setEnabled(True)
+        else:
+            self.arduino_port_combo.addItem("No serial ports found")
+            self.arduino_port_combo.setEnabled(False)
+
+    def _refresh_kdc_devices(self) -> None:
+        """Repopulate the KDC101 combo from connected Kinesis devices."""
+        self.kdc_device_combo.clear()
+        try:
+            devices = Thorlabs.list_kinesis_devices()
+        except Exception:
+            devices = []
+        if devices:
+            for conn, desc in devices:
+                self.kdc_device_combo.addItem(f"{desc}  [{conn}]", userData=conn)
+            self.kdc_device_combo.setEnabled(True)
+        else:
+            self.kdc_device_combo.addItem("No Kinesis devices found")
+            self.kdc_device_combo.setEnabled(False)
 
     def _create_position_panel(self) -> QGroupBox:
         """Create live position display."""
@@ -368,7 +494,70 @@ class CalibrationApp(QMainWindow):
 
         layout.addLayout(btn_layout)
 
+        # Manual calibration (alternative to KDC101)
+        manual_btn = QPushButton("Manual Cal...")
+        manual_btn.setToolTip(
+            "Step-by-step calibration without a motorized reference stage.\n"
+            "You set each angle manually; the tool records the encoder reading."
+        )
+        manual_btn.clicked.connect(self._start_manual_calibration)
+        layout.addWidget(manual_btn)
+
+        # ── Auto sweep ──────────────────────────────────────────────────────
+        layout.addWidget(self._make_separator("Automatic Full Sweep (KDC101)"))
+
+        auto_desc = QLabel(
+            "Moves the KDC101 through 0–360° automatically,\n"
+            "reads the encoder at each step, and records all points."
+        )
+        auto_desc.setStyleSheet("color: #555; font-size: 9px;")
+        layout.addWidget(auto_desc)
+
+        params_layout = QHBoxLayout()
+        params_layout.addWidget(QLabel("Step:"))
+        self.auto_step_edit = QLineEdit("5.0")
+        self.auto_step_edit.setMaximumWidth(48)
+        self.auto_step_edit.setToolTip("Angular step between positions (degrees)")
+        params_layout.addWidget(self.auto_step_edit)
+        params_layout.addWidget(QLabel("°  Settle:"))
+        self.auto_settle_edit = QLineEdit("300")
+        self.auto_settle_edit.setMaximumWidth(48)
+        self.auto_settle_edit.setToolTip(
+            "Wait time after motor stops before reading (ms)"
+        )
+        params_layout.addWidget(self.auto_settle_edit)
+        params_layout.addWidget(QLabel("ms"))
+        params_layout.addStretch()
+        layout.addLayout(params_layout)
+
+        auto_btn_layout = QHBoxLayout()
+        self.auto_start_btn = QPushButton("▶ Run Full Auto Sweep")
+        self.auto_start_btn.setToolTip(
+            "Connect both devices first, then click here to\n"
+            "automatically sweep through all angles and record calibration data."
+        )
+        self.auto_start_btn.clicked.connect(self._start_auto_calibration)
+        auto_btn_layout.addWidget(self.auto_start_btn)
+        self.auto_stop_btn = QPushButton("■ Stop")
+        self.auto_stop_btn.clicked.connect(self._stop_auto_calibration)
+        self.auto_stop_btn.setEnabled(False)
+        auto_btn_layout.addWidget(self.auto_stop_btn)
+        layout.addLayout(auto_btn_layout)
+
+        self.auto_progress = QProgressBar()
+        self.auto_progress.setRange(0, 100)
+        self.auto_progress.setValue(0)
+        self.auto_progress.setTextVisible(True)
+        self.auto_progress.setFormat("%v / %m steps")
+        layout.addWidget(self.auto_progress)
+
         return group
+
+    @staticmethod
+    def _make_separator(text: str) -> QLabel:
+        label = QLabel(f"─── {text} ───")
+        label.setStyleSheet("color: gray; font-size: 9px;")
+        return label
 
     def _create_analysis_panel(self) -> QGroupBox:
         """Create analysis controls and results."""
@@ -431,34 +620,42 @@ class CalibrationApp(QMainWindow):
         QApplication.processEvents()
 
         # Connect Arduino
-        try:
-            self.arduino = ArduinoEncoder(
-                self.arduino_port_edit.text(), ARDUINO_BAUDRATE
-            )
-            if self.arduino.connect():
-                self.arduino_status.setStyleSheet("color: green; font-size: 16px;")
-            else:
-                self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
-                QMessageBox.warning(self, "Arduino", "Failed to connect to Arduino")
-        except Exception as e:
+        arduino_port = self.arduino_port_combo.currentData()
+        if arduino_port is None:
+            QMessageBox.warning(self, "Arduino", "No serial port selected.")
             self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
-            QMessageBox.critical(self, "Arduino Error", str(e))
+        else:
+            try:
+                self.arduino = ArduinoEncoder(arduino_port, ARDUINO_BAUDRATE)
+                if self.arduino.connect():
+                    self.arduino_status.setStyleSheet("color: green; font-size: 16px;")
+                else:
+                    self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
+                    QMessageBox.warning(self, "Arduino", "Failed to connect to Arduino")
+            except Exception as e:
+                self.arduino_status.setStyleSheet("color: red; font-size: 16px;")
+                QMessageBox.critical(self, "Arduino Error", str(e))
 
         # Connect KDC101
-        try:
-            self.kdc101 = KDC101Stage(self.kdc_port_edit.text())
-            if self.kdc101.connect():
-                self.kdc_status.setStyleSheet("color: green; font-size: 16px;")
-            else:
-                self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
-                QMessageBox.warning(
-                    self,
-                    "KDC101",
-                    "Failed to connect to KDC101\nCheck port and try again.",
-                )
-        except Exception as e:
+        kdc_conn = self.kdc_device_combo.currentData()
+        if kdc_conn is None:
+            QMessageBox.warning(self, "KDC101", "No Kinesis device selected.")
             self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
-            QMessageBox.critical(self, "KDC101 Error", str(e))
+        else:
+            try:
+                self.kdc101 = KDC101Stage(kdc_conn)
+                if self.kdc101.connect():
+                    self.kdc_status.setStyleSheet("color: green; font-size: 16px;")
+                else:
+                    self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
+                    QMessageBox.warning(
+                        self,
+                        "KDC101",
+                        "Failed to connect to KDC101\nCheck device and try again.",
+                    )
+            except Exception as e:
+                self.kdc_status.setStyleSheet("color: red; font-size: 16px;")
+                QMessageBox.critical(self, "KDC101 Error", str(e))
 
         # Create measurement instance if both connected
         if (
@@ -467,7 +664,10 @@ class CalibrationApp(QMainWindow):
             and self.kdc101
             and self.kdc101.connected
         ):
-            self.measurement = CalibrationMeasurement(self.arduino, self.kdc101)
+            encoder_id = self.encoder_combo.currentData() or "A"
+            self.measurement = CalibrationMeasurement(
+                self.arduino, self.kdc101, encoder_id=encoder_id
+            )
             self.connect_btn.setEnabled(False)
             self.disconnect_btn.setEnabled(True)
             self.status_bar.showMessage(
@@ -480,6 +680,11 @@ class CalibrationApp(QMainWindow):
     def _disconnect_devices(self):
         """Disconnect from devices."""
         self._measuring = False
+
+        if self._auto_worker:
+            self._auto_worker.stop()
+            self._auto_worker.wait()
+            self._auto_worker = None
 
         if self._measurement_worker:
             self._measurement_worker.stop()
@@ -512,8 +717,9 @@ class CalibrationApp(QMainWindow):
     def _zero_arduino(self):
         """Set Arduino encoder zero position."""
         if self.arduino and self.arduino.connected:
-            self.arduino.set_zero("A")
-            self.status_bar.showMessage("Arduino encoder zeroed.")
+            encoder_id = self.encoder_combo.currentData() or "A"
+            self.arduino.set_zero(encoder_id)
+            self.status_bar.showMessage(f"Encoder {encoder_id} zeroed.")
 
     # =========================================================================
     # Live Update
@@ -523,13 +729,13 @@ class CalibrationApp(QMainWindow):
     def _toggle_live(self, state: int):
         """Toggle live position update."""
         if state == Qt.Checked.value:
-            self._live_timer.start(100)
+            self._live_timer.start(200)
         else:
             self._live_timer.stop()
 
     @Slot()
     def _update_positions(self):
-        """Update live position display."""
+        """Update live position display, then reschedule the next poll."""
         try:
             ref_deg = None
             meas_deg = None
@@ -542,7 +748,11 @@ class CalibrationApp(QMainWindow):
                     self.ref_pos_label.setText("ERROR")
 
             if self.arduino and self.arduino.connected:
-                meas_deg = self.arduino.read_angle()
+                encoder_id = self.encoder_combo.currentData() or "A"
+                meas_deg = self.arduino.read_angle(encoder_id)
+                # Encoder A: magnet placement reverses count direction
+                if meas_deg is not None and encoder_id == "A":
+                    meas_deg = (360.0 - meas_deg) % 360.0
                 if meas_deg is not None:
                     self.meas_pos_label.setText(f"{meas_deg:8.3f}")
                 else:
@@ -551,7 +761,6 @@ class CalibrationApp(QMainWindow):
             # Calculate error
             if ref_deg is not None and meas_deg is not None:
                 error = meas_deg - ref_deg
-                # Normalize
                 while error > 180:
                     error -= 360
                 while error < -180:
@@ -562,6 +771,11 @@ class CalibrationApp(QMainWindow):
 
         except Exception as e:
             print(f"Live update error: {e}")
+        finally:
+            # Reschedule only after I/O is done; checkbox guards against
+            # the timer firing after the user unchecks or disconnects.
+            if self.live_checkbox.isChecked():
+                self._live_timer.start(100)
 
     # =========================================================================
     # Measurement
@@ -577,6 +791,7 @@ class CalibrationApp(QMainWindow):
         self._measuring = True
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
+        self.auto_start_btn.setEnabled(False)
 
         # Start run
         run_name = self.run_name_edit.text()
@@ -632,12 +847,143 @@ class CalibrationApp(QMainWindow):
 
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
+        self.auto_start_btn.setEnabled(True)
 
         if self._current_run:
             self.status_bar.showMessage(
                 f"Measurement stopped. {self._current_run.num_points} points collected."
             )
             self._update_plot()
+
+    @Slot()
+    def _start_auto_calibration(self):
+        """Start motorised angle sweep."""
+        if not self.measurement:
+            QMessageBox.warning(self, "Not Ready", "Connect to devices first!")
+            return
+        if not (self.kdc101 and self.kdc101.connected):
+            QMessageBox.warning(
+                self, "Not Ready", "KDC101 must be connected for auto sweep."
+            )
+            return
+
+        try:
+            step_deg = float(self.auto_step_edit.text())
+            settle_ms = int(self.auto_settle_edit.text())
+        except ValueError:
+            QMessageBox.warning(
+                self, "Invalid Parameters", "Step and settle must be numbers."
+            )
+            return
+
+        if step_deg <= 0 or step_deg > 360:
+            QMessageBox.warning(
+                self, "Invalid Parameters", "Step must be between 0° and 360°."
+            )
+            return
+
+        import numpy as np
+
+        angles = list(np.arange(0.0, 360.0, step_deg))
+        total = len(angles)
+
+        run_name = self.run_name_edit.text()
+        self._current_run = self.measurement.start_run(run_name)
+        self.points_label.setText("0")
+        self.auto_progress.setRange(0, total)
+        self.auto_progress.setValue(0)
+        self.auto_progress.setFormat(f"%v / {total} steps")
+
+        self._auto_sweep_aborted = False
+        self._auto_worker = AutoCalibrationWorker(
+            self.measurement, self.kdc101, angles, settle_ms=settle_ms, parent=self
+        )
+        self._auto_worker.point_recorded.connect(self._on_point_recorded)
+        self._auto_worker.progress_updated.connect(self._on_auto_progress)
+        self._auto_worker.error_occurred.connect(self._on_auto_error)
+        self._auto_worker.finished.connect(self._on_auto_finished)
+        self._auto_worker.start()
+
+        self.auto_start_btn.setEnabled(False)
+        self.auto_stop_btn.setEnabled(True)
+        self.start_btn.setEnabled(False)
+        self.status_bar.showMessage(
+            f"Auto sweep started: {total} positions, {step_deg}° step, {settle_ms} ms settle."
+        )
+
+    @Slot()
+    def _stop_auto_calibration(self):
+        """Stop the ongoing auto sweep."""
+        self._auto_sweep_aborted = True
+        if self._auto_worker:
+            self._auto_worker.stop()
+            if self.kdc101 and self.kdc101.connected:
+                self.kdc101.stop_motion()
+            self._auto_worker.wait()
+            self._auto_worker = None
+
+        if self.measurement:
+            self.measurement.stop_run()
+
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
+
+        if self._current_run:
+            self.status_bar.showMessage(
+                f"Auto sweep stopped. {self._current_run.num_points} points collected."
+            )
+            self._update_plot()
+
+    @Slot(int, int)
+    def _on_auto_progress(self, completed: int, total: int) -> None:
+        self.auto_progress.setValue(completed)
+        self.points_label.setText(str(completed))
+
+    @Slot(str)
+    def _on_auto_error(self, error_msg: str) -> None:
+        self._auto_sweep_aborted = True
+        print(f"Auto sweep error: {error_msg}")
+        self.status_bar.showMessage(f"Auto sweep error: {error_msg}")
+        if self.measurement:
+            self.measurement.stop_run()
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
+
+    @Slot()
+    def _on_auto_finished(self) -> None:
+        # _stop_auto_calibration already cleaned up; don't double-process
+        if self._auto_sweep_aborted:
+            self._auto_worker = None
+            return
+        self._auto_worker = None
+        if self.measurement:
+            self.measurement.stop_run()
+        self.auto_start_btn.setEnabled(True)
+        self.auto_stop_btn.setEnabled(False)
+        self.start_btn.setEnabled(True)
+        pts = self._current_run.num_points if self._current_run else 0
+        self.status_bar.showMessage(f"Auto sweep complete. {pts} points collected.")
+        if self._current_run and pts >= 10:
+            self._update_plot()
+            self._analyze()
+
+    @Slot()
+    def _start_manual_calibration(self):
+        """Open the manual step-through calibration dialog."""
+        dialog = ManualCalibrationDialog(arduino=self.arduino, parent=self)
+        if dialog.exec() == ManualCalibrationDialog.DialogCode.Accepted:
+            run = dialog.get_run()
+            if run and run.num_points > 0:
+                self._current_run = run
+                self.points_label.setText(str(run.num_points))
+                self.run_name_edit.setText(run.name)
+                self.status_bar.showMessage(
+                    f"Manual calibration complete: {run.num_points} points loaded."
+                )
+                self._update_plot()
+                self._analyze()
 
     # =========================================================================
     # Analysis
@@ -845,6 +1191,12 @@ class CalibrationApp(QMainWindow):
     def closeEvent(self, event):
         """Handle window close."""
         self._measuring = False
+
+        if self._auto_worker:
+            self._auto_worker.stop()
+            if self.kdc101 and self.kdc101.connected:
+                self.kdc101.stop_motion()
+            self._auto_worker.wait()
 
         if self._measurement_worker:
             self._measurement_worker.stop()

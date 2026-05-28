@@ -257,10 +257,7 @@ class TestAlignPolariserWorker:
         assert "abgebrochen" in failed_messages[0].lower()
 
     def test_sweep_with_nonzero_offset_shifts_stage_angle(self):
-        """
-        When angle_offset_deg != 0, the calibration worker moves the stage to
-        logical_angle + offset, not to logical_angle alone.
-        """
+        """When angle_offset_deg != 0, the calibration worker moves the stage to logical_angle + offset, not to logical_angle alone."""
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
         mock_arduino = MockArduino()

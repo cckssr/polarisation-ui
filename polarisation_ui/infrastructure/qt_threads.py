@@ -1,5 +1,4 @@
-"""
-Qt worker threads for infrastructure-layer blocking operations.
+"""Qt worker threads for infrastructure-layer blocking operations.
 
 Qt is allowed in this module only. All other infrastructure modules must remain
 free of PySide6 imports.
@@ -17,7 +16,6 @@ from polarisation_ui.core.auto_calibration_settings import (
 )
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
-    GainCalibration,
     PowerCalibrationProfile,
 )
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
@@ -28,7 +26,14 @@ if TYPE_CHECKING:
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 
-_SENSOR_INFO_KEYS = ("name", "serial", "calibration_message", "type", "subtype", "flags")
+_SENSOR_INFO_KEYS = (
+    "name",
+    "serial",
+    "calibration_message",
+    "type",
+    "subtype",
+    "flags",
+)
 
 
 def _parse_sensor_info(raw: list) -> dict:
@@ -40,8 +45,7 @@ def _parse_sensor_info(raw: list) -> dict:
 
 
 class ReconnectWorker(QThread):
-    """
-    Off-main-thread reconnection worker.
+    """Off-main-thread reconnection worker.
 
     Calls ``device_manager.reconnect_encoders()`` (which contains blocking
     ``sleep()`` calls) on a dedicated QThread so the Qt event loop — and the
@@ -80,8 +84,7 @@ class ReconnectWorker(QThread):
 
 
 class AutoPowerCalibrationWorker(QThread):
-    """
-    Off-main-thread worker that runs a full automated power calibration sweep.
+    """Off-main-thread worker that runs a full automated power calibration sweep.
 
     The caller is responsible for pausing DataController polling before
     calling ``start()`` and for resuming it after ``finished`` or ``failed``
@@ -246,7 +249,10 @@ class AutoPowerCalibrationWorker(QThread):
                 # range is sampled at the originally requested density.
                 # Example: 30 steps over 0–90°, first 10 saturated → rebuild
                 # 30 steps over 30–90°, giving 2° spacing instead of 3°.
-                if not first_valid_found and profile.gains[gain].n_saturated_skipped > 0:
+                if (
+                    not first_valid_found
+                    and profile.gains[gain].n_saturated_skipped > 0
+                ):
                     sub = dataclasses.replace(
                         p,
                         angle_start_deg=angle,
@@ -291,9 +297,7 @@ class AutoPowerCalibrationWorker(QThread):
 
 
 class AlignPolariserWorker(QThread):
-    """
-    Off-main-thread worker that scans the PM400 while rotating the KDC stage
-    to find the physical angle of maximum transmission.
+    """Off-main-thread worker to find the physical angle of maximum transmission.
 
     The result (``angle_max_deg``) is the stage position where the mounted
     polariser is parallel to the reference analyser — i.e. the physical angle
