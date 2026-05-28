@@ -13,7 +13,7 @@ select = ["D"]
 
 [project]
 name = "Polarisation-UI"
-version = "0.0.1"
+version = "1.0.0"
 description = "Polarisation-UI: A GUI application for polarisation experiments with manual goniometers."
 readme = "README.md"
 requires-python = ">=3.9"
