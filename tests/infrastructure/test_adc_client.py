@@ -1,5 +1,4 @@
-"""
-Tests for ADCClient via MockArduino — SCPI 2.0.0.
+"""Tests for ADCClient via MockArduino — SCPI 2.0.0.
 
 Verifies one-shot voltage/temperature reads, ADC configuration,
 PD-TIA gain control, and Malus-law simulation in the mock.

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-Entry point for running the package as a module:
-    python -m polarisation-ui
+"""Entry point for running the package as a module.
+
+python -m polarisation-ui
 """
 
 from .main import main

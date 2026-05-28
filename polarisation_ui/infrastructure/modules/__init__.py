@@ -1,5 +1,4 @@
-"""
-Host-side module registry.
+"""Host-side module registry.
 
 Defines the ``HostModule`` protocol and the ``ModuleRegistry`` singleton.
 Tabs query ``ModuleRegistry.get(id)`` so they can request actions on

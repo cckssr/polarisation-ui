@@ -8,7 +8,6 @@ from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManage
 
 def main():
     """Main entry point for the application."""
-
     device_manager = GoniometerDeviceManager(use_mock=True)
 
     # Create QApplication

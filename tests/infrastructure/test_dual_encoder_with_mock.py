@@ -1,5 +1,4 @@
-"""
-Tests for DualEncoderArduino using MockArduino — SCPI 2.0.0.
+"""Tests for DualEncoderArduino using MockArduino — SCPI 2.0.0.
 
 Run with: .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 """

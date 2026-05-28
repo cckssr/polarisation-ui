@@ -1,11 +1,10 @@
-"""
-Shared pytest fixtures and CLI option registration.
+"""Shared pytest fixtures and CLI option registration.
 
 Hardware tests are opt-in: pass --kdc101-port and/or --pm400-visa on the
 command line to enable them.  Without those flags every hardware test is
 skipped automatically.
 
-Examples
+Examples:
 --------
 # Mock-only tests (default):
     pytest tests/

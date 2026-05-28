@@ -115,6 +115,8 @@ class DataController(QObject):
         Args:
             device_manager: Device manager instance
             parent: Parent QObject
+            use_mock_intensity: If True, _read_intensity() returns a simulated value
+                instead of querying the device. Set to True in unit tests without hardware.
         """
         super().__init__(parent)
 

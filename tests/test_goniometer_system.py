@@ -1,5 +1,4 @@
-"""
-Test script for goniometer system - validates all layers.
+"""Test script for goniometer system - validates all layers.
 
 Run from project root: python tests/test_goniometer_system.py
 """

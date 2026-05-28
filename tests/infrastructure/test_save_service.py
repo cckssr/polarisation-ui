@@ -1,5 +1,4 @@
-"""
-Tests for MeasurementSaveService.
+"""Tests for MeasurementSaveService.
 
 Verifies CSV output, metadata JSON correctness (including sensor descriptions),
 backup creation and cleanup, calibration-run saves, and crash-recovery from the
@@ -399,8 +398,10 @@ class TestAutoBackup:
 
 
 class TestCrashRecovery:
-    """Simulates the program exiting mid-session.  The auto_backup files in
-    .backup/ must remain readable and contain all data written before the exit.
+    """Simulates the program exiting mid-session.
+
+    The auto_backup files in .backup/ must remain readable and contain
+    all data written before the exit.
     """
 
     def test_backup_readable_after_service_destroyed(self, tmp_path, sample_data):

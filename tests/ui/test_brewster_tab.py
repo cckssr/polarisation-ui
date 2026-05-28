@@ -1,5 +1,4 @@
-"""
-Smoke tests for BrewsterTab (Brewster-angle sample scan + peak finding).
+"""Smoke tests for BrewsterTab (Brewster-angle sample scan + peak finding).
 
 Verifies build, measurement lifecycle, save-current, and build_export schema.
 """

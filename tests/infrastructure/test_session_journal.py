@@ -1,5 +1,4 @@
-"""
-Tests for SessionJournal — append-only crash-safe autosave.
+"""Tests for SessionJournal — append-only crash-safe autosave.
 
 Run with: .venv/bin/pytest tests/infrastructure/test_session_journal.py
 """

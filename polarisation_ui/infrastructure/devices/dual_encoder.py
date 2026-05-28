@@ -1,5 +1,4 @@
-"""
-Dual AS5048A Encoder + ADS1220 ADC interface via SCPI 2.0.0.
+"""Dual AS5048A Encoder + ADS1220 ADC interface via SCPI 2.0.0.
 
 SCPI 2.0.0 command subset used by this client:
 
@@ -250,8 +249,7 @@ class DualEncoderArduino:
     # ── Connection ────────────────────────────────────────────────────────────
 
     def connect(self) -> bool:
-        """
-        Connect and verify firmware version.
+        """Connect and verify firmware version.
 
         Raises:
             IncompatibleFirmwareError: if firmware < 2.0.0.
@@ -382,8 +380,7 @@ class DualEncoderArduino:
     # ── Poll rate ─────────────────────────────────────────────────────────────
 
     def set_poll_interval(self, interval_ms: int) -> bool:
-        """
-        Set the streaming poll interval.
+        """Set the streaming poll interval.
 
         Converts milliseconds to Hz and sends CONF:RATE.  Valid range: 1–9999 ms.
         """
@@ -551,8 +548,7 @@ class DualEncoderArduino:
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
     def reapply_desired_state(self, state: "DesiredState") -> bool:
-        """
-        Reapply a DesiredState snapshot after reconnect.
+        """Reapply a DesiredState snapshot after reconnect.
 
         Called by GoniometerDeviceManager immediately after a successful
         reconnect so the Arduino retains the last-known CONF:ADC:* / PDTIA

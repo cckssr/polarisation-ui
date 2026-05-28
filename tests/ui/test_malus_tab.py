@@ -1,5 +1,4 @@
-"""
-Tests for MalusTab (manual analyser-angle entry, averaged intensity).
+"""Tests for MalusTab (manual analyser-angle entry, averaged intensity).
 
 These tests call build() which constructs pyqtgraph widgets.  CI runs with
 QT_QPA_PLATFORM=offscreen so no physical display is required.

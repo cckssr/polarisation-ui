@@ -1,5 +1,4 @@
-"""
-Tests for DataController reconnect resilience.
+"""Tests for DataController reconnect resilience.
 
 Verifies exponential backoff, buffer preservation across reconnects,
 gap markers in the session journal, and DesiredState reapplication.

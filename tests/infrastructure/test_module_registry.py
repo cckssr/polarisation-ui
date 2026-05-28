@@ -1,5 +1,4 @@
-"""
-Tests for polarisation_ui.infrastructure.modules (ModuleRegistry + HostModule protocol).
+"""Tests for polarisation_ui.infrastructure.modules (ModuleRegistry + HostModule protocol).
 
 Verifies:
 - register / unregister / get / all / clear work correctly.
@@ -27,7 +26,7 @@ def _clear_registry() -> None:
 
 
 def test_kdc101_stub_satisfies_host_module_protocol() -> None:
-    """isinstance check via @runtime_checkable passes for Kdc101Stub."""
+    """Isinstance check via @runtime_checkable passes for Kdc101Stub."""
     stub = Kdc101Stub()
     assert isinstance(stub, HostModule)
 

@@ -1,5 +1,4 @@
-"""
-KDC101 stub — placeholder host-side module.
+"""KDC101 stub — placeholder host-side module.
 
 Satisfies the ``HostModule`` protocol without importing any Thorlabs SDK.
 Swap this for the real driver when hardware integration is implemented;

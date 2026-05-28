@@ -24,7 +24,8 @@ jobs:
         run: ruff format --check polarisation_ui tests
 
       - name: Lint (ruff)
-        run: ruff check polarisation_ui tests
+        run: ruff check polarisation_ui tests --output-format=concise --ignore D100,D101,D102,D103,D104,D105,D106,D107
+        # Ignore docstring warnings since many functions lack docstrings and we don't want to enforce them yet.
 
   test:
     name: Test (Python ${{ matrix.python-version }})

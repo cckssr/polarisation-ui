@@ -278,6 +278,7 @@ class SerialDevice:
             timeout_remaining (float): Remaining timeout in seconds.
             packet_size (int): Size of binary packets to skip (default 6 bytes).
             start_byte (int): Start byte of binary packets (default 0xAA).
+
         Returns:
             Optional[str]: The first text character found, or None if none found.
         """
@@ -317,6 +318,7 @@ class SerialDevice:
 
         Args:
             result_parts (list): List to append read lines to.
+
         Returns:
             bool: True if data was read, False otherwise.
         """

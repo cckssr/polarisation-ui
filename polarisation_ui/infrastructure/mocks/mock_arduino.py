@@ -1,5 +1,4 @@
-"""
-Mock Arduino for testing — SCPI 2.0.0 (ADS1220 + PD-TIA gain).
+"""Mock Arduino for testing — SCPI 2.0.0 (ADS1220 + PD-TIA gain).
 
 Implements the full SCPI 2.0.0 command tree via a PTY pair so that
 DualEncoderArduino and its tests can run without real hardware.

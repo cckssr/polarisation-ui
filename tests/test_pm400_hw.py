@@ -1,5 +1,4 @@
-"""
-Hardware tests for PM400PowerMeter.
+"""Hardware tests for PM400PowerMeter.
 
 These tests require a real Thorlabs PM400 power meter connected via USB.
 Run with::

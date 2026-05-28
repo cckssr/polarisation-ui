@@ -1,5 +1,4 @@
-"""
-Tests for DataController reconnect / error-handling behaviour (B1, B2, B6).
+"""Tests for DataController reconnect / error-handling behaviour (B1, B2, B6).
 
 These tests check:
   - First read failure is silent (no error_occurred emission).
@@ -168,8 +167,10 @@ def test_reconnect_failed_emits_retry_connecting(qtbot, controller):
 
 
 def test_reconnect_success_resets_spike_filter(qtbot, controller):
-    """After a successful reconnect, spike-filter state is cleared so the first
-    post-reconnect samples are never rejected as bogus spikes."""
+    """After a successful reconnect, spike-filter state is cleared.
+
+    So the first post-reconnect samples are never rejected as bogus spikes.
+    """
     ctrl, dm = controller
 
     # Simulate some prior state
@@ -220,8 +221,11 @@ def live_stack(qapp):
 
 
 def test_kill_pty_triggers_retry_and_banner_signal(qtbot, live_stack):
-    """Closing the PTY master causes retry_connecting to fire, then connection_lost after
-    all retries are exhausted (no real reconnect target so all attempts fail)."""
+    """Closing the PTY master causes retry_connecting to fire.
+
+    Then connection_lost after all retries are exhausted
+    (no real reconnect target so all attempts fail).
+    """
     ctrl, dm, mock, _port = live_stack
 
     retry_events: list[tuple] = []

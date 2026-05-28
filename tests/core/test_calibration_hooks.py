@@ -1,5 +1,4 @@
-"""
-Tests for polarisation_ui.core.calibration_hooks.
+"""Tests for polarisation_ui.core.calibration_hooks.
 
 Verifies:
 - CalibrationRecorder writes the YAML-ish header + CSV rows to disk.
