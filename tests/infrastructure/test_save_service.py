@@ -191,9 +191,9 @@ class TestCreateMetadata:
         for key, entry in m["sensors"].items():
             assert "type" in entry, f"sensor '{key}' missing 'type'"
             assert "description" in entry, f"sensor '{key}' missing 'description'"
-            assert (
-                len(entry["description"]) > 20
-            ), f"sensor '{key}' description too short: {entry['description']!r}"
+            assert len(entry["description"]) > 20, (
+                f"sensor '{key}' description too short: {entry['description']!r}"
+            )
 
     def test_encoder_sample_resolution_14_bit(self, svc, start_end):
         t0, t1 = start_end

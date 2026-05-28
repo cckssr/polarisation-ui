@@ -185,17 +185,17 @@ class TestContinuousMode:
         mock, _ = mock_arduino
 
         assert encoder_client.start_stream([StreamSource.ENC_A])
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         assert not mock.get_state()["continuous_running"]
 
     def test_start_stop_stream_enc_both(self, encoder_client, mock_arduino):
@@ -204,9 +204,9 @@ class TestContinuousMode:
         assert encoder_client.start_stream(
             [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
         )
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
@@ -214,9 +214,9 @@ class TestContinuousMode:
         assert "DIAG" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         assert not mock.get_state()["continuous_running"]
 
     def test_continuous_values_advance(self, encoder_client, mock_arduino):

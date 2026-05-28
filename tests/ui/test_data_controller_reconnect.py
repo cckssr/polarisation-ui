@@ -141,9 +141,9 @@ def test_reconnect_failed_increments_error_count_once(qtbot, controller):
     ctrl._on_reconnect_failed()
     after = ctrl._error_count
 
-    assert (
-        after == before + 1
-    ), "error_count must increment by exactly 1 per failed reconnect"
+    assert after == before + 1, (
+        "error_count must increment by exactly 1 per failed reconnect"
+    )
     ctrl._retry_timer.stop()
 
 
@@ -241,9 +241,9 @@ def test_kill_pty_triggers_retry_and_banner_signal(qtbot, live_stack):
             pass
 
     # Wait until at least one retry fires (first poll error → retry_connecting)
-    assert _spin_until(
-        lambda: len(retry_events) >= 1, timeout=5.0
-    ), "retry_connecting must fire after PTY disconnect"
+    assert _spin_until(lambda: len(retry_events) >= 1, timeout=5.0), (
+        "retry_connecting must fire after PTY disconnect"
+    )
 
     # Verify attempt numbers increment
     assert retry_events[0][0] >= 1

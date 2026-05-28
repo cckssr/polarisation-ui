@@ -72,9 +72,9 @@ def test_home(connected_kdc: KDC101Polariser) -> None:
     """Homing must complete without error and leave position near 0°."""
     connected_kdc.home(wait=True, timeout=120.0)
     pos = connected_kdc.get_position_deg()
-    assert (
-        abs(pos) % 360.0 < _POS_TOL_DEG
-    ), f"Position after home should be near 0°, got {pos:.3f}°"
+    assert abs(pos) % 360.0 < _POS_TOL_DEG, (
+        f"Position after home should be near 0°, got {pos:.3f}°"
+    )
 
 
 def test_move_to_45(connected_kdc: KDC101Polariser) -> None:
