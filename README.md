@@ -100,7 +100,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-The `dev` extras install `pytest`, `pytest-qt`, `black`, `flake8`, and `build`. The mock Arduino simulator is included in editable installs and is used automatically by the test suite.
+The `dev` extras install `ruff`, `pytest`, `pytest-qt`, and `build`. The mock Arduino simulator is included in editable installs and is used automatically by the test suite.
 
 ---
 
@@ -235,9 +235,11 @@ polarisation-ui/
 ├── polarisation_ui/          # Main Python package
 │   ├── core/                 # Pure Python — models, services, exceptions
 │   ├── infrastructure/       # Device I/O, config, logging, Qt threads
-│   │   ├── devices/          # Encoder and ADC adapters (production)
-│   │   └── mocks/            # MockArduino + port registry (dev/test only)
+│   │   ├── devices/          # Encoder, ADC, and optional-module adapters
+│   │   ├── mocks/            # MockArduino + mock devices + port registry (dev/test)
+│   │   └── modules/          # HostModule protocol + ModuleRegistry singleton
 │   └── ui/                   # PySide6 widgets, windows, controllers
+│       └── widgets/tabs/     # Experiment tabs (PlotTabBase subclasses)
 ├── calibration_tool/         # Sibling app — KDC101 encoder calibration
 ├── src_arduino/              # PlatformIO firmware (Arduino Nano ESP32)
 ├── tests/                    # pytest suite
@@ -248,9 +250,9 @@ polarisation-ui/
 ### Code Style
 
 ```bash
-black polarisation_ui tests       # format
-black --check polarisation_ui tests  # check only (used in CI)
-flake8 polarisation_ui tests      # lint
+ruff format polarisation_ui tests        # format
+ruff format --check polarisation_ui tests  # check only (used in CI)
+ruff check polarisation_ui tests         # lint
 ```
 
 ### Versioning
@@ -278,8 +280,13 @@ Version is kept in sync across three files automatically:
 ### Implemented
 
 - **Malus's Law** — `I = I₀ cos²(θ)`: live cos² fit, peak readout, manual point capture to measurement table, CSV export
+- **Brewster's Angle** tab — sample scan, intensity vs. angle display, p/s polarisation selection
+- **Plot-Tab extensibility** — `PlotTabBase` + `TabRegistry`; new experiments register as subclasses in `ui/widgets/tabs/`
+- **Session journal** — append-only CSV autosave with `fsync` for crash-safe data recovery
+- **Module registry** — `HostModule` protocol + `ModuleRegistry` singleton; tabs gate on required modules (e.g. `kdc101`)
+- **Connection banner** — non-blocking reconnect status overlay
 
-### Planned: Additional Polarisation Experiments (Phase 4)
+### Planned: Additional Polarisation Experiments
 
 Each experiment below is a `PlotTabBase` subclass registered in `polarisation_ui/ui/widgets/tabs/`. All work in manual mode immediately; automated scanning requires the KDC101 stage (Phase 6).
 
@@ -305,16 +312,13 @@ Insert a λ/2 plate between polariser and analyser. Mount it on Encoder A and ro
 
 Fill a cuvette of known path length `l` with a sugar solution of concentration `c`. Set the analyser (Encoder B) to the intensity minimum (null method) — the rotation angle directly gives the optical activity. Repeat at multiple concentrations and apply Biot's law to determine the specific rotation `[α]_λ`. This experiment requires stable monochromatic illumination.
 
-### Planned: Infrastructure (Phase 5–6)
+### Planned: Infrastructure
 
-| Feature                     | Phase | Description                                                                 |
-| --------------------------- | ----- | --------------------------------------------------------------------------- |
-| Append-only session journal | 5     | `~/.polarisation-ui/sessions/<ts>/journal.csv`, `fsync` every ~1 s          |
-| Reconnection resilience     | 5     | Exponential backoff, measurement buffers survive reconnect                  |
-| HDF5/Zarr export            | 5     | Optional dense export for large angle-scan datasets                         |
-| KDC101 motorised stage      | 6     | Thorlabs USB APT driver, automated angle sweeps for all Phase 4 experiments |
-| `TabRegistry` gating        | 6     | Tabs with `required_modules={"kdc101"}` hidden until stage is detected      |
-| SCPI 2.0.0 firmware bump    | 2     | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames     |
+| Feature                  | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| HDF5/Zarr export         | Optional dense export for large angle-scan datasets                         |
+| KDC101 motorised stage   | Thorlabs USB APT driver, automated angle sweeps for all tab experiments     |
+| SCPI 2.0.0 firmware bump | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames     |
 
 ---
 
@@ -323,7 +327,7 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
 3. Follow the 3-layer architecture (violations are architecture failures, not style issues)
-4. Run formatters and linters: `black polarisation_ui tests && flake8 polarisation_ui tests`
+4. Run formatters and linters: `ruff format polarisation_ui tests && ruff check polarisation_ui tests`
 5. Run the full test suite: `QT_QPA_PLATFORM=offscreen pytest tests/`
 6. Open a PR — the CI workflow runs automatically on push
 
