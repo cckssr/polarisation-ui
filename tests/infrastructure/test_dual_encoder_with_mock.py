@@ -58,7 +58,6 @@ def encoder_client(mock_arduino):
 
 
 class TestBasicReading:
-
     def test_read_encoder_a(self, encoder_client):
         angle = encoder_client.read_encoder_a()
         assert angle is not None
@@ -98,7 +97,6 @@ class TestBasicReading:
 
 
 class TestZeroReset:
-
     def test_reset_zero_a(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
         initial = encoder_client.read_encoder_a()
@@ -137,22 +135,21 @@ class TestZeroReset:
 
 
 class TestContinuousMode:
-
     def test_start_stop_continuous_a(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
 
         assert encoder_client.start_continuous_a()
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         state = mock.get_state()
         assert not state["continuous_running"]
 
@@ -160,9 +157,9 @@ class TestContinuousMode:
         mock, _ = mock_arduino
 
         assert encoder_client.start_continuous_both()
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         # ENC:BOTH is expanded to ENC:A + ENC:B + ADC + DIAG by start_continuous_both()
@@ -171,9 +168,9 @@ class TestContinuousMode:
         assert "DIAG" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         assert not mock.get_state()["continuous_running"]
 
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
@@ -207,7 +204,6 @@ class TestContinuousMode:
 
 
 class TestPollInterval:
-
     def test_set_poll_interval_valid(self, encoder_client):
         assert encoder_client.set_poll_interval(100)
 
@@ -228,7 +224,6 @@ class TestPollInterval:
 
 
 class TestDiagnostics:
-
     def test_diagnostics_a(self, encoder_client):
         diag = encoder_client.get_diagnostics_a()
         assert diag is not None
@@ -249,7 +244,6 @@ class TestDiagnostics:
 
 
 class TestConnectionManagement:
-
     def test_connect_disconnect(self, mock_arduino):
         mock, pty_path = mock_arduino
         encoder = DualEncoderArduino(port=pty_path)
@@ -272,7 +266,6 @@ class TestConnectionManagement:
 
 
 class TestMockArduinoState:
-
     def test_initial_state(self, mock_arduino):
         mock, _ = mock_arduino
         state = mock.get_state()
@@ -303,7 +296,6 @@ class TestMockArduinoState:
 
 
 class TestFirmwareVersionCheck:
-
     def test_compatible_firmware_connects(self, mock_arduino):
         """2.0.0 mock should connect without error."""
         mock, pty_path = mock_arduino
@@ -327,7 +319,6 @@ class TestFirmwareVersionCheck:
 
 
 class TestDataFrameParser:
-
     def test_parse_full_frame(self):
         line = (
             "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"

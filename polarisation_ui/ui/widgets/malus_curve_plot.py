@@ -1,9 +1,9 @@
 """
 Malus-law curve plot for Malus tab.
 
-Accumulates manually saved MalusPoint entries and displays them as a scatter
-plot.  Points are added via add_point() (Save button) and removed via
-remove_last_point() or remove_point_at().
+Accumulates manually saved MalusPoint entries (user-entered analyser angles)
+and displays them as a scatter plot.  Points are added via add_point() and
+removed via remove_last_point() or remove_point_at().
 """
 
 from typing import Optional
@@ -18,8 +18,8 @@ class MalusCurvePlot(QWidget):
     """
     Scatter plot of saved Malus-law measurement points.
 
-    X axis: sample stage angle (degrees)
-    Y axis: detector intensity (V)
+    X axis: analyser angle (degrees, user-entered)
+    Y axis: detector intensity (V, averaged over ~0.5 s window)
 
     All saved points are shown as green circles.  The most recently saved point
     is additionally outlined with a red ring so the user can see the last entry.
@@ -37,7 +37,7 @@ class MalusCurvePlot(QWidget):
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Probenwinkel", units="°")
+        self._plot_widget.setLabel("bottom", "Analysatorwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="V")
 
         # All saved points: filled green circles
@@ -65,8 +65,8 @@ class MalusCurvePlot(QWidget):
 
     def add_point(
         self,
-        sample_angle: float,
-        detector_angle: float,
+        analyser_angle: float,
+        polariser_angle: float,
         intensity_V: float,
         pdtia_gain: int = 0,
         power_W: Optional[float] = None,
@@ -75,8 +75,8 @@ class MalusCurvePlot(QWidget):
         """Append a new measurement point and refresh the plot."""
         self._points.append(
             MalusPoint(
-                sample_angle=sample_angle,
-                detector_angle=detector_angle,
+                analyser_angle=analyser_angle,
+                polariser_angle=polariser_angle,
                 intensity_V=intensity_V,
                 pdtia_gain=pdtia_gain,
                 power_W=power_W,
@@ -116,8 +116,16 @@ class MalusCurvePlot(QWidget):
             self._last_marker.setVisible(False)
             return
 
-        xs = [p.sample_angle for p in self._points]
-        ys = [p.intensity_V for p in self._points]
+        xs = [p.analyser_angle for p in self._points]
+
+        use_power = all(p.power_W is not None for p in self._points)
+        if use_power:
+            ys = [p.power_W * 1e3 for p in self._points]  # type: ignore[operator]
+            self._plot_widget.setLabel("left", "Leistung", units="mW")
+        else:
+            ys = [p.intensity_V for p in self._points]
+            self._plot_widget.setLabel("left", "Intensität", units="V")
+
         self._scatter.setData(xs, ys)
         self._scatter.setVisible(True)
         self._last_marker.setData([xs[-1]], [ys[-1]])

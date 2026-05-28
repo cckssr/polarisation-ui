@@ -15,9 +15,9 @@ Usage::
     journal.start()
     for frame in frames:
         journal.append_frame(frame)
-    journal.finalize()            # marks as done
+    journal.finalize()  # marks as done
     # OR
-    journal.export_to_csv(path)   # export → finalize
+    journal.export_to_csv(path)  # export → finalize
 """
 
 import csv

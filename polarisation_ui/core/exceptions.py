@@ -38,3 +38,21 @@ class IncompatibleFirmwareError(GoniometerError):
     """Raised when firmware version is incompatible with the Python client (requires >= 2.0.0)."""
 
     pass
+
+
+class KDC101Error(Exception):
+    """Raised when KDC101 motor controller communication fails."""
+
+    pass
+
+
+class KDC101TimeoutError(KDC101Error):
+    """Raised when a KDC101 move or home operation times out."""
+
+    pass
+
+
+class PM400Error(Exception):
+    """Raised when PM400 power meter communication fails."""
+
+    pass

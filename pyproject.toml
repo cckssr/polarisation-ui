@@ -2,9 +2,18 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint]
+select = ["D"]
+
 [project]
 name = "Polarisation-UI"
-version = "0.0.1"
+version = "1.0.0"
 description = "Polarisation-UI: A GUI application for polarisation experiments with manual goniometers."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -32,7 +41,15 @@ dependencies = [
     "pyserial>=3.5",
 ]
 
+
 [project.optional-dependencies]
+calibration = [
+    "pylablib>=1.4.0",
+    "pymeasure>=0.13.0",
+    "pyvisa>=1.13.0",
+    "pyvisa-py>=0.7.0",
+]
+
 docs = [
     "sphinx>=7.1.0",
     "sphinx-rtd-theme>=1.3.0",
@@ -97,3 +114,4 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+pythonpath = ["."]

@@ -1,32 +1,21 @@
 """
-Thorlabs KDC101 Serial Communication.
+Thorlabs KDC101 via pylablib.
 
-Reads position from KDC101 using the APT serial protocol.
-This works on macOS/Linux without requiring Kinesis DLLs.
-
-Reference: APT Communications Protocol (Thorlabs)
+Uses pylablib's KinesisMotor for APT serial communication.
+Works on macOS/Linux/Windows without requiring Kinesis DLLs.
 """
 
-import serial
-import time
 import struct
+import time
 from typing import Optional
+
+from pylablib.devices import Thorlabs
+from pylablib.devices.Thorlabs import ThorlabsError, ThorlabsTimeoutError
 
 
 class KDC101Stage:
     """
-    Interface to Thorlabs KDC101 via serial APT protocol.
-
-    APT Protocol Basics:
-        - Messages have 6-byte header (or longer with data)
-        - Header format: [msg_id_lo, msg_id_hi, param1, param2, dest, source]
-        - For KCube: dest=0x50, source=0x01
-
-    Key messages:
-        - MGMSG_HW_REQ_INFO (0x0005): Request hardware info
-        - MGMSG_MOD_SET_CHANENABLESTATE (0x0210): Enable/disable channel
-        - MGMSG_MOT_REQ_POSCOUNTER (0x0411): Request position counter
-        - MGMSG_MOT_GET_POSCOUNTER (0x0412): Receive position counter
+    Interface to Thorlabs KDC101 via pylablib KinesisMotor.
 
     Example:
         >>> stage = KDC101Stage("/dev/cu.usbserial-27000001")
@@ -36,46 +25,32 @@ class KDC101Stage:
         >>> stage.disconnect()
     """
 
-    # APT Protocol constants
-    HOST = 0x01  # Host (PC) address
-    DEVICE = 0x50  # Generic USB device address
-    CHANNEL = 0x01  # Channel 1
+    # APT message IDs for operations not exposed by pylablib
+    _MSG_MOD_SET_CHANENABLESTATE = 0x0210
+    _MSG_MOT_REQ_ENCCOUNTER = 0x040A
+    _MSG_MOT_GET_ENCCOUNTER = 0x040B
 
-    # Message IDs
-    MSG_HW_REQ_INFO = 0x0005
-    MSG_HW_GET_INFO = 0x0006
-    MSG_MOD_IDENTIFY = 0x0223
-    MSG_MOD_SET_CHANENABLESTATE = 0x0210
-    MSG_MOT_REQ_POSCOUNTER = 0x0411
-    MSG_MOT_GET_POSCOUNTER = 0x0412
-    MSG_MOT_REQ_ENCCOUNTER = 0x040A
-    MSG_MOT_GET_ENCCOUNTER = 0x040B
-    MSG_MOT_REQ_USTATUSUPDATE = 0x0490
-    MSG_MOT_GET_USTATUSUPDATE = 0x0491
+    CHANNEL = 1
 
     # PRM1-Z8 stage parameters
-    # Encoder counts per degree for PRM1-Z8
     ENCODER_COUNTS_PER_DEG = 1919.64186
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
         """
-        Initialize KDC101 connection.
-
         Args:
-            port: Serial port (e.g., /dev/cu.usbserial-27000001)
-            baudrate: Baud rate (115200 for APT)
+            port: Serial port path or Kinesis device serial number
+            baudrate: Kept for API compatibility; pylablib configures this internally.
             timeout: Read timeout in seconds
         """
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
-        self._serial: Optional[serial.Serial] = None
-        self._connected = False
+        self._stage: Thorlabs.KinesisMotor
 
     @property
     def connected(self) -> bool:
         """Check if connected to KDC101."""
-        return self._connected and self._serial is not None and self._serial.is_open
+        return self._stage is not None and self._stage.is_opened()
 
     def connect(self) -> bool:
         """
@@ -85,158 +60,33 @@ class KDC101Stage:
             True if connection successful, False otherwise
         """
         try:
-            self._serial = serial.Serial(
-                port=self.port,
-                baudrate=self.baudrate,
-                timeout=self.timeout,
-                bytesize=serial.EIGHTBITS,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                rtscts=True,  # KDC101 requires RTS/CTS hardware flow control
-            )
-
-            # Clear buffers
-            time.sleep(0.5)
-            self._serial.reset_input_buffer()
-            self._serial.reset_output_buffer()
-
-            # Try to get hardware info to verify connection
-            if self._request_hw_info():
-                self._connected = True
-                print(f"[KDC101] Connected to {self.port}")
-                return True
-            else:
-                print(f"[KDC101] Device not responding on {self.port}")
-                self._serial.close()
-                return False
-
-        except serial.SerialException as e:
+            self._stage = Thorlabs.KinesisMotor(self.port, scale="step")
+            self._stage.open()
+            # Discard any unsolicited status frames that arrive on open
+            self._stage.flush_comm()
+            info = self._stage.get_device_info()
+            print(f"[KDC101] Connected to {self.port}, SN: {info.serial_no}")
+            return True
+        except (ThorlabsError, ThorlabsTimeoutError, Exception) as e:
             print(f"[KDC101] Failed to connect: {e}")
-            self._connected = False
+            self._stage = None
             return False
 
     def disconnect(self) -> None:
         """Close serial connection."""
-        if self._serial and self._serial.is_open:
-            self._serial.close()
-        self._connected = False
+        if self._stage is not None:
+            try:
+                self._stage.close()
+            except Exception:
+                pass
+            self._stage = None
         print("[KDC101] Disconnected")
 
-    def _build_short_msg(self, msg_id: int, param1: int = 0, param2: int = 0) -> bytes:
-        """
-        Build a short (6-byte) APT message.
-
-        Args:
-            msg_id: 16-bit message ID
-            param1: First parameter byte
-            param2: Second parameter byte
-
-        Returns:
-            6-byte message
-        """
-        return struct.pack(
-            "<HBBBB",
-            msg_id,
-            param1,
-            param2,
-            self.DEVICE | 0x80,  # Destination with "data follows" bit
-            self.HOST,
-        )
-
-    def _build_short_msg_simple(
-        self, msg_id: int, param1: int = 0, param2: int = 0
-    ) -> bytes:
-        """
-        Build a short (6-byte) APT message without data flag.
-
-        Args:
-            msg_id: 16-bit message ID
-            param1: First parameter byte
-            param2: Second parameter byte
-
-        Returns:
-            6-byte message
-        """
-        return struct.pack(
-            "<HBBBB",
-            msg_id,
-            param1,
-            param2,
-            self.DEVICE,  # Destination without flag
-            self.HOST,
-        )
-
-    def _send_msg(self, msg: bytes) -> None:
-        """Send message to device."""
-        if not self.connected:
-            raise RuntimeError("Not connected to KDC101")
-        self._serial.write(msg)
-        self._serial.flush()
-
-    def _read_msg(
-        self, expected_len: int, timeout: Optional[float] = None
-    ) -> Optional[bytes]:
-        """
-        Read message from device.
-
-        Args:
-            expected_len: Expected message length
-            timeout: Optional override for read timeout
-
-        Returns:
-            Message bytes or None if timeout
-        """
-        if not self.connected:
-            return None
-
-        old_timeout = self._serial.timeout
-        if timeout is not None:
-            self._serial.timeout = timeout
-
-        try:
-            data = self._serial.read(expected_len)
-            return data if len(data) == expected_len else None
-        finally:
-            self._serial.timeout = old_timeout
-
-    def _request_hw_info(self) -> bool:
-        """
-        Request hardware info to verify connection.
-
-        Returns:
-            True if device responds
-        """
-        try:
-            # Send request
-            msg = self._build_short_msg_simple(self.MSG_HW_REQ_INFO, 0, 0)
-            self._serial.write(msg)
-            self._serial.flush()
-
-            # Read response (90 bytes for HW_GET_INFO)
-            time.sleep(0.1)
-            response = self._serial.read(90)
-
-            if len(response) >= 10:
-                # Check message ID
-                msg_id = struct.unpack("<H", response[0:2])[0]
-                if msg_id == self.MSG_HW_GET_INFO:
-                    serial_num = struct.unpack("<I", response[6:10])[0]
-                    print(f"[KDC101] Found device SN: {serial_num}")
-                    return True
-            return False
-        except Exception as e:
-            print(f"[KDC101] Hardware info request failed: {e}")
-            return False
-
     def identify(self) -> None:
-        """
-        Flash the device's identification LED.
-        Useful for verifying the right device is connected.
-        """
+        """Flash the device's identification LED."""
         if not self.connected:
             return
-        msg = self._build_short_msg_simple(self.MSG_MOD_IDENTIFY, self.CHANNEL, 0)
-        self._send_msg(msg)
+        self._stage.blink(channel=self.CHANNEL)
         print("[KDC101] Identify LED should flash")
 
     def enable(self, enabled: bool = True) -> None:
@@ -249,10 +99,9 @@ class KDC101Stage:
         if not self.connected:
             return
         state = 0x01 if enabled else 0x02
-        msg = self._build_short_msg_simple(
-            self.MSG_MOD_SET_CHANENABLESTATE, self.CHANNEL, state
+        self._stage.send_comm(
+            self._MSG_MOD_SET_CHANENABLESTATE, param1=self.CHANNEL, param2=state
         )
-        self._send_msg(msg)
         time.sleep(0.1)
         print(f"[KDC101] Channel {'enabled' if enabled else 'disabled'}")
 
@@ -265,63 +114,14 @@ class KDC101Stage:
         """
         if not self.connected:
             return None
-
         try:
-            # Clear input buffer
-            self._serial.reset_input_buffer()
-
-            # Request position counter
-            msg = self._build_short_msg_simple(
-                self.MSG_MOT_REQ_POSCOUNTER, self.CHANNEL, 0
-            )
-            self._send_msg(msg)
-
-            # Read response (12 bytes: 6 header + 2 channel + 4 position)
-            time.sleep(0.05)
-            response = self._serial.read(12)
-
-            if len(response) >= 12:
-                msg_id = struct.unpack("<H", response[0:2])[0]
-                if msg_id == self.MSG_MOT_GET_POSCOUNTER:
-                    # Position is bytes 8-11 (signed 32-bit)
-                    position = struct.unpack("<i", response[8:12])[0]
-                    return position
-
-            # Try reading status update which also contains position
-            return self._get_position_from_status()
-
-        except Exception as e:
+            # Flush unsolicited background frames (e.g. periodic status 0x0612,
+            # info replies 0x0004) before issuing a position query so pylablib
+            # does not mistake them for the expected reply (0x0412).
+            self._stage.flush_comm()
+            return self._stage.get_position(scale=False)
+        except (ThorlabsError, ThorlabsTimeoutError) as e:
             print(f"[KDC101] Position read failed: {e}")
-            return None
-
-    def _get_position_from_status(self) -> Optional[int]:
-        """
-        Get position from status update message.
-
-        Returns:
-            Position in encoder counts or None if error
-        """
-        try:
-            self._serial.reset_input_buffer()
-
-            # Request status update
-            msg = self._build_short_msg_simple(
-                self.MSG_MOT_REQ_USTATUSUPDATE, self.CHANNEL, 0
-            )
-            self._send_msg(msg)
-
-            # Read response (20 bytes for status update)
-            time.sleep(0.05)
-            response = self._serial.read(20)
-
-            if len(response) >= 16:
-                msg_id = struct.unpack("<H", response[0:2])[0]
-                if msg_id == self.MSG_MOT_GET_USTATUSUPDATE:
-                    # Position is bytes 8-11 (signed 32-bit)
-                    position = struct.unpack("<i", response[8:12])[0]
-                    return position
-            return None
-        except Exception:
             return None
 
     def get_position_degrees(self) -> Optional[float]:
@@ -345,29 +145,122 @@ class KDC101Stage:
         """
         if not self.connected:
             return None
-
         try:
-            self._serial.reset_input_buffer()
-
-            # Request encoder counter
-            msg = self._build_short_msg_simple(
-                self.MSG_MOT_REQ_ENCCOUNTER, self.CHANNEL, 0
+            self._stage.flush_comm()
+            reply = self._stage.query(
+                self._MSG_MOT_REQ_ENCCOUNTER,
+                param1=self.CHANNEL,
+                replyID=self._MSG_MOT_GET_ENCCOUNTER,
             )
-            self._send_msg(msg)
-
-            # Read response
-            time.sleep(0.05)
-            response = self._serial.read(12)
-
-            if len(response) >= 12:
-                msg_id = struct.unpack("<H", response[0:2])[0]
-                if msg_id == self.MSG_MOT_GET_ENCCOUNTER:
-                    encoder = struct.unpack("<i", response[8:12])[0]
-                    return encoder
-            return None
-        except Exception as e:
+            # CommData.data: 2 bytes channel + 4 bytes signed encoder count
+            return struct.unpack("<i", reply.data[2:6])[0]
+        except (ThorlabsError, ThorlabsTimeoutError) as e:
             print(f"[KDC101] Encoder read failed: {e}")
             return None
+
+    # ── Motor control ─────────────────────────────────────────────────────────
+
+    def move_to_degrees(self, angle_deg: float) -> bool:
+        """
+        Move stage to an absolute position in degrees.
+
+        Args:
+            angle_deg: Target angle in degrees
+
+        Returns:
+            True if command was sent successfully
+        """
+        if not self.connected:
+            return False
+        try:
+            counts = int(round(angle_deg * self.ENCODER_COUNTS_PER_DEG))
+            self._stage.flush_comm()
+            self._stage.move_to(counts, channel=self.CHANNEL)
+            return True
+        except (ThorlabsError, ThorlabsTimeoutError) as e:
+            print(f"[KDC101] Move failed: {e}")
+            return False
+
+    def is_moving(self) -> bool:
+        """Return True if the stage is currently moving."""
+        if not self.connected:
+            return False
+        try:
+            self._stage.flush_comm()
+            return bool(self._stage.is_moving(channel=self.CHANNEL))
+        except (ThorlabsError, ThorlabsTimeoutError):
+            return False
+
+    def wait_until_stopped(self, timeout: float = 60.0) -> bool:
+        """
+        Poll position counts until stable for 3 consecutive reads (200 ms apart).
+
+        Avoids is_moving() and wait_move() entirely — both issue APT queries that
+        race with the KDC101's unsolicited background frames (0x0412, 0x0612) and
+        produce "read returned less data than expected" / "unexpected command"
+        errors. get_position_counts() already handles flush_comm() and silently
+        returns None on transient framing errors, so position-stability polling
+        is naturally tolerant of those glitches.
+
+        Args:
+            timeout: Maximum wait time in seconds
+
+        Returns:
+            True if stopped within timeout, False if timed out
+        """
+        if not self.connected:
+            return False
+        deadline = time.time() + timeout
+        prev_pos: Optional[int] = None
+        stable_count = 0
+        while True:
+            if time.time() > deadline:
+                print(f"[KDC101] wait_until_stopped: timed out after {timeout}s")
+                return False
+            time.sleep(0.2)
+            pos = self.get_position_counts()
+            if pos is None:
+                # Transient read error — keep waiting
+                continue
+            if pos == prev_pos:
+                stable_count += 1
+                if stable_count >= 3:
+                    return True
+            else:
+                stable_count = 0
+                prev_pos = pos
+
+    def stop_motion(self) -> None:
+        """Stop any ongoing motion immediately."""
+        if not self.connected:
+            return
+        try:
+            self._stage.stop(immediate=True, channel=self.CHANNEL)
+        except (ThorlabsError, ThorlabsTimeoutError):
+            pass
+
+    def home(self, timeout: float = 120.0) -> bool:
+        """
+        Home the stage (moves to hardware reference position).
+
+        Args:
+            timeout: Maximum time allowed for homing in seconds
+
+        Returns:
+            True if homing completed successfully
+        """
+        if not self.connected:
+            return False
+        try:
+            self._stage.home(sync=True, channel=self.CHANNEL, timeout=timeout)
+            print("[KDC101] Homing complete")
+            return True
+        except ThorlabsTimeoutError:
+            print(f"[KDC101] Homing timed out after {timeout}s")
+            return False
+        except (ThorlabsError, Exception) as e:
+            print(f"[KDC101] Homing failed: {e}")
+            return False
 
 
 # Simple test
@@ -386,9 +279,9 @@ if __name__ == "__main__":
             pos_deg = stage.get_position_degrees()
             pos_counts = stage.get_position_counts()
             if pos_deg is not None:
-                print(f"  Sample {i+1}: {pos_deg:.2f}° ({pos_counts} counts)")
+                print(f"  Sample {i + 1}: {pos_deg:.2f}° ({pos_counts} counts)")
             else:
-                print(f"  Sample {i+1}: Read failed")
+                print(f"  Sample {i + 1}: Read failed")
             time.sleep(0.5)
 
         stage.disconnect()

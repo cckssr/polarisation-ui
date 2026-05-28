@@ -37,7 +37,6 @@ def _make_frame(
 
 
 class TestJournalBasics:
-
     def test_start_creates_file(self, tmp_journal_base):
         j = SessionJournal(firmware_version="2.0.0")
         j.start()
@@ -84,7 +83,6 @@ class TestJournalBasics:
 
 
 class TestDataRows:
-
     def test_frame_values_written(self, tmp_journal_base):
         j = SessionJournal()
         j.start()
@@ -132,7 +130,6 @@ class TestDataRows:
 
 
 class TestFinalization:
-
     def test_finalize_creates_marker(self, tmp_journal_base):
         j = SessionJournal()
         j.start()
@@ -150,7 +147,6 @@ class TestFinalization:
 
 
 class TestExport:
-
     def test_export_excludes_gaps(self, tmp_journal_base, tmp_path):
         j = SessionJournal()
         j.start()
@@ -193,7 +189,6 @@ class TestExport:
 
 
 class TestOrphanDetection:
-
     def test_no_orphans_initially(self, tmp_journal_base):
         assert SessionJournal.find_orphans() == []
 
@@ -238,7 +233,6 @@ class TestOrphanDetection:
 
 
 class TestCrashResilience:
-
     def test_data_survives_simulated_crash(self, tmp_journal_base, tmp_path):
         """Simulate kill -9: write frames, flush, then close the fd without finalize."""
         j = SessionJournal()

@@ -605,6 +605,21 @@ static void handleConfAdcTemp(const String &param)
     errorQueue.push("-113,\"Undefined header; expected ON or OFF\"");
 }
 
+static void handleConfAdcPwr(bool isQuery, const String &param)
+{
+  if (isQuery)
+  {
+    Serial.println(adsSession.adcPoweredDown() ? "OFF" : "ON");
+    return;
+  }
+  if (param == "OFF")
+    adsSession.powerDown();
+  else if (param == "ON")
+    adsSession.powerUp();
+  else
+    errorQueue.push("-113,\"Undefined header; expected ON or OFF\"");
+}
+
 static void handleConfPdtiaGain(bool isQuery, const String &param)
 {
   if (isQuery)
@@ -899,11 +914,12 @@ static void handleSystHelp()
   Serial.println("  CONF:ADC:VREF?               query current voltage ref");
   Serial.println("  CONF:ADC:TEMP ON|OFF");
   Serial.println("  CONF:ADC:TEMP?               query temp measurement state");
+  Serial.println("  CONF:ADC:PWR  ON|OFF         hardware power-down | up (inhibits auto-recovery)");
+  Serial.println("  CONF:ADC:PWR?                ON|OFF");
   Serial.println("  CONF:PDTIA:GAIN <stage>");
   Serial.println("  CONF:PDTIA:GAIN?             stage,0b<bits>");
   Serial.println("  CONF:SRC ENC:A|ENC:B|ENC:BOTH|ADC|ADC:T|PDTIA|DIAG");
   Serial.println("  CONF:SRC?                    query active sources");
-  Serial.println("  (DIAG adds agcA/agcB/dstatA/dstatB to each DATA:FRAME)");
   Serial.println("  CONF:RATE <hz>               stream rate 1-1000 Hz");
   Serial.println("  CONF:RATE?                   query current rate");
   Serial.println("");
@@ -920,6 +936,7 @@ static void handleSystHelp()
   Serial.println("");
   Serial.println("Streaming:");
   Serial.println("  DATA:FRAME seq=..,tsMs=..,angA=..,angB=..,adcV=..,adcT=..,pdGain=..,agcA=..,dstatA=..,agcB=..,dstatB=..,stat=..");
+  Serial.println("  (DIAG adds agcA/agcB/dstatA/dstatB to each DATA:FRAME)");
   Serial.println("");
   Serial.println("SYSTem:");
   Serial.println("  SYST:ERR?      next queued error");
@@ -1169,6 +1186,10 @@ void scpiDispatch(const String &line)
   else if (header == "CONF:ADC:TEMP")
   {
     isQuery ? handleSensAdcTemp() : handleConfAdcTemp(param);
+  }
+  else if (header == "CONF:ADC:PWR")
+  {
+    handleConfAdcPwr(isQuery, param);
   }
   else if (header == "CONF:PDTIA:GAIN")
   {

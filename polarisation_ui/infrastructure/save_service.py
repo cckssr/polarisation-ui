@@ -19,9 +19,7 @@ Usage:
 
     >>> save_service = MeasurementSaveService(base_dir="/path/to/data")
     >>> file_path = save_service.save_measurement(
-    ...     file_name="data/measurement_001.csv",
-    ...     data=csv_rows,
-    ...     metadata=metadata_dict
+    ...     file_name="data/measurement_001.csv", data=csv_rows, metadata=metadata_dict
     ... )
     >>> backup_path = save_service.auto_backup(data, start_time, sample_id)
 
@@ -347,7 +345,7 @@ class MeasurementSaveService:
             with open(metadata_path, "w", encoding="utf-8") as js_f:
                 json.dump(metadata, js_f, indent=2)
 
-            Debug.debug(f"Backup created: {backup_path} ({len(data)-1} data points)")
+            Debug.debug(f"Backup created: {backup_path} ({len(data) - 1} data points)")
 
             # Cleanup old backups
             self.cleanup_old_backups(backup_dir)
