@@ -1,5 +1,4 @@
-"""
-Automatic power calibration dialog.
+"""Automatic power calibration dialog.
 
 Drives a KDC101 + PRM1/MZ8 polariser rotation stage and a Thorlabs PM400
 power meter to record (voltage, power) pairs for all four PDTIA gain stages,
@@ -55,8 +54,7 @@ class _HomeThread(QThread):
 
 
 class AutoPowerCalibrationWindow(QDialog):
-    """
-    Non-modal dialog for automated detector power calibration.
+    """Non-modal dialog for automated detector power calibration.
 
     When *data_controller* is provided the dialog is opened from MainWindow
     and the existing DataController supplies the Arduino device manager.
@@ -393,6 +391,7 @@ class AutoPowerCalibrationWindow(QDialog):
             wavelength_nm=self.ui.spinWavelength.value(),
             beamsplitter_attenuation_dB=self.ui.spinAttenuation.value(),
             angle_offset_deg=self._angle_offset_deg,
+            adc_saturation_threshold_V=self.ui.spinSaturationThreshold.value(),
         )
 
         if self._data_controller is not None:

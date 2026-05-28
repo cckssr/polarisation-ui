@@ -1,10 +1,10 @@
-"""
-Qt worker threads for infrastructure-layer blocking operations.
+"""Qt worker threads for infrastructure-layer blocking operations.
 
 Qt is allowed in this module only. All other infrastructure modules must remain
 free of PySide6 imports.
 """
 
+import dataclasses
 import time
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,6 @@ from polarisation_ui.core.auto_calibration_settings import (
 )
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
-    GainCalibration,
     PowerCalibrationProfile,
 )
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
@@ -27,9 +26,26 @@ if TYPE_CHECKING:
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 
+_SENSOR_INFO_KEYS = (
+    "name",
+    "serial",
+    "calibration_message",
+    "type",
+    "subtype",
+    "flags",
+)
+
+
+def _parse_sensor_info(raw: list) -> dict:
+    """Convert the flat PM400 sensor_info list to a labelled dict."""
+    return {
+        key: str(raw[i]).strip() if i < len(raw) else ""
+        for i, key in enumerate(_SENSOR_INFO_KEYS)
+    }
+
+
 class ReconnectWorker(QThread):
-    """
-    Off-main-thread reconnection worker.
+    """Off-main-thread reconnection worker.
 
     Calls ``device_manager.reconnect_encoders()`` (which contains blocking
     ``sleep()`` calls) on a dedicated QThread so the Qt event loop — and the
@@ -68,8 +84,7 @@ class ReconnectWorker(QThread):
 
 
 class AutoPowerCalibrationWorker(QThread):
-    """
-    Off-main-thread worker that runs a full automated power calibration sweep.
+    """Off-main-thread worker that runs a full automated power calibration sweep.
 
     The caller is responsible for pausing DataController polling before
     calling ``start()`` and for resuming it after ``finished`` or ``failed``
@@ -132,6 +147,16 @@ class AutoPowerCalibrationWorker(QThread):
             self.failed.emit(f"PM400 configuration failed: {exc}")
             return
 
+        # Collect sensor identification for metadata
+        raw_sensor = self._pm.sensor_info()
+        sensor_meta = _parse_sensor_info(raw_sensor)
+        if sensor_meta:
+            self.log.emit(
+                f"PM400 sensor: {sensor_meta.get('name', '?')} "
+                f"S/N {sensor_meta.get('serial', '?')} "
+                f"({sensor_meta.get('type', '?')})"
+            )
+
         # Home the stage
         self.log.emit("KDC101: homing…")
         try:
@@ -143,7 +168,19 @@ class AutoPowerCalibrationWorker(QThread):
         angles = build_angle_grid(p)
         total = len(angles) * len(p.selected_gains)
         done = 0
-        profile = PowerCalibrationProfile(name=p.profile_name)
+        profile = PowerCalibrationProfile(
+            name=p.profile_name,
+            wavelength_nm=p.wavelength_nm,
+            beamsplitter_attenuation_dB=p.beamsplitter_attenuation_dB,
+            adc_saturation_threshold_V=p.adc_saturation_threshold_V,
+            sensor=sensor_meta,
+        )
+
+        sat_threshold = p.adc_saturation_threshold_V
+        self.log.emit(
+            f"Saturation threshold: {sat_threshold:.2f} V — "
+            f"points at or above this voltage will be skipped."
+        )
 
         for gain in p.selected_gains:
             if self._abort:
@@ -159,10 +196,17 @@ class AutoPowerCalibrationWorker(QThread):
                 return
             time.sleep(p.gain_settle_s)
 
-            for angle in angles:
+            # Mutable per-gain angle list: allows tail redistribution after
+            # the first non-saturated point when the sweep starts in saturation.
+            gain_angles: list[float] = list(angles)
+            first_valid_found = False
+            idx = 0
+            while idx < len(gain_angles):
                 if self._abort:
                     self.failed.emit("Aborted by user")
                     return
+
+                angle = gain_angles[idx]
 
                 try:
                     self._kdc.move_to(angle + p.angle_offset_deg)
@@ -182,8 +226,47 @@ class AutoPowerCalibrationWorker(QThread):
                     self.log.emit(
                         f"  Warning: no ADC readings at θ={angle:.2f}°, skipping"
                     )
+                    done += 1
+                    self.progress.emit(done, total)
+                    idx += 1
                     continue
                 voltage_mean = sum(voltages) / len(voltages)
+
+                # Saturation guard — skip PM400 read and don't record the point
+                if voltage_mean >= sat_threshold:
+                    profile.gains[gain].n_saturated_skipped += 1
+                    self.log.emit(
+                        f"  θ={angle:.1f}° | V={voltage_mean:.4f} V — "
+                        f"SATURATED (≥{sat_threshold:.2f} V), skipping"
+                    )
+                    done += 1
+                    self.progress.emit(done, total)
+                    idx += 1
+                    continue
+
+                # First valid point after a saturated prefix: rebuild the full
+                # p.n_points grid from this angle to angle_end so the usable
+                # range is sampled at the originally requested density.
+                # Example: 30 steps over 0–90°, first 10 saturated → rebuild
+                # 30 steps over 30–90°, giving 2° spacing instead of 3°.
+                if (
+                    not first_valid_found
+                    and profile.gains[gain].n_saturated_skipped > 0
+                ):
+                    sub = dataclasses.replace(
+                        p,
+                        angle_start_deg=angle,
+                        angle_end_deg=p.angle_end_deg,
+                    )
+                    new_grid = build_angle_grid(sub)  # p.n_points points from `angle`
+                    gain_angles[idx + 1 :] = new_grid[1:]
+                    # Tail grew by idx entries; keep progress denominator consistent.
+                    total += idx
+                    self.log.emit(
+                        f"  Grid recalculated: {p.n_points} points from "
+                        f"{angle:.1f}° to {p.angle_end_deg:.1f}°"
+                    )
+                first_valid_found = True
 
                 try:
                     power_W = self._pm.read_power_W()
@@ -199,15 +282,22 @@ class AutoPowerCalibrationWorker(QThread):
                 self.log.emit(
                     f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W"
                 )
+                idx += 1
+
+            n_sat = profile.gains[gain].n_saturated_skipped
+            n_rec = len(profile.gains[gain].points)
+            if n_sat:
+                self.log.emit(
+                    f"Gain {gain}: {n_rec} points recorded, "
+                    f"{n_sat} skipped (saturated)"
+                )
 
         self.log.emit("Sweep complete.")
         self.finished.emit(profile)
 
 
 class AlignPolariserWorker(QThread):
-    """
-    Off-main-thread worker that scans the PM400 while rotating the KDC stage
-    to find the physical angle of maximum transmission.
+    """Off-main-thread worker to find the physical angle of maximum transmission.
 
     The result (``angle_max_deg``) is the stage position where the mounted
     polariser is parallel to the reference analyser — i.e. the physical angle
