@@ -14,7 +14,6 @@ from PySide6.QtWidgets import QFrame
 
 from polarisation_ui.pyqt.ui_connection_banner import Ui_ConnectionBanner
 
-
 _STYLE_RECONNECTING = (
     "QFrame { background-color: #FFA500; border: none; }"
     "QLabel { color: #000; font-weight: bold; }"
@@ -73,9 +72,7 @@ class ConnectionBanner(QFrame):
         """Show LOST state with export button."""
         self._countdown_timer.stop()
         self._state = BannerState.LOST
-        self.ui.lblBannerText.setText(
-            "Verbindung verloren – Daten exportieren?"
-        )
+        self.ui.lblBannerText.setText("Verbindung verloren – Daten exportieren?")
         self.ui.btnBannerExport.setVisible(True)
         self.setStyleSheet(_STYLE_LOST)
         self.setVisible(True)

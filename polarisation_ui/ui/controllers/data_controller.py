@@ -554,7 +554,9 @@ class DataController(QObject):
         the error persists or is a new error type (B1 contract).
         """
         is_first_failure = self._error_count == 0
-        is_new_error_type = self._last_error_msg is not None and error_msg != self._last_error_msg
+        is_new_error_type = (
+            self._last_error_msg is not None and error_msg != self._last_error_msg
+        )
 
         self._error_count += 1
         self._last_error_msg = error_msg

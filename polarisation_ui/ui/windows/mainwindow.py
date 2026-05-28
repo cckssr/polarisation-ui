@@ -187,7 +187,9 @@ class MainWindow(QMainWindow):
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
         self.ui.actionLogWindow.triggered.connect(self._open_log_window)
         self.ui.actionEventLog.toggled.connect(self.ui.dockEventLog.setVisible)
-        self.ui.dockEventLog.visibilityChanged.connect(self.ui.actionEventLog.setChecked)
+        self.ui.dockEventLog.visibilityChanged.connect(
+            self.ui.actionEventLog.setChecked
+        )
         self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
         self.ui.actionAutoPowerCalibration.triggered.connect(
             self._open_auto_power_calibration
@@ -238,9 +240,13 @@ class MainWindow(QMainWindow):
         self.data_controller.connection_lost.connect(self._handle_connection_lost)
         # Banner state transitions
         self.data_controller.retry_connecting.connect(
-            lambda attempt, delay: self.ui.connectionBanner.set_reconnecting(attempt, delay)
+            lambda attempt, delay: self.ui.connectionBanner.set_reconnecting(
+                attempt, delay
+            )
         )
-        self.data_controller.reconnect_succeeded.connect(self.ui.connectionBanner.set_ok)
+        self.data_controller.reconnect_succeeded.connect(
+            self.ui.connectionBanner.set_ok
+        )
         self.data_controller.connection_lost.connect(self.ui.connectionBanner.set_lost)
 
         # Measurement state changes
@@ -256,7 +262,9 @@ class MainWindow(QMainWindow):
             lambda: self._notify_tabs_connection_state(ConnState.CONNECTED)
         )
         self.data_controller.retry_connecting.connect(
-            lambda _attempt, _delay: self._notify_tabs_connection_state(ConnState.RECONNECTING)
+            lambda _attempt, _delay: self._notify_tabs_connection_state(
+                ConnState.RECONNECTING
+            )
         )
         self.data_controller.connection_lost.connect(
             lambda: self._notify_tabs_connection_state(ConnState.LOST)
@@ -656,8 +664,14 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Probe-Encoder auf Null gesetzt")
             Debug.info("Sample encoder zeroed")
         else:
-            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Probe-Encoders")
-            show_error(self, "Nullsetzen fehlgeschlagen", "Probe-Encoder konnte nicht auf Null gesetzt werden.")
+            self.statusbar_manager.show_error(
+                "Fehler beim Nullsetzen des Probe-Encoders"
+            )
+            show_error(
+                self,
+                "Nullsetzen fehlgeschlagen",
+                "Probe-Encoder konnte nicht auf Null gesetzt werden.",
+            )
 
     @Slot()
     def _zero_detector_encoder(self) -> None:
@@ -668,8 +682,14 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Detektor-Encoder auf Null gesetzt")
             Debug.info("Detector encoder zeroed")
         else:
-            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Detektor-Encoders")
-            show_error(self, "Nullsetzen fehlgeschlagen", "Detektor-Encoder konnte nicht auf Null gesetzt werden.")
+            self.statusbar_manager.show_error(
+                "Fehler beim Nullsetzen des Detektor-Encoders"
+            )
+            show_error(
+                self,
+                "Nullsetzen fehlgeschlagen",
+                "Detektor-Encoder konnte nicht auf Null gesetzt werden.",
+            )
 
     @Slot()
     def _open_encoder_debug(self) -> None:

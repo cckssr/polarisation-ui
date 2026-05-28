@@ -627,7 +627,7 @@ class DualEncoderArduino:
         """
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME "):]
+        payload = line[len("DATA:FRAME ") :]
         result: dict[str, str] = {}
         for part in payload.split(","):
             if "=" in part:

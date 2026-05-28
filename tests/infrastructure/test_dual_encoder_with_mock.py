@@ -145,8 +145,8 @@ class TestZeroReset:
 class TestParametricAPI:
     def test_read_angle_parametric(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",30.0)
-        mock.set_encoder_angle("B",60.0)
+        mock.set_encoder_angle("A", 30.0)
+        mock.set_encoder_angle("B", 60.0)
         time.sleep(0.05)
 
         val_a = encoder_client.read_angle(EncoderID.A)
@@ -222,7 +222,7 @@ class TestContinuousMode:
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
         """Verify encoder angle advances while streaming is running."""
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",0.0)
+        mock.set_encoder_angle("A", 0.0)
 
         encoder_client.start_stream([StreamSource.ENC_A])
         initial_angle = mock.get_state()["encoder_a"]["current_angle"]
@@ -235,8 +235,8 @@ class TestContinuousMode:
     def test_both_encoders_different_speeds(self, encoder_client, mock_arduino):
         """Verify encoder A advances faster than B when speeds differ."""
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",0.0)
-        mock.set_encoder_angle("B",0.0)
+        mock.set_encoder_angle("A", 0.0)
+        mock.set_encoder_angle("B", 0.0)
 
         encoder_client.start_stream(
             [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
@@ -343,7 +343,7 @@ class TestMockArduinoState:
 
     def test_manual_angle_set(self, mock_arduino):
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",45.0)
+        mock.set_encoder_angle("A", 45.0)
         state = mock.get_state()
         assert state["encoder_a"]["current_angle"] == 45.0
         assert state["encoder_a"]["effective_angle"] == 45.0

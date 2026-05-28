@@ -30,6 +30,7 @@ pytestmark = pytest.mark.skipif(
 def _spin_until(predicate, timeout: float = 3.0, interval: float = 0.05) -> bool:
     """Pump the Qt event loop until predicate() is True or timeout expires."""
     from PySide6.QtCore import QCoreApplication
+
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         QCoreApplication.processEvents()
@@ -140,7 +141,9 @@ def test_reconnect_failed_increments_error_count_once(qtbot, controller):
     ctrl._on_reconnect_failed()
     after = ctrl._error_count
 
-    assert after == before + 1, "error_count must increment by exactly 1 per failed reconnect"
+    assert after == before + 1, (
+        "error_count must increment by exactly 1 per failed reconnect"
+    )
     ctrl._retry_timer.stop()
 
 

@@ -73,7 +73,7 @@ class TestVoltageRead:
     def test_voltage_malus_law_at_zero_angle(self, encoder_client, mock_arduino):
         """At sample angle = 0°, cos²(0) = 1 → voltage near V_REF."""
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",0.0)
+        mock.set_encoder_angle("A", 0.0)
         v = encoder_client.adc.read_voltage()
         assert v is not None
         assert v > 1.9  # close to 2.048 V
@@ -81,7 +81,7 @@ class TestVoltageRead:
     def test_voltage_malus_law_at_90_degrees(self, encoder_client, mock_arduino):
         """At sample angle = 90°, cos²(90°) = 0 → voltage near 0 V."""
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",90.0)
+        mock.set_encoder_angle("A", 90.0)
         # Allow a brief moment for angle to take effect
         v = encoder_client.adc.read_voltage()
         assert v is not None
@@ -90,10 +90,10 @@ class TestVoltageRead:
     def test_voltage_varies_with_angle(self, encoder_client, mock_arduino):
         """Voltage at 45° should be roughly half of voltage at 0°."""
         mock, _ = mock_arduino
-        mock.set_encoder_angle("A",0.0)
+        mock.set_encoder_angle("A", 0.0)
         v_zero = encoder_client.adc.read_voltage()
 
-        mock.set_encoder_angle("A",45.0)
+        mock.set_encoder_angle("A", 45.0)
         v_45 = encoder_client.adc.read_voltage()
 
         assert v_zero is not None and v_45 is not None
@@ -187,7 +187,9 @@ class TestStreamConfiguration:
         mock, _ = mock_arduino
         # start_stream([ENC_BOTH, ADC, DIAG]) sends CONF:SRC ENC:BOTH,ADC,DIAG + INIT:CONT ON.
         # The mock expands ENC:BOTH → ENC:A + ENC:B internally.
-        encoder_client.start_stream([StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG])
+        encoder_client.start_stream(
+            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
+        )
         assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
             "continuous mode not started"
         )

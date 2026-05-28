@@ -56,7 +56,7 @@ class KDC101Polariser:
     Usage::
 
         kdc = KDC101Polariser()
-        kdc.connect("27266999")   # serial-number string or full port path
+        kdc.connect("27266999")  # serial-number string or full port path
         kdc.home()
         kdc.move_to(45.0)
         print(kdc.get_position_deg())
