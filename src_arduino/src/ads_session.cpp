@@ -135,6 +135,11 @@ void AdsSession::_configureAdcDefaults()
   _conversionPeriodMs = 50; // 20 SPS default
   _nextConversionMs = 0;
 
+  // DRDYM=1: DOUT/DRDY acts as standard SPI MISO (only driven while CS is low).
+  // Without this, DRDYM=0 default drives MISO LOW on conversion-complete even
+  // when CS is high, corrupting encoder reads on the shared SPI bus.
+  _adc.setDRDYMode(true);
+
   _adc.setConversionMode(ADS1220::ConversionMode::CONTINUOUS);
   _adc.start();
 
