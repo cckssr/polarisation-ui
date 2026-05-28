@@ -314,11 +314,11 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 
 ### Planned: Infrastructure
 
-| Feature                  | Description                                                                 |
-| ------------------------ | --------------------------------------------------------------------------- |
-| HDF5/Zarr export         | Optional dense export for large angle-scan datasets                         |
-| KDC101 motorised stage   | Thorlabs USB APT driver, automated angle sweeps for all tab experiments     |
-| SCPI 2.0.0 firmware bump | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames     |
+| Feature                  | Description                                                             |
+| ------------------------ | ----------------------------------------------------------------------- |
+| HDF5/Zarr export         | Optional dense export for large angle-scan datasets                     |
+| KDC101 motorised stage   | Thorlabs USB APT driver, automated angle sweeps for all tab experiments |
+| SCPI 2.0.0 firmware bump | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames |
 
 ---
 
