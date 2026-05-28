@@ -86,8 +86,7 @@ class DualEncoderValue:
 
 @dataclass
 class DesiredState:
-    """
-    Snapshot of CONF:ADC:* and CONF:PDTIA:* settings.
+    """Snapshot of CONF:ADC:* and CONF:PDTIA:* settings.
 
     Stored by GoniometerDeviceManager and reapplied automatically after every
     successful reconnect so the Arduino config is never lost across a USB drop.
@@ -118,8 +117,7 @@ class DesiredState:
 
 # ── ADC client facet ──────────────────────────────────────────────────────────
 class ADCClient:
-    """
-    ADC sub-interface of DualEncoderArduino.
+    """ADC sub-interface of DualEncoderArduino.
 
     Exposes CONF:ADC:*, CONF:PDTIA:*, MEAS:ADC:* commands as typed methods.
     Accessed via the parent's `.adc` attribute::
@@ -217,8 +215,7 @@ class ADCClient:
 
 
 class DualEncoderArduino:
-    """
-    High-level SCPI 2.0.0 interface for dual AS5048A encoders + ADS1220 ADC.
+    """High-level SCPI 2.0.0 interface for dual AS5048A encoders + ADS1220 ADC.
 
     Raises IncompatibleFirmwareError on connect() when the firmware reports
     a version older than 2.0.0.

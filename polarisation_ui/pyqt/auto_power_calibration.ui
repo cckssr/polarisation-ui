@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1100</width>
-    <height>660</height>
+    <width>1218</width>
+    <height>965</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,6 @@
    <property name="bottomMargin">
     <number>8</number>
    </property>
-   <!-- ── Top row: all three connection boxes side by side ── -->
    <item>
     <widget class="QGroupBox" name="gbConnections">
      <property name="title">
@@ -150,11 +149,11 @@
          </item>
          <item row="2" column="0" colspan="3">
           <widget class="QPushButton" name="btnHomeKDC">
-           <property name="text">
-            <string>Referenzfahrt (Home)</string>
-           </property>
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Referenzfahrt (Home)</string>
            </property>
           </widget>
          </item>
@@ -213,11 +212,11 @@
          </item>
          <item row="2" column="0" colspan="3">
           <widget class="QPushButton" name="btnZeroPM400">
-           <property name="text">
-            <string>Nullabgleich (Zero)</string>
-           </property>
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Nullabgleich (Zero)</string>
            </property>
           </widget>
          </item>
@@ -227,19 +226,16 @@
      </layout>
     </widget>
    </item>
-   <!-- ── Bottom: controls (left) + plot (right) ── -->
    <item>
-    <layout class="QHBoxLayout" name="workAreaLayout">
+    <layout class="QHBoxLayout" name="workAreaLayout" stretch="0,1">
      <property name="spacing">
       <number>8</number>
      </property>
-     <!-- Left: parameter controls -->
      <item>
       <layout class="QVBoxLayout" name="leftPanelLayout">
        <property name="spacing">
         <number>5</number>
        </property>
-       <!-- Alignment and beam settings side by side -->
        <item>
         <layout class="QHBoxLayout" name="topControlsRow">
          <property name="spacing">
@@ -281,13 +277,13 @@
                  <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>0.0</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>360.0</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0.0</double>
+                 <double>0.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -313,13 +309,13 @@
                  <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>0.0</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>360.0</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>180.0</double>
+                 <double>180.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -371,16 +367,16 @@
                  <number>2</number>
                 </property>
                 <property name="minimum">
-                 <double>0.0</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>10.0</double>
+                 <double>10.000000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>0.05</double>
+                 <double>0.050000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0.2</double>
+                 <double>0.200000000000000</double>
                 </property>
                </widget>
               </item>
@@ -393,21 +389,21 @@
               </property>
               <item>
                <widget class="QPushButton" name="btnAlignPolariser">
-                <property name="text">
-                 <string>Ausrichtung starten</string>
-                </property>
                 <property name="enabled">
                  <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Ausrichtung starten</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QPushButton" name="btnAbortAlign">
-                <property name="text">
-                 <string>Abbrechen</string>
-                </property>
                 <property name="enabled">
                  <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Abbrechen</string>
                 </property>
                </widget>
               </item>
@@ -426,7 +422,6 @@
            </layout>
           </widget>
          </item>
-         <!-- Beam + measurement settings, right of alignment -->
          <item>
           <widget class="QGroupBox" name="gbBeam">
            <property name="title">
@@ -455,13 +450,13 @@
                <number>1</number>
               </property>
               <property name="minimum">
-               <double>200.0</double>
+               <double>200.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>1100.0</double>
+               <double>1100.000000000000000</double>
               </property>
               <property name="value">
-               <double>633.0</double>
+               <double>633.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -487,16 +482,16 @@
                <number>3</number>
               </property>
               <property name="minimum">
-               <double>-60.0</double>
+               <double>-60.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>90.0</double>
+               <double>90.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.1</double>
+               <double>0.100000000000000</double>
               </property>
               <property name="value">
-               <double>3.0</double>
+               <double>3.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -531,7 +526,6 @@
          </item>
         </layout>
        </item>
-       <!-- Sweep settings -->
        <item>
         <widget class="QGroupBox" name="gbSweep">
          <property name="title">
@@ -565,13 +559,13 @@
                <number>1</number>
               </property>
               <property name="minimum">
-               <double>0.0</double>
+               <double>0.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>360.0</double>
+               <double>360.000000000000000</double>
               </property>
               <property name="value">
-               <double>0.0</double>
+               <double>0.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -594,13 +588,13 @@
                <number>1</number>
               </property>
               <property name="minimum">
-               <double>0.0</double>
+               <double>0.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>360.0</double>
+               <double>360.000000000000000</double>
               </property>
               <property name="value">
-               <double>90.0</double>
+               <double>90.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -649,16 +643,16 @@
                <number>2</number>
               </property>
               <property name="minimum">
-               <double>0.0</double>
+               <double>0.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>30.0</double>
+               <double>30.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.05</double>
+               <double>0.050000000000000</double>
               </property>
               <property name="value">
-               <double>0.2</double>
+               <double>0.200000000000000</double>
               </property>
              </widget>
             </item>
@@ -681,16 +675,16 @@
                <number>2</number>
               </property>
               <property name="minimum">
-               <double>0.0</double>
+               <double>0.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>10.0</double>
+               <double>10.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.1</double>
+               <double>0.100000000000000</double>
               </property>
               <property name="value">
-               <double>0.5</double>
+               <double>0.500000000000000</double>
               </property>
              </widget>
             </item>
@@ -742,16 +736,16 @@
                <number>2</number>
               </property>
               <property name="minimum">
-               <double>1.00</double>
+               <double>1.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>3.30</double>
+               <double>3.300000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.05</double>
+               <double>0.050000000000000</double>
               </property>
               <property name="value">
-               <double>2.35</double>
+               <double>2.350000000000000</double>
               </property>
              </widget>
             </item>
@@ -845,7 +839,6 @@
          </layout>
         </widget>
        </item>
-       <!-- Profile name -->
        <item>
         <widget class="QGroupBox" name="gbProfile">
          <property name="title">
@@ -888,7 +881,6 @@
          </layout>
         </widget>
        </item>
-       <!-- Action buttons -->
        <item>
         <layout class="QHBoxLayout" name="controlLayout">
          <property name="spacing">
@@ -896,31 +888,31 @@
          </property>
          <item>
           <widget class="QPushButton" name="btnStart">
-           <property name="text">
-            <string>Starten</string>
-           </property>
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Starten</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnAbort">
-           <property name="text">
-            <string>Abbrechen</string>
-           </property>
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Abbrechen</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnSave">
-           <property name="text">
-            <string>Profil speichern</string>
-           </property>
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Profil speichern</string>
            </property>
           </widget>
          </item>
@@ -958,7 +950,6 @@
        </item>
       </layout>
      </item>
-     <!-- Right: plot + log -->
      <item>
       <layout class="QVBoxLayout" name="rightPanelLayout">
        <property name="spacing">
@@ -1013,7 +1004,6 @@
    <class>MultiGainCalibrationPlot</class>
    <extends>QWidget</extends>
    <header>polarisation_ui.ui.widgets.multi_gain_calibration_plot</header>
-   <container>0</container>
   </customwidget>
  </customwidgets>
  <resources/>

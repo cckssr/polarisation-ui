@@ -1,5 +1,4 @@
-"""
-Power-calibration tool for PD-TIA detector.
+"""Power-calibration tool for PD-TIA detector.
 
 Usage workflow:
   1. Set up the bench: calibrated power meter + constant laser + ND filters.
@@ -36,7 +35,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QSizePolicy,
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -226,8 +224,7 @@ class _GainCalTab(QWidget):
 
 
 class PowerCalibrationWindow(QDialog):
-    """
-    Standalone calibration dialog.
+    """Standalone calibration dialog.
 
     Emits `profile_saved` (no args) whenever a profile is successfully saved
     so that MainWindow can reload the profile combobox.

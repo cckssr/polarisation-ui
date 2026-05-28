@@ -399,8 +399,7 @@ class TestAutoBackup:
 
 
 class TestCrashRecovery:
-    """
-    Simulates the program exiting mid-session.  The auto_backup files in
+    """Simulates the program exiting mid-session.  The auto_backup files in
     .backup/ must remain readable and contain all data written before the exit.
     """
 

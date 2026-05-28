@@ -1,5 +1,4 @@
-"""
-ConnectionBanner — non-blocking reconnect status banner.
+"""ConnectionBanner — non-blocking reconnect status banner.
 
 Three visible states:
   OK          — hidden.

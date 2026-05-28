@@ -5,8 +5,7 @@ from typing import Optional
 
 
 class MockKDC101Polariser:
-    """
-    Simulated KDC101Polariser.
+    """Simulated KDC101Polariser.
 
     move_to() updates the internal position instantly; home() resets to 0°.
     No real hardware or pylablib needed.

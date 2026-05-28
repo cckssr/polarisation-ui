@@ -1,11 +1,10 @@
-"""
-Status bar management utilities.
+"""Status bar management utilities.
 
 Provides helper functions for updating the status bar with
 consistent formatting and behavior.
 """
 
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Optional
 
 from PySide6.QtWidgets import QStatusBar
 

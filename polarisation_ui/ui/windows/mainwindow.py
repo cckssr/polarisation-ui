@@ -1,5 +1,4 @@
-"""
-Main Window for Goniometer Polarisation UI.
+"""Main Window for Goniometer Polarisation UI.
 
 Uses Qt Designer UI (ui_mainwindow.py) and integrates with the 3-layer architecture:
     - UI Layer: This window and Qt Designer UI
@@ -62,8 +61,7 @@ _ADC_SAT_HIGH = 2.0  # V — near rail
 
 
 class MainWindow(QMainWindow):
-    """
-    Main window of the Goniometer Polarisation UI.
+    """Main window of the Goniometer Polarisation UI.
 
     Uses Qt Designer UI and provides:
         - Live encoder readings display (LCD)
@@ -80,8 +78,7 @@ class MainWindow(QMainWindow):
     """
 
     def __init__(self, device_manager: GoniometerDeviceManager, parent=None):
-        """
-        Initialize main window.
+        """Initialize main window.
 
         Args:
             device_manager: Connected device manager instance
@@ -195,9 +192,6 @@ class MainWindow(QMainWindow):
             self._open_auto_power_calibration
         )
 
-        # Connection banner
-        self.ui.connectionBanner.export_requested.connect(self._export_on_lost)
-
         # PDTIA gain button group — assign IDs 1–4 to match stage numbers
         for stage in (1, 2, 3, 4):
             self.ui.gainButtonGroup.setId(getattr(self.ui, f"btnGain{stage}"), stage)
@@ -208,6 +202,10 @@ class MainWindow(QMainWindow):
         self.ui.btnReloadProfiles.clicked.connect(self._reload_profiles)
         self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
         self._reload_profiles()
+
+        # Group selection — enables/disables experiment tabs and updates filename preview
+        self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
+        self.ui.leSuffix.textChanged.connect(self._update_filename_display)
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
@@ -238,16 +236,6 @@ class MainWindow(QMainWindow):
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
         self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
         self.data_controller.connection_lost.connect(self._handle_connection_lost)
-        # Banner state transitions
-        self.data_controller.retry_connecting.connect(
-            lambda attempt, delay: self.ui.connectionBanner.set_reconnecting(
-                attempt, delay
-            )
-        )
-        self.data_controller.reconnect_succeeded.connect(
-            self.ui.connectionBanner.set_ok
-        )
-        self.data_controller.connection_lost.connect(self.ui.connectionBanner.set_lost)
 
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
@@ -273,6 +261,9 @@ class MainWindow(QMainWindow):
         # Tab activation
         self.ui.tabWidget.currentChanged.connect(self._on_tab_changed)
 
+        # Apply initial group state (cbGroupLetter starts at -1 → all experiment tabs disabled)
+        self._on_group_changed(self.ui.cbGroupLetter.currentIndex())
+
     def _notify_tabs_connection_state(self, state: ConnState) -> None:
         for tab in self._tab_instances:
             tab.on_connection_state(state)
@@ -286,6 +277,7 @@ class MainWindow(QMainWindow):
                 tab.on_deactivated()
         if not self._is_measuring:
             self._sync_save_button()
+        self._update_filename_display()
 
     @Slot(str, str)
     def _handle_tab_status(self, level: str, msg: str) -> None:
@@ -295,6 +287,39 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_error(msg)
         else:
             self.statusbar_manager.show_info(msg)
+
+    # ==================== Group / Filename ====================
+
+    @Slot(int)
+    def _on_group_changed(self, index: int) -> None:
+        """Enable or disable experiment tabs depending on whether a group is selected."""
+        group_selected = index >= 0
+        tooltip = "" if group_selected else "Bitte zuerst eine Gruppe auswählen"
+        # Tab 0 is "Konfiguration" — always accessible.
+        # Tabs 1+ are experiment tabs added by _setup_tabs.
+        for i in range(1, self.ui.tabWidget.count()):
+            self.ui.tabWidget.setTabEnabled(i, group_selected)
+            self.ui.tabWidget.setTabToolTip(i, tooltip)
+        if not group_selected and self.ui.tabWidget.currentIndex() > 0:
+            self.ui.tabWidget.setCurrentIndex(0)
+        self._update_filename_display()
+
+    def _update_filename_display(self) -> None:
+        """Refresh pteCurrentFilename with the expected save path for the active tab."""
+        group = self.ui.cbGroupLetter.currentText()
+        if not group:
+            self.ui.pteCurrentFilename.setPlainText("")
+            return
+
+        suffix = self.ui.leSuffix.text().strip()
+        tab = self._get_active_export_tab()
+        hint = tab.build_export().filename_hint if tab is not None else "messung"
+        stem = (
+            f"messung_{hint}_{group}_{suffix}" if suffix else f"messung_{hint}_{group}"
+        )
+        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
+        display = f"{base_folder}/{group}/{stem}.csv"
+        self.ui.pteCurrentFilename.setPlainText(display)
 
     # ==================== Arduino Connection ====================
 
@@ -396,7 +421,6 @@ class MainWindow(QMainWindow):
         """Reset all connection-related UI elements to the disconnected state."""
         self._is_connected = False
         self._adc_saturated = False
-        self.ui.connectionBanner.set_ok()
 
         # Restore connect button
         try:
@@ -470,7 +494,12 @@ class MainWindow(QMainWindow):
         )
         self.ui.lcdSampleAngle.display(0.00)
         self.ui.lcdDetectorStageAngle.display(0.00)
-        self.ui.lcdDetectorVoltage.display(0.0000)
+        self.ui.lcdWattage.display(0.00)
+        self.ui.lcdDetectorVoltage.display(0.00)
+        self.ui.lcdSampleAngle_2.display(0.00)
+        self.ui.lcdDetectorStageAngle_2.display(0.00)
+        self.ui.lcdDetectorVoltage_2.display(0.00)
+        self.ui.lcdWattage_2.display(0.00)
         self.ui.btnStartMeasurement.setEnabled(True)
         self._sensor_a_ok = True
         self._sensor_b_ok = True
@@ -481,8 +510,7 @@ class MainWindow(QMainWindow):
     # ==================== Acquisition Settings ====================
 
     def _load_acq_settings_from_config(self) -> AcquisitionSettings:
-        """
-        Build AcquisitionSettings from config.json defaults.
+        """Build AcquisitionSettings from config.json defaults.
 
         Called once at startup. The returned object is the authoritative
         session state; it is never written back to disk.
@@ -516,8 +544,7 @@ class MainWindow(QMainWindow):
     def _update_angle_displays(
         self, sample_angle: float, detector_angle: float
     ) -> None:
-        """
-        Update LCD displays with encoder readings.
+        """Update LCD displays with encoder readings.
 
         Args:
             sample_angle: Sample stage angle in degrees
@@ -528,15 +555,20 @@ class MainWindow(QMainWindow):
         # diagnostic fault is more confusing than showing a potentially noisy reading.
         self.ui.lcdSampleAngle.display(f"{sample_angle:.2f}")
         self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
+        self.ui.lcdSampleAngle_2.display(f"{sample_angle:.2f}")
+        self.ui.lcdDetectorStageAngle_2.display(f"{detector_angle:.2f}")
 
     @Slot(float)
     def _update_intensity_display(self, voltage: float) -> None:
-        """Update the detector voltage LCD and check for ADC saturation."""
+        """Update the detector voltage LCD (in mV) and check for ADC saturation."""
         if math.isnan(voltage):
-            self.ui.lcdDetectorVoltage.display("----")
+            self.ui.lcdWattage.display("----")
+            self.ui.lcdDetectorVoltage_2.display("----")
             return
 
-        self.ui.lcdDetectorVoltage.display(f"{voltage:.4f}")
+        voltage_mv = voltage * 1000.0
+        self.ui.lcdWattage.display(f"{voltage_mv:.2f}")
+        self.ui.lcdDetectorVoltage_2.display(f"{voltage_mv:.2f}")
 
         saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
         if saturated != self._adc_saturated:
@@ -587,10 +619,12 @@ class MainWindow(QMainWindow):
     @Slot(float)
     def _update_wattage_display(self, power_W: float) -> None:
         if math.isnan(power_W):
-            self.ui.lcdWattage.display("    ----")
+            self.ui.lcdDetectorVoltage.display("----")
+            self.ui.lcdWattage_2.display("----")
         else:
-            power_mw = power_W * 1e3
-            self.ui.lcdWattage.display(f"{power_mw:.3f}")
+            power_uw = power_W * 1e6
+            self.ui.lcdDetectorVoltage.display(f"{power_uw:.2f}")
+            self.ui.lcdWattage_2.display(f"{power_uw:.2f}")
 
     # ==================== Calibration Profile Management ====================
 
@@ -834,11 +868,14 @@ class MainWindow(QMainWindow):
             else f"messung_{exp.filename_hint}_{group_letter}"
         )
         default_name = f"{stem}.csv"
+        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
+        default_dir = Path.home() / base_folder / group_letter
+        default_dir.mkdir(parents=True, exist_ok=True)
 
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Messdaten speichern",
-            str(Path.home() / default_name),
+            str(default_dir / default_name),
             "CSV-Dateien (*.csv);;Alle Dateien (*)",
         )
         if not path:
@@ -889,8 +926,7 @@ class MainWindow(QMainWindow):
     def _handle_diagnostics_update(
         self, a_ok: bool, a_desc: str, b_ok: bool, b_desc: str
     ) -> None:
-        """
-        React to per-encoder diagnostic results from the data controller.
+        """React to per-encoder diagnostic results from the data controller.
 
         Each encoder's LED and display gate is updated independently so a
         fault on one stage doesn't affect the other.
@@ -978,7 +1014,6 @@ class MainWindow(QMainWindow):
     @Slot()
     def _handle_reconnect_success(self) -> None:
         """Serial connection re-established: restore all status indicators."""
-        self.ui.connectionBanner.set_ok()
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
@@ -1018,13 +1053,6 @@ class MainWindow(QMainWindow):
         )
         Debug.error("Connection permanently lost; user must reconnect manually")
 
-        journal = self.data_controller.current_journal
-        if journal is not None and journal.row_count > 0:
-            self._offer_partial_export(journal)
-
-    @Slot()
-    def _export_on_lost(self) -> None:
-        """Triggered by the connection banner's export button after connection is lost."""
         journal = self.data_controller.current_journal
         if journal is not None and journal.row_count > 0:
             self._offer_partial_export(journal)
@@ -1091,8 +1119,7 @@ class MainWindow(QMainWindow):
     # ==================== Window Lifecycle ====================
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        """
-        Handle window close event.
+        """Handle window close event.
 
         Args:
             event: Close event

@@ -1,5 +1,4 @@
-"""
-Acquisition Settings Dialog.
+"""Acquisition Settings Dialog.
 
 Wraps the Qt Designer UI (acq_settings_ui.py) and provides
 a clean interface to read/write AcquisitionSettings values.
@@ -18,7 +17,8 @@ class AcquisitionSettingsDialog(QDialog):
     """Dialog for editing acquisition averaging settings."""
 
     def __init__(self, settings: AcquisitionSettings, parent=None):
-        """
+        """Initialize the dialog with current settings.
+
         Args:
             settings: Current session settings used to pre-populate the form.
             parent: Parent widget (MainWindow); passed to QDialog for modality.

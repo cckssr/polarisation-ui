@@ -1,5 +1,4 @@
-"""
-Core business logic services for goniometer control.
+"""Core business logic services for goniometer control.
 
 Services implement domain logic without any PySide6 or Qt dependencies.
 They orchestrate operations on models and coordinate with infrastructure
@@ -12,8 +11,7 @@ from .exceptions import AngleLimitError, AngleMismatchError
 
 
 class GoniometerService:
-    """
-    Service for managing goniometer state and operations.
+    """Service for managing goniometer state and operations.
 
     Responsibilities:
     - Maintain current goniometer state
@@ -33,8 +31,7 @@ class GoniometerService:
         self.reading_history: List[EncoderReading] = []
 
     def initialize_state(self, sample_angle: float = 0.0) -> GoniometerState:
-        """
-        Initialize goniometer to a known state.
+        """Initialize goniometer to a known state.
 
         Args:
             sample_angle: Initial sample stage angle in degrees.
@@ -53,9 +50,8 @@ class GoniometerService:
         )
         return self.current_state
 
-    def update_sample_angle(self, angle: float) -> GoniometerState:
-        """
-        Update sample stage angle (upper stage).
+    def update_sample_angle(self, angle: float) -> Optional[GoniometerState]:
+        """Update sample stage angle (upper stage).
 
         The detector angle is automatically calculated to maintain
         the 2x relationship.
@@ -64,7 +60,7 @@ class GoniometerService:
             angle: New sample angle in degrees.
 
         Returns:
-            GoniometerState: Updated state.
+            Optional[GoniometerState]: Updated state.
 
         Raises:
             AngleLimitError: If angle exceeds limits.
@@ -80,9 +76,10 @@ class GoniometerService:
 
         return self.current_state
 
-    def process_encoder_reading(self, stage: str, angle: float) -> GoniometerState:
-        """
-        Process an encoder reading from hardware.
+    def process_encoder_reading(
+        self, stage: str, angle: float
+    ) -> Optional[GoniometerState]:
+        """Process an encoder reading from hardware.
 
         Encoder readings are the electronic feedback of manual positions.
         If detector reading provided, it will be validated against sample angle.
@@ -92,7 +89,7 @@ class GoniometerService:
             angle: Measured angle in degrees.
 
         Returns:
-            GoniometerState: Updated state.
+            Optional[GoniometerState]: Updated state.
 
         Raises:
             AngleLimitError: If angle exceeds limits.
@@ -129,8 +126,7 @@ class GoniometerService:
         return self.current_state
 
     def get_reading_history(self, limit: Optional[int] = None) -> List[EncoderReading]:
-        """
-        Get history of encoder readings.
+        """Get history of encoder readings.
 
         Args:
             limit: Maximum number of readings to return. None = all.
@@ -148,8 +144,7 @@ class GoniometerService:
         self.reading_history = []
 
     def _validate_angle_range(self, angle: float) -> None:
-        """
-        Validate angle is within mechanical limits.
+        """Validate angle is within mechanical limits.
 
         Args:
             angle: Angle to validate in degrees.

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 19.0.0, 2026-05-19T14:33:02. -->
+<!-- Written by QtCreator 19.0.2, 2026-05-28T18:22:18. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -158,10 +158,8 @@
      <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt/mock_main.py</value>
      <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
      <value type="QString" key="ProjectExplorer.RunConfiguration.UniqueId"></value>
-     <value type="QString" key="PythonEditor.RunConfiguation.Script">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt/mock_main.py</value>
      <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
      <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-     <value type="QString" key="RunConfiguration.WorkingDirectory.default">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt</value>
     </valuemap>
     <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
     <value type="QString" key="python">/Users/cedric.kessler/GIT/polarisation-ui/.venv/bin/python</value>
@@ -196,10 +194,8 @@
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt/mock_main.py</value>
     <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.UniqueId"></value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt/mock_main.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/Users/cedric.kessler/GIT/polarisation-ui/polarisation_ui/pyqt</value>
    </valuemap>
    <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
   </valuemap>

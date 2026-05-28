@@ -8,6 +8,10 @@
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/auto_power_calibration.ui -o ./polarisation_ui/pyqt/ui_auto_power_calibration.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/connection_banner.ui -o ./polarisation_ui/pyqt/ui_connection_banner.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/event_log_panel.ui -o ./polarisation_ui/pyqt/ui_event_log_panel.py
+.venv/bin/pyside6-uic ./polarisation_ui/pyqt/malus_tab.ui -o ./polarisation_ui/pyqt/ui_malus_tab.py
+.venv/bin/pyside6-uic ./polarisation_ui/pyqt/brewster_tab.ui -o ./polarisation_ui/pyqt/ui_brewster_tab.py
+
+.venv/bin/ruff format ./polarisation_ui/pyqt/ui_*.py
 
 if [ $? -ne 0 ]; then
     echo "Error converting UI files"

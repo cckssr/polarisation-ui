@@ -77,8 +77,7 @@ class CalibrationRun:
 
 
 class CalibrationMeasurement:
-    """
-    Manages calibration measurement session.
+    """Manages calibration measurement session.
 
     Workflow:
         1. Connect to both devices

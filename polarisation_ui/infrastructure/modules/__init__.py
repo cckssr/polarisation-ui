@@ -55,8 +55,7 @@ class HostModule(Protocol):
 
 
 class ModuleRegistry:
-    """
-    Registry for host-side peripheral modules.
+    """Registry for host-side peripheral modules.
 
     Class-level dict — one registry per process.  Tabs receive the registry
     contents via ``PlotTabBase.inject_modules()`` so they remain decoupled from

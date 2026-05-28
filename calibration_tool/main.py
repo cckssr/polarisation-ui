@@ -108,8 +108,7 @@ class MeasurementWorker(QThread):
 
 
 class AutoCalibrationWorker(QThread):
-    """
-    Background thread for motorised angle sweep.
+    """Background thread for motorised angle sweep.
 
     Moves the KDC101 to each target angle in sequence, waits for it to stop,
     waits an additional settle delay, then takes a single encoder reading.
@@ -172,8 +171,7 @@ class AutoCalibrationWorker(QThread):
 
 
 class CalibrationApp(QMainWindow):
-    """
-    Main application window for encoder calibration.
+    """Main application window for encoder calibration.
 
     Provides:
         - Device connection management

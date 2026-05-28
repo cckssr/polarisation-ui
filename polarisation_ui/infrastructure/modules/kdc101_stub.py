@@ -17,8 +17,7 @@ from polarisation_ui.infrastructure.modules import HostModule
 
 
 class Kdc101Stub:
-    """
-    Stub implementation of ``HostModule`` for the Thorlabs KDC101 stepper controller.
+    """Stub implementation of ``HostModule`` for the Thorlabs KDC101 stepper controller.
 
     All methods are no-ops that log at DEBUG level.  ``is_connected()`` always
     returns ``True`` so that tabs with ``required_modules={"kdc101"}`` become

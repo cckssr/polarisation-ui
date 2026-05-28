@@ -1,5 +1,4 @@
-"""
-Multi-series calibration scatter plot.
+"""Multi-series calibration scatter plot.
 
 Shows one colour-coded scatter series per PDTIA gain stage (1–4) with
 X = detector voltage (V) and Y = optical power (W).  Designed to receive
@@ -23,8 +22,7 @@ _GAIN_COLOURS: dict[int, tuple[int, int, int]] = {
 
 
 class MultiGainCalibrationPlot(QWidget):
-    """
-    Live scatter plot for automated power calibration.
+    """Live scatter plot for automated power calibration.
 
     One coloured series per gain stage; X = detector voltage (V),
     Y = calibrated optical power (W).  Call ``add_point()`` as each

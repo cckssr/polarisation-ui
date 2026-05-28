@@ -52,8 +52,7 @@ class MockEncoderState:
 
 
 class MockArduino:
-    """
-    Simulated Arduino (SCPI 2.0.0) via PTY.
+    """Simulated Arduino (SCPI 2.0.0) via PTY.
 
     Runs in a background daemon thread; callers interact through the PTY slave
     path returned by start().

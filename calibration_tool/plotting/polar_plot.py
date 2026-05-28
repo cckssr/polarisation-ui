@@ -19,8 +19,7 @@ from calibration.analysis import CalibrationAnalysis, CalibrationResult
 
 
 class CalibrationPlotter:
-    """
-    Creates visualizations for encoder calibration data.
+    """Creates visualizations for encoder calibration data.
 
     Main plots:
         1. Polar plot: Shows error magnitude as radius at each angle.

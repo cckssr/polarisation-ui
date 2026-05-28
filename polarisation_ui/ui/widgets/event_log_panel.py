@@ -1,5 +1,4 @@
-"""
-EventLogPanel — timestamped scrollback panel for application events.
+"""EventLogPanel — timestamped scrollback panel for application events.
 
 Mirrors every message written to StatusBarManager so the user has
 persistent scrollback beyond the status bar's 1-line display.

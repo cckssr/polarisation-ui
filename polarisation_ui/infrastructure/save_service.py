@@ -1,5 +1,4 @@
-"""!/usr/bin/env python
-Data persistence and file management for measurement sessions.
+"""Data persistence and file management for measurement sessions.
 
 This module provides services for saving, loading, and managing measurement data
 to disk. It handles CSV export, metadata creation, automatic backups, and
@@ -50,8 +49,7 @@ with _SENSOR_METADATA_PATH.open("r", encoding="utf-8") as _f:
 
 
 class MeasurementSaveService:
-    """
-    File I/O service for saving and managing measurement data.
+    """File I/O service for saving and managing measurement data.
 
     Handles CSV export, metadata creation, automatic backups, and directory
     organization. Operates independently from core business logic, providing
@@ -63,8 +61,7 @@ class MeasurementSaveService:
         base_dir: Optional[Path | str] = None,
         tk_designation: str = "TKXX",
     ):
-        """
-        Initialize the measurement save service.
+        """Initialize the measurement save service.
 
         Args:
             base_dir: Base directory for storing measurement files.
@@ -91,8 +88,7 @@ class MeasurementSaveService:
             Debug.error(f"Failed to create base directory {self.base_dir}: {exc}")
 
     def has_unsaved(self) -> bool:
-        """
-        Check if there is unsaved measurement data.
+        """Check if there is unsaved measurement data.
 
         Returns:
             bool: True if data has been modified since last save.
@@ -115,8 +111,7 @@ class MeasurementSaveService:
         suffix: str = "",
         extension: str = ".csv",
     ) -> str:
-        """
-        Generate standardized measurement file name with folder structure.
+        """Generate standardized measurement file name with folder structure.
 
         Creates Dropbox-compatible folder paths following naming conventions:
         `<Day><Group><TK>-<Subterm>/YYYY_MM_DD-NN-identifier.csv`
@@ -164,8 +159,7 @@ class MeasurementSaveService:
         subterm: str = "",
         extra_fields: dict | None = None,
     ) -> dict:
-        """
-        Create metadata dictionary for a measurement session.
+        """Create metadata dictionary for a measurement session.
 
         Uses Dublin Core fields for standardization. Can be extended with
         custom fields via extra_fields parameter.
@@ -201,8 +195,7 @@ class MeasurementSaveService:
     def save_measurement(
         self, file_name: str, data: List[List[str]], metadata: dict
     ) -> Path:
-        """
-        Save CSV measurement data with metadata.
+        """Save CSV measurement data with metadata.
 
         Saves data as CSV and metadata as JSON alongside it. Creates
         parent directories automatically if needed.
@@ -252,8 +245,7 @@ class MeasurementSaveService:
         subterm: str = "",
         suffix: str = "",
     ) -> Optional[Path]:
-        """
-        Automatically save measurement with generated file name.
+        """Automatically save measurement with generated file name.
 
         Convenience method that generates the file name, creates metadata,
         and saves in one call.
@@ -295,8 +287,7 @@ class MeasurementSaveService:
         subterm: str = "",
         extra_metadata: dict | None = None,
     ) -> Optional[Path]:
-        """
-        Create incremental backup of measurement data.
+        """Create incremental backup of measurement data.
 
         Designed for periodic calls during long measurements to create
         recovery points. Old backups are automatically cleaned up.
@@ -363,8 +354,7 @@ class MeasurementSaveService:
         firmware_version: str = "unknown",
         config_snapshot: Optional[dict] = None,
     ) -> Path:
-        """
-        Save a calibration run CSV with a YAML-ish header.
+        """Save a calibration run CSV with a YAML-ish header.
 
         The header carries the firmware version and the full ``CONF:*`` config
         snapshot so the file is self-describing.  The body is written as plain
@@ -415,8 +405,7 @@ class MeasurementSaveService:
         return output_path
 
     def cleanup_old_backups(self, backup_dir: Path, max_age_hours: int = 24):
-        """
-        Remove old backup files.
+        """Remove old backup files.
 
         Automatically called after backup creation. Removes backups older
         than max_age_hours along with their metadata files.

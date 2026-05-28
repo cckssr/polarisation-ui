@@ -42,8 +42,7 @@ from devices.arduino_encoder import ArduinoEncoder
 
 
 class ManualCalibrationDialog(QDialog):
-    """
-    Modal dialog that walks the user through a manual angle-by-angle
+    """Modal dialog that walks the user through a manual angle-by-angle
     calibration run.
 
     Args:

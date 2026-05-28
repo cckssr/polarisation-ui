@@ -1,5 +1,4 @@
-"""
-Device Manager for Goniometer System.
+"""Device Manager for Goniometer System.
 
 Manages connections to encoder and photodetector hardware,
 providing a centralized interface for device lifecycle management.
@@ -12,7 +11,7 @@ Architecture:
     - Automatic reconnection support
 """
 
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -61,8 +60,7 @@ class DeviceStatus:
 
 
 class GoniometerDeviceManager:
-    """
-    Manages all hardware devices for goniometer system.
+    """Manages all hardware devices for goniometer system.
 
     Responsibilities:
         - Initialize and connect to encoder Arduino
@@ -73,8 +71,7 @@ class GoniometerDeviceManager:
     """
 
     def __init__(self, use_mock: bool = False):
-        """
-        Initialize device manager.
+        """Initialize device manager.
 
         Args:
             use_mock: If True, use mock devices for testing.
@@ -107,8 +104,7 @@ class GoniometerDeviceManager:
     def connect_encoders(
         self, port: str, baudrate: int = 115200, timeout: float = 1.0
     ) -> bool:
-        """
-        Connect to encoder Arduino.
+        """Connect to encoder Arduino.
 
         Args:
             port: Serial port (e.g., '/dev/ttyUSB0', 'COM3')
@@ -153,8 +149,7 @@ class GoniometerDeviceManager:
             return False
 
     def reconnect_encoders(self) -> bool:
-        """
-        Re-establish the encoder connection using the last known port/baudrate.
+        """Re-establish the encoder connection using the last known port/baudrate.
 
         Cleanly disconnects first, then calls connect_encoders() with the
         stored parameters.  On success, reapplies the saved DesiredState so
@@ -224,8 +219,7 @@ class GoniometerDeviceManager:
         return self._encoder_status
 
     def get_connection_info(self) -> Dict[str, Any]:
-        """
-        Get detailed connection information for all devices.
+        """Get detailed connection information for all devices.
 
         Returns:
             dict: Connection status for each device
@@ -244,8 +238,7 @@ class GoniometerDeviceManager:
     # ==================== Device Access ====================
 
     def get_encoder_device(self) -> Optional[DualEncoderArduino]:
-        """
-        Get encoder device instance.
+        """Get encoder device instance.
 
         Returns:
             DualEncoderArduino or None if not connected
@@ -258,8 +251,7 @@ class GoniometerDeviceManager:
     # ==================== Data Reading ====================
 
     def read_angles(self) -> Optional[DualEncoderReading]:
-        """
-        Read current angles from both encoders.
+        """Read current angles from both encoders.
 
         Returns:
             DualEncoderReading(sample_angle, detector_angle) or None on error.
@@ -340,8 +332,7 @@ class GoniometerDeviceManager:
     def read_diagnostics_both(
         self,
     ) -> Optional[tuple[Optional[dict], Optional[dict]]]:
-        """
-        Read SYST:DIAG? for both encoders.
+        """Read SYST:DIAG? for both encoders.
 
         Returns:
             (diag_a, diag_b) where each entry is a dict with keys

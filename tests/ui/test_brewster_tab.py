@@ -37,8 +37,8 @@ def tab(qtbot):
 
 
 def test_build_creates_plots(tab):
-    assert tab._detector_plot is not None
-    assert tab._curve_plot is not None
+    assert tab._ui.detectorPlot is not None
+    assert tab._ui.brewsterCurvePlot is not None
 
 
 def test_tab_metadata():
@@ -53,16 +53,14 @@ def test_tab_metadata():
 
 
 def test_save_buttons_disabled_before_measurement(tab):
-    assert tab._btn_save_current is not None
-    assert not tab._btn_save_current.isEnabled()
-    assert tab._btn_save_max is not None
-    assert not tab._btn_save_max.isEnabled()
+    assert not tab._ui.btnSaveCurrent.isEnabled()
+    assert not tab._ui.btnSaveMax.isEnabled()
 
 
 def test_save_buttons_enabled_after_start(tab):
     tab.on_measurement_started()
-    assert tab._btn_save_current.isEnabled()
-    assert tab._btn_save_max.isEnabled()
+    assert tab._ui.btnSaveCurrent.isEnabled()
+    assert tab._ui.btnSaveMax.isEnabled()
 
 
 # ---------------------------------------------------------------------------

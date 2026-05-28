@@ -1,5 +1,4 @@
-"""
-Shared display-formatting helpers for angles, voltages, and intensity values.
+"""Shared display-formatting helpers for angles, voltages, and intensity values.
 
 All functions return formatted strings ready for display. They live in core
 so that UI widgets and export code use identical representations.

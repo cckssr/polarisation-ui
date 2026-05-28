@@ -1,5 +1,4 @@
-"""
-Domain-specific exceptions for goniometer control system.
+"""Domain-specific exceptions for goniometer control system.
 
 These exceptions represent business logic errors and should only
 be raised and handled in the core layer.
@@ -19,8 +18,7 @@ class AngleLimitError(GoniometerError):
 
 
 class AngleMismatchError(GoniometerError):
-    """
-    Raised when detector and probe angles don't follow the 2x relationship.
+    """Raised when detector and probe angles don't follow the 2x relationship.
 
     This indicates either a mechanical misalignment or encoder malfunction.
     """

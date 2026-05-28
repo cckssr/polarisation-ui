@@ -1,5 +1,4 @@
-"""
-Data controller for continuous sensor reading.
+"""Data controller for continuous sensor reading.
 
 Manages threaded data acquisition from encoder devices and
 emits signals for UI updates. Separates data collection from UI rendering.
@@ -25,8 +24,7 @@ CONFIG = import_config()
 
 
 def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
-    """
-    Evaluate one encoder's SYST:DIAG? dict.
+    """Evaluate one encoder's SYST:DIAG? dict.
 
     Returns (ok, description) — description is "<label>: OK" when healthy or
     "<label>: <fault list>" when one or more flags are set.
@@ -53,8 +51,7 @@ def _circular_delta(a: float, b: float) -> float:
 
 
 class DataController(QObject):
-    """
-    Controller for managing continuous data acquisition.
+    """Controller for managing continuous data acquisition.
 
     Responsibilities:
         - Poll encoders at regular intervals
@@ -113,8 +110,7 @@ class DataController(QObject):
         parent: Optional[QObject] = None,
         use_mock_intensity: bool = False,
     ):
-        """
-        Initialize data controller.
+        """Initialize data controller.
 
         Args:
             device_manager: Device manager instance
@@ -211,8 +207,7 @@ class DataController(QObject):
     # ==================== Acquisition Settings ====================
 
     def update_acq_settings(self, settings: AcquisitionSettings) -> None:
-        """
-        Apply new acquisition settings.
+        """Apply new acquisition settings.
 
         Recreates the averaging buffers (discarding old samples) and syncs
         the sample-inversion flag.  Call at startup and whenever the settings
@@ -246,8 +241,7 @@ class DataController(QObject):
     # ==================== Polling Control ====================
 
     def enable_raw_frame_signal(self, enabled: bool) -> None:
-        """
-        Enable or disable the opt-in ``raw_frame`` debug signal.
+        """Enable or disable the opt-in ``raw_frame`` debug signal.
 
         When *enabled* is True, each poll emits ``raw_frame(str)`` with a
         synthetic ``DATA:FRAME`` string built from the latest sensor readings.
@@ -264,8 +258,7 @@ class DataController(QObject):
             self._diag_timer.setInterval(interval_ms)
 
     def set_poll_interval(self, interval_ms: int) -> None:
-        """
-        Set polling interval.
+        """Set polling interval.
 
         Args:
             interval_ms: Interval in milliseconds
@@ -278,8 +271,7 @@ class DataController(QObject):
         Debug.debug(f"Poll interval set to {self.poll_interval}ms")
 
     def start_continuous_reading(self) -> bool:
-        """
-        Start continuous sensor polling.
+        """Start continuous sensor polling.
 
         Returns:
             bool: True if started successfully
@@ -313,8 +305,7 @@ class DataController(QObject):
     # ==================== Measurement Control ====================
 
     def start_measurement(self) -> bool:
-        """
-        Start measurement session.
+        """Start measurement session.
 
         Continuous reading must already be active (started on device connect).
         Returns False if a measurement is already running.
@@ -356,8 +347,7 @@ class DataController(QObject):
     # ==================== PDTIA Gain Control ====================
 
     def set_pdtia_gain(self, stage: int) -> bool:
-        """
-        Set PDTIA discrete gain stage (1–4).
+        """Set PDTIA discrete gain stage (1–4).
 
         Pauses polling for the duration of the SCPI exchange (same pattern as
         _check_diagnostics) so commands don't interleave with ongoing reads.
@@ -393,8 +383,7 @@ class DataController(QObject):
     # ==================== Intensity Reading ====================
 
     def _read_intensity(self, detector_angle: float) -> float:
-        """
-        Return the current photodiode intensity (a.u.).
+        """Return the current photodiode intensity (a.u.).
 
         Reads real ADC voltage via MEAS:ADC:VOLT?.  Falls back to a Gaussian
         simulation when use_mock_intensity=True (tests without hardware).
@@ -415,8 +404,7 @@ class DataController(QObject):
 
     @Slot()
     def _poll_sensors(self) -> None:
-        """
-        Poll sensors and emit updated data.
+        """Poll sensors and emit updated data.
 
         Called by timer at regular intervals.
         """
@@ -656,8 +644,7 @@ class DataController(QObject):
     # ==================== Manual Reading ====================
 
     def read_once(self) -> Optional["DualEncoderReading"]:
-        """
-        Perform single sensor read without starting continuous polling.
+        """Perform single sensor read without starting continuous polling.
 
         Returns:
             DualEncoderReading or None on error.
@@ -684,8 +671,7 @@ class DataController(QObject):
 
     @Slot()
     def _check_diagnostics(self) -> None:
-        """
-        Run SYST:DIAG? on both encoders and emit diagnostics_updated.
+        """Run SYST:DIAG? on both encoders and emit diagnostics_updated.
 
         The angle-polling timer is paused for the duration of the SCPI
         exchange so that serial commands do not interleave.

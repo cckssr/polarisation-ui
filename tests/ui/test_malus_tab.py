@@ -46,10 +46,10 @@ def tab(qtbot):
 
 
 def test_build_creates_plot_and_inputs(tab):
-    assert tab._curve_plot is not None
-    assert tab._spin_polariser is not None
-    assert tab._spin_analyser is not None
-    assert tab._btn_add is not None
+    assert tab._ui.malusCurvePlot is not None
+    assert tab._ui.spinPolariser is not None
+    assert tab._ui.spinAnalyser is not None
+    assert tab._ui.btnAdd is not None
 
 
 # ---------------------------------------------------------------------------
@@ -65,8 +65,7 @@ def test_on_frame_populates_buffer(tab):
 
 def test_on_frame_updates_live_label(tab):
     tab.on_frame(_make_frame(1000, 1.2345))
-    assert tab._lbl_live_intensity is not None
-    assert "1.2345" in tab._lbl_live_intensity.text()
+    assert "1.2345" in tab._ui.lblLiveIntensity.text()
 
 
 # ---------------------------------------------------------------------------
@@ -118,34 +117,32 @@ def test_compute_average_all_nan_returns_nan(tab):
 
 
 def test_entry_disabled_before_measurement(tab):
-    assert tab._spin_analyser is not None
-    assert not tab._spin_analyser.isEnabled()
-    assert tab._btn_add is not None
-    assert not tab._btn_add.isEnabled()
+    assert not tab._ui.spinAnalyser.isEnabled()
+    assert not tab._ui.btnAdd.isEnabled()
 
 
 def test_entry_enabled_after_measurement_start(tab):
     tab.on_measurement_started()
-    assert tab._spin_analyser.isEnabled()
-    assert tab._btn_add.isEnabled()
+    assert tab._ui.spinAnalyser.isEnabled()
+    assert tab._ui.btnAdd.isEnabled()
 
 
 def test_polariser_locked_during_measurement(tab):
     tab.on_measurement_started()
-    assert not tab._spin_polariser.isEnabled()
+    assert not tab._ui.spinPolariser.isEnabled()
 
 
 def test_entry_disabled_after_measurement_stop(tab):
     tab.on_measurement_started()
     tab.on_measurement_stopped()
-    assert not tab._spin_analyser.isEnabled()
-    assert not tab._btn_add.isEnabled()
+    assert not tab._ui.spinAnalyser.isEnabled()
+    assert not tab._ui.btnAdd.isEnabled()
 
 
 def test_polariser_re_enabled_after_measurement_stop(tab):
     tab.on_measurement_started()
     tab.on_measurement_stopped()
-    assert tab._spin_polariser.isEnabled()
+    assert tab._ui.spinPolariser.isEnabled()
 
 
 # ---------------------------------------------------------------------------
@@ -155,8 +152,8 @@ def test_polariser_re_enabled_after_measurement_stop(tab):
 
 def test_add_point_saves_with_averaged_intensity(qtbot, tab):
     tab.on_measurement_started()
-    tab._spin_polariser.setValue(30.0)
-    tab._spin_analyser.setValue(45.0)
+    tab._ui.spinPolariser.setValue(30.0)
+    tab._ui.spinAnalyser.setValue(45.0)
     # Feed frames all within the window
     base = 1000
     tab._buffer.append(_make_frame(base, 0.4))
@@ -208,8 +205,8 @@ def test_get_saved_points_initially_empty(tab):
 
 def test_build_export_schema(qtbot, tab):
     tab.on_measurement_started()
-    tab._spin_polariser.setValue(10.0)
-    tab._spin_analyser.setValue(20.0)
+    tab._ui.spinPolariser.setValue(10.0)
+    tab._ui.spinAnalyser.setValue(20.0)
     tab._buffer.append(_make_frame(1000, 0.3))
     tab._add_point()
 

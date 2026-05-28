@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-Polarisation-UI - Main program for Goniometer Control GUI.
+"""Polarisation-UI - Main program for Goniometer Control GUI.
 
 Entry point for the application. Sets up the Qt application,
 initializes logging, and launches the main window.
@@ -41,8 +40,7 @@ from polarisation_ui.ui.windows.auto_power_calibration_window import (
 
 
 def main():
-    """
-    Main entry point of the application.
+    """Main entry point of the application.
 
     Initializes:
         - Debug/logging system
@@ -116,7 +114,6 @@ def main():
 
 def _run_main(app: "QApplication", device_manager: GoniometerDeviceManager) -> None:
     """Launch the full main window."""
-
     main_window = MainWindow(device_manager)
     main_window.show()
     Debug.info("Main window displayed")
@@ -139,7 +136,6 @@ def _run_debug_only(
     app: "QApplication", device_manager: GoniometerDeviceManager
 ) -> None:
     """Launch only the encoder debug window (standalone mode)."""
-
     Debug.info("Launching debug-only mode")
     dialog = EncoderDebugDialog(device_manager, standalone=True)
     dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)

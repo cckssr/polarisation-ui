@@ -13,8 +13,7 @@ import serial
 
 
 class ArduinoEncoder:
-    """
-    Interface to AS5048A encoder via Arduino (SCPI protocol).
+    """Interface to AS5048A encoder via Arduino (SCPI protocol).
 
     Protocol:
         Send: MEAS:ENC:ANGL? A   (read angle encoder A)

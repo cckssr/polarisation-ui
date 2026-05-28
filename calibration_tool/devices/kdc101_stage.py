@@ -14,8 +14,7 @@ from pylablib.devices.Thorlabs import ThorlabsError, ThorlabsTimeoutError
 
 
 class KDC101Stage:
-    """
-    Interface to Thorlabs KDC101 via pylablib KinesisMotor.
+    """Interface to Thorlabs KDC101 via pylablib KinesisMotor.
 
     Example:
         >>> stage = KDC101Stage("/dev/cu.usbserial-27000001")

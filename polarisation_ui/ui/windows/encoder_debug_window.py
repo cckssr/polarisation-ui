@@ -1,5 +1,4 @@
-"""
-Encoder + ADS1220 Debug Dialog.
+"""Encoder + ADS1220 Debug Dialog.
 
 Provides a comprehensive live view of:
   - AS5048A encoder angles, magnitudes, and diagnostics (DIAG:ENC?)
@@ -70,8 +69,7 @@ _ENCODER_LABELS = ["A", "B", "BOTH"]
 
 
 class EncoderDebugDialog(QDialog):
-    """
-    Live debug view for the dual AS5048A encoder system.
+    """Live debug view for the dual AS5048A encoder system.
 
     Opens non-modally so the main window remains usable while monitoring.
     All data is polled via the existing GoniometerDeviceManager — no extra
@@ -721,8 +719,7 @@ class EncoderDebugDialog(QDialog):
     # ==================== Raw Stream Tab ====================
 
     def _build_raw_stream_tab(self) -> None:
-        """
-        Create the Raw Stream tab — a scrolling log of DATA:FRAME strings.
+        """Create the Raw Stream tab — a scrolling log of DATA:FRAME strings.
 
         Requires DataController with the raw_frame signal.  When no
         DataController is provided the tab is created but shows a notice.
