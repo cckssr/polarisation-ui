@@ -123,6 +123,14 @@ class AcquisitionSettings:
 
 
 @dataclass
+class DualEncoderReading:
+    """Paired angle reading from both encoder stages returned by the device manager."""
+
+    sample_angle: float
+    detector_angle: float
+
+
+@dataclass
 class Frame:
     """Consolidated per-sample data frame emitted by DataController at the polling rate."""
 

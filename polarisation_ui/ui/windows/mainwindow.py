@@ -103,6 +103,9 @@ class MainWindow(QMainWindow):
         self._is_connected = False
         self._adc_saturated = False  # tracks last saturation state to avoid LED flicker
 
+        # Mirror every status-bar message to the event log panel
+        self.statusbar_manager.set_mirror(self.ui.eventLogPanel)
+
         self._acq_settings: AcquisitionSettings = self._load_acq_settings_from_config()
 
         self._sensor_a_ok: bool = True
@@ -183,10 +186,15 @@ class MainWindow(QMainWindow):
         self.ui.actionAcquisitionSettings.triggered.connect(self._open_acq_settings)
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
         self.ui.actionLogWindow.triggered.connect(self._open_log_window)
+        self.ui.actionEventLog.toggled.connect(self.ui.dockEventLog.setVisible)
+        self.ui.dockEventLog.visibilityChanged.connect(self.ui.actionEventLog.setChecked)
         self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
         self.ui.actionAutoPowerCalibration.triggered.connect(
             self._open_auto_power_calibration
         )
+
+        # Connection banner
+        self.ui.connectionBanner.export_requested.connect(self._export_on_lost)
 
         # PDTIA gain button group — assign IDs 1–4 to match stage numbers
         for stage in (1, 2, 3, 4):
@@ -228,6 +236,12 @@ class MainWindow(QMainWindow):
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
         self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
         self.data_controller.connection_lost.connect(self._handle_connection_lost)
+        # Banner state transitions
+        self.data_controller.retry_connecting.connect(
+            lambda attempt, delay: self.ui.connectionBanner.set_reconnecting(attempt, delay)
+        )
+        self.data_controller.reconnect_succeeded.connect(self.ui.connectionBanner.set_ok)
+        self.data_controller.connection_lost.connect(self.ui.connectionBanner.set_lost)
 
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
@@ -242,7 +256,7 @@ class MainWindow(QMainWindow):
             lambda: self._notify_tabs_connection_state(ConnState.CONNECTED)
         )
         self.data_controller.retry_connecting.connect(
-            lambda: self._notify_tabs_connection_state(ConnState.RECONNECTING)
+            lambda _attempt, _delay: self._notify_tabs_connection_state(ConnState.RECONNECTING)
         )
         self.data_controller.connection_lost.connect(
             lambda: self._notify_tabs_connection_state(ConnState.LOST)
@@ -353,7 +367,7 @@ class MainWindow(QMainWindow):
             set_connection_status(
                 self.ui.ledArduinoStatus,
                 self.ui.lblArduinoStatusValue,
-                f"Fehler: {error[:30]}",
+                f"Fehler: {error}",
                 LED_RED,
             )
             self.ui.cbArduinoPort.setEnabled(True)
@@ -374,6 +388,7 @@ class MainWindow(QMainWindow):
         """Reset all connection-related UI elements to the disconnected state."""
         self._is_connected = False
         self._adc_saturated = False
+        self.ui.connectionBanner.set_ok()
 
         # Restore connect button
         try:
@@ -638,11 +653,11 @@ class MainWindow(QMainWindow):
         success = self.device_manager.zero_sample_encoder()
 
         if success:
-            self.statusbar_manager.show_success("Sample encoder zeroed")
+            self.statusbar_manager.show_success("Probe-Encoder auf Null gesetzt")
             Debug.info("Sample encoder zeroed")
         else:
-            self.statusbar_manager.show_error("Failed to zero sample encoder")
-            show_error(self, "Zero Error", "Failed to zero sample encoder.")
+            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Probe-Encoders")
+            show_error(self, "Nullsetzen fehlgeschlagen", "Probe-Encoder konnte nicht auf Null gesetzt werden.")
 
     @Slot()
     def _zero_detector_encoder(self) -> None:
@@ -650,11 +665,11 @@ class MainWindow(QMainWindow):
         success = self.device_manager.zero_detector_encoder()
 
         if success:
-            self.statusbar_manager.show_success("Detector encoder zeroed")
+            self.statusbar_manager.show_success("Detektor-Encoder auf Null gesetzt")
             Debug.info("Detector encoder zeroed")
         else:
-            self.statusbar_manager.show_error("Failed to zero detector encoder")
-            show_error(self, "Zero Error", "Failed to zero detector encoder.")
+            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Detektor-Encoders")
+            show_error(self, "Nullsetzen fehlgeschlagen", "Detektor-Encoder konnte nicht auf Null gesetzt werden.")
 
     @Slot()
     def _open_encoder_debug(self) -> None:
@@ -692,16 +707,16 @@ class MainWindow(QMainWindow):
         success = self.data_controller.start_measurement()
 
         if success:
-            self.statusbar_manager.show_success("Measurement started")
+            self.statusbar_manager.show_success("Messung gestartet")
             Debug.info("Measurement session started")
         else:
-            self.statusbar_manager.show_error("Failed to start measurement")
+            self.statusbar_manager.show_error("Messung konnte nicht gestartet werden")
 
     @Slot()
     def _stop_measurement(self) -> None:
         """Stop measurement session."""
         self.data_controller.stop_measurement()
-        self.statusbar_manager.show_info("Measurement stopped")
+        self.statusbar_manager.show_info("Messung gestoppt")
         Debug.info("Measurement session stopped")
 
     @Slot()
@@ -709,7 +724,7 @@ class MainWindow(QMainWindow):
         """Reset measurement data across all tabs."""
         for tab in self._tab_instances:
             tab.on_reset()
-        self.statusbar_manager.show_info("Measurement reset")
+        self.statusbar_manager.show_info("Messung zurückgesetzt")
         Debug.info("Measurement data reset")
 
         # Disable reset button
@@ -933,9 +948,9 @@ class MainWindow(QMainWindow):
         )
         self.statusbar_manager.show_error(f"Lesefehler: {error_msg}")
 
-    @Slot()
-    def _handle_reconnect_attempt(self) -> None:
-        """Show reconnection progress in status bar."""
+    @Slot(int, float)
+    def _handle_reconnect_attempt(self, attempt: int, _delay_s: float) -> None:
+        """Show reconnection progress in status bar (banner shows the detailed countdown)."""
         self.statusbar_manager.show_warning(
             "Verbindung unterbrochen – Wiederverbindung wird versucht..."
         )
@@ -943,6 +958,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _handle_reconnect_success(self) -> None:
         """Serial connection re-established: restore all status indicators."""
+        self.ui.connectionBanner.set_ok()
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
@@ -982,6 +998,13 @@ class MainWindow(QMainWindow):
         )
         Debug.error("Connection permanently lost; user must reconnect manually")
 
+        journal = self.data_controller.current_journal
+        if journal is not None and journal.row_count > 0:
+            self._offer_partial_export(journal)
+
+    @Slot()
+    def _export_on_lost(self) -> None:
+        """Triggered by the connection banner's export button after connection is lost."""
         journal = self.data_controller.current_journal
         if journal is not None and journal.row_count > 0:
             self._offer_partial_export(journal)

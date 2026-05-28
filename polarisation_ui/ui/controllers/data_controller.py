@@ -101,7 +101,7 @@ class DataController(QObject):
     # -------------------------------------------------------------------------
 
     # Signal emitted when a reconnection attempt begins
-    retry_connecting = Signal()
+    retry_connecting = Signal(int, float)  # (attempt_number, delay_seconds)
     # Signal emitted when the connection is re-established after errors
     reconnect_succeeded = Signal()
     # Signal emitted when max errors are reached and we stop trying
@@ -190,6 +190,9 @@ class DataController(QObject):
         # on every poll.  Disabled by default — only enabled when the Raw Stream
         # tab in the debug dialog is open, to avoid unnecessary string formatting.
         self._raw_frame_enabled: bool = False
+
+        # Quiet self-heal: track the last error message to detect new error types
+        self._last_error_msg: Optional[str] = None
 
         # Last seen DATA:FRAME sequence number — used to detect gaps in the stream.
         self._last_frame_seq: Optional[int] = None
@@ -425,7 +428,8 @@ class DataController(QObject):
                 self._handle_read_error("Failed to read angles")
                 return
 
-            sample_angle, detector_angle = angles
+            sample_angle = angles.sample_angle
+            detector_angle = angles.detector_angle
 
             # Correct for diametrically flipped magnet on sample stage
             if self.sample_inverted:
@@ -543,15 +547,26 @@ class DataController(QObject):
             self._handle_read_error(f"Exception during sensor poll: {e}")
 
     def _handle_read_error(self, error_msg: str) -> None:
-        """Pause polling and schedule a reconnect with exponential backoff."""
+        """Pause polling and schedule a reconnect with exponential backoff.
+
+        First failure is silent (no error_occurred emission) — only the banner
+        is notified via retry_connecting. error_occurred is emitted only when
+        the error persists or is a new error type (B1 contract).
+        """
+        is_first_failure = self._error_count == 0
+        is_new_error_type = self._last_error_msg is not None and error_msg != self._last_error_msg
+
         self._error_count += 1
+        self._last_error_msg = error_msg
         Debug.error(f"Read error ({self._error_count}/{self._max_errors}): {error_msg}")
-        self.error_occurred.emit(error_msg)
         self.poll_timer.stop()
+
+        # Emit error_occurred only after the first attempt fails or on a new error type
+        if not is_first_failure or is_new_error_type:
+            self.error_occurred.emit(error_msg)
 
         if self._error_count >= self._max_errors:
             Debug.error("Max reconnect attempts exhausted — declaring connection lost")
-            # Close the journal (not finalized — stays recoverable)
             if self._journal is not None and self._journal.is_active:
                 self._journal.close()
             self.connection_lost.emit()
@@ -564,11 +579,11 @@ class DataController(QObject):
                 f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})"
             )
             self._retry_timer.start(delay_ms)
+            self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
 
     @Slot()
     def _attempt_reconnect(self) -> None:
         """Start a ReconnectWorker to re-establish the serial connection off the main thread."""
-        self.retry_connecting.emit()
         Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
 
         # Clean up any previous worker that has already finished
@@ -589,10 +604,16 @@ class DataController(QObject):
         self._reconnect_worker = None
         self._error_count = 0
         self._backoff_attempt = 0
+        self._last_error_msg = None
         # Buffers are intentionally preserved — data continuity across gaps.
         # Write a gap marker so consumers can show a discontinuity on plots.
         if self._journal is not None and self._journal.is_active:
             self._journal.append_gap()
+        # Reset spike-filter references so the first samples after reconnect
+        # are never rejected as bogus spikes (B6).
+        self._last_sample_angle = None
+        self._last_det_angle = None
+        self._spike_reject_streak = 0
         self.poll_timer.start(self.poll_interval)
         self._diag_timer.start(self._diag_interval_ms)
         self.reconnect_succeeded.emit()
@@ -600,18 +621,44 @@ class DataController(QObject):
 
     @Slot()
     def _on_reconnect_failed(self) -> None:
-        """Called on the main thread when ReconnectWorker reports failure."""
+        """Called on the main thread when ReconnectWorker reports failure.
+
+        Does NOT re-enter _handle_read_error — manages the backoff directly
+        so the status bar is never written for retries (B2 contract).
+        """
         self._reconnect_worker = None
-        self._handle_read_error("Reconnect failed")
+        self._error_count += 1
+        Debug.warning(
+            f"Reconnect attempt {self._backoff_attempt} failed "
+            f"({self._error_count}/{self._max_errors})"
+        )
+
+        if self._error_count >= self._max_errors:
+            Debug.error("Max reconnect attempts exhausted — declaring connection lost")
+            if self._journal is not None and self._journal.is_active:
+                self._journal.close()
+            self.connection_lost.emit()
+        else:
+            # Emit error_occurred only when we're past the first silent attempt (B1)
+            if self._backoff_attempt >= 2:
+                self.error_occurred.emit(
+                    f"Wiederverbindung fehlgeschlagen (Versuch {self._backoff_attempt})"
+                )
+            delay_ms = self._backoff_delays_ms[
+                min(self._backoff_attempt, len(self._backoff_delays_ms) - 1)
+            ]
+            self._backoff_attempt += 1
+            self._retry_timer.start(delay_ms)
+            self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
 
     # ==================== Manual Reading ====================
 
-    def read_once(self) -> Optional[tuple[float, float]]:
+    def read_once(self) -> Optional["DualEncoderReading"]:
         """
         Perform single sensor read without starting continuous polling.
 
         Returns:
-            Tuple of (sample_angle, detector_angle) or None on error
+            DualEncoderReading or None on error.
         """
         if not self.device_manager.is_encoder_connected():
             Debug.warning("Cannot read: encoders not connected")
@@ -621,8 +668,7 @@ class DataController(QObject):
             angles = self.device_manager.read_angles()
 
             if angles is not None:
-                sample_angle, detector_angle = angles
-                self.angles_updated.emit(sample_angle, detector_angle)
+                self.angles_updated.emit(angles.sample_angle, angles.detector_angle)
                 return angles
 
             return None

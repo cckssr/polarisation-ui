@@ -18,6 +18,7 @@ from enum import Enum
 
 from serial.tools import list_ports
 
+from polarisation_ui.core.models import DualEncoderReading
 from polarisation_ui.infrastructure.logging import Debug
 
 try:
@@ -32,6 +33,7 @@ except ImportError:
 from polarisation_ui.infrastructure.devices.dual_encoder import (
     DesiredState,
     DualEncoderArduino,
+    EncoderID,
 )
 
 
@@ -255,12 +257,12 @@ class GoniometerDeviceManager:
 
     # ==================== Data Reading ====================
 
-    def read_angles(self) -> Optional[Tuple[float, float]]:
+    def read_angles(self) -> Optional[DualEncoderReading]:
         """
         Read current angles from both encoders.
 
         Returns:
-            Tuple of (sample_angle, detector_angle) or None on error
+            DualEncoderReading(sample_angle, detector_angle) or None on error.
         """
         if not self.is_encoder_connected():
             return None
@@ -270,11 +272,14 @@ class GoniometerDeviceManager:
             if device is None:
                 return None
 
-            reading = device.read_both()
+            reading = device.read_angle("BOTH")
             if reading is None:
                 return None
 
-            return (reading.angle_a, reading.angle_b)
+            return DualEncoderReading(
+                sample_angle=reading.angle_a,
+                detector_angle=reading.angle_b,
+            )
 
         except Exception as e:
             Debug.error(f"Error reading angles: {e}")
@@ -289,7 +294,8 @@ class GoniometerDeviceManager:
             device = self.get_encoder_device()
             if device is None:
                 return None
-            return device.read_encoder_a()
+            v = device.read_angle(EncoderID.A)
+            return v.angle_deg if v is not None else None
         except Exception as e:
             Debug.error(f"Error reading sample angle: {e}")
             return None
@@ -303,7 +309,8 @@ class GoniometerDeviceManager:
             device = self.get_encoder_device()
             if device is None:
                 return None
-            return device.read_encoder_b()
+            v = device.read_angle(EncoderID.B)
+            return v.angle_deg if v is not None else None
         except Exception as e:
             Debug.error(f"Error reading detector angle: {e}")
             return None
@@ -344,43 +351,33 @@ class GoniometerDeviceManager:
         device = self.get_encoder_device()
         if device is None:
             return None
-        return (device.get_diagnostics_a(), device.get_diagnostics_b())
+        return device.query_diagnostics("BOTH")
 
     # ==================== Device Control ====================
 
-    def zero_sample_encoder(self) -> bool:
-        """Set current sample encoder position as zero."""
+    def zero_encoder(self, target: EncoderID | str) -> bool:
+        """Set current encoder position as zero. target: EncoderID.A, EncoderID.B, or 'BOTH'."""
         if not self.is_encoder_connected():
             return False
-
         try:
             device = self.get_encoder_device()
             if device is None:
                 return False
-
-            device.reset_zero_a()
-            Debug.info("Sample encoder zeroed")
+            device.zero(target)
+            label = target if isinstance(target, str) else target.value
+            Debug.info(f"Encoder {label} zeroed")
             return True
         except Exception as e:
-            Debug.error(f"Error zeroing sample encoder: {e}")
+            Debug.error(f"Error zeroing encoder {target}: {e}")
             return False
+
+    def zero_sample_encoder(self) -> bool:
+        """Thin alias: zero sample stage encoder (A)."""
+        return self.zero_encoder(EncoderID.A)
 
     def zero_detector_encoder(self) -> bool:
-        """Set current detector encoder position as zero."""
-        if not self.is_encoder_connected():
-            return False
-
-        try:
-            device = self.get_encoder_device()
-            if device is None:
-                return False
-
-            device.reset_zero_b()
-            Debug.info("Detector encoder zeroed")
-            return True
-        except Exception as e:
-            Debug.error(f"Error zeroing detector encoder: {e}")
-            return False
+        """Thin alias: zero detector stage encoder (B)."""
+        return self.zero_encoder(EncoderID.B)
 
     def set_pdtia_gain(self, stage: int) -> bool:
         """Set PDTIA discrete gain stage (1–4) via CONF:PDTIA:GAIN."""
@@ -398,18 +395,5 @@ class GoniometerDeviceManager:
             return False
 
     def zero_both_encoders(self) -> bool:
-        """Set both encoder positions as zero."""
-        if not self.is_encoder_connected():
-            return False
-
-        try:
-            device = self.get_encoder_device()
-            if device is None:
-                return False
-
-            device.reset_zero_both()
-            Debug.info("Both encoders zeroed")
-            return True
-        except Exception as e:
-            Debug.error(f"Error zeroing encoders: {e}")
-            return False
+        """Thin alias: zero both encoder stages."""
+        return self.zero_encoder("BOTH")

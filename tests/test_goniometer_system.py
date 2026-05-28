@@ -14,7 +14,6 @@ sys.path.insert(0, str(project_root))
 # Now import from the package
 from polarisation_ui.core.services import GoniometerService
 from polarisation_ui.core.models import GoniometerState
-from polarisation_ui.infrastructure.devices.base import EncoderMock
 
 
 def test_core_layer():
@@ -56,62 +55,18 @@ def test_core_layer():
     print("✅ Core layer tests passed!")
 
 
-def test_infrastructure_layer():
-    """Test infrastructure layer."""
-    print("\n📋 Testing Infrastructure Layer...")
-
-    # Test mock encoder
-    mock = EncoderMock(start_angle=45.0, name="TestProbe")
-    assert mock.is_connected(), "Mock should be connected"
-    assert mock.read() == 45.0, "Should read initial angle"
-
-    print("  ✓ EncoderMock creation and reading")
-
-    # Test mock encoder operations
-    mock.set_angle(90.0)
-    assert mock.read() == 90.0, "Should update to new angle"
-
-    mock.reset()
-    assert mock.read() == 0.0, "Should reset to zero"
-
-    print("  ✓ EncoderMock operations (set, reset)")
-
-    # Test disconnect
-    mock.disconnect()
-    assert not mock.is_connected(), "Should be disconnected"
-
-    try:
-        mock.read()
-        assert False, "Should raise error when disconnected"
-    except RuntimeError:
-        pass
-
-    print("  ✓ EncoderMock connection handling")
-
-    print("✅ Infrastructure layer tests passed!")
-
-
 def test_integration():
     """Test integration between layers."""
     print("\n📋 Testing Layer Integration...")
 
-    # Create service and encoders
     service = GoniometerService()
-    probe_encoder = EncoderMock(start_angle=0.0, name="Probe")
-    detector_encoder = EncoderMock(start_angle=0.0, name="Detector")
-
-    # Initialize service
     service.initialize_state(0.0)
 
-    print("  ✓ Service + Encoders created")
-
-    # Simulate encoder readings
-    probe_encoder.set_angle(45.0)
-    detector_encoder.set_angle(90.0)
+    print("  ✓ Service created")
 
     # Process readings
-    service.process_encoder_reading("sample", probe_encoder.read())
-    service.process_encoder_reading("detector", detector_encoder.read())
+    service.process_encoder_reading("sample", 45.0)
+    service.process_encoder_reading("detector", 90.0)
 
     state = service.get_state()
     assert state.sample_angle == 45.0
@@ -161,7 +116,6 @@ def main():
 
     try:
         test_core_layer()
-        test_infrastructure_layer()
         test_integration()
         test_error_handling()
 

@@ -33,7 +33,7 @@ Firmware < 2.0.0 is rejected with IncompatibleFirmwareError.
 Architecture: pure Python — no PySide6, no serial imports beyond pyserial.
 """
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -49,6 +49,15 @@ class EncoderID(Enum):
 
     A = "A"
     B = "B"
+
+
+class StreamSource(str, Enum):
+    """Streaming source tokens for use with start_stream()."""
+
+    ENC_A = "ENC:A"
+    ENC_BOTH = "ENC:BOTH"
+    ADC = "ADC"
+    DIAG = "DIAG"
 
 
 @dataclass
@@ -152,13 +161,21 @@ class ADCClient:
         """Set PD-TIA discrete gain stage (integer; mapped to GPIO pattern in firmware)."""
         return self._dev._send_command_no_response(f"CONF:PDTIA:GAIN {stage}")
 
-    def get_pdtia_gain(self) -> Optional[str]:
-        """Query current PD-TIA stage; returns '<stage>,0b<bits>' or None."""
+    def get_pdtia_gain(self) -> Optional[dict[str, Any]]:
+        """Query current PD-TIA stage; returns {'stage': int, 'pattern': str} or None."""
         if not self._dev._device.send_command("CONF:PDTIA:GAIN?", add_newline=True):
             return None
-        return self._dev._device.read_value(
-            timeout=self._dev.timeout, return_type="str"
-        )
+        raw = self._dev._device.read_value(timeout=self._dev.timeout, return_type="str")
+        if not raw:
+            return None
+        try:
+            parts = raw.strip().split(",", 1)
+            stage = int(parts[0])
+            pattern = parts[1].strip() if len(parts) > 1 else "0b0000"
+            return {"stage": stage, "pattern": pattern}
+        except (ValueError, IndexError) as e:
+            Debug.error(f"Failed to parse CONF:PDTIA:GAIN? response: '{raw}' ({e})")
+            return None
 
     def read_voltage(self, channel: str = "DIFF01") -> Optional[float]:
         """One-shot ADC voltage read via MEAS:ADC:VOLT?; returns volts or None."""
@@ -249,7 +266,7 @@ class DualEncoderArduino:
             self._device.reconnect()
             if not self._device.connected:
                 return False
-            idn = self.identify()
+            idn = self.query_idn()
             if idn:
                 self._check_firmware_version(idn)
                 self._firmware_version = self._parse_version(idn)
@@ -273,54 +290,38 @@ class DualEncoderArduino:
 
     # ── Encoder reads ─────────────────────────────────────────────────────────
 
-    def read_encoder_a(self) -> Optional[float]:
-        v = self.read_single(EncoderID.A)
-        return v.angle_deg if v else None
-
-    def read_encoder_b(self) -> Optional[float]:
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return None
-        v = self.read_single(EncoderID.B)
-        return v.angle_deg if v else None
-
-    def read_single(self, encoder_id: EncoderID) -> Optional[EncoderValue]:
-        """MEAS:ENC:ANGL? A|B → EncoderValue."""
-        if encoder_id == EncoderID.B and not self.encoder_b_present:
-            Debug.warning("Encoder B not available")
-            return None
-
-        cmd = f"MEAS:ENC:ANGL? {encoder_id.value}"
-        if not self._device.send_command(cmd, add_newline=True):
-            Debug.error(f"Failed to send: {cmd}")
-            return None
-
-        response = self._device.read_value(timeout=self.timeout, return_type="str")
-        if not response:
-            Debug.error(f"No response from encoder {encoder_id.value}")
-            self._query_and_log_error()
-            return None
-
-        return self._parse_single_response(response, encoder_id)
-
-    def read_both(self) -> Optional[DualEncoderValue]:
-        """MEAS:ENC:ANGL? BOTH → DualEncoderValue."""
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return None
-
-        cmd = "MEAS:ENC:ANGL? BOTH"
-        if not self._device.send_command(cmd, add_newline=True):
-            Debug.error(f"Failed to send: {cmd}")
-            return None
-
-        response = self._device.read_value(timeout=self.timeout, return_type="str")
-        if not response:
-            Debug.error("No response for MEAS:ENC:ANGL? BOTH")
-            self._query_and_log_error()
-            return None
-
-        return self._parse_both_response(response)
+    def read_angle(
+        self, target: EncoderID | Literal["BOTH"]
+    ) -> EncoderValue | DualEncoderValue | None:
+        """MEAS:ENC:ANGL? A|B|BOTH → EncoderValue or DualEncoderValue."""
+        if target == "BOTH":
+            if not self.encoder_b_present:
+                Debug.warning("Encoder B not present")
+                return None
+            cmd = "MEAS:ENC:ANGL? BOTH"
+            if not self._device.send_command(cmd, add_newline=True):
+                Debug.error(f"Failed to send: {cmd}")
+                return None
+            response = self._device.read_value(timeout=self.timeout, return_type="str")
+            if not response:
+                Debug.error("No response for MEAS:ENC:ANGL? BOTH")
+                self._query_and_log_error()
+                return None
+            return self._parse_both_response(response)
+        else:
+            if target == EncoderID.B and not self.encoder_b_present:
+                Debug.warning("Encoder B not available")
+                return None
+            cmd = f"MEAS:ENC:ANGL? {target.value}"
+            if not self._device.send_command(cmd, add_newline=True):
+                Debug.error(f"Failed to send: {cmd}")
+                return None
+            response = self._device.read_value(timeout=self.timeout, return_type="str")
+            if not response:
+                Debug.error(f"No response from encoder {target.value}")
+                self._query_and_log_error()
+                return None
+            return self._parse_single_response(response, target)
 
     def read_magnitude(self, encoder_id: EncoderID) -> Optional[int]:
         """MEAS:ENC:MAGN? A|B → raw 14-bit magnitude or None."""
@@ -346,19 +347,18 @@ class DualEncoderArduino:
 
     # ── Continuous streaming ──────────────────────────────────────────────────
 
-    def start_continuous_a(self) -> bool:
-        """Configure source ENC:A and arm streaming."""
-        return self._send_command_no_response(
-            "CONF:SRC ENC:A"
-        ) and self._send_command_no_response("INIT:CONT ON")
-
-    def start_continuous_both(self) -> bool:
-        """Configure source ENC:BOTH,ADC,DIAG and arm streaming."""
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
+    def start_stream(self, sources: list[StreamSource]) -> bool:
+        """Configure CONF:SRC and arm streaming with INIT:CONT ON."""
+        if not sources:
+            Debug.error("start_stream requires at least one source")
             return False
+        if any(s in (StreamSource.ENC_BOTH, StreamSource.DIAG) for s in sources):
+            if not self.encoder_b_present:
+                Debug.warning("Encoder B not present")
+                return False
+        src_str = ",".join(s.value for s in sources)
         return self._send_command_no_response(
-            "CONF:SRC ENC:BOTH,ADC,DIAG"
+            f"CONF:SRC {src_str}"
         ) and self._send_command_no_response("INIT:CONT ON")
 
     def abort(self) -> bool:
@@ -366,35 +366,21 @@ class DualEncoderArduino:
 
     # ── Zero / error-flag ─────────────────────────────────────────────────────
 
-    def reset_zero_a(self) -> bool:
-        return self._send_command_no_response("CONF:ENC:ZERO A")
-
-    def reset_zero_b(self) -> bool:
-        if not self.encoder_b_present:
+    def zero(self, target: EncoderID | Literal["BOTH"]) -> bool:
+        """CONF:ENC:ZERO A|B|BOTH — set current position as zero."""
+        tgt = "BOTH" if target == "BOTH" else target.value
+        if tgt in ("B", "BOTH") and not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ENC:ZERO B")
+        return self._send_command_no_response(f"CONF:ENC:ZERO {tgt}")
 
-    def reset_zero_both(self) -> bool:
-        if not self.encoder_b_present:
+    def clear_error(self, target: EncoderID | Literal["BOTH"]) -> bool:
+        """CONF:ENC:ERR A|B|BOTH — clear encoder error flag."""
+        tgt = "BOTH" if target == "BOTH" else target.value
+        if tgt in ("B", "BOTH") and not self.encoder_b_present:
             Debug.warning("Encoder B not present")
             return False
-        return self._send_command_no_response("CONF:ENC:ZERO BOTH")
-
-    def clear_error_flag_a(self) -> bool:
-        return self._send_command_no_response("CONF:ENC:ERR A")
-
-    def clear_error_flag_b(self) -> bool:
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return False
-        return self._send_command_no_response("CONF:ENC:ERR B")
-
-    def clear_error_flag_both(self) -> bool:
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return False
-        return self._send_command_no_response("CONF:ENC:ERR BOTH")
+        return self._send_command_no_response(f"CONF:ENC:ERR {tgt}")
 
     # ── Poll rate ─────────────────────────────────────────────────────────────
 
@@ -412,75 +398,65 @@ class DualEncoderArduino:
 
     # ── Diagnostics ───────────────────────────────────────────────────────────
 
-    def get_diagnostics_a(self) -> Optional[dict[str, Any]]:
-        return self.get_diagnostics(EncoderID.A)
+    def query_diagnostics(
+        self, target: EncoderID | Literal["BOTH"]
+    ) -> dict[str, Any] | tuple[dict[str, Any] | None, dict[str, Any] | None] | None:
+        """DIAG:ENC? A|B|BOTH — single round-trip for diagnostics.
 
-    def get_diagnostics_b(self) -> Optional[dict[str, Any]]:
-        if not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return None
-        return self.get_diagnostics(EncoderID.B)
-
-    def get_diagnostics_both(
-        self,
-    ) -> tuple[Optional[dict[str, Any]], Optional[dict[str, Any]]]:
-        """DIAG:ENC? BOTH → (diag_a, diag_b) in a single SCPI round-trip."""
-        cmd = "DIAG:ENC? BOTH"
-        if not self._device.send_command(cmd, add_newline=True):
-            Debug.error(f"Failed to send: {cmd}")
-            return None, None
-        response = self._device.read_value(timeout=self.timeout, return_type="str")
-        if not response:
-            Debug.error("No response for DIAG:ENC? BOTH")
-            return None, None
-        # Response: compHA=N,compLA=N,cofA=N,ocfA=N,agcA=N,compHB=N,...,agcB=N
-        try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
-            diag_a: dict[str, Any] = {
-                "compHigh": bool(int(kv.get("compHA", "0"))),
-                "compLow": bool(int(kv.get("compLA", "0"))),
-                "cof": bool(int(kv.get("cofA", "0"))),
-                "ocf": bool(int(kv.get("ocfA", "0"))),
-                "agc": int(kv.get("agcA", "0")),
-            }
-            if "agcB" in kv:
-                diag_b: Optional[dict[str, Any]] = {
-                    "compHigh": bool(int(kv.get("compHB", "0"))),
-                    "compLow": bool(int(kv.get("compLB", "0"))),
-                    "cof": bool(int(kv.get("cofB", "0"))),
-                    "ocf": bool(int(kv.get("ocfB", "0"))),
-                    "agc": int(kv.get("agcB", "0")),
+        Returns a dict for A or B, or a (diag_a, diag_b) tuple for BOTH.
+        """
+        if target == "BOTH":
+            cmd = "DIAG:ENC? BOTH"
+            if not self._device.send_command(cmd, add_newline=True):
+                Debug.error(f"Failed to send: {cmd}")
+                return None, None
+            response = self._device.read_value(timeout=self.timeout, return_type="str")
+            if not response:
+                Debug.error("No response for DIAG:ENC? BOTH")
+                return None, None
+            # Response: compHA=N,compLA=N,cofA=N,ocfA=N,agcA=N,compHB=N,...,agcB=N
+            try:
+                kv: dict[str, str] = {}
+                for token in response.strip().split(","):
+                    if "=" in token:
+                        k, _, v = token.partition("=")
+                        kv[k.strip()] = v.strip()
+                diag_a: dict[str, Any] = {
+                    "compHigh": bool(int(kv.get("compHA", "0"))),
+                    "compLow": bool(int(kv.get("compLA", "0"))),
+                    "cof": bool(int(kv.get("cofA", "0"))),
+                    "ocf": bool(int(kv.get("ocfA", "0"))),
+                    "agc": int(kv.get("agcA", "0")),
                 }
-            else:
-                diag_b = None  # encB absent
-            return diag_a, diag_b
-        except (ValueError, KeyError) as e:
-            Debug.error(f"Failed to parse DIAG:ENC? BOTH: '{response}' ({e})")
-            return None, None
+                if "agcB" in kv:
+                    diag_b: Optional[dict[str, Any]] = {
+                        "compHigh": bool(int(kv.get("compHB", "0"))),
+                        "compLow": bool(int(kv.get("compLB", "0"))),
+                        "cof": bool(int(kv.get("cofB", "0"))),
+                        "ocf": bool(int(kv.get("ocfB", "0"))),
+                        "agc": int(kv.get("agcB", "0")),
+                    }
+                else:
+                    diag_b = None
+                return diag_a, diag_b
+            except (ValueError, KeyError) as e:
+                Debug.error(f"Failed to parse DIAG:ENC? BOTH: '{response}' ({e})")
+                return None, None
+        else:
+            if target == EncoderID.B and not self.encoder_b_present:
+                Debug.warning("Encoder B not present")
+                return None
+            cmd = f"DIAG:ENC? {target.value}"
+            if not self._device.send_command(cmd, add_newline=True):
+                Debug.error(f"Failed to send: {cmd}")
+                return None
+            response = self._device.read_value(timeout=self.timeout, return_type="str")
+            if not response:
+                Debug.error("No response for diagnostics command")
+                return None
+            return self._parse_diagnostics_response(response, target)
 
-    def get_diagnostics(self, encoder_id: EncoderID) -> Optional[dict[str, Any]]:
-        """DIAG:ENC? A|B → dict with compHigh, compLow, cof, ocf (bool), agc (int)."""
-        if encoder_id == EncoderID.B and not self.encoder_b_present:
-            Debug.warning("Encoder B not present")
-            return None
-
-        cmd = f"DIAG:ENC? {encoder_id.value}"
-        if not self._device.send_command(cmd, add_newline=True):
-            Debug.error(f"Failed to send: {cmd}")
-            return None
-
-        response = self._device.read_value(timeout=self.timeout, return_type="str")
-        if not response:
-            Debug.error("No response for diagnostics command")
-            return None
-
-        return self._parse_diagnostics_response(response, encoder_id)
-
-    def get_adc_diagnostics(self) -> Optional[dict[str, Any]]:
+    def query_adc_diagnostics(self) -> Optional[dict[str, Any]]:
         """DIAG:ADC? → dict(reg0-reg3: int, drdy: bool, last_raw: int, absent: bool)."""
         cmd = "DIAG:ADC?"
         if not self._device.send_command(cmd, add_newline=True):
@@ -511,7 +487,7 @@ class DualEncoderArduino:
             Debug.error(f"Failed to parse DIAG:ADC? response: '{response}' ({e})")
             return None
 
-    def get_pdtia_diagnostics(self) -> Optional[dict[str, Any]]:
+    def query_pdtia_diagnostics(self) -> Optional[dict[str, Any]]:
         """DIAG:PDTIA? → dict(stage: int, pattern: str like '0b1010')."""
         cmd = "DIAG:PDTIA?"
         if not self._device.send_command(cmd, add_newline=True):
@@ -535,7 +511,7 @@ class DualEncoderArduino:
             Debug.error(f"Failed to parse DIAG:PDTIA? response: '{response}' ({e})")
             return None
 
-    def get_adc_config(self) -> dict[str, str]:
+    def query_adc_config(self) -> dict[str, str]:
         """Query all current ADC config settings via CONF:ADC:*? commands."""
         config: dict[str, str] = {}
         for key, cmd in [
@@ -552,12 +528,14 @@ class DualEncoderArduino:
 
     # ── Misc ──────────────────────────────────────────────────────────────────
 
-    def query_error(self) -> Optional[str]:
+    def query_last_error(self) -> Optional[str]:
+        """SYST:ERR? — read one entry from the SCPI error queue."""
         if not self._device.send_command("SYST:ERR?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
-    def identify(self) -> Optional[str]:
+    def query_idn(self) -> Optional[str]:
+        """*IDN? — identification string."""
         if not self._device.send_command("*IDN?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
@@ -622,7 +600,7 @@ class DualEncoderArduino:
 
     def _query_and_log_error(self) -> None:
         self._device.flush_input_buffer()
-        error = self.query_error()
+        error = self.query_last_error()
         if error is None:
             Debug.error("SYST:ERR? query failed (no response)")
         elif error.startswith("0,"):
@@ -649,7 +627,7 @@ class DualEncoderArduino:
         """
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME ") :]
+        payload = line[len("DATA:FRAME "):]
         result: dict[str, str] = {}
         for part in payload.split(","):
             if "=" in part:

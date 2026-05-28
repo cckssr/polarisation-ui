@@ -308,14 +308,13 @@ class EncoderDebugDialog(QDialog):
                 self.ui.lcdMagnitudeB.display(mag_b)
                 self.ui.pbarMagnitudeB.setValue(mag_b)
 
-            diag_a = device.get_diagnostics_a()
+            diag_a, diag_b = device.query_diagnostics("BOTH")
             if diag_a:
                 self._apply_diagnostics(diag_a, "A")
-            diag_b = device.get_diagnostics_b()
             if diag_b:
                 self._apply_diagnostics(diag_b, "B")
 
-            adc_diag = device.get_adc_diagnostics()
+            adc_diag = device.query_adc_diagnostics()
             if adc_diag is not None:
                 if adc_diag.get("absent"):
                     self._led_adc_present.setStyleSheet(LED_RED)
@@ -332,7 +331,7 @@ class EncoderDebugDialog(QDialog):
                         f"0x{adc_diag.get('last_raw', 0):06X}"
                     )
 
-            pdtia = device.get_pdtia_diagnostics()
+            pdtia = device.query_pdtia_diagnostics()
             if pdtia is not None:
                 self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
                 self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
@@ -354,17 +353,17 @@ class EncoderDebugDialog(QDialog):
 
     def _update_measurements(self, device: "DualEncoderArduino") -> None:
         # Encoder A — angle
-        angle_a = device.read_encoder_a()
-        if angle_a is not None:
-            self.ui.lcdAngleA.display(round(angle_a, 4))
+        val_a = device.read_angle(EncoderID.A)
+        if val_a is not None:
+            self.ui.lcdAngleA.display(round(val_a.angle_deg, 4))
             self.ui.ledConnA.setStyleSheet(LED_GREEN)
         else:
             self.ui.ledConnA.setStyleSheet(LED_RED)
 
         # Encoder B — angle
-        angle_b = device.read_encoder_b()
-        if angle_b is not None:
-            self.ui.lcdAngleB.display(round(angle_b, 4))
+        val_b = device.read_angle(EncoderID.B)
+        if val_b is not None:
+            self.ui.lcdAngleB.display(round(val_b.angle_deg, 4))
             self.ui.ledConnB.setStyleSheet(LED_GREEN)
         else:
             self.ui.ledConnB.setStyleSheet(LED_RED)
@@ -384,11 +383,9 @@ class EncoderDebugDialog(QDialog):
     # ──── Diagnostics ────────────────────────────────────────────────────────
 
     def _update_diagnostics(self, device: "DualEncoderArduino") -> None:
-        diag_a = device.get_diagnostics_a()
+        diag_a, diag_b = device.query_diagnostics("BOTH")
         if diag_a:
             self._apply_diagnostics(diag_a, "A")
-
-        diag_b = device.get_diagnostics_b()
         if diag_b:
             self._apply_diagnostics(diag_b, "B")
 
@@ -435,7 +432,7 @@ class EncoderDebugDialog(QDialog):
             return
 
         # *IDN?
-        idn = device.identify()
+        idn = device.query_idn()
         self.ui.leIdn.setText(idn if idn else "–")
 
         # CONF:RATE? returns Hz; display as ms
@@ -470,12 +467,8 @@ class EncoderDebugDialog(QDialog):
         if device is None:
             return
         enc = self._selected_encoder_id()
-        if enc == "A":
-            device.reset_zero_a()
-        elif enc == "B":
-            device.reset_zero_b()
-        else:
-            device.reset_zero_both()
+        target = EncoderID.A if enc == "A" else EncoderID.B if enc == "B" else "BOTH"
+        device.zero(target)
         Debug.info(f"Zero set for encoder {enc} from debug dialog")
 
     @Slot()
@@ -484,12 +477,8 @@ class EncoderDebugDialog(QDialog):
         if device is None:
             return
         enc = self._selected_encoder_id()
-        if enc == "A":
-            device.clear_error_flag_a()
-        elif enc == "B":
-            device.clear_error_flag_b()
-        else:
-            device.clear_error_flag_both()
+        target = EncoderID.A if enc == "A" else EncoderID.B if enc == "B" else "BOTH"
+        device.clear_error(target)
         Debug.info(f"Error flag cleared for encoder {enc} from debug dialog")
 
     # ==================== SCPI Error Queue ====================
@@ -503,7 +492,7 @@ class EncoderDebugDialog(QDialog):
 
         entries: list[str] = []
         for _ in range(20):  # safety limit
-            entry = device.query_error()
+            entry = device.query_last_error()
             if entry is None:
                 break
             entries.append(entry)
@@ -697,7 +686,7 @@ class EncoderDebugDialog(QDialog):
             self._lcd_adc_voltage.display(voltage)
 
         # ADC diagnostics (registers + drdy)
-        adc_diag = device.get_adc_diagnostics()
+        adc_diag = device.query_adc_diagnostics()
         if adc_diag is not None:
             if adc_diag.get("absent"):
                 self._led_adc_present.setStyleSheet(LED_RED)
@@ -711,7 +700,7 @@ class EncoderDebugDialog(QDialog):
                 self._le_adc_last_raw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
 
         # PD-TIA
-        pdtia = device.get_pdtia_diagnostics()
+        pdtia = device.query_pdtia_diagnostics()
         if pdtia is not None:
             self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
             self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
@@ -721,7 +710,7 @@ class EncoderDebugDialog(QDialog):
         device = self._device()
         if device is None:
             return
-        cfg = device.get_adc_config()
+        cfg = device.query_adc_config()
         self._le_adc_mux.setText(cfg.get("mux", "–"))
         self._le_adc_gain.setText(cfg.get("gain", "–"))
         self._le_adc_rate.setText(cfg.get("rate", "–"))

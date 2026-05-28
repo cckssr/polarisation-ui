@@ -7,7 +7,11 @@ Run with: .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 import sys
 import pytest
 import time
-from polarisation_ui.infrastructure.devices import DualEncoderArduino, EncoderID
+from polarisation_ui.infrastructure.devices import (
+    DualEncoderArduino,
+    EncoderID,
+    StreamSource,
+)
 from polarisation_ui.infrastructure.mocks import MockArduino
 
 pytestmark = pytest.mark.skipif(
@@ -58,33 +62,33 @@ def encoder_client(mock_arduino):
 
 
 class TestBasicReading:
-    def test_read_encoder_a(self, encoder_client):
-        angle = encoder_client.read_encoder_a()
-        assert angle is not None
-        assert isinstance(angle, float)
-        assert 9.0 < angle < 11.0
+    def test_read_angle_a(self, encoder_client):
+        val = encoder_client.read_angle(EncoderID.A)
+        assert val is not None
+        assert val.encoder_id == EncoderID.A
+        assert isinstance(val.angle_deg, float)
+        assert 9.0 < val.angle_deg < 11.0
 
-    def test_read_encoder_b(self, encoder_client):
-        angle = encoder_client.read_encoder_b()
-        assert angle is not None
-        assert isinstance(angle, float)
-        assert 19.0 < angle < 21.0
+    def test_read_angle_b(self, encoder_client):
+        val = encoder_client.read_angle(EncoderID.B)
+        assert val is not None
+        assert val.encoder_id == EncoderID.B
+        assert isinstance(val.angle_deg, float)
+        assert 19.0 < val.angle_deg < 21.0
 
-    def test_read_both(self, encoder_client):
-        both = encoder_client.read_both()
+    def test_read_angle_both(self, encoder_client):
+        both = encoder_client.read_angle("BOTH")
         assert both is not None
         assert hasattr(both, "angle_a")
         assert hasattr(both, "angle_b")
         assert 9.0 < both.angle_a < 11.0
         assert 19.0 < both.angle_b < 21.0
 
-    def test_read_single(self, encoder_client):
-        value = encoder_client.read_single(EncoderID.A)
-        assert value is not None
-        assert value.encoder_id == EncoderID.A
-        assert isinstance(value.angle_deg, float)
+    def test_read_angle_raw_is_none(self, encoder_client):
         # angle_raw is not populated by MEAS:ENC:ANGL? (magnitude needs MEAS:ENC:MAGN?)
-        assert value.angle_raw is None
+        val = encoder_client.read_angle(EncoderID.A)
+        assert val is not None
+        assert val.angle_raw is None
 
     def test_read_magnitude(self, encoder_client):
         mag = encoder_client.read_magnitude(EncoderID.A)
@@ -97,48 +101,90 @@ class TestBasicReading:
 
 
 class TestZeroReset:
-    def test_reset_zero_a(self, encoder_client, mock_arduino):
+    def test_zero_a(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
-        initial = encoder_client.read_encoder_a()
+        initial = encoder_client.read_angle(EncoderID.A)
         assert initial is not None
 
-        assert encoder_client.reset_zero_a()
+        assert encoder_client.zero(EncoderID.A)
 
         time.sleep(0.1)
-        after = encoder_client.read_encoder_a()
+        after = encoder_client.read_angle(EncoderID.A)
         assert after is not None
-        assert abs(after) < 0.1
+        assert abs(after.angle_deg) < 0.1
 
-    def test_reset_zero_b(self, encoder_client, mock_arduino):
+    def test_zero_b(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
-        assert encoder_client.reset_zero_b()
+        assert encoder_client.zero(EncoderID.B)
         time.sleep(0.1)
-        after = encoder_client.read_encoder_b()
+        after = encoder_client.read_angle(EncoderID.B)
         assert after is not None
-        assert abs(after) < 0.1
+        assert abs(after.angle_deg) < 0.1
 
-    def test_reset_zero_both(self, encoder_client):
-        assert encoder_client.reset_zero_both()
+    def test_zero_both(self, encoder_client):
+        assert encoder_client.zero("BOTH")
         time.sleep(0.1)
-        assert abs(encoder_client.read_encoder_a()) < 0.1
-        assert abs(encoder_client.read_encoder_b()) < 0.1
+        a = encoder_client.read_angle(EncoderID.A)
+        b = encoder_client.read_angle(EncoderID.B)
+        assert a is not None and abs(a.angle_deg) < 0.1
+        assert b is not None and abs(b.angle_deg) < 0.1
 
-    def test_zero_offset_independent(self, encoder_client, mock_arduino):
+    def test_zero_independent(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
-        encoder_client.reset_zero_a()
+        encoder_client.zero(EncoderID.A)
         time.sleep(0.1)
-        assert abs(encoder_client.read_encoder_a()) < 0.1
-        assert 19.0 < encoder_client.read_encoder_b() < 21.0
+        a = encoder_client.read_angle(EncoderID.A)
+        b = encoder_client.read_angle(EncoderID.B)
+        assert a is not None and abs(a.angle_deg) < 0.1
+        assert b is not None and 19.0 < b.angle_deg < 21.0
+
+
+# ── Parametric tests (new per plan) ──────────────────────────────────────────
+
+
+class TestParametricAPI:
+    def test_read_angle_parametric(self, encoder_client, mock_arduino):
+        mock, _ = mock_arduino
+        mock.set_encoder_angle("A",30.0)
+        mock.set_encoder_angle("B",60.0)
+        time.sleep(0.05)
+
+        val_a = encoder_client.read_angle(EncoderID.A)
+        val_b = encoder_client.read_angle(EncoderID.B)
+        both = encoder_client.read_angle("BOTH")
+
+        assert val_a is not None and 29.0 < val_a.angle_deg < 31.0
+        assert val_b is not None and 59.0 < val_b.angle_deg < 61.0
+        assert both is not None
+        assert 29.0 < both.angle_a < 31.0
+        assert 59.0 < both.angle_b < 61.0
+
+    def test_zero_and_clear_error_parametric(self, encoder_client):
+        for target in (EncoderID.A, EncoderID.B, "BOTH"):
+            assert encoder_client.zero(target)
+            assert encoder_client.clear_error(target)
+
+    def test_diagnostics_both_single_roundtrip(self, encoder_client):
+        """query_diagnostics('BOTH') returns (diag_a, diag_b) from one DIAG:ENC? BOTH call."""
+        result = encoder_client.query_diagnostics("BOTH")
+        assert result is not None
+        diag_a, diag_b = result
+        # Both dicts must be populated — confirms the BOTH path parsed correctly
+        assert isinstance(diag_a, dict)
+        assert isinstance(diag_b, dict)
+        for key in ("compHigh", "compLow", "cof", "ocf", "agc"):
+            assert key in diag_a
+            assert key in diag_b
 
 
 # ── Continuous mode ───────────────────────────────────────────────────────────
 
 
 class TestContinuousMode:
-    def test_start_stop_continuous_a(self, encoder_client, mock_arduino):
+    def test_start_stop_stream_enc_a(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
 
-        assert encoder_client.start_continuous_a()
+        assert encoder_client.start_stream([StreamSource.ENC_A])
         assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
             "continuous mode not started"
         )
@@ -150,19 +196,19 @@ class TestContinuousMode:
         assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
             "continuous mode not stopped"
         )
-        state = mock.get_state()
-        assert not state["continuous_running"]
+        assert not mock.get_state()["continuous_running"]
 
-    def test_start_stop_continuous_both(self, encoder_client, mock_arduino):
+    def test_start_stop_stream_enc_both(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
 
-        assert encoder_client.start_continuous_both()
+        assert encoder_client.start_stream(
+            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
+        )
         assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
             "continuous mode not started"
         )
         state = mock.get_state()
         assert state["continuous_running"]
-        # ENC:BOTH is expanded to ENC:A + ENC:B + ADC + DIAG by start_continuous_both()
         assert "ENC:A" in state["stream_sources"]
         assert "ENC:B" in state["stream_sources"]
         assert "DIAG" in state["stream_sources"]
@@ -176,9 +222,9 @@ class TestContinuousMode:
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
         """Verify encoder angle advances while streaming is running."""
         mock, _ = mock_arduino
-        mock.set_encoder_a_angle(0.0)
+        mock.set_encoder_angle("A",0.0)
 
-        encoder_client.start_continuous_a()
+        encoder_client.start_stream([StreamSource.ENC_A])
         initial_angle = mock.get_state()["encoder_a"]["current_angle"]
         time.sleep(0.2)  # ~4 intervals at 50ms
         encoder_client.abort()
@@ -189,10 +235,12 @@ class TestContinuousMode:
     def test_both_encoders_different_speeds(self, encoder_client, mock_arduino):
         """Verify encoder A advances faster than B when speeds differ."""
         mock, _ = mock_arduino
-        mock.set_encoder_a_angle(0.0)
-        mock.set_encoder_b_angle(0.0)
+        mock.set_encoder_angle("A",0.0)
+        mock.set_encoder_angle("B",0.0)
 
-        encoder_client.start_continuous_both()
+        encoder_client.start_stream(
+            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
+        )
         time.sleep(0.3)
         encoder_client.abort()
 
@@ -225,7 +273,7 @@ class TestPollInterval:
 
 class TestDiagnostics:
     def test_diagnostics_a(self, encoder_client):
-        diag = encoder_client.get_diagnostics_a()
+        diag = encoder_client.query_diagnostics(EncoderID.A)
         assert diag is not None
         assert isinstance(diag, dict)
         for key in ("compHigh", "compLow", "cof", "ocf"):
@@ -235,9 +283,18 @@ class TestDiagnostics:
         assert isinstance(diag["agc"], int)
 
     def test_diagnostics_b(self, encoder_client):
-        diag = encoder_client.get_diagnostics_b()
+        diag = encoder_client.query_diagnostics(EncoderID.B)
         assert diag is not None
         assert isinstance(diag, dict)
+
+    def test_diagnostics_both(self, encoder_client):
+        result = encoder_client.query_diagnostics("BOTH")
+        assert result is not None
+        diag_a, diag_b = result
+        assert diag_a is not None
+        assert diag_b is not None
+        assert isinstance(diag_a, dict)
+        assert isinstance(diag_b, dict)
 
 
 # ── Connection lifecycle ──────────────────────────────────────────────────────
@@ -276,17 +333,17 @@ class TestMockArduinoState:
 
     def test_state_after_zero_reset(self, mock_arduino, encoder_client):
         mock, _ = mock_arduino
-        encoder_client.reset_zero_a()
+        encoder_client.zero(EncoderID.A)
         assert _await_mock_state(
             mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0
-        ), "zero_offset not updated after reset_zero_a"
+        ), "zero_offset not updated after zero(A)"
         state = mock.get_state()
         assert state["encoder_a"]["zero_offset"] == 10.0
         assert state["encoder_a"]["effective_angle"] == 0.0
 
     def test_manual_angle_set(self, mock_arduino):
         mock, _ = mock_arduino
-        mock.set_encoder_a_angle(45.0)
+        mock.set_encoder_angle("A",45.0)
         state = mock.get_state()
         assert state["encoder_a"]["current_angle"] == 45.0
         assert state["encoder_a"]["effective_angle"] == 45.0

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'log_window.ui'
+## Form generated from reading UI file 'event_log_panel.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.11.1
 ##
@@ -15,41 +15,35 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractButton, QApplication, QDialog, QDialogButtonBox,
-    QPlainTextEdit, QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QPlainTextEdit, QSizePolicy, QVBoxLayout,
+    QWidget)
 
-class Ui_LogWindow(object):
-    def setupUi(self, LogWindow):
-        if not LogWindow.objectName():
-            LogWindow.setObjectName(u"LogWindow")
-        LogWindow.resize(820, 480)
-        self.verticalLayout = QVBoxLayout(LogWindow)
+class Ui_EventLogPanel(object):
+    def setupUi(self, EventLogPanel):
+        if not EventLogPanel.objectName():
+            EventLogPanel.setObjectName(u"EventLogPanel")
+        EventLogPanel.resize(800, 150)
+        self.verticalLayout = QVBoxLayout(EventLogPanel)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.textLog = QPlainTextEdit(LogWindow)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.textLog = QPlainTextEdit(EventLogPanel)
         self.textLog.setObjectName(u"textLog")
         self.textLog.setReadOnly(True)
+        self.textLog.setMaximumBlockCount(500)
         font = QFont()
         font.setFamilies([u"Courier New"])
         font.setStyleStrategy(QFont.PreferDefault)
         self.textLog.setFont(font)
-        self.textLog.setMaximumBlockCount(2000)
 
         self.verticalLayout.addWidget(self.textLog)
 
-        self.buttonBox = QDialogButtonBox(LogWindow)
-        self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Close)
 
-        self.verticalLayout.addWidget(self.buttonBox)
+        self.retranslateUi(EventLogPanel)
 
-
-        self.retranslateUi(LogWindow)
-
-        QMetaObject.connectSlotsByName(LogWindow)
+        QMetaObject.connectSlotsByName(EventLogPanel)
     # setupUi
 
-    def retranslateUi(self, LogWindow):
-        LogWindow.setWindowTitle(QCoreApplication.translate("LogWindow", u"Log-Ausgabe", None))
+    def retranslateUi(self, EventLogPanel):
+        pass
     # retranslateUi
 

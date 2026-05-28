@@ -144,8 +144,9 @@ class SerialDevice:
         """
         Send a text command to the device.
 
-        Automatically appends a newline if not present. Handles reconnection
-        on connection loss and retries the command if successful.
+        Automatically appends a newline if not present. Returns False on any
+        I/O failure — callers are responsible for routing failures through
+        ReconnectWorker; no silent retry happens here.
 
         Args:
             command (str): Command text to send.
@@ -159,52 +160,18 @@ class SerialDevice:
             return False
 
         try:
-            # Prepare command
             cmd = command
             if add_newline and not cmd.endswith("\n"):
                 cmd += "\n"
 
-            # Encode and send
             self.serial.write(cmd.encode("utf-8"))
-            self.serial.flush()  # Ensure data is sent immediately
+            self.serial.flush()
             Debug.debug(f"Sent command: {repr(cmd.strip())}")
             return True
 
         except (serial.SerialException, OSError) as e:
             Debug.error(f"Serial error sending command: {e}", exc_info=True)
-
-            # Check if it's a "Device not configured" error - connection lost
-            if "Device not configured" in str(e) or "Errno 6" in str(e):
-                Debug.warning("Device disconnected! Attempting to reconnect...")
-                self.connected = False
-
-                # Try to reconnect
-                try:
-                    if self.reconnect():
-                        Debug.info("Reconnection successful! Retrying command...")
-                        # Retry the command after successful reconnection
-                        try:
-                            cmd_to_send = command
-                            if add_newline and not cmd_to_send.endswith("\n"):
-                                cmd_to_send += "\n"
-                            self.serial.write(cmd_to_send.encode("utf-8"))
-                            self.serial.flush()
-                            Debug.debug(
-                                f"Command resent after reconnect: {repr(cmd_to_send.strip())}"
-                            )
-                            return True
-                        except Exception as retry_error:  # pylint: disable=broad-except
-                            Debug.error(
-                                f"Failed to resend command after reconnect: {retry_error}"
-                            )
-                            return False
-                    else:
-                        Debug.error("Reconnection failed")
-                        return False
-                except Exception as reconnect_error:  # pylint: disable=broad-except
-                    Debug.error(f"Error during reconnection attempt: {reconnect_error}")
-                    return False
-
+            self.connected = False
             return False
         except Exception as e:  # pylint: disable=broad-except
             Debug.error(f"Unexpected error sending command: {e}", exc_info=True)

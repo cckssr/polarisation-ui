@@ -168,15 +168,12 @@ class MockArduino:
         if self._thread:
             self._thread.join(timeout=1.0)
 
-    def set_encoder_a_angle(self, angle: float) -> None:
-        self.encoder_a.current_angle = angle
-        self.encoder_a.base_angle = angle
-        self.encoder_a.poll_count = 0
-
-    def set_encoder_b_angle(self, angle: float) -> None:
-        self.encoder_b.current_angle = angle
-        self.encoder_b.base_angle = angle
-        self.encoder_b.poll_count = 0
+    def set_encoder_angle(self, target: str, angle: float) -> None:
+        """Set encoder angle. target: 'A' or 'B'."""
+        enc = self.encoder_a if target == "A" else self.encoder_b
+        enc.current_angle = angle
+        enc.base_angle = angle
+        enc.poll_count = 0
 
     def set_firmware_version(self, version: str) -> None:
         """Override firmware version string — use in tests for mismatch testing."""

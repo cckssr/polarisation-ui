@@ -20,7 +20,7 @@
    <string>Polarisation-UI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,1" columnminimumwidth="0,0,0">
+   <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,1" rowstretch="0,1" columnminimumwidth="0,0,0">
     <property name="leftMargin">
      <number>10</number>
     </property>
@@ -33,7 +33,14 @@
     <property name="bottomMargin">
      <number>10</number>
     </property>
-    <item row="0" column="0">
+    <item row="0" column="0" colspan="3">
+     <widget class="ConnectionBanner" name="connectionBanner">
+      <property name="visible">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,1,0,0">
       <property name="spacing">
        <number>-1</number>
@@ -324,7 +331,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>E12345</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
@@ -506,7 +513,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>E12345</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
@@ -682,7 +689,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>E12345</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
@@ -1047,7 +1054,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Auswahl der GP Praktikumsgruppe &lt;span style=&quot; color:#ff001a;&quot;&gt;(Pflichtfeld)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>Auswahl der GP Praktikumsgruppe (Pflichtfeld)</string>
              </property>
              <property name="currentIndex">
               <number>-1</number>
@@ -1327,7 +1334,7 @@
       </item>
      </layout>
     </item>
-    <item row="0" column="1">
+    <item row="1" column="1">
      <widget class="Line" name="line">
       <property name="frameShadow">
        <enum>QFrame::Shadow::Plain</enum>
@@ -1337,10 +1344,19 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="2">
+    <item row="1" column="2">
      <widget class="QTabWidget" name="tabWidget"/>
     </item>
    </layout>
+  </widget>
+  <widget class="QDockWidget" name="dockEventLog">
+   <property name="windowTitle">
+    <string>Ereignisprotokoll</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="EventLogPanel" name="eventLogPanel"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1359,6 +1375,7 @@
     <addaction name="actionAcquisitionSettings"/>
     <addaction name="actionEncoderDebug"/>
     <addaction name="actionLogWindow"/>
+    <addaction name="actionEventLog"/>
     <addaction name="actionPowerCalibration"/>
     <addaction name="actionAutoPowerCalibration"/>
    </widget>
@@ -1402,6 +1419,14 @@
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
+  <action name="actionEventLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Ereignisprotokoll anzeigen</string>
+   </property>
+  </action>
   <action name="actionAutoPowerCalibration">
    <property name="text">
     <string>Automatische Leistungskalibrierung…</string>
@@ -1411,6 +1436,18 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ConnectionBanner</class>
+   <extends>QFrame</extends>
+   <header>polarisation_ui.ui.widgets.connection_banner</header>
+  </customwidget>
+  <customwidget>
+   <class>EventLogPanel</class>
+   <extends>QWidget</extends>
+   <header>polarisation_ui.ui.widgets.event_log_panel</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
