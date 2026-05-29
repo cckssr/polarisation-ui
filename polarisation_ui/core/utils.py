@@ -5,8 +5,7 @@ from collections.abc import Sequence
 
 
 def circular_mean_deg(angles: Sequence[float]) -> float:
-    """
-    Circular mean for a sequence of angles in degrees.
+    """Calculate circular mean for a sequence of angles in degrees.
 
     Arithmetic mean is wrong near the 0°/360° wrap (e.g. mean([359°, 1°])
     gives 180° instead of 0°). Uses atan2 of the mean sin/cos components.

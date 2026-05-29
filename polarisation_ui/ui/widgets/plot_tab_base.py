@@ -1,5 +1,4 @@
-"""
-Base class for experiment tab widgets.
+"""Base class for experiment tab widgets.
 
 Each experiment tab (Malus, Ellipsometry, …) subclasses PlotTabBase,
 declares its metadata, and implements the lifecycle hooks.  The
@@ -24,8 +23,7 @@ class ConnState(Enum):
 
 
 class PlotTabBase(QWidget):
-    """
-    Abstract base for all experiment tabs.
+    """Abstract base for all experiment tabs.
 
     Subclasses must define tab_id and tab_title and implement build().
     All other hooks have default no-op implementations.

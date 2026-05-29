@@ -1,5 +1,4 @@
-"""!/usr/bin/env python
-Logging and debugging utility module for the GM Counter application.
+"""Logging and debugging utility module for the GM Counter application.
 
 This module provides a centralized Debug class that handles logging to both console
 and file outputs with configurable debug levels. It supports systematic logging of
@@ -47,8 +46,8 @@ import inspect
 
 
 class Debug:
-    """
-    Debug utility class originally for fringe counter program.
+    """Debug utility class originally for fringe counter program.
+
     This class provides central debug and logging functions,
     to systematically log errors and program flow.
     The logger will log messages to both the console and a file if debugging is enabled.
@@ -79,8 +78,8 @@ class Debug:
         app_name="Application",
         supress_logfile=False,
     ):
-        """
-        Initialise the logger with the specified debug level and log directory.
+        """Initialise the logger with the specified debug level and log directory.
+
         If no log directory is specified, a platform-specific temp directory is used.
 
         Args:
@@ -153,8 +152,7 @@ class Debug:
 
     @classmethod
     def error(cls, message, exc_info=None):
-        """
-        Log an error message.
+        """Log an error message.
 
         Args:
             message: Error message to log
@@ -176,8 +174,7 @@ class Debug:
 
     @classmethod
     def info(cls, message):
-        """
-        Log an informational message.
+        """Log an informational message.
 
         Args:
             message: Information to log
@@ -196,8 +193,7 @@ class Debug:
 
     @classmethod
     def debug(cls, message):
-        """
-        Log detailed debug information.
+        """Log detailed debug information.
 
         Args:
             message: Debug information to log
@@ -216,8 +212,7 @@ class Debug:
 
     @classmethod
     def warning(cls, message):
-        """
-        Log information as warning for non critical issues.
+        """Log information as warning for non critical issues.
 
         Args:
             message: Warning information to log
@@ -236,8 +231,7 @@ class Debug:
 
     @classmethod
     def critical(cls, message):
-        """
-        Log a critical error message.
+        """Log a critical error message.
 
         Args:
             message: Critical error message to log
@@ -255,8 +249,8 @@ class Debug:
 
     @classmethod
     def exception_hook(cls, exc_type, exc_value, exc_traceback):
-        """
-        Callback function for unhandled exceptions.
+        """Callback function for unhandled exceptions.
+
         Logs the exception and forwards it to sys.__excepthook__.
 
         Args:
@@ -286,8 +280,7 @@ class Debug:
 
     @classmethod
     def _get_caller_info(cls):
-        """
-        Retrieve information about the caller (class and function).
+        """Retrieve information about the caller (class and function).
 
         Returns:
             str: Formatted information about the caller in the format [Class.Function]

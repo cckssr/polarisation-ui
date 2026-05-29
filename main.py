@@ -1,14 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""Robust launcher for the application.
 
-"""
-Robust launcher for the application. When executed as a script from the
-repository root or from an installed package folder the module `src.main`
-should be executed as a module so that its intra-package relative imports work
-correctly. On Windows executing a script inside a package folder often fails
-with "attempted relative import with no known parent" if the module is simply
-imported; to avoid this we prefer runpy.run_module and fall back to sensible
-import attempts.
+When executed as a script from the repository root or from an installed package
+folder the module `src.main` should be executed as a module so that its
+intra-package relative imports work correctly. On Windows executing a script
+inside a package folder often fails with "attempted relative import with no
+known parent" if the module is simply imported; to avoid this we prefer
+runpy.run_module and fall back to sensible import attempts.
 
 This file is intentionally small and defensive so users can run the repository
 entrypoint (``python main.py``) or the installed entrypoint that points here.

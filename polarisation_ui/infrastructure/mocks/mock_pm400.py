@@ -10,8 +10,7 @@ from typing import Optional
 
 
 class MockPM400:
-    """
-    Simulated PM400PowerMeter.
+    """Simulated PM400PowerMeter.
 
     *kdc_mock* is a MockKDC101Polariser (or any object with ``get_position_deg()``).
     Power is computed as:

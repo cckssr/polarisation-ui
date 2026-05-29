@@ -1,5 +1,4 @@
-"""
-Registry for PlotTabBase subclasses.
+"""Registry for PlotTabBase subclasses.
 
 Import tabs/__init__.py to trigger registrations before calling TabRegistry.all().
 """

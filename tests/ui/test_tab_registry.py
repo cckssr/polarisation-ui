@@ -1,5 +1,4 @@
-"""
-Tests for TabRegistry and PlotTabBase.
+"""Tests for TabRegistry and PlotTabBase.
 
 These tests run headless (no display required) because they only exercise
 registration logic and the on_frame / on_reset hooks — no pyqtgraph widgets

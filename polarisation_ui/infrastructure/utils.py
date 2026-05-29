@@ -5,8 +5,7 @@ from datetime import datetime
 
 
 def sanitize_subterm_for_folder(subterm: str, max_length: int = 20) -> str:
-    """
-    Sanitize a subterm string for safe use in a directory name.
+    """Sanitize a subterm string for safe use in a directory name.
 
     Replaces whitespace with underscores, removes characters that are not
     alphanumeric, underscores, or hyphens, then truncates to *max_length*.
@@ -21,8 +20,7 @@ def create_dropbox_foldername(
     tk_designation: str,
     sanitized_subterm: str = "",
 ) -> str:
-    """
-    Build the Dropbox folder name for a measurement group.
+    """Build the Dropbox folder name for a measurement group.
 
     Format: ``<Weekday><Group><TK>[-<Subterm>]``
     Example: ``MonATK08-Polariser``.

@@ -1,5 +1,4 @@
-"""
-Core domain models for goniometer control system.
+"""Core domain models for goniometer control system.
 
 This module contains pure Python dataclasses representing the
 goniometer state without any Qt or UI dependencies.
@@ -12,8 +11,7 @@ from typing import Optional
 
 @dataclass
 class GoniometerState:
-    """
-    Represents the state of a dual-stage goniometer.
+    """Represents the state of a dual-stage goniometer.
 
     The goniometer follows a specific mechanical relationship:
     detector_angle = 2 * sample_angle
@@ -24,7 +22,7 @@ class GoniometerState:
 
     sample_angle: float  # Upper stage angle (degrees) - sample position
     detector_angle: float  # Lower stage angle (degrees) - detector arm position
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
 
     def __post_init__(self) -> None:
         """Initialize timestamp if not provided."""
@@ -32,8 +30,7 @@ class GoniometerState:
             self.timestamp = datetime.now()
 
     def validate(self) -> bool:
-        """
-        Validate goniometer state against physical constraints.
+        """Validate goniometer state against physical constraints.
 
         Returns:
             bool: True if state is valid, False otherwise.
@@ -46,8 +43,7 @@ class GoniometerState:
         return is_valid
 
     def get_validation_error(self) -> Optional[str]:
-        """
-        Get human-readable validation error if state is invalid.
+        """Get human-readable validation error if state is invalid.
 
         Returns:
             str or None: Error message if invalid, None if valid.
@@ -66,8 +62,7 @@ class GoniometerState:
 
 @dataclass
 class EncoderReading:
-    """
-    Represents a single reading from an encoder device.
+    """Represents a single reading from an encoder device.
 
     Encoders provide electronic feedback of the manual stage position.
     """
@@ -91,7 +86,7 @@ class MeasurementPoint:
     sample_stage_reading: EncoderReading  # Sample stage angle
     detector_stage_reading: EncoderReading  # Detector stage angle
     photodiode_reading: PhotodiodeReading
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
     adc_voltage: Optional[float] = None
     adc_temperature: Optional[float] = None
 
@@ -103,8 +98,7 @@ class MeasurementPoint:
 
 @dataclass
 class AcquisitionSettings:
-    """
-    Acquisition settings for the current session.
+    """Acquisition settings for the current session.
 
     Loaded from config at startup; changes made in the settings dialog
     are kept in memory only and are never written back to config.json.
@@ -120,6 +114,14 @@ class AcquisitionSettings:
     sample_stage_inverted: bool = True
     spike_filter_enabled: bool = True
     spike_max_delta_deg: float = 10.0  # 100 °/s at default 10 Hz — rejects glitches
+
+
+@dataclass
+class DualEncoderReading:
+    """Paired angle reading from both encoder stages returned by the device manager."""
+
+    sample_angle: float
+    detector_angle: float
 
 
 @dataclass

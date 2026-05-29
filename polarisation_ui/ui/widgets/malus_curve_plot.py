@@ -1,5 +1,4 @@
-"""
-Malus-law curve plot for Malus tab.
+"""Malus-law curve plot for Malus tab.
 
 Accumulates manually saved MalusPoint entries (user-entered analyser angles)
 and displays them as a scatter plot.  Points are added via add_point() and
@@ -15,8 +14,7 @@ from polarisation_ui.core.models import MalusPoint
 
 
 class MalusCurvePlot(QWidget):
-    """
-    Scatter plot of saved Malus-law measurement points.
+    """Scatter plot of saved Malus-law measurement points.
 
     X axis: analyser angle (degrees, user-entered)
     Y axis: detector intensity (V, averaged over ~0.5 s window)

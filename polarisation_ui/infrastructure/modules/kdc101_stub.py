@@ -1,5 +1,4 @@
-"""
-KDC101 stub — placeholder host-side module.
+"""KDC101 stub — placeholder host-side module.
 
 Satisfies the ``HostModule`` protocol without importing any Thorlabs SDK.
 Swap this for the real driver when hardware integration is implemented;
@@ -17,8 +16,7 @@ from polarisation_ui.infrastructure.modules import HostModule
 
 
 class Kdc101Stub:
-    """
-    Stub implementation of ``HostModule`` for the Thorlabs KDC101 stepper controller.
+    """Stub implementation of ``HostModule`` for the Thorlabs KDC101 stepper controller.
 
     All methods are no-ops that log at DEBUG level.  ``is_connected()`` always
     returns ``True`` so that tabs with ``required_modules={"kdc101"}`` become

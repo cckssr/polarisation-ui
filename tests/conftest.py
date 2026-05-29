@@ -1,11 +1,10 @@
-"""
-Shared pytest fixtures and CLI option registration.
+"""Shared pytest fixtures and CLI option registration.
 
 Hardware tests are opt-in: pass --kdc101-port and/or --pm400-visa on the
 command line to enable them.  Without those flags every hardware test is
 skipped automatically.
 
-Examples
+Examples:
 --------
 # Mock-only tests (default):
     pytest tests/
@@ -64,8 +63,7 @@ def pm400_visa(request: pytest.FixtureRequest) -> str | None:
 
 @pytest.fixture
 def connected_kdc(kdc101_port: str | None):
-    """
-    Yield a connected KDC101Polariser for hardware tests.
+    """Yield a connected KDC101Polariser for hardware tests.
 
     Skips the test automatically if --kdc101-port was not provided.
     Disconnects after the test regardless of outcome.
@@ -83,8 +81,7 @@ def connected_kdc(kdc101_port: str | None):
 
 @pytest.fixture
 def connected_pm400(pm400_visa: str | None):
-    """
-    Yield a connected PM400PowerMeter for hardware tests.
+    """Yield a connected PM400PowerMeter for hardware tests.
 
     Skips the test automatically if --pm400-visa was not provided.
     Disconnects after the test regardless of outcome.

@@ -1,9 +1,13 @@
 {
     "files": [
-        "../mock_main.py",
         "../mainwindow.ui",
-        "../connection.ui",
         "../acq_settings.ui",
-        "../encoder_debug.ui"
+        "../auto_power_calibration.ui",
+        "../connection_banner.ui",
+        "../encoder_debug.ui",
+        "../log_window.ui",
+        "../brewster_tab.ui",
+        "../malus_tab.ui",
+        "../mock_mainwindow.py"
     ]
 }

@@ -1,5 +1,4 @@
-"""
-Data controller for continuous sensor reading.
+"""Data controller for continuous sensor reading.
 
 Manages threaded data acquisition from encoder devices and
 emits signals for UI updates. Separates data collection from UI rendering.
@@ -25,8 +24,7 @@ CONFIG = import_config()
 
 
 def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
-    """
-    Evaluate one encoder's SYST:DIAG? dict.
+    """Evaluate one encoder's SYST:DIAG? dict.
 
     Returns (ok, description) — description is "<label>: OK" when healthy or
     "<label>: <fault list>" when one or more flags are set.
@@ -53,8 +51,7 @@ def _circular_delta(a: float, b: float) -> float:
 
 
 class DataController(QObject):
-    """
-    Controller for managing continuous data acquisition.
+    """Controller for managing continuous data acquisition.
 
     Responsibilities:
         - Poll encoders at regular intervals
@@ -101,7 +98,7 @@ class DataController(QObject):
     # -------------------------------------------------------------------------
 
     # Signal emitted when a reconnection attempt begins
-    retry_connecting = Signal()
+    retry_connecting = Signal(int, float)  # (attempt_number, delay_seconds)
     # Signal emitted when the connection is re-established after errors
     reconnect_succeeded = Signal()
     # Signal emitted when max errors are reached and we stop trying
@@ -113,12 +110,13 @@ class DataController(QObject):
         parent: Optional[QObject] = None,
         use_mock_intensity: bool = False,
     ):
-        """
-        Initialize data controller.
+        """Initialize data controller.
 
         Args:
             device_manager: Device manager instance
             parent: Parent QObject
+            use_mock_intensity: If True, _read_intensity() returns a simulated value
+                instead of querying the device. Set to True in unit tests without hardware.
         """
         super().__init__(parent)
 
@@ -191,6 +189,9 @@ class DataController(QObject):
         # tab in the debug dialog is open, to avoid unnecessary string formatting.
         self._raw_frame_enabled: bool = False
 
+        # Quiet self-heal: track the last error message to detect new error types
+        self._last_error_msg: Optional[str] = None
+
         # Last seen DATA:FRAME sequence number — used to detect gaps in the stream.
         self._last_frame_seq: Optional[int] = None
 
@@ -208,8 +209,7 @@ class DataController(QObject):
     # ==================== Acquisition Settings ====================
 
     def update_acq_settings(self, settings: AcquisitionSettings) -> None:
-        """
-        Apply new acquisition settings.
+        """Apply new acquisition settings.
 
         Recreates the averaging buffers (discarding old samples) and syncs
         the sample-inversion flag.  Call at startup and whenever the settings
@@ -243,8 +243,7 @@ class DataController(QObject):
     # ==================== Polling Control ====================
 
     def enable_raw_frame_signal(self, enabled: bool) -> None:
-        """
-        Enable or disable the opt-in ``raw_frame`` debug signal.
+        """Enable or disable the opt-in ``raw_frame`` debug signal.
 
         When *enabled* is True, each poll emits ``raw_frame(str)`` with a
         synthetic ``DATA:FRAME`` string built from the latest sensor readings.
@@ -261,8 +260,7 @@ class DataController(QObject):
             self._diag_timer.setInterval(interval_ms)
 
     def set_poll_interval(self, interval_ms: int) -> None:
-        """
-        Set polling interval.
+        """Set polling interval.
 
         Args:
             interval_ms: Interval in milliseconds
@@ -275,8 +273,7 @@ class DataController(QObject):
         Debug.debug(f"Poll interval set to {self.poll_interval}ms")
 
     def start_continuous_reading(self) -> bool:
-        """
-        Start continuous sensor polling.
+        """Start continuous sensor polling.
 
         Returns:
             bool: True if started successfully
@@ -310,8 +307,7 @@ class DataController(QObject):
     # ==================== Measurement Control ====================
 
     def start_measurement(self) -> bool:
-        """
-        Start measurement session.
+        """Start measurement session.
 
         Continuous reading must already be active (started on device connect).
         Returns False if a measurement is already running.
@@ -353,8 +349,7 @@ class DataController(QObject):
     # ==================== PDTIA Gain Control ====================
 
     def set_pdtia_gain(self, stage: int) -> bool:
-        """
-        Set PDTIA discrete gain stage (1–4).
+        """Set PDTIA discrete gain stage (1–4).
 
         Pauses polling for the duration of the SCPI exchange (same pattern as
         _check_diagnostics) so commands don't interleave with ongoing reads.
@@ -390,8 +385,7 @@ class DataController(QObject):
     # ==================== Intensity Reading ====================
 
     def _read_intensity(self, detector_angle: float) -> float:
-        """
-        Return the current photodiode intensity (a.u.).
+        """Return the current photodiode intensity (a.u.).
 
         Reads real ADC voltage via MEAS:ADC:VOLT?.  Falls back to a Gaussian
         simulation when use_mock_intensity=True (tests without hardware).
@@ -412,8 +406,7 @@ class DataController(QObject):
 
     @Slot()
     def _poll_sensors(self) -> None:
-        """
-        Poll sensors and emit updated data.
+        """Poll sensors and emit updated data.
 
         Called by timer at regular intervals.
         """
@@ -425,7 +418,8 @@ class DataController(QObject):
                 self._handle_read_error("Failed to read angles")
                 return
 
-            sample_angle, detector_angle = angles
+            sample_angle = angles.sample_angle
+            detector_angle = angles.detector_angle
 
             # Correct for diametrically flipped magnet on sample stage
             if self.sample_inverted:
@@ -543,15 +537,28 @@ class DataController(QObject):
             self._handle_read_error(f"Exception during sensor poll: {e}")
 
     def _handle_read_error(self, error_msg: str) -> None:
-        """Pause polling and schedule a reconnect with exponential backoff."""
+        """Pause polling and schedule a reconnect with exponential backoff.
+
+        First failure is silent (no error_occurred emission) — only the banner
+        is notified via retry_connecting. error_occurred is emitted only when
+        the error persists or is a new error type (B1 contract).
+        """
+        is_first_failure = self._error_count == 0
+        is_new_error_type = (
+            self._last_error_msg is not None and error_msg != self._last_error_msg
+        )
+
         self._error_count += 1
+        self._last_error_msg = error_msg
         Debug.error(f"Read error ({self._error_count}/{self._max_errors}): {error_msg}")
-        self.error_occurred.emit(error_msg)
         self.poll_timer.stop()
+
+        # Emit error_occurred only after the first attempt fails or on a new error type
+        if not is_first_failure or is_new_error_type:
+            self.error_occurred.emit(error_msg)
 
         if self._error_count >= self._max_errors:
             Debug.error("Max reconnect attempts exhausted — declaring connection lost")
-            # Close the journal (not finalized — stays recoverable)
             if self._journal is not None and self._journal.is_active:
                 self._journal.close()
             self.connection_lost.emit()
@@ -564,11 +571,11 @@ class DataController(QObject):
                 f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})"
             )
             self._retry_timer.start(delay_ms)
+            self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
 
     @Slot()
     def _attempt_reconnect(self) -> None:
         """Start a ReconnectWorker to re-establish the serial connection off the main thread."""
-        self.retry_connecting.emit()
         Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
 
         # Clean up any previous worker that has already finished
@@ -589,10 +596,16 @@ class DataController(QObject):
         self._reconnect_worker = None
         self._error_count = 0
         self._backoff_attempt = 0
+        self._last_error_msg = None
         # Buffers are intentionally preserved — data continuity across gaps.
         # Write a gap marker so consumers can show a discontinuity on plots.
         if self._journal is not None and self._journal.is_active:
             self._journal.append_gap()
+        # Reset spike-filter references so the first samples after reconnect
+        # are never rejected as bogus spikes (B6).
+        self._last_sample_angle = None
+        self._last_det_angle = None
+        self._spike_reject_streak = 0
         self.poll_timer.start(self.poll_interval)
         self._diag_timer.start(self._diag_interval_ms)
         self.reconnect_succeeded.emit()
@@ -600,18 +613,43 @@ class DataController(QObject):
 
     @Slot()
     def _on_reconnect_failed(self) -> None:
-        """Called on the main thread when ReconnectWorker reports failure."""
+        """Called on the main thread when ReconnectWorker reports failure.
+
+        Does NOT re-enter _handle_read_error — manages the backoff directly
+        so the status bar is never written for retries (B2 contract).
+        """
         self._reconnect_worker = None
-        self._handle_read_error("Reconnect failed")
+        self._error_count += 1
+        Debug.warning(
+            f"Reconnect attempt {self._backoff_attempt} failed "
+            f"({self._error_count}/{self._max_errors})"
+        )
+
+        if self._error_count >= self._max_errors:
+            Debug.error("Max reconnect attempts exhausted — declaring connection lost")
+            if self._journal is not None and self._journal.is_active:
+                self._journal.close()
+            self.connection_lost.emit()
+        else:
+            # Emit error_occurred only when we're past the first silent attempt (B1)
+            if self._backoff_attempt >= 2:
+                self.error_occurred.emit(
+                    f"Wiederverbindung fehlgeschlagen (Versuch {self._backoff_attempt})"
+                )
+            delay_ms = self._backoff_delays_ms[
+                min(self._backoff_attempt, len(self._backoff_delays_ms) - 1)
+            ]
+            self._backoff_attempt += 1
+            self._retry_timer.start(delay_ms)
+            self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
 
     # ==================== Manual Reading ====================
 
-    def read_once(self) -> Optional[tuple[float, float]]:
-        """
-        Perform single sensor read without starting continuous polling.
+    def read_once(self) -> Optional["DualEncoderReading"]:
+        """Perform single sensor read without starting continuous polling.
 
         Returns:
-            Tuple of (sample_angle, detector_angle) or None on error
+            DualEncoderReading or None on error.
         """
         if not self.device_manager.is_encoder_connected():
             Debug.warning("Cannot read: encoders not connected")
@@ -621,8 +659,7 @@ class DataController(QObject):
             angles = self.device_manager.read_angles()
 
             if angles is not None:
-                sample_angle, detector_angle = angles
-                self.angles_updated.emit(sample_angle, detector_angle)
+                self.angles_updated.emit(angles.sample_angle, angles.detector_angle)
                 return angles
 
             return None
@@ -636,8 +673,7 @@ class DataController(QObject):
 
     @Slot()
     def _check_diagnostics(self) -> None:
-        """
-        Run SYST:DIAG? on both encoders and emit diagnostics_updated.
+        """Run SYST:DIAG? on both encoders and emit diagnostics_updated.
 
         The angle-polling timer is paused for the duration of the SCPI
         exchange so that serial commands do not interleave.

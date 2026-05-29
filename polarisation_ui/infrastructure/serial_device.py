@@ -1,5 +1,4 @@
-"""!/usr/bin/env python
-Serial communication module for embedded device control.
+"""Serial communication module for embedded device control.
 
 This module provides a generic serial communication handler for interfacing with
 microcontroller-based devices via serial ports. It handles connection management,
@@ -38,8 +37,7 @@ from .logging import Debug
 
 
 class SerialDevice:
-    """
-    Generic serial communication handler for microcontroller devices.
+    """Generic serial communication handler for microcontroller devices.
 
     Provides a flexible interface for serial communication with any embedded device
     via standard serial ports or virtual PTY devices. Handles connection lifecycle,
@@ -53,8 +51,7 @@ class SerialDevice:
     FAST_READ_TIMEOUT_MS = 100
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
-        """
-        Initialize serial device connection.
+        """Initialize serial device connection.
 
         Args:
             port (str): Serial port identifier (e.g., '/dev/ttyUSB0', 'COM3').
@@ -69,8 +66,7 @@ class SerialDevice:
         self._config: Dict[str, Any] = {}
 
     def reconnect(self) -> bool:
-        """
-        Establish or re-establish connection to the serial device.
+        """Establish or re-establish connection to the serial device.
 
         Closes any existing connection and opens a fresh one. Handles both
         standard serial ports and pseudo-terminals (PTY) transparently.
@@ -130,8 +126,7 @@ class SerialDevice:
             raise serial.SerialException(str(e)) from e
 
     def close(self) -> None:
-        """
-        Close the serial connection.
+        """Close the serial connection.
 
         Safe to call even if connection is not open.
         """
@@ -141,11 +136,11 @@ class SerialDevice:
         self.connected = False
 
     def send_command(self, command: str, add_newline: bool = True) -> bool:
-        """
-        Send a text command to the device.
+        """Send a text command to the device.
 
-        Automatically appends a newline if not present. Handles reconnection
-        on connection loss and retries the command if successful.
+        Automatically appends a newline if not present. Returns False on any
+        I/O failure — callers are responsible for routing failures through
+        ReconnectWorker; no silent retry happens here.
 
         Args:
             command (str): Command text to send.
@@ -159,52 +154,18 @@ class SerialDevice:
             return False
 
         try:
-            # Prepare command
             cmd = command
             if add_newline and not cmd.endswith("\n"):
                 cmd += "\n"
 
-            # Encode and send
             self.serial.write(cmd.encode("utf-8"))
-            self.serial.flush()  # Ensure data is sent immediately
+            self.serial.flush()
             Debug.debug(f"Sent command: {repr(cmd.strip())}")
             return True
 
         except (serial.SerialException, OSError) as e:
             Debug.error(f"Serial error sending command: {e}", exc_info=True)
-
-            # Check if it's a "Device not configured" error - connection lost
-            if "Device not configured" in str(e) or "Errno 6" in str(e):
-                Debug.warning("Device disconnected! Attempting to reconnect...")
-                self.connected = False
-
-                # Try to reconnect
-                try:
-                    if self.reconnect():
-                        Debug.info("Reconnection successful! Retrying command...")
-                        # Retry the command after successful reconnection
-                        try:
-                            cmd_to_send = command
-                            if add_newline and not cmd_to_send.endswith("\n"):
-                                cmd_to_send += "\n"
-                            self.serial.write(cmd_to_send.encode("utf-8"))
-                            self.serial.flush()
-                            Debug.debug(
-                                f"Command resent after reconnect: {repr(cmd_to_send.strip())}"
-                            )
-                            return True
-                        except Exception as retry_error:  # pylint: disable=broad-except
-                            Debug.error(
-                                f"Failed to resend command after reconnect: {retry_error}"
-                            )
-                            return False
-                    else:
-                        Debug.error("Reconnection failed")
-                        return False
-                except Exception as reconnect_error:  # pylint: disable=broad-except
-                    Debug.error(f"Error during reconnection attempt: {reconnect_error}")
-                    return False
-
+            self.connected = False
             return False
         except Exception as e:  # pylint: disable=broad-except
             Debug.error(f"Unexpected error sending command: {e}", exc_info=True)
@@ -243,8 +204,7 @@ class SerialDevice:
         return_type: str = "auto",
         strip_whitespace: bool = True,
     ) -> Union[str, bytes, None]:
-        """
-        Unified method to read a single value from the Arduino.
+        """Unified method to read a single value from the Arduino.
 
         This is the standard read method. It automatically handles both text and binary
         data. Use this for general-purpose reading unless you need extreme speed.
@@ -318,6 +278,7 @@ class SerialDevice:
             timeout_remaining (float): Remaining timeout in seconds.
             packet_size (int): Size of binary packets to skip (default 6 bytes).
             start_byte (int): Start byte of binary packets (default 0xAA).
+
         Returns:
             Optional[str]: The first text character found, or None if none found.
         """
@@ -357,6 +318,7 @@ class SerialDevice:
 
         Args:
             result_parts (list): List to append read lines to.
+
         Returns:
             bool: True if data was read, False otherwise.
         """
@@ -407,8 +369,7 @@ class SerialDevice:
         timeout: float = DEFAULT_READ_TIMEOUT,
         packet_size: int = DEFAULT_PACKET_SIZE,
     ) -> str:
-        """
-        Read a multi-line text response, filtering out binary data.
+        """Read a multi-line text response, filtering out binary data.
 
         More lenient than read_value(); designed for multi-line responses from devices
         that may intersperse binary and text data (e.g., version info, copyright).
@@ -454,6 +415,7 @@ class SerialDevice:
         Args:
             max_bytes (int): Maximum number of bytes to read.
             delimiter (bytes): Byte sequence marking end of message.
+
         Returns:
             bytes: The bytes read including the delimiter, or empty bytes if none.
         """
@@ -486,8 +448,7 @@ class SerialDevice:
         timeout_ms: int = FAST_READ_TIMEOUT_MS,
         delimiter: Optional[bytes] = None,
     ) -> Optional[bytes]:
-        """
-        Read raw bytes with minimal overhead, optimized for performance.
+        r"""Read raw bytes with minimal overhead, optimized for performance.
 
         Best for bulk data transfer and high-frequency sampling. Bypasses
         text decoding and multi-line handling for maximum speed.
@@ -551,8 +512,7 @@ class SerialDevice:
         max_buffer: int = 4096,
         timeout: float = DEFAULT_READ_TIMEOUT,
     ) -> Optional[bytes]:
-        """
-        Read bytes until a delimiter sequence is found.
+        r"""Read bytes until a delimiter sequence is found.
 
         Optimized for streaming data where messages are delimited (e.g., newline).
         Reads and buffers data until delimiter found, timeout, or buffer limit.
@@ -610,8 +570,7 @@ class SerialDevice:
             return None
 
     def flush_input_buffer(self) -> bool:
-        """
-        Clear the input buffer for a clean state.
+        """Clear the input buffer for a clean state.
 
         Reads and discards all pending data. Useful before expecting a
         specific response or to clear stale data.
@@ -652,8 +611,7 @@ class SerialDevice:
             return False
 
     def set_config(self, key: str, value: Any) -> bool:
-        """
-        Set a device configuration parameter.
+        """Set a device configuration parameter.
 
         Args:
             key (str): Configuration parameter name.
@@ -666,8 +624,7 @@ class SerialDevice:
         return self.send_command(f"CONFIG {key}={value}")
 
     def get_config(self, key: str) -> Any:
-        """
-        Get a device configuration parameter.
+        """Get a device configuration parameter.
 
         Args:
             key (str): Configuration parameter name.

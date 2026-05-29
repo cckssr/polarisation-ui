@@ -37,7 +37,7 @@ except ImportError as _local_exc:
         _PYMEASURE_AVAILABLE = True
     except ImportError as _pkg_exc:
         _PYMEASURE_IMPORT_ERROR = (
-            f"Local driver: {_local_exc} | " f"pymeasure package: {_pkg_exc}"
+            f"Local driver: {_local_exc} | pymeasure package: {_pkg_exc}"
         )
 
 _PYVISA_AVAILABLE = False
@@ -62,7 +62,7 @@ class PM400PowerMeter:
         pm = PM400PowerMeter()
         pm.connect("USB0::0x1313::0x8078::P0000001::INSTR")
         pm.set_wavelength_nm(633.0)
-        pm.set_attenuation_dB(3.0)   # beamsplitter loss
+        pm.set_attenuation_dB(3.0)  # beamsplitter loss
         pm.set_averaging(100)
         print(pm.read_power_W())
         pm.disconnect()

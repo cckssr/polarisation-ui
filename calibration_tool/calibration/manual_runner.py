@@ -19,8 +19,7 @@ from devices.arduino_encoder import ArduinoEncoder
 
 @dataclass
 class ManualCalibrationController:
-    """
-    Drives a manual, step-by-step calibration run.
+    """Drives a manual, step-by-step calibration run.
 
     Usage::
 

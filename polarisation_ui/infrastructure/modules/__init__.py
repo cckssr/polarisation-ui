@@ -1,5 +1,4 @@
-"""
-Host-side module registry.
+"""Host-side module registry.
 
 Defines the ``HostModule`` protocol and the ``ModuleRegistry`` singleton.
 Tabs query ``ModuleRegistry.get(id)`` so they can request actions on
@@ -55,8 +54,7 @@ class HostModule(Protocol):
 
 
 class ModuleRegistry:
-    """
-    Registry for host-side peripheral modules.
+    """Registry for host-side peripheral modules.
 
     Class-level dict — one registry per process.  Tabs receive the registry
     contents via ``PlotTabBase.inject_modules()`` so they remain decoupled from

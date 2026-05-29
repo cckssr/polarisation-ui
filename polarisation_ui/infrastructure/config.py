@@ -8,8 +8,7 @@ from .logging import Debug
 
 
 def import_config(language: str = "de") -> dict:
-    """
-    Imports the language-specific configuration from config.json.
+    """Imports the language-specific configuration from config.json.
 
     Priority order:
     1. File paths (package directory, project root, current directory, sys.prefix)
@@ -22,7 +21,6 @@ def import_config(language: str = "de") -> dict:
         dict: The configuration dictionary for the specified language,
               or empty dict if not found.
     """
-
     # File paths in priority order
     possible_paths = [
         Path(__file__).parent.parent / "config.json",  # Package directory

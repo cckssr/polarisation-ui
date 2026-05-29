@@ -63,8 +63,7 @@ class CalibrationResult:
 
 
 class CalibrationAnalysis:
-    """
-    Analyzes calibration measurement data.
+    """Analyzes calibration measurement data.
 
     The main sources of error in AS5048A encoders with off-center magnets:
 

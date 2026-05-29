@@ -1,5 +1,4 @@
-"""
-Live log output window.
+"""Live log output window.
 
 Displays the application log in a non-modal dialog. Log records are forwarded
 from Python's logging system via a thread-safe Qt signal, so it works correctly
@@ -23,8 +22,7 @@ class _SignalEmitter(QObject):
 
 
 class _LogWindowHandler(logging.Handler):
-    """
-    Thread-safe bridge between Python's logging system and a Qt signal.
+    """Thread-safe bridge between Python's logging system and a Qt signal.
 
     ``emit()`` is called by the logging framework from any thread.  Emitting
     a Qt signal is safe from any thread — Qt queues delivery to the main thread

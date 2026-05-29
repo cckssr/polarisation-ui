@@ -288,8 +288,7 @@ class AutoPowerCalibrationWorker(QThread):
             n_rec = len(profile.gains[gain].points)
             if n_sat:
                 self.log.emit(
-                    f"Gain {gain}: {n_rec} points recorded, "
-                    f"{n_sat} skipped (saturated)"
+                    f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)"
                 )
 
         self.log.emit("Sweep complete.")

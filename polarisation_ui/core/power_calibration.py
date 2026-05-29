@@ -1,5 +1,4 @@
-"""
-Power calibration profiles for the PD-TIA detector.
+"""Power calibration profiles for the PD-TIA detector.
 
 Each detector requires its own calibration because the TIA gain resistors vary.
 A profile stores (voltage_V, power_W) measurement pairs for each of the four
@@ -44,16 +43,34 @@ class GainCalibration:
     n_saturated_skipped: int = 0
 
     def add_point(self, voltage_V: float, power_W: float) -> None:
+        """Add a new calibration point (voltage, power) to this gain stage.
+
+        Args:
+            voltage_V: Measured voltage from the ADC (V)
+            power_W: Corresponding optical power measured by the PM400 (W)
+        """
         self.points.append((voltage_V, power_W))
 
     def remove_point(self, index: int) -> bool:
+        """Remove a calibration point by index.
+
+        Args:
+            index: The index of the point to remove in the points list.
+
+        Returns:
+            bool: True if the point was successfully removed, False if index was out of range.
+        """
         if 0 <= index < len(self.points):
             del self.points[index]
             return True
         return False
 
     def conversion_factor_W_per_V(self) -> Optional[float]:
-        """Mean W/V ratio across all calibration points. None if no points."""
+        """Mean W/V ratio across all calibration points.
+
+        Returns:
+            float or None: The average conversion factor in W/V. None if no valid points available.
+        """
         if not self.points:
             return None
         valid = [p_w / v_v for v_v, p_w in self.points if v_v > 0]
@@ -62,6 +79,14 @@ class GainCalibration:
         return sum(valid) / len(valid)
 
     def watts_from_voltage(self, voltage_V: float) -> Optional[float]:
+        """Convert a voltage reading to power using the calibration points.
+
+        Args:
+            voltage_V: The voltage reading to convert (V)
+
+        Returns:
+            float or None: The corresponding power in W. None if conversion factor is unavailable.
+        """
         factor = self.conversion_factor_W_per_V()
         if factor is None:
             return None

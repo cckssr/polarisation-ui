@@ -1,5 +1,4 @@
-"""
-Status LED utility for connection indicator widgets.
+"""Status LED utility for connection indicator widgets.
 
 Provides a reusable function for updating LED + label pairs that
 indicate device connection state across different device rows
@@ -26,8 +25,7 @@ LED_GRAY = _style(_led_cfg.get("inactive", "#808080"))
 
 
 def set_connection_status(led: QLabel, label: QLabel, text: str, style: str) -> None:
-    """
-    Update a status LED and its accompanying label.
+    """Update a status LED and its accompanying label.
 
     Args:
         led: QLabel used as a circular LED indicator (styled via stylesheet)

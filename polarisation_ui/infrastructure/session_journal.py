@@ -1,5 +1,4 @@
-"""
-Append-only crash-safe session journal.
+"""Append-only crash-safe session journal.
 
 Every measurement frame is flushed to disk; fsync is called every ≤1 s so
 at most 1 s of data is lost if the process is killed.  Each session lives in
@@ -35,8 +34,7 @@ _FINALIZED = "finalized"
 
 
 class SessionJournal:
-    """
-    One-per-measurement-session append-only journal.
+    """One-per-measurement-session append-only journal.
 
     Thread-safety: all methods must be called from the same thread (the Qt
     main thread via DataController).  No locking is needed.
@@ -91,9 +89,12 @@ class SessionJournal:
             safe_val = str(value).replace("\n", " ")
             f.write(f"# config_{key}: {safe_val}\n")
         self._writer = csv.writer(f)
-        self._writer.writerow(
-            ["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"]
-        )
+        if self._writer:
+            self._writer.writerow(
+                ["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"]
+            )
+        else:
+            Debug.error("SessionJournal failed to initialize CSV writer")
         f.flush()
         self._last_fsync = time.monotonic()
         Debug.info(f"SessionJournal started: {self._journal_path}")
@@ -160,8 +161,7 @@ class SessionJournal:
     # ── export ─────────────────────────────────────────────────────────────────
 
     def export_to_csv(self, output_path: Path, finalize: bool = True) -> int:
-        """
-        Export data rows (no gaps, no header comments) to *output_path*.
+        """Export data rows (no gaps, no header comments) to *output_path*.
 
         Returns the number of rows written.  Calls finalize() afterwards
         unless *finalize* is False.
@@ -188,8 +188,7 @@ class SessionJournal:
 
     @classmethod
     def export_orphan(cls, session_dir: Path, output_path: Path) -> int:
-        """
-        Export an orphaned session to *output_path* and mark it finalized.
+        """Export an orphaned session to *output_path* and mark it finalized.
 
         Returns the number of data rows exported.
         """
@@ -204,8 +203,7 @@ class SessionJournal:
 
 
 def _copy_data_rows(src: Path, dst: Path) -> int:
-    """
-    Read *src* journal and write only non-gap data rows to *dst*.
+    """Read *src* journal and write only non-gap data rows to *dst*.
 
     Comments (lines starting with ``#``) and gap rows are skipped.
     Returns the number of data rows written.

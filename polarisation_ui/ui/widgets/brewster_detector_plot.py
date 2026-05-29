@@ -1,5 +1,4 @@
-"""
-Live detector scan plot for Brewster tab.
+"""Live detector scan plot for Brewster tab.
 
 Shows detector arm angle (X) vs. intensity (Y) as the user sweeps the arm.
 A rolling buffer of recent samples forms the curve; angle debouncing suppresses
@@ -17,8 +16,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 
 class BrewsterDetectorPlot(QWidget):
-    """
-    Live rolling scatter: detector angle vs. intensity.
+    """Live rolling scatter: detector angle vs. intensity.
 
     Accepts samples at the incoming poll rate but only appends a new point when
     the angle has moved by at least MIN_ANGLE_DELTA degrees, suppressing noise
@@ -83,8 +81,7 @@ class BrewsterDetectorPlot(QWidget):
 
     @Slot(float, float)
     def update_data(self, detector_angle: float, intensity: float) -> None:
-        """
-        Accept a new (angle, intensity) sample.
+        """Accept a new (angle, intensity) sample.
 
         A point is only appended when the detector angle has moved by at least
         MIN_ANGLE_DELTA degrees since the last accepted sample.  NaN intensity

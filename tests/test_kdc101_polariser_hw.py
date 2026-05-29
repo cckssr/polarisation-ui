@@ -1,5 +1,4 @@
-"""
-Hardware tests for KDC101Polariser.
+"""Hardware tests for KDC101Polariser.
 
 These tests require a real Thorlabs KDC101 controller with a PRM1-Z8
 rotation stage attached.  Run with::
@@ -28,9 +27,7 @@ def test_list_devices_returns_list() -> None:
     """list_devices() must return a list even without hardware present."""
     devices = KDC101Polariser.list_devices()
     assert isinstance(devices, list)
-    for conn_id, desc in devices:
-        assert isinstance(conn_id, str)
-        assert isinstance(desc, str)
+    assert all(isinstance(d, str) for d in devices)
 
 
 def test_connect_invalid_port_raises() -> None:
@@ -75,9 +72,9 @@ def test_home(connected_kdc: KDC101Polariser) -> None:
     """Homing must complete without error and leave position near 0°."""
     connected_kdc.home(wait=True, timeout=120.0)
     pos = connected_kdc.get_position_deg()
-    assert (
-        abs(pos) % 360.0 < _POS_TOL_DEG
-    ), f"Position after home should be near 0°, got {pos:.3f}°"
+    assert abs(pos) % 360.0 < _POS_TOL_DEG, (
+        f"Position after home should be near 0°, got {pos:.3f}°"
+    )
 
 
 def test_move_to_45(connected_kdc: KDC101Polariser) -> None:

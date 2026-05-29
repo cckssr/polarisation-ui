@@ -1,5 +1,4 @@
-"""
-Brewster-angle curve plot for Brewster tab.
+"""Brewster-angle curve plot for Brewster tab.
 
 Accumulates manually saved BrewsterPoint entries and displays them as a scatter
 plot.  Points are added via add_point() (Save button) and removed via
@@ -15,8 +14,7 @@ from polarisation_ui.core.models import BrewsterPoint
 
 
 class BrewsterCurvePlot(QWidget):
-    """
-    Scatter plot of saved Brewster-angle measurement points.
+    """Scatter plot of saved Brewster-angle measurement points.
 
     X axis: sample stage angle (degrees)
     Y axis: detector intensity (V)

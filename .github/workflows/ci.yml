@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Lint (black + flake8)
+    name: Lint (ruff)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +20,12 @@ jobs:
       - name: Install dev dependencies
         run: pip install -e ".[dev]"
 
-      - name: Check formatting (black)
-        run: black --check polarisation_ui tests
+      - name: Check formatting (ruff)
+        run: ruff format --check polarisation_ui tests
 
-      - name: Lint (flake8)
-        run: flake8 polarisation_ui tests
-        continue-on-error: true
+      - name: Lint (ruff)
+        run: ruff check polarisation_ui tests --output-format=concise --ignore D100,D101,D102,D103,D104,D105,D106,D107
+        # Ignore docstring warnings since many functions lack docstrings and we don't want to enforce them yet.
 
   test:
     name: Test (Python ${{ matrix.python-version }})

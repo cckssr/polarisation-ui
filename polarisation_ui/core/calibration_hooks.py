@@ -1,5 +1,4 @@
-"""
-Calibration hooks — pure-Python data surface.
+"""Calibration hooks — pure-Python data surface.
 
 No Qt, no serial imports.  Importable by both the main app and the
 calibration_tool sibling app.
@@ -45,8 +44,7 @@ class CalibrationFrame:
 
 
 class CalibrationRecorder:
-    """
-    Write CalibrationFrames to an append-safe CSV.
+    """Write CalibrationFrames to an append-safe CSV.
 
     The output file has a YAML-ish comment header followed by a standard CSV.
     Comment lines (starting with ``#``) are skipped by most CSV importers and
@@ -54,8 +52,7 @@ class CalibrationRecorder:
     mid-run config changes produce additional ``# config_change_*`` comment
     lines inline before the affected data row.
 
-    Usage::
-
+    Example:
         rec = CalibrationRecorder(
             output_path=Path("calib_20250101.csv"),
             firmware_version="2.0.0",
@@ -116,9 +113,12 @@ class CalibrationRecorder:
             safe_val = str(value).replace("\n", " ")
             f.write(f"# config_{key}: {safe_val}\n")
         self._writer = csv.writer(f)
-        self._writer.writerow(
-            ["ts_ms", "ang_a", "ang_b", "adc_v", "adc_temp", "pd_gain"]
-        )
+        if self._writer:
+            self._writer.writerow(
+                ["ts_ms", "ang_a", "ang_b", "adc_v", "adc_temp", "pd_gain"]
+            )
+        else:
+            raise RuntimeError("Failed to create CSV writer")
         f.flush()  # type: ignore[union-attr]
         self._last_fsync = time.monotonic()
         self._active = True
@@ -165,8 +165,7 @@ class CalibrationRecorder:
         adc_temp: Optional[float] = None,
         config_snapshot: Optional[dict] = None,
     ) -> None:
-        """
-        Convenience wrapper: convert a core ``Frame`` to ``CalibrationFrame`` and record.
+        """Convenience wrapper: convert a core ``Frame`` to ``CalibrationFrame`` and record.
 
         Intended for use when connected to ``DataController.frame_ready``::
 
