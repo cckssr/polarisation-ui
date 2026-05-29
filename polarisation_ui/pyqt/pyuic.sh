@@ -10,6 +10,7 @@
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/event_log_panel.ui -o ./polarisation_ui/pyqt/ui_event_log_panel.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/malus_tab.ui -o ./polarisation_ui/pyqt/ui_malus_tab.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/brewster_tab.ui -o ./polarisation_ui/pyqt/ui_brewster_tab.py
+.venv/bin/pyside6-uic ./polarisation_ui/pyqt/waveplate_tab.ui -o ./polarisation_ui/pyqt/ui_waveplate_tab.py
 
 .venv/bin/ruff format ./polarisation_ui/pyqt/ui_*.py
 

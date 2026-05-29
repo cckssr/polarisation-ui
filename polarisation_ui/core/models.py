@@ -4,7 +4,7 @@ This module contains pure Python dataclasses representing the
 goniometer state without any Qt or UI dependencies.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
@@ -169,3 +169,4 @@ class TabExport:
     columns: list
     rows: list
     metadata: dict
+    filename_tokens: list[str] = field(default_factory=list)

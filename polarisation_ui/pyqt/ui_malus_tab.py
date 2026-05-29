@@ -43,6 +43,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QCheckBox,
     QDoubleSpinBox,
     QFormLayout,
     QGridLayout,
@@ -189,6 +190,105 @@ class Ui_MalusTab(object):
 
         self.rightLayout.addWidget(self.gbEntry)
 
+        self.gbSweep = QGroupBox(MalusTab)
+        self.gbSweep.setObjectName("gbSweep")
+        self.gbSweep.setEnabled(False)
+        self.vboxSweep = QVBoxLayout(self.gbSweep)
+        self.vboxSweep.setObjectName("vboxSweep")
+        self.vboxSweep.setContentsMargins(6, 6, 6, 6)
+        self.cbPolariserPlaced = QCheckBox(self.gbSweep)
+        self.cbPolariserPlaced.setObjectName("cbPolariserPlaced")
+
+        self.vboxSweep.addWidget(self.cbPolariserPlaced)
+
+        self.formSweepParams = QFormLayout()
+        self.formSweepParams.setObjectName("formSweepParams")
+        self.formSweepParams.setVerticalSpacing(3)
+        self.lblZeroOffsetLabel = QLabel(self.gbSweep)
+        self.lblZeroOffsetLabel.setObjectName("lblZeroOffsetLabel")
+
+        self.formSweepParams.setWidget(
+            0, QFormLayout.ItemRole.LabelRole, self.lblZeroOffsetLabel
+        )
+
+        self.lblZeroOffset = QLabel(self.gbSweep)
+        self.lblZeroOffset.setObjectName("lblZeroOffset")
+
+        self.formSweepParams.setWidget(
+            0, QFormLayout.ItemRole.FieldRole, self.lblZeroOffset
+        )
+
+        self.lblSweepStart = QLabel(self.gbSweep)
+        self.lblSweepStart.setObjectName("lblSweepStart")
+
+        self.formSweepParams.setWidget(
+            1, QFormLayout.ItemRole.LabelRole, self.lblSweepStart
+        )
+
+        self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
+        self.spinSweepStart.setObjectName("spinSweepStart")
+        self.spinSweepStart.setDecimals(1)
+        self.spinSweepStart.setMinimum(0.000000000000000)
+        self.spinSweepStart.setMaximum(360.000000000000000)
+        self.spinSweepStart.setValue(0.000000000000000)
+
+        self.formSweepParams.setWidget(
+            1, QFormLayout.ItemRole.FieldRole, self.spinSweepStart
+        )
+
+        self.lblSweepEnd = QLabel(self.gbSweep)
+        self.lblSweepEnd.setObjectName("lblSweepEnd")
+
+        self.formSweepParams.setWidget(
+            2, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd
+        )
+
+        self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
+        self.spinSweepEnd.setObjectName("spinSweepEnd")
+        self.spinSweepEnd.setDecimals(1)
+        self.spinSweepEnd.setMinimum(0.000000000000000)
+        self.spinSweepEnd.setMaximum(360.000000000000000)
+        self.spinSweepEnd.setValue(180.000000000000000)
+
+        self.formSweepParams.setWidget(
+            2, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd
+        )
+
+        self.lblSweepStep = QLabel(self.gbSweep)
+        self.lblSweepStep.setObjectName("lblSweepStep")
+
+        self.formSweepParams.setWidget(
+            3, QFormLayout.ItemRole.LabelRole, self.lblSweepStep
+        )
+
+        self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
+        self.spinSweepStep.setObjectName("spinSweepStep")
+        self.spinSweepStep.setDecimals(1)
+        self.spinSweepStep.setMinimum(0.100000000000000)
+        self.spinSweepStep.setMaximum(90.000000000000000)
+        self.spinSweepStep.setSingleStep(0.500000000000000)
+        self.spinSweepStep.setValue(5.000000000000000)
+
+        self.formSweepParams.setWidget(
+            3, QFormLayout.ItemRole.FieldRole, self.spinSweepStep
+        )
+
+        self.vboxSweep.addLayout(self.formSweepParams)
+
+        self.btnStartSweep = QPushButton(self.gbSweep)
+        self.btnStartSweep.setObjectName("btnStartSweep")
+        self.btnStartSweep.setEnabled(False)
+
+        self.vboxSweep.addWidget(self.btnStartSweep)
+
+        self.btnAbortSweep = QPushButton(self.gbSweep)
+        self.btnAbortSweep.setObjectName("btnAbortSweep")
+        self.btnAbortSweep.setEnabled(False)
+
+        self.vboxSweep.addWidget(self.btnAbortSweep)
+
+        self.rightLayout.addWidget(self.gbSweep)
+
         self.btnDeleteSelected = QPushButton(MalusTab)
         self.btnDeleteSelected.setObjectName("btnDeleteSelected")
         self.btnDeleteSelected.setEnabled(False)
@@ -304,6 +404,58 @@ class Ui_MalusTab(object):
         # endif // QT_CONFIG(tooltip)
         self.btnAdd.setText(
             QCoreApplication.translate("MalusTab", "Punkt hinzuf\u00fcgen", None)
+        )
+        self.gbSweep.setTitle(
+            QCoreApplication.translate("MalusTab", "Automatischer Scan (KDC101)", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.cbPolariserPlaced.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab",
+                "Best\u00e4tigen, dass der Polarisator im Strahlengang eingesetzt ist",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.cbPolariserPlaced.setText(
+            QCoreApplication.translate("MalusTab", "Polarisator eingesetzt", None)
+        )
+        self.lblZeroOffsetLabel.setText(
+            QCoreApplication.translate("MalusTab", "Zero-Offset:", None)
+        )
+        self.lblZeroOffset.setText(
+            QCoreApplication.translate("MalusTab", "\u2014", None)
+        )
+        self.lblSweepStart.setText(
+            QCoreApplication.translate("MalusTab", "Von (\u00b0):", None)
+        )
+        self.spinSweepStart.setSuffix(
+            QCoreApplication.translate("MalusTab", " \u00b0", None)
+        )
+        self.lblSweepEnd.setText(
+            QCoreApplication.translate("MalusTab", "Bis (\u00b0):", None)
+        )
+        self.spinSweepEnd.setSuffix(
+            QCoreApplication.translate("MalusTab", " \u00b0", None)
+        )
+        self.lblSweepStep.setText(
+            QCoreApplication.translate("MalusTab", "Schritt (\u00b0):", None)
+        )
+        self.spinSweepStep.setSuffix(
+            QCoreApplication.translate("MalusTab", " \u00b0", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnStartSweep.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Home, Auto-Zero und automatischer Scan starten", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnStartSweep.setText(
+            QCoreApplication.translate("MalusTab", "Scan starten", None)
+        )
+        self.btnAbortSweep.setText(
+            QCoreApplication.translate("MalusTab", "Abbrechen", None)
         )
         # if QT_CONFIG(tooltip)
         self.btnDeleteSelected.setToolTip(

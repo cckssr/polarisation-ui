@@ -14,8 +14,6 @@ Responsibilities:
     - Status indicators (LEDs)
 """
 
-import csv
-import json
 import math
 import shutil
 from collections.abc import Callable
@@ -23,21 +21,29 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from PySide6.QtCore import Qt, QTimer, Slot
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QMainWindow,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QCloseEvent
 
+from polarisation_ui.core.exceptions import KDC101Error
 from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.save_service import SENSOR_DESCRIPTIONS
+from polarisation_ui.infrastructure.modules import ModuleRegistry
+from polarisation_ui.infrastructure.modules.kdc101_adapter import KDC101ModuleAdapter
+from polarisation_ui.infrastructure.qt_threads import KDC101HomeWorker
+from polarisation_ui.infrastructure.save_service import (
+    compose_filename,
+    save_tab_export,
+)
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 from polarisation_ui.ui.common.dialogs import show_error
@@ -115,6 +121,14 @@ class MainWindow(QMainWindow):
         # Power calibration — lazily loaded from selected profile
         self._calibration_profile: Optional[PowerCalibrationProfile] = None
 
+        # KDC101 rotation stage
+        self._kdc = KDC101Polariser()
+        self._kdc_home_worker: Optional[KDC101HomeWorker] = None
+        # 250 ms timer that polls get_position_deg() while the KDC is connected
+        self._kdc_position_timer = QTimer(self)
+        self._kdc_position_timer.setInterval(250)
+        self._kdc_position_timer.timeout.connect(self._refresh_kdc_position)
+
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
@@ -161,19 +175,73 @@ class MainWindow(QMainWindow):
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
+        # KDC101 group: populate device list and set initial state
+        self._populate_kdc_devices()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.lblKDCPositionValue.setText("—")
+
     def _setup_tabs(self) -> None:
         """Instantiate and register all available experiment tabs into tabWidget."""
         # Trigger tab registrations by importing the tabs package
         import polarisation_ui.ui.widgets.tabs  # NOQA: F401
 
-        for tab_cls in TabRegistry.available(modules={}):
+        modules = ModuleRegistry.all()
+        for tab_cls in TabRegistry.available(modules=modules):
             tab = tab_cls()
             tab.build()
             tab.status_message.connect(self._handle_tab_status)
+            tab.filename_hint_changed.connect(self._update_filename_display)
             if hasattr(tab, "points_changed"):
                 tab.points_changed.connect(self._on_tab_points_changed)
             self.ui.tabWidget.addTab(tab, tab.tab_title)
             self._tab_instances.append(tab)
+            tab.inject_modules(modules)
+
+    def _refresh_tab_visibility(self) -> None:
+        """Re-evaluate which tabs are visible based on current module registry.
+
+        Tabs whose ``required_modules`` are not met become hidden; new tabs
+        that are now satisfied are added.  Existing satisfied tabs are kept in
+        place (their state is preserved).
+        """
+        modules = ModuleRegistry.all()
+        available_ids = {cls.tab_id for cls in TabRegistry.available(modules=modules)}
+        existing_ids = {tab.tab_id for tab in self._tab_instances}
+
+        # Inject modules into already-existing tabs (they may gain new capabilities)
+        for tab in self._tab_instances:
+            tab.inject_modules(modules)
+
+        # Add newly available tabs (tabs that need kdc101 and it just connected)
+        for tab_cls in TabRegistry.available(modules=modules):
+            if tab_cls.tab_id not in existing_ids:
+                tab = tab_cls()
+                tab.build()
+                tab.status_message.connect(self._handle_tab_status)
+                tab.filename_hint_changed.connect(self._update_filename_display)
+                if hasattr(tab, "points_changed"):
+                    tab.points_changed.connect(self._on_tab_points_changed)
+                self.data_controller.frame_ready.connect(tab.on_frame)
+                self.ui.tabWidget.addTab(tab, tab.tab_title)
+                self._tab_instances.append(tab)
+                tab.inject_modules(modules)
+
+        # Hide tabs whose requirements are no longer met
+        for tab in self._tab_instances:
+            if tab.tab_id not in available_ids:
+                idx = self.ui.tabWidget.indexOf(tab)
+                if idx >= 0:
+                    self.ui.tabWidget.setTabVisible(idx, False)
+            else:
+                idx = self.ui.tabWidget.indexOf(tab)
+                if idx >= 0:
+                    self.ui.tabWidget.setTabVisible(idx, True)
 
     # ==================== Signal Connections ====================
 
@@ -211,6 +279,11 @@ class MainWindow(QMainWindow):
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
         self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
         self.ui.cbArduinoPort.currentIndexChanged.connect(self._update_port_display)
+
+        # KDC101 connection controls
+        self.ui.btnKDCRefresh.clicked.connect(self._populate_kdc_devices)
+        self.ui.btnKDCConnect.clicked.connect(self._toggle_kdc)
+        self.ui.btnKDCHome.clicked.connect(self._home_kdc)
 
         # Zero buttons
         self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
@@ -313,10 +386,12 @@ class MainWindow(QMainWindow):
 
         suffix = self.ui.leSuffix.text().strip()
         tab = self._get_active_export_tab()
-        hint = tab.build_export().filename_hint if tab is not None else "messung"
-        stem = (
-            f"messung_{hint}_{group}_{suffix}" if suffix else f"messung_{hint}_{group}"
-        )
+        if tab is not None:
+            exp = tab.build_export()
+            hint, tokens = exp.filename_hint, exp.filename_tokens
+        else:
+            hint, tokens = "messung", []
+        stem = compose_filename(hint, group, suffix, tokens)
         base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
         display = f"{base_folder}/{group}/{stem}.csv"
         self.ui.pteCurrentFilename.setPlainText(display)
@@ -506,6 +581,114 @@ class MainWindow(QMainWindow):
         self._adc_saturated = False
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
+
+    # ==================== KDC101 Connection ====================
+
+    def _populate_kdc_devices(self) -> None:
+        """Populate cbKDCDevice with currently discovered Thorlabs KDC101 devices."""
+        current = self.ui.cbKDCDevice.currentText()
+        self.ui.cbKDCDevice.clear()
+        devices = KDC101Polariser.list_devices()
+        for conn_id, desc in devices:
+            self.ui.cbKDCDevice.addItem(f"{conn_id} — {desc}", userData=conn_id)
+        if not devices:
+            self.ui.cbKDCDevice.addItem("Kein KDC101 gefunden")
+        # Restore previous selection if still present
+        if current:
+            idx = self.ui.cbKDCDevice.findText(current)
+            if idx >= 0:
+                self.ui.cbKDCDevice.setCurrentIndex(idx)
+        Debug.info(f"KDC101 devices found: {devices}")
+
+    @Slot()
+    def _toggle_kdc(self) -> None:
+        """Connect to or disconnect from the selected KDC101 device."""
+        if self._kdc.is_connected():
+            self._kdc_position_timer.stop()
+            self._kdc.disconnect()
+            ModuleRegistry.unregister("kdc101")
+            self._refresh_tab_visibility()
+            set_connection_status(
+                self.ui.ledKDCStatus,
+                self.ui.lblKDCStatusValue,
+                "Nicht verbunden",
+                LED_RED,
+            )
+            self.ui.btnKDCConnect.setText("Verbinden")
+            self.ui.btnKDCHome.setEnabled(False)
+            self.ui.lblKDCPositionValue.setText("—")
+            self.statusbar_manager.show_info("KDC101 getrennt")
+        else:
+            conn_id = (
+                self.ui.cbKDCDevice.currentData() or self.ui.cbKDCDevice.currentText()
+            )
+            if not conn_id or conn_id == "Kein KDC101 gefunden":
+                QMessageBox.warning(self, "KDC101", "Kein Gerät ausgewählt.")
+                return
+            set_connection_status(
+                self.ui.ledKDCStatus,
+                self.ui.lblKDCStatusValue,
+                "Verbinde...",
+                LED_YELLOW,
+            )
+            try:
+                self._kdc.connect(conn_id)
+            except KDC101Error as exc:
+                set_connection_status(
+                    self.ui.ledKDCStatus,
+                    self.ui.lblKDCStatusValue,
+                    f"Fehler: {exc}",
+                    LED_RED,
+                )
+                self.statusbar_manager.show_error(f"KDC101 Verbindungsfehler: {exc}")
+                return
+            ModuleRegistry.register(KDC101ModuleAdapter(self._kdc))
+            self._refresh_tab_visibility()
+            set_connection_status(
+                self.ui.ledKDCStatus,
+                self.ui.lblKDCStatusValue,
+                f"Verbunden: {conn_id}",
+                LED_GREEN,
+            )
+            self.ui.btnKDCConnect.setText("Trennen")
+            self.ui.btnKDCHome.setEnabled(True)
+            self._kdc_position_timer.start()
+            self.statusbar_manager.show_success(f"KDC101 verbunden: {conn_id}")
+            Debug.info(f"KDC101 connected: {conn_id}")
+
+    @Slot()
+    def _home_kdc(self) -> None:
+        """Home the KDC101 stage off the main thread."""
+        if not self._kdc.is_connected():
+            return
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.btnKDCConnect.setEnabled(False)
+        self._kdc_home_worker = KDC101HomeWorker(self._kdc, parent=self)
+        self._kdc_home_worker.done.connect(self._on_kdc_home_done)
+        self._kdc_home_worker.error.connect(self._on_kdc_home_error)
+        self._kdc_home_worker.start()
+        self.statusbar_manager.show_info("KDC101 Referenzfahrt läuft…")
+
+    @Slot()
+    def _on_kdc_home_done(self) -> None:
+        self.ui.btnKDCHome.setEnabled(True)
+        self.ui.btnKDCConnect.setEnabled(True)
+        self.statusbar_manager.show_success("KDC101 Referenzfahrt abgeschlossen")
+
+    @Slot(str)
+    def _on_kdc_home_error(self, msg: str) -> None:
+        self.ui.btnKDCHome.setEnabled(True)
+        self.ui.btnKDCConnect.setEnabled(True)
+        self.statusbar_manager.show_error(f"KDC101 Referenzfahrt fehlgeschlagen: {msg}")
+
+    @Slot()
+    def _refresh_kdc_position(self) -> None:
+        """Poll current KDC101 position and update the live display label."""
+        try:
+            pos = self._kdc.get_position_deg()
+            self.ui.lblKDCPositionValue.setText(f"{pos:.2f}°")
+        except KDC101Error:
+            pass  # transient read error — label stays at last known value
 
     # ==================== Acquisition Settings ====================
 
@@ -862,12 +1045,9 @@ class MainWindow(QMainWindow):
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        stem = (
-            f"messung_{exp.filename_hint}_{group_letter}_{suffix}"
-            if suffix
-            else f"messung_{exp.filename_hint}_{group_letter}"
+        stem = compose_filename(
+            exp.filename_hint, group_letter, suffix, exp.filename_tokens
         )
-        default_name = f"{stem}.csv"
         base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
         default_dir = Path.home() / base_folder / group_letter
         default_dir.mkdir(parents=True, exist_ok=True)
@@ -875,20 +1055,11 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Messdaten speichern",
-            str(default_dir / default_name),
+            str(default_dir / f"{stem}.csv"),
             "CSV-Dateien (*.csv);;Alle Dateien (*)",
         )
         if not path:
             return
-
-        saved_at = datetime.now()
-        csv_path = Path(path)
-
-        with open(csv_path, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(exp.columns)
-            for row in exp.rows:
-                writer.writerow(row)
 
         cal_meta: dict = {}
         if self._calibration_profile is not None:
@@ -902,23 +1073,17 @@ class MainWindow(QMainWindow):
                 },
             }
 
-        metadata = {
-            "saved_at": saved_at.isoformat(),
-            "point_count": len(exp.rows),
-            "group": group_letter,
-            "suffix": suffix,
-            "power_calibration": cal_meta,
-            "sensors": SENSOR_DESCRIPTIONS,
-            **exp.metadata,
-        }
-        metadata_path = csv_path.with_name(csv_path.stem + "_metadata.json")
-        with open(metadata_path, "w", encoding="utf-8") as fh:
-            json.dump(metadata, fh, indent=2)
-
+        save_tab_export(
+            Path(path),
+            exp,
+            group_letter=group_letter,
+            suffix=suffix,
+            power_cal_meta=cal_meta,
+            saved_at=datetime.now(),
+        )
         self.statusbar_manager.show_success(
             f"{len(exp.rows)} Datenpunkte gespeichert: {path}"
         )
-        Debug.info(f"Data exported to {csv_path} ({len(exp.rows)} points)")
 
     # ==================== Error Handling ====================
 

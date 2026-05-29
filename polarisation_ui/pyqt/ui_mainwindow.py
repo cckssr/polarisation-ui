@@ -1007,134 +1007,171 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.gbSave, 4, 0, 1, 2)
 
-        self.gbArduinoConnection_2 = QGroupBox(self.configuration)
-        self.gbArduinoConnection_2.setObjectName("gbArduinoConnection_2")
+        self.gbKDCConnection = QGroupBox(self.configuration)
+        self.gbKDCConnection.setObjectName("gbKDCConnection")
         sizePolicy4.setHeightForWidth(
-            self.gbArduinoConnection_2.sizePolicy().hasHeightForWidth()
+            self.gbKDCConnection.sizePolicy().hasHeightForWidth()
         )
-        self.gbArduinoConnection_2.setSizePolicy(sizePolicy4)
-        self.gbArduinoConnection_2.setMinimumSize(QSize(0, 0))
-        self.gbArduinoConnection_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.gbArduinoConnection_2.setCheckable(False)
-        self.formArduinoConnection_2 = QFormLayout(self.gbArduinoConnection_2)
-        self.formArduinoConnection_2.setObjectName("formArduinoConnection_2")
-        self.formArduinoConnection_2.setSizeConstraint(
-            QLayout.SizeConstraint.SetNoConstraint
-        )
-        self.formArduinoConnection_2.setFieldGrowthPolicy(
+        self.gbKDCConnection.setSizePolicy(sizePolicy4)
+        self.gbKDCConnection.setMinimumSize(QSize(0, 0))
+        self.gbKDCConnection.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.gbKDCConnection.setCheckable(False)
+        self.formKDCConnection = QFormLayout(self.gbKDCConnection)
+        self.formKDCConnection.setObjectName("formKDCConnection")
+        self.formKDCConnection.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
+        self.formKDCConnection.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
         )
-        self.formArduinoConnection_2.setLabelAlignment(
+        self.formKDCConnection.setLabelAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
             | Qt.AlignmentFlag.AlignVCenter
         )
-        self.formArduinoConnection_2.setHorizontalSpacing(15)
-        self.formArduinoConnection_2.setVerticalSpacing(15)
-        self.formArduinoConnection_2.setContentsMargins(-1, 5, -1, 5)
-        self.lblArduinoPort_2 = QLabel(self.gbArduinoConnection_2)
-        self.lblArduinoPort_2.setObjectName("lblArduinoPort_2")
+        self.formKDCConnection.setHorizontalSpacing(15)
+        self.formKDCConnection.setVerticalSpacing(15)
+        self.formKDCConnection.setContentsMargins(-1, 5, -1, 5)
+        self.lblKDCDeviceLabel = QLabel(self.gbKDCConnection)
+        self.lblKDCDeviceLabel.setObjectName("lblKDCDeviceLabel")
         sizePolicy4.setHeightForWidth(
-            self.lblArduinoPort_2.sizePolicy().hasHeightForWidth()
+            self.lblKDCDeviceLabel.sizePolicy().hasHeightForWidth()
         )
-        self.lblArduinoPort_2.setSizePolicy(sizePolicy4)
-        self.lblArduinoPort_2.setAlignment(
-            Qt.AlignmentFlag.AlignLeading
-            | Qt.AlignmentFlag.AlignLeft
-            | Qt.AlignmentFlag.AlignVCenter
-        )
-
-        self.formArduinoConnection_2.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblArduinoPort_2
-        )
-
-        self.hlArduinoPort_2 = QHBoxLayout()
-        self.hlArduinoPort_2.setObjectName("hlArduinoPort_2")
-        self.hlArduinoPort_2.setContentsMargins(-1, -1, -1, 0)
-        self.cbArduinoPort_2 = QComboBox(self.gbArduinoConnection_2)
-        self.cbArduinoPort_2.setObjectName("cbArduinoPort_2")
-        sizePolicy.setHeightForWidth(
-            self.cbArduinoPort_2.sizePolicy().hasHeightForWidth()
-        )
-        self.cbArduinoPort_2.setSizePolicy(sizePolicy)
-        self.cbArduinoPort_2.setMaximumSize(QSize(500, 16777215))
-
-        self.hlArduinoPort_2.addWidget(self.cbArduinoPort_2)
-
-        self.btnRefreshPorts_2 = QToolButton(self.gbArduinoConnection_2)
-        self.btnRefreshPorts_2.setObjectName("btnRefreshPorts_2")
-        self.btnRefreshPorts_2.setIcon(icon)
-        self.btnRefreshPorts_2.setIconSize(QSize(14, 14))
-
-        self.hlArduinoPort_2.addWidget(self.btnRefreshPorts_2)
-
-        self.formArduinoConnection_2.setLayout(
-            0, QFormLayout.ItemRole.FieldRole, self.hlArduinoPort_2
-        )
-
-        self.lblArduinoStatus_2 = QLabel(self.gbArduinoConnection_2)
-        self.lblArduinoStatus_2.setObjectName("lblArduinoStatus_2")
-        sizePolicy4.setHeightForWidth(
-            self.lblArduinoStatus_2.sizePolicy().hasHeightForWidth()
-        )
-        self.lblArduinoStatus_2.setSizePolicy(sizePolicy4)
-        self.lblArduinoStatus_2.setAlignment(
+        self.lblKDCDeviceLabel.setSizePolicy(sizePolicy4)
+        self.lblKDCDeviceLabel.setAlignment(
             Qt.AlignmentFlag.AlignLeading
             | Qt.AlignmentFlag.AlignLeft
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formArduinoConnection_2.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblArduinoStatus_2
+        self.formKDCConnection.setWidget(
+            0, QFormLayout.ItemRole.LabelRole, self.lblKDCDeviceLabel
         )
 
-        self.hlArduinoStatus_2 = QHBoxLayout()
-        self.hlArduinoStatus_2.setObjectName("hlArduinoStatus_2")
-        self.lblArduinoStatusValue_2 = QLabel(self.gbArduinoConnection_2)
-        self.lblArduinoStatusValue_2.setObjectName("lblArduinoStatusValue_2")
-        sizePolicy4.setHeightForWidth(
-            self.lblArduinoStatusValue_2.sizePolicy().hasHeightForWidth()
+        self.hlKDCDevice = QHBoxLayout()
+        self.hlKDCDevice.setObjectName("hlKDCDevice")
+        self.hlKDCDevice.setContentsMargins(-1, -1, -1, 0)
+        self.cbKDCDevice = QComboBox(self.gbKDCConnection)
+        self.cbKDCDevice.setObjectName("cbKDCDevice")
+        sizePolicy.setHeightForWidth(self.cbKDCDevice.sizePolicy().hasHeightForWidth())
+        self.cbKDCDevice.setSizePolicy(sizePolicy)
+        self.cbKDCDevice.setMaximumSize(QSize(500, 16777215))
+
+        self.hlKDCDevice.addWidget(self.cbKDCDevice)
+
+        self.btnKDCRefresh = QToolButton(self.gbKDCConnection)
+        self.btnKDCRefresh.setObjectName("btnKDCRefresh")
+        self.btnKDCRefresh.setIcon(icon)
+        self.btnKDCRefresh.setIconSize(QSize(14, 14))
+
+        self.hlKDCDevice.addWidget(self.btnKDCRefresh)
+
+        self.formKDCConnection.setLayout(
+            0, QFormLayout.ItemRole.FieldRole, self.hlKDCDevice
         )
-        self.lblArduinoStatusValue_2.setSizePolicy(sizePolicy4)
-        self.lblArduinoStatusValue_2.setAlignment(
+
+        self.lblKDCStatusLabel = QLabel(self.gbKDCConnection)
+        self.lblKDCStatusLabel.setObjectName("lblKDCStatusLabel")
+        sizePolicy4.setHeightForWidth(
+            self.lblKDCStatusLabel.sizePolicy().hasHeightForWidth()
+        )
+        self.lblKDCStatusLabel.setSizePolicy(sizePolicy4)
+        self.lblKDCStatusLabel.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.formKDCConnection.setWidget(
+            1, QFormLayout.ItemRole.LabelRole, self.lblKDCStatusLabel
+        )
+
+        self.hlKDCStatus = QHBoxLayout()
+        self.hlKDCStatus.setObjectName("hlKDCStatus")
+        self.lblKDCStatusValue = QLabel(self.gbKDCConnection)
+        self.lblKDCStatusValue.setObjectName("lblKDCStatusValue")
+        sizePolicy4.setHeightForWidth(
+            self.lblKDCStatusValue.sizePolicy().hasHeightForWidth()
+        )
+        self.lblKDCStatusValue.setSizePolicy(sizePolicy4)
+        self.lblKDCStatusValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
             | Qt.AlignmentFlag.AlignTrailing
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.hlArduinoStatus_2.addWidget(self.lblArduinoStatusValue_2)
+        self.hlKDCStatus.addWidget(self.lblKDCStatusValue)
 
-        self.ledArduinoStatus_2 = QLabel(self.gbArduinoConnection_2)
-        self.ledArduinoStatus_2.setObjectName("ledArduinoStatus_2")
+        self.ledKDCStatus = QLabel(self.gbKDCConnection)
+        self.ledKDCStatus.setObjectName("ledKDCStatus")
         sizePolicy4.setHeightForWidth(
-            self.ledArduinoStatus_2.sizePolicy().hasHeightForWidth()
+            self.ledKDCStatus.sizePolicy().hasHeightForWidth()
         )
-        self.ledArduinoStatus_2.setSizePolicy(sizePolicy4)
-        self.ledArduinoStatus_2.setMinimumSize(QSize(16, 16))
-        self.ledArduinoStatus_2.setMaximumSize(QSize(16, 16))
-        self.ledArduinoStatus_2.setStyleSheet(
+        self.ledKDCStatus.setSizePolicy(sizePolicy4)
+        self.ledKDCStatus.setMinimumSize(QSize(16, 16))
+        self.ledKDCStatus.setMaximumSize(QSize(16, 16))
+        self.ledKDCStatus.setStyleSheet(
             "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
         )
 
-        self.hlArduinoStatus_2.addWidget(self.ledArduinoStatus_2)
+        self.hlKDCStatus.addWidget(self.ledKDCStatus)
 
-        self.formArduinoConnection_2.setLayout(
-            1, QFormLayout.ItemRole.FieldRole, self.hlArduinoStatus_2
+        self.formKDCConnection.setLayout(
+            1, QFormLayout.ItemRole.FieldRole, self.hlKDCStatus
         )
 
-        self.btnArduinoConnect_2 = QPushButton(self.gbArduinoConnection_2)
-        self.btnArduinoConnect_2.setObjectName("btnArduinoConnect_2")
+        self.lblKDCPositionLabel = QLabel(self.gbKDCConnection)
+        self.lblKDCPositionLabel.setObjectName("lblKDCPositionLabel")
         sizePolicy4.setHeightForWidth(
-            self.btnArduinoConnect_2.sizePolicy().hasHeightForWidth()
+            self.lblKDCPositionLabel.sizePolicy().hasHeightForWidth()
         )
-        self.btnArduinoConnect_2.setSizePolicy(sizePolicy4)
-        self.btnArduinoConnect_2.setMinimumSize(QSize(0, 0))
-
-        self.formArduinoConnection_2.setWidget(
-            2, QFormLayout.ItemRole.SpanningRole, self.btnArduinoConnect_2
+        self.lblKDCPositionLabel.setSizePolicy(sizePolicy4)
+        self.lblKDCPositionLabel.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.gridLayout.addWidget(self.gbArduinoConnection_2, 0, 1, 1, 1)
+        self.formKDCConnection.setWidget(
+            2, QFormLayout.ItemRole.LabelRole, self.lblKDCPositionLabel
+        )
+
+        self.lblKDCPositionValue = QLabel(self.gbKDCConnection)
+        self.lblKDCPositionValue.setObjectName("lblKDCPositionValue")
+        sizePolicy4.setHeightForWidth(
+            self.lblKDCPositionValue.sizePolicy().hasHeightForWidth()
+        )
+        self.lblKDCPositionValue.setSizePolicy(sizePolicy4)
+        self.lblKDCPositionValue.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.formKDCConnection.setWidget(
+            2, QFormLayout.ItemRole.FieldRole, self.lblKDCPositionValue
+        )
+
+        self.btnKDCConnect = QPushButton(self.gbKDCConnection)
+        self.btnKDCConnect.setObjectName("btnKDCConnect")
+        sizePolicy4.setHeightForWidth(
+            self.btnKDCConnect.sizePolicy().hasHeightForWidth()
+        )
+        self.btnKDCConnect.setSizePolicy(sizePolicy4)
+
+        self.formKDCConnection.setWidget(
+            3, QFormLayout.ItemRole.SpanningRole, self.btnKDCConnect
+        )
+
+        self.btnKDCHome = QPushButton(self.gbKDCConnection)
+        self.btnKDCHome.setObjectName("btnKDCHome")
+        self.btnKDCHome.setEnabled(False)
+        sizePolicy4.setHeightForWidth(self.btnKDCHome.sizePolicy().hasHeightForWidth())
+        self.btnKDCHome.setSizePolicy(sizePolicy4)
+
+        self.formKDCConnection.setWidget(
+            4, QFormLayout.ItemRole.SpanningRole, self.btnKDCHome
+        )
+
+        self.gridLayout.addWidget(self.gbKDCConnection, 0, 1, 1, 1)
 
         self.tabWidget.addTab(self.configuration, "")
 
@@ -1460,25 +1497,39 @@ class Ui_MainWindow(object):
         self.btnSave.setText(
             QCoreApplication.translate("MainWindow", "Speichern", None)
         )
-        self.gbArduinoConnection_2.setTitle(
+        self.gbKDCConnection.setTitle(
             QCoreApplication.translate("MainWindow", "KDC-Verbindung", None)
         )
-        self.lblArduinoPort_2.setText(
-            QCoreApplication.translate("MainWindow", "Port", None)
+        self.lblKDCDeviceLabel.setText(
+            QCoreApplication.translate("MainWindow", "Ger\u00e4t", None)
         )
-        self.btnRefreshPorts_2.setText(
+        self.btnKDCRefresh.setText(
             QCoreApplication.translate("MainWindow", "...", None)
         )
-        self.lblArduinoStatus_2.setText(
+        self.lblKDCStatusLabel.setText(
             QCoreApplication.translate("MainWindow", "Status", None)
         )
-        self.lblArduinoStatusValue_2.setText(
+        self.lblKDCStatusValue.setText(
             QCoreApplication.translate("MainWindow", "Nicht verbunden", None)
         )
-        self.ledArduinoStatus_2.setText("")
-        self.btnArduinoConnect_2.setText(
+        self.ledKDCStatus.setText("")
+        self.lblKDCPositionLabel.setText(
+            QCoreApplication.translate("MainWindow", "Position", None)
+        )
+        self.lblKDCPositionValue.setText(
+            QCoreApplication.translate("MainWindow", "\u2014", None)
+        )
+        self.btnKDCConnect.setText(
             QCoreApplication.translate("MainWindow", "Verbinden", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.btnKDCHome.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "KDC101 auf Nullposition fahren (Home)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnKDCHome.setText(QCoreApplication.translate("MainWindow", "Home", None))
         self.tabWidget.setTabText(
             self.tabWidget.indexOf(self.configuration),
             QCoreApplication.translate("MainWindow", "Konfiguration", None),

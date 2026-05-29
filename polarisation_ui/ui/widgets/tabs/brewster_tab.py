@@ -15,10 +15,10 @@ Both modes reset the detector scan after saving so the next sweep starts clean.
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Literal, Optional
 
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
+from PySide6.QtWidgets import QButtonGroup, QHeaderView, QTableWidgetItem, QWidget
 
 from polarisation_ui.core.models import BrewsterPoint, Frame, TabExport
 from polarisation_ui.pyqt.ui_brewster_tab import Ui_BrewsterTab
@@ -40,6 +40,7 @@ class BrewsterTab(PlotTabBase):
         self._latest_frame: Optional[Frame] = None
         self._peak_intensity: float = float("nan")
         self._peak_angle: float = float("nan")
+        self._polarisation: Literal["p", "s"] = "p"
 
     def build(self) -> None:
         self._ui = Ui_BrewsterTab()
@@ -56,6 +57,12 @@ class BrewsterTab(PlotTabBase):
             self._on_table_selection_changed
         )
         self._ui.detectorPlot.peak_changed.connect(self._update_max_labels)
+
+        # p/s polarisation selection — QButtonGroup is a non-visual logical helper
+        self._pol_group = QButtonGroup(self)
+        self._pol_group.addButton(self._ui.rbPolP, 0)
+        self._pol_group.addButton(self._ui.rbPolS, 1)
+        self._pol_group.idToggled.connect(self._on_polarisation_toggled)
 
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
@@ -94,6 +101,12 @@ class BrewsterTab(PlotTabBase):
 
     def inject_modules(self, modules: dict[str, object]) -> None:
         pass
+
+    @Slot(int, bool)
+    def _on_polarisation_toggled(self, btn_id: int, checked: bool) -> None:
+        if checked:
+            self._polarisation = "p" if btn_id == 0 else "s"
+            self.filename_hint_changed.emit()
 
     # ── Export contract ───────────────────────────────────────────────────────
 
@@ -134,9 +147,14 @@ class BrewsterTab(PlotTabBase):
                 "power_W": "watts",
                 "conv_factor_W_per_V": "watts_per_volt",
             },
+            "polarisation": self._polarisation,
         }
         return TabExport(
-            filename_hint="brewster", columns=columns, rows=rows, metadata=metadata
+            filename_hint="brewster",
+            columns=columns,
+            rows=rows,
+            metadata=metadata,
+            filename_tokens=[self._polarisation],
         )
 
     # ── Save helpers ──────────────────────────────────────────────────────────

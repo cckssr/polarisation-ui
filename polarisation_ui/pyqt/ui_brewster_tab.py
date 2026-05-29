@@ -47,9 +47,11 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QPushButton,
+    QRadioButton,
     QSizePolicy,
     QSpacerItem,
     QTableWidget,
@@ -177,6 +179,24 @@ class Ui_BrewsterTab(object):
 
         self.rightLayout.addWidget(self.line)
 
+        self.gbPolarisation = QGroupBox(BrewsterTab)
+        self.gbPolarisation.setObjectName("gbPolarisation")
+        self.hlPolarisation = QHBoxLayout(self.gbPolarisation)
+        self.hlPolarisation.setObjectName("hlPolarisation")
+        self.hlPolarisation.setContentsMargins(6, 4, 6, 4)
+        self.rbPolP = QRadioButton(self.gbPolarisation)
+        self.rbPolP.setObjectName("rbPolP")
+        self.rbPolP.setChecked(True)
+
+        self.hlPolarisation.addWidget(self.rbPolP)
+
+        self.rbPolS = QRadioButton(self.gbPolarisation)
+        self.rbPolS.setObjectName("rbPolS")
+
+        self.hlPolarisation.addWidget(self.rbPolS)
+
+        self.rightLayout.addWidget(self.gbPolarisation)
+
         self.btnSaveCurrent = QPushButton(BrewsterTab)
         self.btnSaveCurrent.setObjectName("btnSaveCurrent")
         self.btnSaveCurrent.setEnabled(False)
@@ -267,6 +287,11 @@ class Ui_BrewsterTab(object):
                 "BrewsterTab", "Letzten Punkt l\u00f6schen", None
             )
         )
+        self.gbPolarisation.setTitle(
+            QCoreApplication.translate("BrewsterTab", "Polarisation", None)
+        )
+        self.rbPolP.setText(QCoreApplication.translate("BrewsterTab", "p", None))
+        self.rbPolS.setText(QCoreApplication.translate("BrewsterTab", "s", None))
         # if QT_CONFIG(tooltip)
         self.btnSaveCurrent.setToolTip(
             QCoreApplication.translate(

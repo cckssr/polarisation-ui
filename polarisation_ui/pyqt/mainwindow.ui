@@ -1589,7 +1589,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QGroupBox" name="gbArduinoConnection_2">
+         <widget class="QGroupBox" name="gbKDCConnection">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -1611,7 +1611,7 @@
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QFormLayout" name="formArduinoConnection_2">
+          <layout class="QFormLayout" name="formKDCConnection">
            <property name="sizeConstraint">
             <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
            </property>
@@ -1634,7 +1634,7 @@
             <number>5</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="lblArduinoPort_2">
+            <widget class="QLabel" name="lblKDCDeviceLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -1642,7 +1642,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Port</string>
+              <string>Gerät</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
@@ -1650,12 +1650,12 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <layout class="QHBoxLayout" name="hlArduinoPort_2">
+            <layout class="QHBoxLayout" name="hlKDCDevice">
              <property name="bottomMargin">
               <number>0</number>
              </property>
              <item>
-              <widget class="QComboBox" name="cbArduinoPort_2">
+              <widget class="QComboBox" name="cbKDCDevice">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -1671,7 +1671,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="btnRefreshPorts_2">
+              <widget class="QToolButton" name="btnKDCRefresh">
                <property name="text">
                 <string>...</string>
                </property>
@@ -1689,7 +1689,7 @@
             </layout>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="lblArduinoStatus_2">
+            <widget class="QLabel" name="lblKDCStatusLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -1705,9 +1705,9 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <layout class="QHBoxLayout" name="hlArduinoStatus_2">
+            <layout class="QHBoxLayout" name="hlKDCStatus">
              <item>
-              <widget class="QLabel" name="lblArduinoStatusValue_2">
+              <widget class="QLabel" name="lblKDCStatusValue">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -1723,7 +1723,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="ledArduinoStatus_2">
+              <widget class="QLabel" name="ledKDCStatus">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -1752,22 +1752,67 @@
              </item>
             </layout>
            </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QPushButton" name="btnArduinoConnect_2">
+           <item row="2" column="0">
+            <widget class="QLabel" name="lblKDCPositionLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
+             <property name="text">
+              <string>Position</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="lblKDCPositionValue">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>—</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QPushButton" name="btnKDCConnect">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
              <property name="text">
               <string>Verbinden</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QPushButton" name="btnKDCHome">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>KDC101 auf Nullposition fahren (Home)</string>
+             </property>
+             <property name="text">
+              <string>Home</string>
              </property>
             </widget>
            </item>
