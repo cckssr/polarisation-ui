@@ -179,6 +179,18 @@ class PowerCalibrationProfile:
 
     # ── Directory helpers ────────────────────────────────────────────────────
 
+    def to_save_metadata(self) -> dict:
+        """Return a metadata dict suitable for embedding in a saved CSV."""
+        return {
+            "profile_name": self.name,
+            "calibrated_at": self.calibrated_at,
+            "gain_conversion_factors": {
+                str(stage): cal.conversion_factor_W_per_V()
+                for stage, cal in self.gains.items()
+                if cal.conversion_factor_W_per_V() is not None
+            },
+        }
+
     @staticmethod
     def list_profiles(directory: Path = PROFILES_DIR) -> list[Path]:
         """Return sorted list of .json profile files in *directory*."""

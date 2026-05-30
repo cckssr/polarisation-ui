@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>869</width>
+    <width>963</width>
     <height>896</height>
    </rect>
   </property>
@@ -316,6 +316,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStart">
+            <property name="toolTip">
+             <string>Startwinkel des automatischen Scans (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -342,6 +345,9 @@
           </item>
           <item row="2" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepEnd">
+            <property name="toolTip">
+             <string>Endwinkel des automatischen Scans (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -368,6 +374,9 @@
           </item>
           <item row="3" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStep">
+            <property name="toolTip">
+             <string>Schrittweite des automatischen Scans (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -408,6 +417,9 @@
           <property name="enabled">
            <bool>false</bool>
           </property>
+          <property name="toolTip">
+           <string>Laufenden automatischen Scan sofort abbrechen</string>
+          </property>
           <property name="text">
            <string>Abbrechen</string>
           </property>
@@ -434,6 +446,9 @@
        <property name="enabled">
         <bool>false</bool>
        </property>
+       <property name="toolTip">
+        <string>Letzten gespeicherten Messpunkt entfernen</string>
+       </property>
        <property name="text">
         <string>Letzten Punkt löschen</string>
        </property>
@@ -443,6 +458,9 @@
       <widget class="QPushButton" name="btnClear">
        <property name="enabled">
         <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Alle gespeicherten Messpunkte löschen</string>
        </property>
        <property name="text">
         <string>Alle löschen</string>

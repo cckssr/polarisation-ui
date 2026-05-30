@@ -46,6 +46,7 @@ from polarisation_ui.infrastructure.save_service import (
 )
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
+from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.common.status_led import (
     LED_GREEN,
@@ -186,6 +187,23 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCHome.setEnabled(False)
         self.ui.lblKDCPositionValue.setText("—")
 
+        # Initialise inline acquisition settings from loaded config
+        self._sync_inline_acq_controls()
+
+    def _add_tab(self, tab_cls, modules) -> "PlotTabBase":
+        """Instantiate one tab, wire all standard signals, and append it to the widget."""
+        tab = tab_cls()
+        tab.build()
+        tab.status_message.connect(self._handle_tab_status)
+        tab.filename_hint_changed.connect(self._update_filename_display)
+        if hasattr(tab, "points_changed"):
+            tab.points_changed.connect(self._on_tab_points_changed)
+        self.data_controller.frame_ready.connect(tab.on_frame)
+        self.ui.tabWidget.addTab(tab, tab.tab_title)
+        self._tab_instances.append(tab)
+        tab.inject_modules(modules)
+        return tab
+
     def _setup_tabs(self) -> None:
         """Instantiate and register all available experiment tabs into tabWidget."""
         # Trigger tab registrations by importing the tabs package
@@ -193,15 +211,7 @@ class MainWindow(QMainWindow):
 
         modules = ModuleRegistry.all()
         for tab_cls in TabRegistry.available(modules=modules):
-            tab = tab_cls()
-            tab.build()
-            tab.status_message.connect(self._handle_tab_status)
-            tab.filename_hint_changed.connect(self._update_filename_display)
-            if hasattr(tab, "points_changed"):
-                tab.points_changed.connect(self._on_tab_points_changed)
-            self.ui.tabWidget.addTab(tab, tab.tab_title)
-            self._tab_instances.append(tab)
-            tab.inject_modules(modules)
+            self._add_tab(tab_cls, modules)
 
     def _refresh_tab_visibility(self) -> None:
         """Re-evaluate which tabs are visible based on current module registry.
@@ -221,16 +231,7 @@ class MainWindow(QMainWindow):
         # Add newly available tabs (tabs that need kdc101 and it just connected)
         for tab_cls in TabRegistry.available(modules=modules):
             if tab_cls.tab_id not in existing_ids:
-                tab = tab_cls()
-                tab.build()
-                tab.status_message.connect(self._handle_tab_status)
-                tab.filename_hint_changed.connect(self._update_filename_display)
-                if hasattr(tab, "points_changed"):
-                    tab.points_changed.connect(self._on_tab_points_changed)
-                self.data_controller.frame_ready.connect(tab.on_frame)
-                self.ui.tabWidget.addTab(tab, tab.tab_title)
-                self._tab_instances.append(tab)
-                tab.inject_modules(modules)
+                self._add_tab(tab_cls, modules)
 
         # Hide tabs whose requirements are no longer met
         for tab in self._tab_instances:
@@ -271,6 +272,16 @@ class MainWindow(QMainWindow):
         self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
         self._reload_profiles()
 
+        # Inline acquisition settings (averaging)
+        self.ui.cbSampleAverageOn.toggled.connect(self.ui.spbSampleAverages.setEnabled)
+        self.ui.cbDetectorAverageOn.toggled.connect(
+            self.ui.spbDetectorAverages.setEnabled
+        )
+        self.ui.cbSampleAverageOn.toggled.connect(self._on_acq_inline_changed)
+        self.ui.spbSampleAverages.valueChanged.connect(self._on_acq_inline_changed)
+        self.ui.cbDetectorAverageOn.toggled.connect(self._on_acq_inline_changed)
+        self.ui.spbDetectorAverages.valueChanged.connect(self._on_acq_inline_changed)
+
         # Group selection — enables/disables experiment tabs and updates filename preview
         self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
         self.ui.leSuffix.textChanged.connect(self._update_filename_display)
@@ -282,7 +293,7 @@ class MainWindow(QMainWindow):
 
         # KDC101 connection controls
         self.ui.btnKDCRefresh.clicked.connect(self._populate_kdc_devices)
-        self.ui.btnKDCConnect.clicked.connect(self._toggle_kdc)
+        self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
         self.ui.btnKDCHome.clicked.connect(self._home_kdc)
 
         # Zero buttons
@@ -314,10 +325,6 @@ class MainWindow(QMainWindow):
         self.data_controller.measurement_started.connect(self._on_measurement_started)
         self.data_controller.measurement_stopped.connect(self._on_measurement_stopped)
 
-        # Fan frame_ready to all tab on_frame handlers
-        for tab in self._tab_instances:
-            self.data_controller.frame_ready.connect(tab.on_frame)
-
         # Connection state changes → all tabs
         self.data_controller.reconnect_succeeded.connect(
             lambda: self._notify_tabs_connection_state(ConnState.CONNECTED)
@@ -343,8 +350,8 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def _on_tab_changed(self, index: int) -> None:
-        for i, tab in enumerate(self._tab_instances):
-            if i == index:
+        for tab in self._tab_instances:
+            if self.ui.tabWidget.indexOf(tab) == index:
                 tab.on_activated()
             else:
                 tab.on_deactivated()
@@ -601,60 +608,64 @@ class MainWindow(QMainWindow):
         Debug.info(f"KDC101 devices found: {devices}")
 
     @Slot()
-    def _toggle_kdc(self) -> None:
-        """Connect to or disconnect from the selected KDC101 device."""
-        if self._kdc.is_connected():
-            self._kdc_position_timer.stop()
-            self._kdc.disconnect()
-            ModuleRegistry.unregister("kdc101")
-            self._refresh_tab_visibility()
+    def _connect_kdc(self) -> None:
+        """Connect to the selected KDC101 device."""
+        conn_id = self.ui.cbKDCDevice.currentData() or self.ui.cbKDCDevice.currentText()
+        if not conn_id or conn_id == "Kein KDC101 gefunden":
+            QMessageBox.warning(self, "KDC101", "Kein Gerät ausgewählt.")
+            return
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Verbinde...",
+            LED_YELLOW,
+        )
+        try:
+            self._kdc.connect(conn_id)
+        except KDC101Error as exc:
             set_connection_status(
                 self.ui.ledKDCStatus,
                 self.ui.lblKDCStatusValue,
-                "Nicht verbunden",
+                f"Fehler: {exc}",
                 LED_RED,
             )
-            self.ui.btnKDCConnect.setText("Verbinden")
-            self.ui.btnKDCHome.setEnabled(False)
-            self.ui.lblKDCPositionValue.setText("—")
-            self.statusbar_manager.show_info("KDC101 getrennt")
-        else:
-            conn_id = (
-                self.ui.cbKDCDevice.currentData() or self.ui.cbKDCDevice.currentText()
-            )
-            if not conn_id or conn_id == "Kein KDC101 gefunden":
-                QMessageBox.warning(self, "KDC101", "Kein Gerät ausgewählt.")
-                return
-            set_connection_status(
-                self.ui.ledKDCStatus,
-                self.ui.lblKDCStatusValue,
-                "Verbinde...",
-                LED_YELLOW,
-            )
-            try:
-                self._kdc.connect(conn_id)
-            except KDC101Error as exc:
-                set_connection_status(
-                    self.ui.ledKDCStatus,
-                    self.ui.lblKDCStatusValue,
-                    f"Fehler: {exc}",
-                    LED_RED,
-                )
-                self.statusbar_manager.show_error(f"KDC101 Verbindungsfehler: {exc}")
-                return
-            ModuleRegistry.register(KDC101ModuleAdapter(self._kdc))
-            self._refresh_tab_visibility()
-            set_connection_status(
-                self.ui.ledKDCStatus,
-                self.ui.lblKDCStatusValue,
-                f"Verbunden: {conn_id}",
-                LED_GREEN,
-            )
-            self.ui.btnKDCConnect.setText("Trennen")
-            self.ui.btnKDCHome.setEnabled(True)
-            self._kdc_position_timer.start()
-            self.statusbar_manager.show_success(f"KDC101 verbunden: {conn_id}")
-            Debug.info(f"KDC101 connected: {conn_id}")
+            self.statusbar_manager.show_error(f"KDC101 Verbindungsfehler: {exc}")
+            return
+        ModuleRegistry.register(KDC101ModuleAdapter(self._kdc))
+        self._refresh_tab_visibility()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            f"Verbunden: {conn_id}",
+            LED_GREEN,
+        )
+        self.ui.btnKDCConnect.setText("Trennen")
+        self.ui.btnKDCConnect.clicked.disconnect(self._connect_kdc)
+        self.ui.btnKDCConnect.clicked.connect(self._disconnect_kdc)
+        self.ui.btnKDCHome.setEnabled(True)
+        self._kdc_position_timer.start()
+        self.statusbar_manager.show_success(f"KDC101 verbunden: {conn_id}")
+        Debug.info(f"KDC101 connected: {conn_id}")
+
+    @Slot()
+    def _disconnect_kdc(self) -> None:
+        """Disconnect from the currently connected KDC101 device."""
+        self._kdc_position_timer.stop()
+        self._kdc.disconnect()
+        ModuleRegistry.unregister("kdc101")
+        self._refresh_tab_visibility()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        self.ui.btnKDCConnect.setText("Verbinden")
+        self.ui.btnKDCConnect.clicked.disconnect(self._disconnect_kdc)
+        self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.lblKDCPositionValue.setText("—")
+        self.statusbar_manager.show_info("KDC101 getrennt")
 
     @Slot()
     def _home_kdc(self) -> None:
@@ -693,25 +704,48 @@ class MainWindow(QMainWindow):
     # ==================== Acquisition Settings ====================
 
     def _load_acq_settings_from_config(self) -> AcquisitionSettings:
-        """Build AcquisitionSettings from config.json defaults.
+        return AcquisitionSettings.from_config(CONFIG.get("acquisition", {}))
 
-        Called once at startup. The returned object is the authoritative
-        session state; it is never written back to disk.
-        """
-        acq = CONFIG.get("acquisition", {})
-        return AcquisitionSettings(
-            det_average_on=acq.get("det_average_on", True),
-            det_averages=acq.get("det_averages", 5),
-            samp_average_on=acq.get("samp_average_on", True),
-            samp_averages=acq.get("samp_averages", 5),
-            sample_stage_inverted=acq.get("sample_stage_inverted", True),
-            spike_filter_enabled=acq.get("spike_filter_enabled", True),
-            spike_max_delta_deg=acq.get("spike_max_delta_deg", 10.0),
+    @Slot()
+    def _on_acq_inline_changed(self) -> None:
+        """Update AcquisitionSettings from the inline configuration-tab controls."""
+        self._acq_settings = AcquisitionSettings(
+            samp_average_on=self.ui.cbSampleAverageOn.isChecked(),
+            samp_averages=self.ui.spbSampleAverages.value(),
+            det_average_on=self.ui.cbDetectorAverageOn.isChecked(),
+            det_averages=self.ui.spbDetectorAverages.value(),
+            sample_stage_inverted=self._acq_settings.sample_stage_inverted,
+            spike_filter_enabled=self._acq_settings.spike_filter_enabled,
+            spike_max_delta_deg=self._acq_settings.spike_max_delta_deg,
         )
+        self.data_controller.update_acq_settings(self._acq_settings)
+
+    def _sync_inline_acq_controls(self) -> None:
+        """Push current _acq_settings to the inline configuration-tab widgets."""
+        for widget in (
+            self.ui.cbSampleAverageOn,
+            self.ui.spbSampleAverages,
+            self.ui.cbDetectorAverageOn,
+            self.ui.spbDetectorAverages,
+        ):
+            widget.blockSignals(True)
+        self.ui.cbSampleAverageOn.setChecked(self._acq_settings.samp_average_on)
+        self.ui.spbSampleAverages.setValue(self._acq_settings.samp_averages)
+        self.ui.spbSampleAverages.setEnabled(self._acq_settings.samp_average_on)
+        self.ui.cbDetectorAverageOn.setChecked(self._acq_settings.det_average_on)
+        self.ui.spbDetectorAverages.setValue(self._acq_settings.det_averages)
+        self.ui.spbDetectorAverages.setEnabled(self._acq_settings.det_average_on)
+        for widget in (
+            self.ui.cbSampleAverageOn,
+            self.ui.spbSampleAverages,
+            self.ui.cbDetectorAverageOn,
+            self.ui.spbDetectorAverages,
+        ):
+            widget.blockSignals(False)
 
     @Slot()
     def _open_acq_settings(self) -> None:
-        """Open the acquisition settings dialog. Main window is disabled while open."""
+        """Open the acquisition settings dialog (spike filter + inversion settings)."""
         dialog = AcquisitionSettingsDialog(self._acq_settings, parent=self)
         # exec() makes the dialog application-modal: the main window cannot
         # receive input while the dialog is open. setEnabled(False) is NOT
@@ -719,6 +753,7 @@ class MainWindow(QMainWindow):
         # dialog itself.
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._acq_settings = dialog.get_settings()
+            self._sync_inline_acq_controls()
             self.data_controller.update_acq_settings(self._acq_settings)
 
     # ==================== Data Display Updates ====================
@@ -1021,12 +1056,15 @@ class MainWindow(QMainWindow):
     def _get_active_export_tab(self):
         """Return the currently selected tab if it exposes the export contract, else None."""
         idx = self.ui.tabWidget.currentIndex()
-        if idx < 0 or idx >= len(self._tab_instances):
+        if idx < 0:
             return None
-        tab = self._tab_instances[idx]
+        widget = self.ui.tabWidget.widget(idx)
+        tab = next((t for t in self._tab_instances if t is widget), None)
         return (
             tab
-            if hasattr(tab, "build_export") and hasattr(tab, "get_saved_points")
+            if tab is not None
+            and hasattr(tab, "build_export")
+            and hasattr(tab, "get_saved_points")
             else None
         )
 
@@ -1063,15 +1101,7 @@ class MainWindow(QMainWindow):
 
         cal_meta: dict = {}
         if self._calibration_profile is not None:
-            cal_meta = {
-                "profile_name": self._calibration_profile.name,
-                "calibrated_at": self._calibration_profile.calibrated_at,
-                "gain_conversion_factors": {
-                    str(stage): cal.conversion_factor_W_per_V()
-                    for stage, cal in self._calibration_profile.gains.items()
-                    if cal.conversion_factor_W_per_V() is not None
-                },
-            }
+            cal_meta = self._calibration_profile.to_save_metadata()
 
         save_tab_export(
             Path(path),

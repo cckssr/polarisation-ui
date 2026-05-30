@@ -65,7 +65,7 @@ class Ui_MalusTab(object):
     def setupUi(self, MalusTab):
         if not MalusTab.objectName():
             MalusTab.setObjectName("MalusTab")
-        MalusTab.resize(869, 896)
+        MalusTab.resize(963, 896)
         self.gridLayout = QGridLayout(MalusTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -429,18 +429,39 @@ class Ui_MalusTab(object):
         self.lblSweepStart.setText(
             QCoreApplication.translate("MalusTab", "Von (\u00b0):", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.spinSweepStart.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Startwinkel des automatischen Scans (\u00b0)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepStart.setSuffix(
             QCoreApplication.translate("MalusTab", " \u00b0", None)
         )
         self.lblSweepEnd.setText(
             QCoreApplication.translate("MalusTab", "Bis (\u00b0):", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.spinSweepEnd.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Endwinkel des automatischen Scans (\u00b0)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepEnd.setSuffix(
             QCoreApplication.translate("MalusTab", " \u00b0", None)
         )
         self.lblSweepStep.setText(
             QCoreApplication.translate("MalusTab", "Schritt (\u00b0):", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.spinSweepStep.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Schrittweite des automatischen Scans (\u00b0)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepStep.setSuffix(
             QCoreApplication.translate("MalusTab", " \u00b0", None)
         )
@@ -454,6 +475,13 @@ class Ui_MalusTab(object):
         self.btnStartSweep.setText(
             QCoreApplication.translate("MalusTab", "Scan starten", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.btnAbortSweep.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Laufenden automatischen Scan sofort abbrechen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.btnAbortSweep.setText(
             QCoreApplication.translate("MalusTab", "Abbrechen", None)
         )
@@ -469,9 +497,23 @@ class Ui_MalusTab(object):
                 "MalusTab", "Ausgew\u00e4hlten l\u00f6schen", None
             )
         )
+        # if QT_CONFIG(tooltip)
+        self.btnDeleteLast.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Letzten gespeicherten Messpunkt entfernen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.btnDeleteLast.setText(
             QCoreApplication.translate("MalusTab", "Letzten Punkt l\u00f6schen", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.btnClear.setToolTip(
+            QCoreApplication.translate(
+                "MalusTab", "Alle gespeicherten Messpunkte l\u00f6schen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.btnClear.setText(
             QCoreApplication.translate("MalusTab", "Alle l\u00f6schen", None)
         )

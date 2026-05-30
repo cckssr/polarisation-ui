@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>856</width>
+    <width>959</width>
     <height>839</height>
    </rect>
   </property>
@@ -211,6 +211,9 @@
        <property name="enabled">
         <bool>false</bool>
        </property>
+       <property name="toolTip">
+        <string>Letzten gespeicherten Messpunkt entfernen</string>
+       </property>
        <property name="text">
         <string>Letzten Punkt löschen</string>
        </property>
@@ -243,6 +246,9 @@
         </property>
         <item>
          <widget class="QRadioButton" name="rbPolP">
+          <property name="toolTip">
+           <string>p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)</string>
+          </property>
           <property name="text">
            <string>p</string>
           </property>
@@ -253,6 +259,9 @@
         </item>
         <item>
          <widget class="QRadioButton" name="rbPolS">
+          <property name="toolTip">
+           <string>s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)</string>
+          </property>
           <property name="text">
            <string>s</string>
           </property>

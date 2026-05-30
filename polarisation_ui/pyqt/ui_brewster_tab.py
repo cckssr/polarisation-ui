@@ -68,7 +68,7 @@ class Ui_BrewsterTab(object):
     def setupUi(self, BrewsterTab):
         if not BrewsterTab.objectName():
             BrewsterTab.setObjectName("BrewsterTab")
-        BrewsterTab.resize(856, 839)
+        BrewsterTab.resize(959, 839)
         self.gridLayout = QGridLayout(BrewsterTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -282,6 +282,13 @@ class Ui_BrewsterTab(object):
                 "BrewsterTab", "Ausgew\u00e4hlten l\u00f6schen", None
             )
         )
+        # if QT_CONFIG(tooltip)
+        self.btnDeleteLast.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab", "Letzten gespeicherten Messpunkt entfernen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.btnDeleteLast.setText(
             QCoreApplication.translate(
                 "BrewsterTab", "Letzten Punkt l\u00f6schen", None
@@ -290,7 +297,25 @@ class Ui_BrewsterTab(object):
         self.gbPolarisation.setTitle(
             QCoreApplication.translate("BrewsterTab", "Polarisation", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.rbPolP.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab",
+                "p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.rbPolP.setText(QCoreApplication.translate("BrewsterTab", "p", None))
+        # if QT_CONFIG(tooltip)
+        self.rbPolS.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab",
+                "s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.rbPolS.setText(QCoreApplication.translate("BrewsterTab", "s", None))
         # if QT_CONFIG(tooltip)
         self.btnSaveCurrent.setToolTip(
