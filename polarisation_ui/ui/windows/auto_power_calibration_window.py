@@ -302,7 +302,6 @@ class AutoPowerCalibrationWindow(QDialog):
             settle_s=self.ui.spinAlignSettle.value(),
             parent=self,
         )
-        self._align_worker.point_scanned.connect(self._on_align_point)
         self._align_worker.progress.connect(self._on_align_progress)
         self._align_worker.finished.connect(self._on_align_finished)
         self._align_worker.failed.connect(self._on_align_failed)
@@ -324,11 +323,6 @@ class AutoPowerCalibrationWindow(QDialog):
             self._align_worker.abort()
             self.ui.btnAbortAlign.setEnabled(False)
             self.ui.lblPhase.setText("Ausrichtung wird abgebrochen…")
-
-    @Slot(float, float)
-    def _on_align_point(self, angle_deg: float, power_W: float) -> None:
-        # The log already captures per-point details; nothing extra needed here.
-        pass
 
     @Slot(int, int)
     def _on_align_progress(self, done: int, total: int) -> None:
@@ -443,9 +437,8 @@ class AutoPowerCalibrationWindow(QDialog):
         angle_deg: float,
         voltage: float,
         pm_power: float,
-        corrected_power: float,
     ) -> None:
-        self.ui.plotWidget.add_point(gain, voltage, corrected_power)
+        self.ui.plotWidget.add_point(gain, voltage, pm_power)
 
     @Slot(int, int)
     def _on_progress(self, done: int, total: int) -> None:

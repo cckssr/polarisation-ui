@@ -90,7 +90,7 @@ class DataController(QObject):
     measurement_stopped = Signal()
 
     # --- Mock intensity parameters -------------------------------------------
-    # Replace _read_intensity() body with a real ADC read when hardware is ready.
+    # Used by _read_raw_adc() when use_mock_intensity=True (no hardware attached).
     _MOCK_PEAK_ANGLE: float = 90.0  # degrees — centre of simulated Gaussian
     _MOCK_SIGMA: float = 20.0  # width (degrees)
     _MOCK_AMPLITUDE: float = 1000.0  # peak intensity (a.u.)
@@ -744,32 +744,6 @@ class DataController(QObject):
             self._backoff_attempt += 1
             self._retry_timer.start(delay_ms)
             self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
-
-    # ==================== Manual Reading ====================
-
-    def read_once(self) -> Optional["DualEncoderReading"]:
-        """Perform single sensor read without starting continuous polling.
-
-        Returns:
-            DualEncoderReading or None on error.
-        """
-        if not self.device_manager.is_encoder_connected():
-            Debug.warning("Cannot read: encoders not connected")
-            return None
-
-        try:
-            angles = self.device_manager.read_angles()
-
-            if angles is not None:
-                self.angles_updated.emit(angles.sample_angle, angles.detector_angle)
-                return angles
-
-            return None
-
-        except Exception as e:
-            Debug.error(f"Error during manual read: {e}")
-            self.error_occurred.emit(str(e))
-            return None
 
     # ==================== Diagnostics ====================
 

@@ -41,6 +41,7 @@ class BrewsterTab(PlotTabBase):
         self._peak_intensity: float = float("nan")
         self._peak_angle: float = float("nan")
         self._polarisation: Literal["p", "s"] = "p"
+        self._is_measuring: bool = False
 
     def build(self) -> None:
         self._ui = Ui_BrewsterTab()
@@ -86,6 +87,7 @@ class BrewsterTab(PlotTabBase):
         pass
 
     def on_measurement_started(self) -> None:
+        self._is_measuring = True
         self._ui.btnClearDetector.setEnabled(True)
         self._ui.btnDeleteLast.setEnabled(True)
         self._ui.btnSaveCurrent.setEnabled(True)
@@ -93,6 +95,7 @@ class BrewsterTab(PlotTabBase):
         self._on_table_selection_changed()
 
     def on_measurement_stopped(self) -> None:
+        self._is_measuring = False
         self._ui.btnClearDetector.setEnabled(False)
         self._ui.btnDeleteLast.setEnabled(False)
         self._ui.btnDeleteSelected.setEnabled(False)
@@ -278,6 +281,5 @@ class BrewsterTab(PlotTabBase):
 
     @Slot()
     def _on_table_selection_changed(self) -> None:
-        measuring = self._ui.btnSaveCurrent.isEnabled()
         has_selection = bool(self._ui.pointsTable.selectedItems())
-        self._ui.btnDeleteSelected.setEnabled(measuring and has_selection)
+        self._ui.btnDeleteSelected.setEnabled(self._is_measuring and has_selection)

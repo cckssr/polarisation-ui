@@ -66,10 +66,10 @@ def test_inject_empty_modules_disables_sweep_group(tab_with_kdc):
     assert tab._kdc is None
 
 
-def test_compute_average_safe_thread_safe(tab):
+def test_compute_average_thread_safe(tab):
     tab.on_frame(_make_frame(1000, 0.5))
     tab.on_frame(_make_frame(1100, 0.7))
-    intensity, frame = tab._compute_average_safe()
+    intensity, frame = tab._compute_average()
     assert not (intensity != intensity)  # not NaN
     assert abs(intensity - 0.6) < 0.01
 

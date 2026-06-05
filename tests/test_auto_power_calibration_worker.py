@@ -73,7 +73,11 @@ class TestAutoPowerCalibrationWorker:
         pm = MockPM400(kdc_mock=kdc)
         pm.connect("mock://pm400")
 
-        params = _make_params(selected_gains=(1, 2, 3, 4), n_points=5)
+        # Use a threshold above EXT VREF (2.5 V) so the mock encoder at 0°
+        # does not saturate all points (cos²(0°) × 2.5 V = 2.5 V > 2.35 V default).
+        params = _make_params(
+            selected_gains=(1, 2, 3, 4), n_points=5, adc_saturation_threshold_V=2.6
+        )
 
         received_points: list[tuple] = []
         finished_profiles: list[PowerCalibrationProfile] = []
@@ -268,6 +272,8 @@ class TestAlignPolariserWorker:
         pm.connect("mock://pm400")
 
         OFFSET = 30.0
+        # Use threshold above EXT VREF (2.5 V) so the static encoder_a=0° does
+        # not saturate all points (2.5 × cos²(0°) = 2.5 V > 2.35 V default).
         params = _make_params(
             selected_gains=(1,),
             n_points=3,
@@ -275,6 +281,7 @@ class TestAlignPolariserWorker:
             angle_end_deg=90.0,
             grid_mode="linear_angle",
             angle_offset_deg=OFFSET,
+            adc_saturation_threshold_V=2.6,
         )
 
         recorded: list[tuple] = []

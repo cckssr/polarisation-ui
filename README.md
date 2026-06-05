@@ -83,7 +83,7 @@ pip install git+https://github.com/cckssr/polarisation-ui.git
 To pin to a specific release:
 
 ```bash
-pip install git+https://github.com/cckssr/polarisation-ui.git@v0.1.0
+pip install git+https://github.com/cckssr/polarisation-ui.git@v1.0.0
 ```
 
 The production wheel does **not** include the mock Arduino simulator or test utilities.
@@ -286,7 +286,6 @@ Version is kept in sync across three files automatically:
 - **Plot-Tab extensibility** — `PlotTabBase` + `TabRegistry`; new experiments register as subclasses in `ui/widgets/tabs/`
 - **Session journal** — append-only CSV autosave with `fsync` for crash-safe data recovery
 - **Module registry** — `HostModule` protocol + `ModuleRegistry` singleton; tabs gate on required modules (e.g. `kdc101`)
-- **Connection banner** — non-blocking reconnect status overlay
 
 ### Planned: Additional Polarisation Experiments
 
@@ -316,10 +315,9 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 
 ### Planned: Infrastructure
 
-| Feature                  | Description                                                             |
-| ------------------------ | ----------------------------------------------------------------------- |
-| HDF5/Zarr export         | Optional dense export for large angle-scan datasets                     |
-| SCPI 2.0.0 firmware bump | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames |
+| Feature          | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| HDF5/Zarr export | Optional dense export for large angle-scan datasets      |
 
 ---
 

@@ -528,6 +528,7 @@ class MainWindow(QMainWindow):
         self.data_controller.stop_continuous_reading()
         self.device_manager.disconnect_all()
         self._reset_connection_ui()
+        self._notify_tabs_connection_state(ConnState.LOST)
         self.statusbar_manager.show_info("Arduino getrennt")
         Debug.info("Arduino disconnected by user")
 
@@ -608,12 +609,12 @@ class MainWindow(QMainWindow):
         )
         self.ui.lcdSampleAngle.display(0.00)
         self.ui.lcdDetectorStageAngle.display(0.00)
-        self.ui.lcdWattage.display(0.00)
-        self.ui.lcdDetectorVoltage.display(0.00)
+        self.ui.lcdDetectorVoltage_mV.display(0.00)
+        self.ui.lcdDetectorPower.display(0.00)
         self.ui.lcdSampleAngle_2.display(0.00)
         self.ui.lcdDetectorStageAngle_2.display(0.00)
         self.ui.lcdDetectorVoltage_2.display(0.00)
-        self.ui.lcdWattage_2.display(0.00)
+        self.ui.lcdDetectorPower_2.display(0.00)
         self.ui.btnStartMeasurement.setEnabled(True)
         self._sensor_a_ok = True
         self._sensor_b_ok = True
@@ -832,12 +833,12 @@ class MainWindow(QMainWindow):
     def _update_intensity_display(self, voltage: float) -> None:
         """Update the detector voltage LCD (in mV) and check for ADC saturation."""
         if math.isnan(voltage):
-            self.ui.lcdWattage.display("----")
+            self.ui.lcdDetectorVoltage_mV.display("----")
             self.ui.lcdDetectorVoltage_2.display("----")
             return
 
         voltage_mv = voltage * 1000.0
-        self.ui.lcdWattage.display(f"{voltage_mv:.2f}")
+        self.ui.lcdDetectorVoltage_mV.display(f"{voltage_mv:.2f}")
         self.ui.lcdDetectorVoltage_2.display(f"{voltage_mv:.2f}")
 
         saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
@@ -903,12 +904,12 @@ class MainWindow(QMainWindow):
     @Slot(float)
     def _update_wattage_display(self, power_W: float) -> None:
         if math.isnan(power_W):
-            self.ui.lcdDetectorVoltage.display("----")
-            self.ui.lcdWattage_2.display("----")
+            self.ui.lcdDetectorPower.display("----")
+            self.ui.lcdDetectorPower_2.display("----")
         else:
             power_uw = power_W * 1e6
-            self.ui.lcdDetectorVoltage.display(f"{power_uw:.2f}")
-            self.ui.lcdWattage_2.display(f"{power_uw:.2f}")
+            self.ui.lcdDetectorPower.display(f"{power_uw:.2f}")
+            self.ui.lcdDetectorPower_2.display(f"{power_uw:.2f}")
 
     # ==================== Calibration Profile Management ====================
 

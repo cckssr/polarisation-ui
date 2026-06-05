@@ -16,6 +16,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Literal
 
+from .utils import linear_angle_grid
+
 _SETTINGS_PATH: Path = (
     Path.home() / ".config" / "polarisation-ui" / "auto_calibration_settings.json"
 )
@@ -87,10 +89,6 @@ class AutoCalibrationParams:
     sweep moves on immediately without spending measurement time in saturation.
     Typical ADS1220 full-scale is ~2.4 V; the default 2.35 V leaves a small
     margin below clipping.
-    
-    Physical stage angle at maximum transmission.  Added to every logical
-    sweep angle before sending to the KDC so that sweep angles 0°…90° always
-    map to max→min transmission regardless of how the polariser is mounted.
     """
 
 
@@ -111,8 +109,7 @@ def build_angle_grid(params: AutoCalibrationParams) -> list[float]:
     a1 = params.angle_end_deg
 
     if params.grid_mode == "linear_angle":
-        step = (a1 - a0) / (n - 1)
-        return [a0 + i * step for i in range(n)]
+        return linear_angle_grid(a0, a1, n)
 
     # linear_cos2: c²_i evenly spaced in [cos²(a0), cos²(a1)]
     c2_start = math.cos(math.radians(a0)) ** 2

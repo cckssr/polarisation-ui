@@ -200,17 +200,19 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.lblSampleStatus_4)
 
-        self.lcdWattage = QLCDNumber(self.centralwidget)
-        self.lcdWattage.setObjectName("lcdWattage")
-        self.lcdWattage.setEnabled(True)
-        sizePolicy1.setHeightForWidth(self.lcdWattage.sizePolicy().hasHeightForWidth())
-        self.lcdWattage.setSizePolicy(sizePolicy1)
-        self.lcdWattage.setMinimumSize(QSize(0, 40))
-        self.lcdWattage.setLineWidth(2)
-        self.lcdWattage.setDigitCount(8)
-        self.lcdWattage.setProperty("value", 2499.989999999999782)
+        self.lcdDetectorVoltage_mV = QLCDNumber(self.centralwidget)
+        self.lcdDetectorVoltage_mV.setObjectName("lcdDetectorVoltage_mV")
+        self.lcdDetectorVoltage_mV.setEnabled(True)
+        sizePolicy1.setHeightForWidth(
+            self.lcdDetectorVoltage_mV.sizePolicy().hasHeightForWidth()
+        )
+        self.lcdDetectorVoltage_mV.setSizePolicy(sizePolicy1)
+        self.lcdDetectorVoltage_mV.setMinimumSize(QSize(0, 40))
+        self.lcdDetectorVoltage_mV.setLineWidth(2)
+        self.lcdDetectorVoltage_mV.setDigitCount(8)
+        self.lcdDetectorVoltage_mV.setProperty("value", 2499.989999999999782)
 
-        self.verticalLayout_2.addWidget(self.lcdWattage)
+        self.verticalLayout_2.addWidget(self.lcdDetectorVoltage_mV)
 
         self.lblSampleStatus_5 = QLabel(self.centralwidget)
         self.lblSampleStatus_5.setObjectName("lblSampleStatus_5")
@@ -226,19 +228,19 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.lblSampleStatus_5)
 
-        self.lcdDetectorVoltage = QLCDNumber(self.centralwidget)
-        self.lcdDetectorVoltage.setObjectName("lcdDetectorVoltage")
-        self.lcdDetectorVoltage.setEnabled(True)
+        self.lcdDetectorPower = QLCDNumber(self.centralwidget)
+        self.lcdDetectorPower.setObjectName("lcdDetectorPower")
+        self.lcdDetectorPower.setEnabled(True)
         sizePolicy1.setHeightForWidth(
-            self.lcdDetectorVoltage.sizePolicy().hasHeightForWidth()
+            self.lcdDetectorPower.sizePolicy().hasHeightForWidth()
         )
-        self.lcdDetectorVoltage.setSizePolicy(sizePolicy1)
-        self.lcdDetectorVoltage.setMinimumSize(QSize(0, 40))
-        self.lcdDetectorVoltage.setLineWidth(2)
-        self.lcdDetectorVoltage.setDigitCount(8)
-        self.lcdDetectorVoltage.setProperty("value", 499.990000000000009)
+        self.lcdDetectorPower.setSizePolicy(sizePolicy1)
+        self.lcdDetectorPower.setMinimumSize(QSize(0, 40))
+        self.lcdDetectorPower.setLineWidth(2)
+        self.lcdDetectorPower.setDigitCount(8)
+        self.lcdDetectorPower.setProperty("value", 499.990000000000009)
 
-        self.verticalLayout_2.addWidget(self.lcdDetectorVoltage)
+        self.verticalLayout_2.addWidget(self.lcdDetectorPower)
 
         self.lblSampleStatus_6 = QLabel(self.centralwidget)
         self.lblSampleStatus_6.setObjectName("lblSampleStatus_6")
@@ -680,18 +682,18 @@ class Ui_MainWindow(object):
         self.gridLayout_4 = QGridLayout()
         self.gridLayout_4.setObjectName("gridLayout_4")
         self.gridLayout_4.setContentsMargins(-1, -1, 0, -1)
-        self.lcdWattage_2 = QLCDNumber(self.gbDetector)
-        self.lcdWattage_2.setObjectName("lcdWattage_2")
+        self.lcdDetectorPower_2 = QLCDNumber(self.gbDetector)
+        self.lcdDetectorPower_2.setObjectName("lcdDetectorPower_2")
         sizePolicy3.setHeightForWidth(
-            self.lcdWattage_2.sizePolicy().hasHeightForWidth()
+            self.lcdDetectorPower_2.sizePolicy().hasHeightForWidth()
         )
-        self.lcdWattage_2.setSizePolicy(sizePolicy3)
-        self.lcdWattage_2.setMinimumSize(QSize(0, 30))
-        self.lcdWattage_2.setLineWidth(2)
-        self.lcdWattage_2.setDigitCount(10)
-        self.lcdWattage_2.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
+        self.lcdDetectorPower_2.setSizePolicy(sizePolicy3)
+        self.lcdDetectorPower_2.setMinimumSize(QSize(0, 30))
+        self.lcdDetectorPower_2.setLineWidth(2)
+        self.lcdDetectorPower_2.setDigitCount(10)
+        self.lcdDetectorPower_2.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
 
-        self.gridLayout_4.addWidget(self.lcdWattage_2, 3, 1, 1, 1)
+        self.gridLayout_4.addWidget(self.lcdDetectorPower_2, 3, 1, 1, 1)
 
         self.btnReloadProfiles = QPushButton(self.gbDetector)
         self.btnReloadProfiles.setObjectName("btnReloadProfiles")
@@ -1530,7 +1532,7 @@ class Ui_MainWindow(object):
             QCoreApplication.translate("MainWindow", "Detektor-Spannung (mV)", None)
         )
         # if QT_CONFIG(tooltip)
-        self.lcdWattage.setToolTip(
+        self.lcdDetectorVoltage_mV.setToolTip(
             QCoreApplication.translate(
                 "MainWindow", "Detektorspannung in Millivolt (mV)", None
             )
@@ -1542,7 +1544,7 @@ class Ui_MainWindow(object):
             )
         )
         # if QT_CONFIG(tooltip)
-        self.lcdDetectorVoltage.setToolTip(
+        self.lcdDetectorPower.setToolTip(
             QCoreApplication.translate(
                 "MainWindow",
                 "Berechnete Laserleistung in Mikrowatt (\u00b5W) \u2014 nur mit geladenem Kalibrierungsprofil",

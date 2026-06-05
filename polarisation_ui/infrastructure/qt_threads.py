@@ -14,6 +14,7 @@ from polarisation_ui.core.auto_calibration_settings import (
     AutoCalibrationParams,
     build_angle_grid,
 )
+from polarisation_ui.core.utils import linear_angle_grid
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
@@ -96,7 +97,9 @@ class AutoPowerCalibrationWorker(QThread):
     """
 
     gain_started = Signal(int)
-    point_recorded = Signal(int, float, float, float, float)
+    point_recorded = Signal(
+        int, float, float, float
+    )  # gain, angle_deg, detector_voltage, pm_power_W
     progress = Signal(int, int)
     finished = Signal(object)  # PowerCalibrationProfile
     failed = Signal(str)
@@ -276,8 +279,7 @@ class AutoPowerCalibrationWorker(QThread):
 
                 profile.gains[gain].add_point(voltage_mean, power_W)
                 done += 1
-                # point_recorded(gain, angle_deg, detector_voltage, pm_power_W, corrected_power_W)
-                self.point_recorded.emit(gain, angle, voltage_mean, power_W, power_W)
+                self.point_recorded.emit(gain, angle, voltage_mean, power_W)
                 self.progress.emit(done, total)
                 self.log.emit(
                     f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W"
@@ -347,8 +349,8 @@ class AlignPolariserWorker(QThread):
 
     def _run_scan(self) -> None:
         n = self._n_points
-        step = (self._end - self._start) / (n - 1)
-        angles = [self._start + i * step for i in range(n)]
+        angles = linear_angle_grid(self._start, self._end, n)
+        step = (self._end - self._start) / (n - 1) if n > 1 else 0.0
 
         self.log.emit(
             f"Ausrichtungsscan: {self._start:.1f}°…{self._end:.1f}° "

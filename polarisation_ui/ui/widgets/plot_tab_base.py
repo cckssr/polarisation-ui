@@ -35,9 +35,6 @@ class PlotTabBase(QWidget):
     required_modules: set[str] = set()
 
     # --- outbound signals ----------------------------------------------------
-    request_config_change = Signal(dict)
-    request_module_action = Signal(str, dict)
-    export_requested = Signal(str)
     status_message = Signal(str, str)  # (level, message) — "info"/"warning"/"error"
     filename_hint_changed = Signal()  # emitted when filename_hint or tokens change
 
