@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1316</width>
-    <height>1029</height>
+    <height>980</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -34,7 +34,7 @@
      <number>10</number>
     </property>
     <item row="1" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0">
       <property name="spacing">
        <number>-1</number>
       </property>
@@ -258,55 +258,127 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gbDarkTare">
-        <property name="title">
-         <string>Dunkelstrom-Korrektur</string>
+       <widget class="QLabel" name="lblSampleStatus_6">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-        <layout class="QVBoxLayout" name="vlDarkTare">
-         <property name="leftMargin">
-          <number>5</number>
-         </property>
-         <property name="topMargin">
-          <number>8</number>
-         </property>
-         <property name="rightMargin">
-          <number>5</number>
-         </property>
-         <property name="bottomMargin">
-          <number>5</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lblDarkOffsetValue">
-           <property name="text">
-            <string>Offset: –</string>
-           </property>
-           <property name="toolTip">
-            <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnDarkTare">
-           <property name="text">
-            <string>Dunkelstrom nullen</string>
-           </property>
-           <property name="toolTip">
-            <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnDarkReset">
-           <property name="text">
-            <string>Offset zurücksetzen</string>
-           </property>
-           <property name="toolTip">
-            <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <property name="text">
+         <string>Detektor-Gainstufe</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+        </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="btnGain1_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>PD-TIA Verstärkungsstufe 1 (niedrigste Empfindlichkeit)</string>
+          </property>
+          <property name="text">
+           <string>1</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnGain2_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>PD-TIA Verstärkungsstufe 2</string>
+          </property>
+          <property name="text">
+           <string>2</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnGain3_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>PD-TIA Verstärkungsstufe 3</string>
+          </property>
+          <property name="text">
+           <string>3</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnGain4_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
+          </property>
+          <property name="text">
+           <string>4</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <spacer name="verticalSpacer">
@@ -1100,14 +1172,31 @@
             </layout>
            </item>
            <item>
-            <layout class="QFormLayout" name="formLayout_2">
-             <property name="formAlignment">
-              <set>Qt::AlignmentFlag::AlignBottom|Qt::AlignmentFlag::AlignHCenter</set>
-             </property>
+            <layout class="QGridLayout" name="gridLayout_4">
              <property name="rightMargin">
               <number>0</number>
              </property>
-             <item row="0" column="0" colspan="2">
+             <item row="1" column="0">
+              <widget class="QPushButton" name="btnDarkTare">
+               <property name="toolTip">
+                <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
+               </property>
+               <property name="text">
+                <string>Dunkelstrom nullen</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="btnDarkReset">
+               <property name="toolTip">
+                <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
+               </property>
+               <property name="text">
+                <string>Offset zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="2">
               <widget class="QComboBox" name="cbProfile">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -1123,7 +1212,7 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0" colspan="2">
+             <item row="3" column="0" colspan="2">
               <layout class="QHBoxLayout" name="hlProfileButtons">
                <item>
                 <widget class="QPushButton" name="btnReloadProfiles">
@@ -1146,6 +1235,16 @@
                 </widget>
                </item>
               </layout>
+             </item>
+             <item row="0" column="0" colspan="2">
+              <widget class="QLabel" name="lblDarkOffsetValue">
+               <property name="toolTip">
+                <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
+               </property>
+               <property name="text">
+                <string>Offset: –</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1645,6 +1744,9 @@
              </property>
              <item>
               <widget class="QComboBox" name="cbKDCDevice">
+               <property name="editable">
+                <bool>true</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -1658,7 +1760,7 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>Thorlabs KDC101 Polarisationsrotator (USB-APT)</string>
+                <string>Thorlabs KDC101 Polarisationsrotator (USB-APT) — Seriennummer oder COM-Port eingeben</string>
                </property>
               </widget>
              </item>

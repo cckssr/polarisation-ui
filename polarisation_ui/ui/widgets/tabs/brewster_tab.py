@@ -157,6 +157,22 @@ class BrewsterTab(PlotTabBase):
             filename_tokens=[self._polarisation],
         )
 
+    def restore_points(self, points: list[dict]) -> None:
+        for p in points:
+            try:
+                self._ui.brewsterCurvePlot.add_point(
+                    sample_angle=float(p["sample_angle"]),
+                    detector_angle=float(p["detector_angle"]),
+                    intensity_V=float(p["intensity_V"]),
+                    pdtia_gain=int(p.get("pdtia_gain") or 0),
+                    power_W=p.get("power_W"),
+                    conv_factor_W_per_V=p.get("conv_factor_W_per_V"),
+                )
+            except (KeyError, TypeError, ValueError):
+                pass
+        self._refresh_table()
+        self.points_changed.emit(len(self._ui.brewsterCurvePlot.get_points()))
+
     # ── Save helpers ──────────────────────────────────────────────────────────
 
     @Slot()

@@ -74,3 +74,6 @@ class PlotTabBase(QWidget):
 
     def inject_modules(self, modules: dict[str, object]) -> None:
         """Receive host-side module references (e.g. {"kdc101": KdcController})."""
+
+    def restore_points(self, points: list[dict]) -> None:
+        """Reload saved points from a prior session. Override in subclasses."""

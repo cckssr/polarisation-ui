@@ -24,6 +24,7 @@ from typing import Optional
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QDialog,
     QFileDialog,
     QMainWindow,
@@ -49,6 +50,12 @@ from polarisation_ui.infrastructure.utils import (
     sanitize_subterm_for_folder,
 )
 from polarisation_ui.infrastructure.session_journal import SessionJournal
+from polarisation_ui.infrastructure.session_state import (
+    SessionState,
+    is_from_today,
+    load_session_state,
+    save_session_state,
+)
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.common.dialogs import show_error
@@ -134,6 +141,15 @@ class MainWindow(QMainWindow):
         self._kdc_position_timer.setInterval(250)
         self._kdc_position_timer.timeout.connect(self._refresh_kdc_position)
 
+        # Gain stage to apply when Arduino next connects (set by session restore).
+        self._pending_gain_restore: int = 0
+
+        # Debounce timer for session-state persistence.
+        self._state_save_timer = QTimer(self)
+        self._state_save_timer.setSingleShot(True)
+        self._state_save_timer.setInterval(500)
+        self._state_save_timer.timeout.connect(self._save_session_state)
+
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
@@ -195,6 +211,7 @@ class MainWindow(QMainWindow):
         tab.filename_hint_changed.connect(self._update_filename_display)
         if hasattr(tab, "points_changed"):
             tab.points_changed.connect(self._on_tab_points_changed)
+            tab.points_changed.connect(self._schedule_state_save)
         self.data_controller.frame_ready.connect(tab.on_frame)
         self.ui.tabWidget.addTab(tab, tab.tab_title)
         self._tab_instances.append(tab)
@@ -263,8 +280,16 @@ class MainWindow(QMainWindow):
             self.ui.gainButtonGroup.setId(getattr(self.ui, f"btnGain{stage}"), stage)
         self.ui.gainButtonGroup.idClicked.connect(self._on_gain_button_clicked)
 
+        # Second gain button group for the sidebar buttons (btnGain1_2 … btnGain4_2).
+        self._gain_button_group_2 = QButtonGroup(self)
+        for stage in (1, 2, 3, 4):
+            btn = getattr(self.ui, f"btnGain{stage}_2")
+            self._gain_button_group_2.addButton(btn, stage)
+        self._gain_button_group_2.idClicked.connect(self._on_gain_button_clicked)
+
         # Power calibration profile controls
         self.ui.cbProfile.currentIndexChanged.connect(self._on_profile_selected)
+        self.ui.cbProfile.currentIndexChanged.connect(self._schedule_state_save)
         self.ui.btnReloadProfiles.clicked.connect(self._reload_profiles)
         self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
         self._reload_profiles()
@@ -278,11 +303,20 @@ class MainWindow(QMainWindow):
         self.ui.spbSampleAverages.valueChanged.connect(self._on_acq_inline_changed)
         self.ui.cbDetectorAverageOn.toggled.connect(self._on_acq_inline_changed)
         self.ui.spbDetectorAverages.valueChanged.connect(self._on_acq_inline_changed)
+        self.ui.cbSampleAverageOn.toggled.connect(self._schedule_state_save)
+        self.ui.spbSampleAverages.valueChanged.connect(self._schedule_state_save)
+        self.ui.cbDetectorAverageOn.toggled.connect(self._schedule_state_save)
+        self.ui.spbDetectorAverages.valueChanged.connect(self._schedule_state_save)
 
         # Group selection — enables/disables experiment tabs and updates filename preview
         self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
         self.ui.leSuffix.textChanged.connect(self._update_filename_display)
         self.ui.leTeamName.textChanged.connect(self._update_filename_display)
+
+        # Persist session state on every relevant settings change.
+        self.ui.cbGroupLetter.currentIndexChanged.connect(self._schedule_state_save)
+        self.ui.leSuffix.textChanged.connect(self._schedule_state_save)
+        self.ui.leTeamName.textChanged.connect(self._schedule_state_save)
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
@@ -573,13 +607,18 @@ class MainWindow(QMainWindow):
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
 
-        # Sync gain buttons to the stage the firmware already has active
-        stage = self.device_manager.get_pdtia_gain()
-        if 1 <= stage <= 4:
-            btn = getattr(self.ui, f"btnGain{stage}", None)
-            if btn is not None:
-                btn.setChecked(True)
-            self.data_controller._current_pdtia_gain = stage
+        # Apply pending session-restore gain if set, else read from firmware.
+        pending = self._pending_gain_restore
+        self._pending_gain_restore = 0
+        if 1 <= pending <= 4:
+            ok = self.data_controller.set_pdtia_gain(pending)
+            if ok:
+                self._sync_gain_visual(pending)
+        else:
+            stage = self.device_manager.get_pdtia_gain()
+            if 1 <= stage <= 4:
+                self._sync_gain_visual(stage)
+                self.data_controller._current_pdtia_gain = stage
 
         self._update_detector_calibration_status()
 
@@ -810,21 +849,35 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def _on_gain_button_clicked(self, stage: int) -> None:
-        """Set PDTIA gain stage on the device and visually select the button."""
+        """Set PDTIA gain stage on the device and visually select both button groups."""
         ok = self.data_controller.set_pdtia_gain(stage)
         if not ok:
-            # Deselect all buttons so the UI doesn't show a wrong state
-            grp = self.ui.gainButtonGroup
+            self._clear_gain_visual()
+            self.statusbar_manager.show_error(
+                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
+            )
+        else:
+            self._sync_gain_visual(stage)
+            self._schedule_state_save()
+            self.statusbar_manager.show_info(f"PDTIA Gain auf Stufe {stage} gesetzt")
+
+    def _sync_gain_visual(self, stage: int) -> None:
+        """Check the matching button in both gain button groups without re-emitting."""
+        for grp in (self.ui.gainButtonGroup, self._gain_button_group_2):
+            btn = grp.button(stage)
+            if btn is not None and not btn.isChecked():
+                btn.blockSignals(True)
+                btn.setChecked(True)
+                btn.blockSignals(False)
+
+    def _clear_gain_visual(self) -> None:
+        """Uncheck all buttons in both gain button groups."""
+        for grp in (self.ui.gainButtonGroup, self._gain_button_group_2):
             checked = grp.checkedButton()
             if checked is not None:
                 grp.setExclusive(False)
                 checked.setChecked(False)
                 grp.setExclusive(True)
-            self.statusbar_manager.show_error(
-                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
-            )
-        else:
-            self.statusbar_manager.show_info(f"PDTIA Gain auf Stufe {stage} gesetzt")
 
     # ==================== Power / Wattage Display ====================
 
@@ -1313,12 +1366,147 @@ class MainWindow(QMainWindow):
         if journal is not None and journal.row_count > 0:
             self._offer_partial_export(journal)
 
+    # ==================== Session State Persistence ====================
+
+    def _schedule_state_save(self, *_args) -> None:
+        """Restart the debounce timer so state is written 500 ms after the last change."""
+        self._state_save_timer.start()
+
+    def _save_session_state(self) -> None:
+        """Serialise current UI settings and tab points to last_session.json."""
+        from dataclasses import asdict as dc_asdict
+
+        now = datetime.now()
+        tab_points: dict[str, list[dict]] = {}
+        for tab in self._tab_instances:
+            if hasattr(tab, "get_saved_points"):
+                pts = tab.get_saved_points()
+                if pts:
+                    tab_points[tab.tab_id] = [dc_asdict(p) for p in pts]
+
+        state = SessionState(
+            saved_date=now.date().isoformat(),
+            saved_at=now.isoformat(),
+            group_letter=self.ui.cbGroupLetter.currentText(),
+            team_name=self.ui.leTeamName.text().strip(),
+            suffix=self.ui.leSuffix.text().strip(),
+            profile_name=(
+                self.ui.cbProfile.currentText()
+                if self.ui.cbProfile.currentIndex() >= 0
+                else ""
+            ),
+            gain_stage=self.data_controller.pdtia_gain,
+            acq_settings={
+                "samp_average_on": self._acq_settings.samp_average_on,
+                "samp_averages": self._acq_settings.samp_averages,
+                "det_average_on": self._acq_settings.det_average_on,
+                "det_averages": self._acq_settings.det_averages,
+                "sample_stage_inverted": self._acq_settings.sample_stage_inverted,
+                "spike_filter_enabled": self._acq_settings.spike_filter_enabled,
+                "spike_max_delta_deg": self._acq_settings.spike_max_delta_deg,
+            },
+            tab_points=tab_points,
+        )
+        try:
+            save_session_state(state)
+        except OSError as exc:
+            Debug.warning(f"Could not save session state: {exc}")
+
+    def _check_session_restore(self) -> None:
+        """After startup: offer to restore today's persisted session state."""
+        state = load_session_state()
+        if state is None or not is_from_today(state):
+            return
+
+        has_data = bool(
+            state.group_letter
+            or state.team_name
+            or state.suffix
+            or state.profile_name
+            or (1 <= state.gain_stage <= 4)
+            or any(v for v in state.tab_points.values())
+        )
+        if not has_data:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Sitzung wiederherstellen",
+            "Eine frühere Sitzung von heute wurde gefunden.\n"
+            "Einstellungen und Messpunkte wiederherstellen?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self._restore_session(state)
+
+    def _restore_session(self, state: SessionState) -> None:
+        """Apply a previously saved SessionState to the current UI."""
+        if state.group_letter:
+            idx = self.ui.cbGroupLetter.findText(state.group_letter)
+            if idx >= 0:
+                self.ui.cbGroupLetter.setCurrentIndex(idx)
+
+        if state.team_name:
+            self.ui.leTeamName.setText(state.team_name)
+        if state.suffix:
+            self.ui.leSuffix.setText(state.suffix)
+
+        if state.profile_name:
+            idx = self.ui.cbProfile.findText(state.profile_name)
+            if idx >= 0:
+                self.ui.cbProfile.setCurrentIndex(idx)
+
+        if 1 <= state.gain_stage <= 4:
+            self._pending_gain_restore = state.gain_stage
+
+        if state.acq_settings:
+            s = state.acq_settings
+            try:
+                self._acq_settings = AcquisitionSettings(
+                    samp_average_on=s.get(
+                        "samp_average_on", self._acq_settings.samp_average_on
+                    ),
+                    samp_averages=s.get(
+                        "samp_averages", self._acq_settings.samp_averages
+                    ),
+                    det_average_on=s.get(
+                        "det_average_on", self._acq_settings.det_average_on
+                    ),
+                    det_averages=s.get("det_averages", self._acq_settings.det_averages),
+                    sample_stage_inverted=s.get(
+                        "sample_stage_inverted",
+                        self._acq_settings.sample_stage_inverted,
+                    ),
+                    spike_filter_enabled=s.get(
+                        "spike_filter_enabled",
+                        self._acq_settings.spike_filter_enabled,
+                    ),
+                    spike_max_delta_deg=s.get(
+                        "spike_max_delta_deg",
+                        self._acq_settings.spike_max_delta_deg,
+                    ),
+                )
+                self._sync_inline_acq_controls()
+                self.data_controller.update_acq_settings(self._acq_settings)
+            except Exception as exc:
+                Debug.warning(f"Could not restore acquisition settings: {exc}")
+
+        for tab in self._tab_instances:
+            pts = state.tab_points.get(tab.tab_id, [])
+            if pts:
+                tab.restore_points(pts)
+
+        self.statusbar_manager.show_success("Sitzung wiederhergestellt")
+
     # ==================== Session Journal Helpers ====================
 
     def _check_orphan_journals(self) -> None:
         """On startup, scan for unfinalized session journals and offer recovery."""
         orphans = SessionJournal.find_orphans()
         if not orphans:
+            self._check_session_restore()
             return
         n = len(orphans)
         reply = QMessageBox.question(
@@ -1338,6 +1526,7 @@ class MainWindow(QMainWindow):
                     Debug.info(f"Orphan journal deleted: {session_dir}")
                 except OSError as e:
                     Debug.warning(f"Could not delete orphan {session_dir}: {e}")
+            self._check_session_restore()
             return
         for session_dir in orphans:
             path, _ = QFileDialog.getSaveFileName(
@@ -1349,6 +1538,8 @@ class MainWindow(QMainWindow):
             if path:
                 rows = SessionJournal.export_orphan(session_dir, Path(path))
                 self.statusbar_manager.show_success(f"{rows} Zeilen exportiert: {path}")
+
+        self._check_session_restore()
 
     def _offer_partial_export(self, journal: "SessionJournal") -> None:
         """Show a modal offering to export partial data after connection_lost."""

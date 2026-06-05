@@ -171,6 +171,11 @@ class KDC101Polariser:
     def list_devices() -> list[tuple[str, str]]:
         """Return ``[(conn_id, description), ...]`` for all connected KDC101s.
 
+        When the ft232 backend is available pylablib returns
+        ``[(serial_number, description), ...]``.  Without it (macOS fallback)
+        it returns a flat list of port-path strings; those are normalised to
+        ``(path, path)`` tuples so the caller always sees the same shape.
+
         Returns an empty list if pylablib is not installed or no devices are
         found.
         """
@@ -178,9 +183,15 @@ class KDC101Polariser:
             return []
         try:
             devices = _Thorlabs.list_kinesis_devices()
-            if isinstance(devices[0], tuple):
-                return devices
-            return []
+            if not devices:
+                return []
+            result: list[tuple[str, str]] = []
+            for d in devices:
+                if isinstance(d, tuple) and len(d) >= 2:
+                    result.append((str(d[0]), str(d[1])))
+                elif isinstance(d, str):
+                    result.append((d, d))
+            return result
         except Exception as exc:
             Debug.warning(f"KDC101Polariser.list_devices: {exc}")
             return []
