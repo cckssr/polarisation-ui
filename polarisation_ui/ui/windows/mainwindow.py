@@ -144,6 +144,13 @@ class MainWindow(QMainWindow):
         # Gain stage to apply when Arduino next connects (set by session restore).
         self._pending_gain_restore: int = 0
 
+        # True after the first successful Save — locks group letter and team name.
+        self._prefix_locked: bool = False
+
+        # True after auto-calibration was applied for the current PDTIA ID.
+        # Reset whenever the selected ID changes so a new ID triggers auto-selection again.
+        self._pdtia_auto_cal_done: bool = False
+
         # Debounce timer for session-state persistence.
         self._state_save_timer = QTimer(self)
         self._state_save_timer.setSingleShot(True)
@@ -199,6 +206,9 @@ class MainWindow(QMainWindow):
         )
         self.ui.btnKDCHome.setEnabled(False)
         self.ui.lblKDCPositionValue.setText("—")
+
+        # Populate PDTIA device ID selector from config
+        self._populate_pdtia_ids()
 
         # Initialise inline acquisition settings from loaded config
         self._sync_inline_acq_controls()
@@ -287,6 +297,9 @@ class MainWindow(QMainWindow):
             self._gain_button_group_2.addButton(btn, stage)
         self._gain_button_group_2.idClicked.connect(self._on_gain_button_clicked)
 
+        # PDTIA device ID selector
+        self.ui.cbPdtiaID.currentIndexChanged.connect(self._on_pdtia_id_changed)
+
         # Power calibration profile controls
         self.ui.cbProfile.currentIndexChanged.connect(self._on_profile_selected)
         self.ui.cbProfile.currentIndexChanged.connect(self._schedule_state_save)
@@ -330,6 +343,7 @@ class MainWindow(QMainWindow):
         # Zero buttons
         self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
         self.ui.btnDetectorStageZero.clicked.connect(self._zero_detector_encoder)
+        self.ui.btnDetectorStage180.clicked.connect(self._zero_detector_encoder_at_180)
 
         # Measurement controls
         self.ui.btnStartMeasurement.clicked.connect(self._start_measurement)
@@ -607,18 +621,23 @@ class MainWindow(QMainWindow):
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
 
-        # Apply pending session-restore gain if set, else read from firmware.
+        # Apply pending session-restore gain if set, else read from firmware (default 1).
         pending = self._pending_gain_restore
         self._pending_gain_restore = 0
         if 1 <= pending <= 4:
-            ok = self.data_controller.set_pdtia_gain(pending)
-            if ok:
-                self._sync_gain_visual(pending)
+            stage = pending
         else:
             stage = self.device_manager.get_pdtia_gain()
-            if 1 <= stage <= 4:
-                self._sync_gain_visual(stage)
-                self.data_controller._current_pdtia_gain = stage
+            if not (1 <= stage <= 4):
+                stage = 1  # always ensure a gain is active
+        ok = self.data_controller.set_pdtia_gain(stage)
+        if ok:
+            self._sync_gain_visual(stage)
+
+        # Auto-select calibration profile for the chosen PDTIA device ID.
+        device_id = self.ui.cbPdtiaID.currentText()
+        if device_id and not self._pdtia_auto_cal_done:
+            self._auto_select_calibration_for_id(device_id)
 
         self._update_detector_calibration_status()
 
@@ -948,6 +967,60 @@ class MainWindow(QMainWindow):
                 LED_GREEN,
             )
 
+    # ==================== PDTIA Device ID ====================
+
+    def _populate_pdtia_ids(self) -> None:
+        """Fill cbPdtiaID from the device_ids list in config.json."""
+        cb = self.ui.cbPdtiaID
+        cb.blockSignals(True)
+        cb.clear()
+        for did in CONFIG.get("pdtia", {}).get("device_ids", []):
+            cb.addItem(did)
+        cb.blockSignals(False)
+
+    @Slot(int)
+    def _on_pdtia_id_changed(self, _index: int) -> None:
+        """Reset auto-calibration flag and trigger auto-selection for the new ID."""
+        self._pdtia_auto_cal_done = False
+        self._schedule_state_save()
+        if self._is_connected:
+            device_id = self.ui.cbPdtiaID.currentText()
+            if device_id:
+                self._auto_select_calibration_for_id(device_id)
+
+    def _auto_select_calibration_for_id(self, device_id: str) -> None:
+        """Select the newest calibration profile whose filename contains *device_id*.
+
+        Filenames that start with an 8-digit date (yyyymmdd) are considered newer
+        than undated ones; among dated files the lexicographically greatest date wins.
+        Only runs once per device-ID selection; does nothing if already applied.
+        """
+        if self._pdtia_auto_cal_done or not device_id:
+            return
+
+        matching = [
+            p for p in PowerCalibrationProfile.list_profiles() if device_id in p.stem
+        ]
+        if not matching:
+            Debug.info(f"No calibration profile found for PDTIA ID: {device_id}")
+            return
+
+        def _sort_key(path: "Path") -> tuple:
+            stem = path.stem
+            if len(stem) >= 8 and stem[:8].isdigit():
+                return (1, stem[:8])
+            return (0, "")
+
+        best = sorted(matching, key=_sort_key, reverse=True)[0]
+        idx = self.ui.cbProfile.findText(best.stem)
+        if idx >= 0:
+            self.ui.cbProfile.setCurrentIndex(idx)
+            self._pdtia_auto_cal_done = True
+            self.statusbar_manager.show_info(
+                f"Kalibrierungsprofil automatisch ausgewählt: {best.stem}"
+            )
+            Debug.info(f"Auto-selected calibration profile: {best.stem}")
+
     def _open_power_calibration(self) -> None:
         from polarisation_ui.ui.windows.power_calibration_window import (
             PowerCalibrationWindow,
@@ -1038,12 +1111,13 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _zero_detector_encoder(self) -> None:
-        """Zero detector encoder at current position."""
+        """Zero detector encoder at current position (display 0°)."""
         success = self.device_manager.zero_detector_encoder()
-
         if success:
+            self.data_controller.set_detector_offset(0.0)
+            self._schedule_state_save()
             self.statusbar_manager.show_success("Detektor-Encoder auf Null gesetzt")
-            Debug.info("Detector encoder zeroed")
+            Debug.info("Detector encoder zeroed (offset=0°)")
         else:
             self.statusbar_manager.show_error(
                 "Fehler beim Nullsetzen des Detektor-Encoders"
@@ -1052,6 +1126,30 @@ class MainWindow(QMainWindow):
                 self,
                 "Nullsetzen fehlgeschlagen",
                 "Detektor-Encoder konnte nicht auf Null gesetzt werden.",
+            )
+
+    @Slot()
+    def _zero_detector_encoder_at_180(self) -> None:
+        """Zero detector encoder at current position and display 180°.
+
+        Sends CONF:ENC:ZERO B to the firmware (making current = 0° in hardware),
+        then applies a host-side +180° offset so the angle display reads 180°.
+        Use when the detector arm is physically at the half-rotation position.
+        """
+        success = self.device_manager.zero_detector_encoder()
+        if success:
+            self.data_controller.set_detector_offset(180.0)
+            self._schedule_state_save()
+            self.statusbar_manager.show_success("Detektor-Encoder auf 180° gesetzt")
+            Debug.info("Detector encoder zeroed (offset=180°)")
+        else:
+            self.statusbar_manager.show_error(
+                "Fehler beim 180°-Nullsetzen des Detektor-Encoders"
+            )
+            show_error(
+                self,
+                "Nullsetzen fehlgeschlagen",
+                "Detektor-Encoder konnte nicht auf 180° gesetzt werden.",
             )
 
     @Slot()
@@ -1126,6 +1224,7 @@ class MainWindow(QMainWindow):
         # Disable zeroing and tab switching during a run
         self.ui.btnSampleZero.setEnabled(False)
         self.ui.btnDetectorStageZero.setEnabled(False)
+        self.ui.btnDetectorStage180.setEnabled(False)
         self.ui.tabWidget.tabBar().setEnabled(False)
 
         for tab in self._tab_instances:
@@ -1143,6 +1242,7 @@ class MainWindow(QMainWindow):
         # Re-enable zeroing and tab switching
         self.ui.btnSampleZero.setEnabled(True)
         self.ui.btnDetectorStageZero.setEnabled(True)
+        self.ui.btnDetectorStage180.setEnabled(True)
         self.ui.tabWidget.tabBar().setEnabled(True)
 
         self._sync_save_button()
@@ -1228,6 +1328,12 @@ class MainWindow(QMainWindow):
         self.statusbar_manager.show_success(
             f"{len(exp.rows)} Datenpunkte gespeichert: {path}"
         )
+
+        if not self._prefix_locked:
+            self._prefix_locked = True
+            self.ui.cbGroupLetter.setEnabled(False)
+            self.ui.leTeamName.setEnabled(False)
+            Debug.info("Group/team prefix locked after first save")
 
     # ==================== Error Handling ====================
 
@@ -1396,6 +1502,12 @@ class MainWindow(QMainWindow):
                 else ""
             ),
             gain_stage=self.data_controller.pdtia_gain,
+            detector_offset_deg=self.data_controller.detector_offset_deg,
+            pdtia_id=(
+                self.ui.cbPdtiaID.currentText()
+                if self.ui.cbPdtiaID.currentIndex() >= 0
+                else ""
+            ),
             acq_settings={
                 "samp_average_on": self._acq_settings.samp_average_on,
                 "samp_averages": self._acq_settings.samp_averages,
@@ -1458,8 +1570,18 @@ class MainWindow(QMainWindow):
             if idx >= 0:
                 self.ui.cbProfile.setCurrentIndex(idx)
 
+        if state.pdtia_id:
+            idx = self.ui.cbPdtiaID.findText(state.pdtia_id)
+            if idx >= 0:
+                self.ui.cbPdtiaID.blockSignals(True)
+                self.ui.cbPdtiaID.setCurrentIndex(idx)
+                self.ui.cbPdtiaID.blockSignals(False)
+
         if 1 <= state.gain_stage <= 4:
             self._pending_gain_restore = state.gain_stage
+
+        if state.detector_offset_deg in (0.0, 180.0):
+            self.data_controller.set_detector_offset(state.detector_offset_deg)
 
         if state.acq_settings:
             s = state.acq_settings

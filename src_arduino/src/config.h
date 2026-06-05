@@ -1,11 +1,12 @@
 #pragma once
 
 // ── Encoder SPI ───────────────────────────────────────────────────────────────
-#define ENC_CS_A 9
-#define ENC_CS_B 10
+#define ENC_CS_A 10     // chip select for sample stage encoder
+#define ENC_CS_B 9      // chip select for detector stage encoder
 #define SPI_HZ 1000000UL
 
 // ── ADS1220 ADC ───────────────────────────────────────────────────────────────
+// Uses second SPI peripheral (VSPI) on the ESP32, with dedicated GPIO pins.
 #define ADC_MISO_PIN 5
 #define ADC_MOSI_PIN 6
 #define ADC_SCK_PIN 7

@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Session storage reminder: Did you persist any new settings or data to SessionState? (~/.polarisation-ui/last_session.json) — fields: group_letter, team_name, suffix, profile_name, gain_stage, pdtia_id, detector_offset_deg, acq_settings, tab_points.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
