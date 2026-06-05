@@ -41,6 +41,8 @@ dependencies = [
     "pyserial>=3.5",
 ]
 
+[project.gui-scripts]
+polarisation_ui = "polarisation_ui.main:main"
 
 [project.optional-dependencies]
 calibration = [
