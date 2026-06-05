@@ -1,7 +1,7 @@
 #include "ADS1220.h"
 
-ADS1220::ADS1220(uint8_t csPin, int8_t drdyPin, SPIClass &spi)
-    : _csPin(csPin), _drdyPin(drdyPin), _spi(spi), _spiFreq(4000000UL)
+ADS1220::ADS1220(uint8_t csPin, uint8_t misoPin, uint8_t mosiPin, uint8_t sckPin, int8_t drdyPin, SPIClass &spi)
+    : _csPin(csPin), _misoPin(misoPin), _mosiPin(mosiPin), _sckPin(sckPin), _drdyPin(drdyPin), _spi(spi), _spiFreq(4000000UL)
 {
     memset(_reg, 0, sizeof(_reg));
 }
@@ -10,6 +10,11 @@ bool ADS1220::begin(uint32_t spiFreq)
 {
     _spiFreq = spiFreq;
 
+    // Configure HSPI bus with the application-supplied pins.
+    // SPIClass::begin(sck, miso, mosi, ss) sets pin modes for the SPI signals.
+    _spi.begin(_sckPin, _misoPin, _mosiPin, _csPin);
+
+    // CS is driven manually; ensure it starts deasserted.
     pinMode(_csPin, OUTPUT);
     digitalWrite(_csPin, HIGH);
 
@@ -17,8 +22,6 @@ bool ADS1220::begin(uint32_t spiFreq)
     {
         pinMode(_drdyPin, INPUT);
     }
-
-    _spi.begin();
 
     reset();
 

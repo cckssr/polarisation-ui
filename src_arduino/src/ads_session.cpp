@@ -33,8 +33,11 @@ static const char *const kMuxNames[15] = {
 
 // ── Constructor / global instance ─────────────────────────────────────────────
 
+// ADS1220 uses the second SPI bus (HSPI) to avoid contention with the AS5048A encoders on SPI.
+static SPIClass sAdcSpi(HSPI);
+
 AdsSession::AdsSession()
-    : _adc(ADC_CS_PIN, ADC_DRDY_PIN)
+    : _adc(ADC_CS_PIN, ADC_MISO_PIN, ADC_MOSI_PIN, ADC_SCK_PIN, ADC_DRDY_PIN, sAdcSpi)
 {
 }
 
