@@ -167,6 +167,9 @@ class DataController(QObject):
             maxlen=self._acq_settings.samp_averages
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
+        self._intensity_buffer: deque[float] = deque(
+            maxlen=self._acq_settings.pdtia_averages
+        )
 
         # Spike filter: last accepted angles for derivative check.
         self._last_sample_angle: Optional[float] = None
@@ -237,11 +240,13 @@ class DataController(QObject):
         self._acq_settings = settings
         self._sample_buffer = deque(maxlen=settings.samp_averages)
         self._det_buffer = deque(maxlen=settings.det_averages)
+        self._intensity_buffer = deque(maxlen=settings.pdtia_averages)
         self.sample_inverted = settings.sample_stage_inverted
         Debug.info(
             f"Acq settings updated: "
             f"samp={settings.samp_averages}× (on={settings.samp_average_on}), "
             f"det={settings.det_averages}× (on={settings.det_average_on}), "
+            f"pdtia={settings.pdtia_averages}× (on={settings.pdtia_average_on}), "
             f"inverted={settings.sample_stage_inverted}, "
             f"spike_filter={settings.spike_filter_enabled} "
             f"(max_delta={settings.spike_max_delta_deg}°)"
@@ -584,7 +589,14 @@ class DataController(QObject):
                 if not math.isnan(raw_intensity)
                 else raw_intensity
             )
-            self.intensity_updated.emit(intensity)
+            if not math.isnan(intensity):
+                self._intensity_buffer.append(intensity)
+            display_intensity = (
+                sum(self._intensity_buffer) / len(self._intensity_buffer)
+                if self._acq_settings.pdtia_average_on and self._intensity_buffer
+                else intensity
+            )
+            self.intensity_updated.emit(display_intensity)
             self.angles_updated.emit(display_sample, display_det)
             # Compute optical power from calibration profile (if loaded).
             conv_factor: Optional[float] = None
@@ -594,7 +606,7 @@ class DataController(QObject):
                     self._current_pdtia_gain
                 )
                 if conv_factor is not None:
-                    power_W = intensity * conv_factor
+                    power_W = display_intensity * conv_factor
 
             self.power_updated.emit(power_W if power_W is not None else float("nan"))
 
@@ -602,7 +614,7 @@ class DataController(QObject):
                 ts_ms=int(time.monotonic() * 1000),
                 sample_angle=display_sample,
                 detector_angle=display_det,
-                intensity=intensity,
+                intensity=display_intensity,
                 pdtia_gain=self._current_pdtia_gain,
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor,

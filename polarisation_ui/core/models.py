@@ -20,6 +20,8 @@ class AcquisitionSettings:
     det_averages: int = 5
     samp_average_on: bool = True
     samp_averages: int = 5
+    pdtia_average_on: bool = True
+    pdtia_averages: int = 5
     # Hardware flag: the sample-stage magnet is mounted diametrically flipped,
     # so the raw angle increases in the wrong direction.  When True the
     # DataController applies  corrected = (360 - raw) % 360  before emitting.
@@ -34,6 +36,8 @@ class AcquisitionSettings:
             det_averages=acq.get("det_averages", 5),
             samp_average_on=acq.get("samp_average_on", True),
             samp_averages=acq.get("samp_averages", 5),
+            pdtia_average_on=acq.get("pdtia_average_on", True),
+            pdtia_averages=acq.get("pdtia_averages", 5),
             sample_stage_inverted=acq.get("sample_stage_inverted", True),
             spike_filter_enabled=acq.get("spike_filter_enabled", True),
             spike_max_delta_deg=acq.get("spike_max_delta_deg", 10.0),

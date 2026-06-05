@@ -340,13 +340,10 @@ class Ui_MainWindow(object):
 
         self.pteCurrentFilename = QPlainTextEdit(self.groupBox)
         self.pteCurrentFilename.setObjectName("pteCurrentFilename")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(
+        sizePolicy3.setHeightForWidth(
             self.pteCurrentFilename.sizePolicy().hasHeightForWidth()
         )
-        self.pteCurrentFilename.setSizePolicy(sizePolicy4)
+        self.pteCurrentFilename.setSizePolicy(sizePolicy3)
         self.pteCurrentFilename.setMaximumSize(QSize(200, 45))
         self.pteCurrentFilename.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
@@ -400,6 +397,9 @@ class Ui_MainWindow(object):
         self.btnSave = QPushButton(self.groupBox)
         self.btnSave.setObjectName("btnSave")
         self.btnSave.setEnabled(False)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
         sizePolicy4.setHeightForWidth(self.btnSave.sizePolicy().hasHeightForWidth())
         self.btnSave.setSizePolicy(sizePolicy4)
         self.btnSave.setMinimumSize(QSize(100, 30))

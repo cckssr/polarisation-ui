@@ -312,14 +312,19 @@ class MainWindow(QMainWindow):
         self.ui.cbDetectorAverageOn.toggled.connect(
             self.ui.spbDetectorAverages.setEnabled
         )
+        self.ui.cbPdtiaAveragesOn.toggled.connect(self.ui.spbPdtiaAverages.setEnabled)
         self.ui.cbSampleAverageOn.toggled.connect(self._on_acq_inline_changed)
         self.ui.spbSampleAverages.valueChanged.connect(self._on_acq_inline_changed)
         self.ui.cbDetectorAverageOn.toggled.connect(self._on_acq_inline_changed)
         self.ui.spbDetectorAverages.valueChanged.connect(self._on_acq_inline_changed)
+        self.ui.cbPdtiaAveragesOn.toggled.connect(self._on_acq_inline_changed)
+        self.ui.spbPdtiaAverages.valueChanged.connect(self._on_acq_inline_changed)
         self.ui.cbSampleAverageOn.toggled.connect(self._schedule_state_save)
         self.ui.spbSampleAverages.valueChanged.connect(self._schedule_state_save)
         self.ui.cbDetectorAverageOn.toggled.connect(self._schedule_state_save)
         self.ui.spbDetectorAverages.valueChanged.connect(self._schedule_state_save)
+        self.ui.cbPdtiaAveragesOn.toggled.connect(self._schedule_state_save)
+        self.ui.spbPdtiaAverages.valueChanged.connect(self._schedule_state_save)
 
         # Group selection — enables/disables experiment tabs and updates filename preview
         self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
@@ -767,6 +772,8 @@ class MainWindow(QMainWindow):
             samp_averages=self.ui.spbSampleAverages.value(),
             det_average_on=self.ui.cbDetectorAverageOn.isChecked(),
             det_averages=self.ui.spbDetectorAverages.value(),
+            pdtia_average_on=self.ui.cbPdtiaAveragesOn.isChecked(),
+            pdtia_averages=self.ui.spbPdtiaAverages.value(),
             sample_stage_inverted=self._acq_settings.sample_stage_inverted,
             spike_filter_enabled=self._acq_settings.spike_filter_enabled,
             spike_max_delta_deg=self._acq_settings.spike_max_delta_deg,
@@ -780,6 +787,8 @@ class MainWindow(QMainWindow):
             self.ui.spbSampleAverages,
             self.ui.cbDetectorAverageOn,
             self.ui.spbDetectorAverages,
+            self.ui.cbPdtiaAveragesOn,
+            self.ui.spbPdtiaAverages,
         ):
             widget.blockSignals(True)
         self.ui.cbSampleAverageOn.setChecked(self._acq_settings.samp_average_on)
@@ -788,11 +797,16 @@ class MainWindow(QMainWindow):
         self.ui.cbDetectorAverageOn.setChecked(self._acq_settings.det_average_on)
         self.ui.spbDetectorAverages.setValue(self._acq_settings.det_averages)
         self.ui.spbDetectorAverages.setEnabled(self._acq_settings.det_average_on)
+        self.ui.cbPdtiaAveragesOn.setChecked(self._acq_settings.pdtia_average_on)
+        self.ui.spbPdtiaAverages.setValue(self._acq_settings.pdtia_averages)
+        self.ui.spbPdtiaAverages.setEnabled(self._acq_settings.pdtia_average_on)
         for widget in (
             self.ui.cbSampleAverageOn,
             self.ui.spbSampleAverages,
             self.ui.cbDetectorAverageOn,
             self.ui.spbDetectorAverages,
+            self.ui.cbPdtiaAveragesOn,
+            self.ui.spbPdtiaAverages,
         ):
             widget.blockSignals(False)
 
@@ -1514,6 +1528,8 @@ class MainWindow(QMainWindow):
                 "samp_averages": self._acq_settings.samp_averages,
                 "det_average_on": self._acq_settings.det_average_on,
                 "det_averages": self._acq_settings.det_averages,
+                "pdtia_average_on": self._acq_settings.pdtia_average_on,
+                "pdtia_averages": self._acq_settings.pdtia_averages,
                 "sample_stage_inverted": self._acq_settings.sample_stage_inverted,
                 "spike_filter_enabled": self._acq_settings.spike_filter_enabled,
                 "spike_max_delta_deg": self._acq_settings.spike_max_delta_deg,
@@ -1598,6 +1614,12 @@ class MainWindow(QMainWindow):
                         "det_average_on", self._acq_settings.det_average_on
                     ),
                     det_averages=s.get("det_averages", self._acq_settings.det_averages),
+                    pdtia_average_on=s.get(
+                        "pdtia_average_on", self._acq_settings.pdtia_average_on
+                    ),
+                    pdtia_averages=s.get(
+                        "pdtia_averages", self._acq_settings.pdtia_averages
+                    ),
                     sample_stage_inverted=s.get(
                         "sample_stage_inverted",
                         self._acq_settings.sample_stage_inverted,
