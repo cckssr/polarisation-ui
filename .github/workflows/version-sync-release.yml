@@ -1,136 +1,189 @@
-name: Version Sync and Release
+name: Auto Release
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'pyproject.toml'
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
-      force_release:
-        description: 'Force release even if version unchanged'
+      bump_type:
+        description: "Version component to bump"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      prerelease:
+        description: "Prerelease type (none = stable release)"
+        required: true
+        default: "none"
+        type: choice
+        options:
+          - none
+          - a
+          - b
+          - rc
+      prerelease_number:
+        description: "Prerelease number (only used when prerelease != none)"
         required: false
-        default: false
-        type: boolean
+        default: "1"
 
 permissions:
   contents: write
 
 jobs:
-  sync-version-and-release:
+  release:
+    name: Bump version and release
     runs-on: ubuntu-latest
-    
+    # Skip if PR was closed without merging
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Determine bump type
+        id: bump
         run: |
-          pip install toml
-
-      - name: Extract version from pyproject.toml
-        id: get_version
-        run: |
-          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
-
-      - name: Check if version tag already exists
-        id: check_tag
-        run: |
-          if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
-            echo "tag_exists=true" >> $GITHUB_OUTPUT
-            echo "Tag v${{ steps.get_version.outputs.version }} already exists"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "bump_type=${{ inputs.bump_type }}" >> $GITHUB_OUTPUT
+            echo "prerelease=${{ inputs.prerelease }}" >> $GITHUB_OUTPUT
+            echo "prerelease_number=${{ inputs.prerelease_number }}" >> $GITHUB_OUTPUT
+            echo "Triggered manually: bump=${{ inputs.bump_type }}"
           else
-            echo "tag_exists=false" >> $GITHUB_OUTPUT
-            echo "Tag v${{ steps.get_version.outputs.version }} does not exist"
-          fi
-
-      - name: Sync version in Python files
-        if: steps.check_tag.outputs.tag_exists == 'false' || github.event.inputs.force_release == 'true'
-        run: |
-          VERSION="${{ steps.get_version.outputs.version }}"
-          
-          echo "Syncing version $VERSION to Python files..."
-          
-          # Update any Python files with __version__
-          find . -name "*.py" -type f ! -path "./.venv/*" ! -path "./build/*" ! -path "./dist/*" | while read file; do
-            if grep -q "__version__ = " "$file"; then
-              sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$file"
-              echo "Updated $file"
+            LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+            echo "PR labels: $LABELS"
+            if [[ "$LABELS" == *"major"* ]]; then
+              BUMP="major"
+            elif [[ "$LABELS" == *"minor"* ]]; then
+              BUMP="minor"
+            else
+              BUMP="patch"
             fi
-          done
-          
-          # Update polarisation_ui/config.json
-          if [ -f "polarisation_ui/config.json" ]; then
-            jq --arg version "$VERSION" '. + {"version": $version}' polarisation_ui/config.json > tmp.$$.json && mv tmp.$$.json polarisation_ui/config.json
-            echo "Updated polarisation_ui/config.json"
+            echo "bump_type=$BUMP" >> $GITHUB_OUTPUT
+            echo "prerelease=none" >> $GITHUB_OUTPUT
+            echo "prerelease_number=1" >> $GITHUB_OUTPUT
+            echo "Detected bump type from labels: $BUMP"
           fi
-          
-          echo "Version sync complete"
 
-      - name: Check for changes
-        id: check_changes
+      - name: Compute new version
+        id: ver
         run: |
-          if git diff --quiet; then
-            echo "changes=false" >> $GITHUB_OUTPUT
+          python3 - <<'PYEOF'
+          import re, os
+
+          with open("pyproject.toml") as f:
+              content = f.read()
+
+          m = re.search(r'^version\s*=\s*"([^"]+)"', content, re.MULTILINE)
+          if not m:
+              raise RuntimeError("Could not find version in pyproject.toml")
+          current = m.group(1)
+
+          base = re.sub(r"(a|b|rc)\d+$", "", current)
+          parts = base.split(".")
+          major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+
+          bump = os.environ["BUMP_TYPE"]
+          if bump == "major":
+              major += 1; minor = 0; patch = 0
+          elif bump == "minor":
+              minor += 1; patch = 0
+          else:
+              patch += 1
+
+          new = f"{major}.{minor}.{patch}"
+
+          pre = os.environ["PRERELEASE"]
+          pre_num = os.environ["PRERELEASE_NUMBER"]
+          if pre != "none":
+              new = f"{new}{pre}{pre_num}"
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"new_version={new}\n")
+
+          print(f"Current: {current}  →  New: {new}")
+          PYEOF
+        env:
+          BUMP_TYPE: ${{ steps.bump.outputs.bump_type }}
+          PRERELEASE: ${{ steps.bump.outputs.prerelease }}
+          PRERELEASE_NUMBER: ${{ steps.bump.outputs.prerelease_number }}
+
+      - name: Update version files
+        run: |
+          VERSION="${{ steps.ver.outputs.new_version }}"
+          sed -i "s/^version = \"[^\"]*\"/version = \"$VERSION\"/" pyproject.toml
+          sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" polarisation_ui/__init__.py
+          jq --arg v "$VERSION" '. + {"version": $v}' \
+            polarisation_ui/config.json > /tmp/cfg.json && mv /tmp/cfg.json polarisation_ui/config.json
+          echo "Updated all version files to $VERSION"
+
+      - name: Install build tool
+        run: pip install build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Commit and tag
+        run: |
+          VERSION="${{ steps.ver.outputs.new_version }}"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add pyproject.toml polarisation_ui/__init__.py polarisation_ui/config.json
+          git commit -m "chore: bump version to v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
+          echo "Pushed commit and tag v$VERSION"
+
+      - name: Detect prerelease
+        id: pre
+        run: |
+          if echo "${{ steps.ver.outputs.new_version }}" | grep -qE "(a|b|rc)[0-9]+$"; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
           else
-            echo "changes=true" >> $GITHUB_OUTPUT
-            git diff --stat
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit version changes
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A
-          git commit -m "chore: sync version to ${{ steps.get_version.outputs.version }}"
-          git push
-
-      - name: Create Release
-        if: (steps.check_tag.outputs.tag_exists == 'false' || github.event.inputs.force_release == 'true')
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: Release v${{ steps.get_version.outputs.version }}
-          body: |
-            ## Polarisation-UI v${{ steps.get_version.outputs.version }}
-            
-            ### Installation
-            
-            ```bash
-            pip install .
-            ```
-            
-            ### Änderungen
-            
-            Siehe [CHANGELOG](CHANGELOG.md) oder die Commit-Historie für Details.
-          draft: false
-          prerelease: ${{ contains(steps.get_version.outputs.version, 'alpha') || contains(steps.get_version.outputs.version, 'beta') || contains(steps.get_version.outputs.version, 'rc') }}
+          tag_name: v${{ steps.ver.outputs.new_version }}
+          name: Release v${{ steps.ver.outputs.new_version }}
+          prerelease: ${{ steps.pre.outputs.is_prerelease }}
           generate_release_notes: true
+          body: |
+            ## Polarisation-UI v${{ steps.ver.outputs.new_version }}
+
+            Desktop application for polarisation experiments — reads two magnetic encoder
+            angles and ADS1220 photodiode intensity over SCPI from an Arduino Nano ESP32.
+
+            ### Installation
+
+            ```bash
+            pip install git+https://github.com/cckssr/polarisation-ui.git@v${{ steps.ver.outputs.new_version }}
+            ```
+
+            See the [README](https://github.com/cckssr/polarisation-ui#readme) for hardware requirements.
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         run: |
-          echo "## Version Sync Summary" >> $GITHUB_STEP_SUMMARY
+          VERSION="${{ steps.ver.outputs.new_version }}"
+          echo "## Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version:** ${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag exists:** ${{ steps.check_tag.outputs.tag_exists }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files changed:** ${{ steps.check_changes.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.check_tag.outputs.tag_exists }}" == "false" ]; then
-            echo "- **Release created:** ✅ v${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Release created:** ❌ (tag already exists)" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`v$VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Bump type** | ${{ steps.bump.outputs.bump_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
