@@ -97,6 +97,10 @@ class DataController(QObject):
     _MOCK_NOISE: float = 15.0  # Gaussian noise amplitude
     # -------------------------------------------------------------------------
 
+    # Dark-tare signals
+    dark_tare_progress = Signal(int, int)  # (samples_collected, samples_total)
+    dark_tare_done = Signal(float)  # dark offset in V (0.0 on reset)
+
     # Signal emitted when a reconnection attempt begins
     retry_connecting = Signal(int, float)  # (attempt_number, delay_seconds)
     # Signal emitted when the connection is re-established after errors
@@ -194,6 +198,12 @@ class DataController(QObject):
 
         # Last seen DATA:FRAME sequence number — used to detect gaps in the stream.
         self._last_frame_seq: Optional[int] = None
+
+        # Dark-current tare state
+        self._dark_V: float = 0.0
+        self._tare_active: bool = False
+        self._tare_samples: list[float] = []
+        self._tare_n: int = 20
 
         # Active session journal — created on start_measurement(), closed/finalized
         # when the user explicitly exports or stops. Preserved across reconnects.
@@ -382,14 +392,37 @@ class DataController(QObject):
         """Currently active PDTIA gain stage (0 = not set)."""
         return self._current_pdtia_gain
 
+    # ==================== Dark-Current Tare ====================
+
+    @property
+    def dark_offset_V(self) -> float:
+        """Currently stored dark-current offset in volts."""
+        return self._dark_V
+
+    def start_dark_tare(self, n: int = 20) -> None:
+        """Begin averaging n raw ADC samples to establish the dark-current offset.
+
+        The poll timer must be running.  While tare is in progress the
+        ``dark_tare_progress`` signal fires after each sample; ``dark_tare_done``
+        fires once with the measured offset when the collection is complete.
+        """
+        if self._tare_active:
+            return
+        self._tare_n = n
+        self._tare_samples = []
+        self._tare_active = True
+        Debug.info(f"Dark tare started (n={n})")
+
+    def reset_dark_offset(self) -> None:
+        """Clear the dark-current offset (set to 0 V)."""
+        self._dark_V = 0.0
+        self.dark_tare_done.emit(0.0)
+        Debug.info("Dark offset reset to 0")
+
     # ==================== Intensity Reading ====================
 
-    def _read_intensity(self, detector_angle: float) -> float:
-        """Return the current photodiode intensity (a.u.).
-
-        Reads real ADC voltage via MEAS:ADC:VOLT?.  Falls back to a Gaussian
-        simulation when use_mock_intensity=True (tests without hardware).
-        """
+    def _read_raw_adc(self, detector_angle: float) -> float:
+        """Return the raw ADC voltage without dark offset applied."""
         if self._use_mock_intensity:
             diff = detector_angle - self._MOCK_PEAK_ANGLE
             signal = self._MOCK_AMPLITUDE * math.exp(
@@ -398,9 +431,7 @@ class DataController(QObject):
             return signal + random.gauss(0.0, self._MOCK_NOISE)
 
         voltage = self.device_manager.read_adc_voltage()
-        if voltage is None:
-            return float("nan")
-        return voltage
+        return float("nan") if voltage is None else voltage
 
     # ==================== Data Acquisition ====================
 
@@ -495,7 +526,27 @@ class DataController(QObject):
                 else detector_angle
             )
 
-            intensity = self._read_intensity(detector_angle)
+            raw_intensity = self._read_raw_adc(detector_angle)
+
+            # Dark tare: accumulate raw samples; apply offset only after collection.
+            if self._tare_active and not math.isnan(raw_intensity):
+                self._tare_samples.append(raw_intensity)
+                n = len(self._tare_samples)
+                self.dark_tare_progress.emit(n, self._tare_n)
+                if n >= self._tare_n:
+                    self._dark_V = sum(self._tare_samples) / len(self._tare_samples)
+                    self._tare_active = False
+                    self._tare_samples.clear()
+                    self.dark_tare_done.emit(self._dark_V)
+                    Debug.info(
+                        f"Dark tare complete: offset={self._dark_V * 1000:.3f} mV"
+                    )
+
+            intensity = (
+                max(0.0, raw_intensity - self._dark_V)
+                if not math.isnan(raw_intensity)
+                else raw_intensity
+            )
             self.intensity_updated.emit(intensity)
             self.angles_updated.emit(display_sample, display_det)
             # Compute optical power from calibration profile (if loaded).

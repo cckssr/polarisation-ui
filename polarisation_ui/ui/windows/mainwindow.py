@@ -305,6 +305,12 @@ class MainWindow(QMainWindow):
         # Save button
         self.ui.btnSave.clicked.connect(self._save_data)
 
+        # Dark-tare buttons and signals
+        self.ui.btnDarkTare.clicked.connect(self._on_dark_tare_clicked)
+        self.ui.btnDarkReset.clicked.connect(self._on_dark_reset_clicked)
+        self.data_controller.dark_tare_progress.connect(self._on_dark_tare_progress)
+        self.data_controller.dark_tare_done.connect(self._on_dark_tare_done)
+
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
         self.data_controller.intensity_updated.connect(self._update_intensity_display)
@@ -914,6 +920,48 @@ class MainWindow(QMainWindow):
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dialog.profile_saved.connect(self._reload_profiles)
         dialog.show()
+
+    # ==================== Dark-Current Tare ====================
+
+    @Slot()
+    def _on_dark_tare_clicked(self) -> None:
+        reply = QMessageBox.question(
+            self,
+            "Dunkelstrom messen",
+            "Bitte den Detektor vollständig und lichtdicht abdecken.\n\n"
+            "Der Dunkelstrom-Offset wird über 2 Sekunden gemittelt (20 Messungen) "
+            "und von allen folgenden Intensitätswerten abgezogen.\n\n"
+            "Fortfahren?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self.ui.btnDarkTare.setEnabled(False)
+        self.ui.btnDarkReset.setEnabled(False)
+        self.statusbar_manager.show_info("Dunkelstrom messen… 0/20")
+        self.data_controller.start_dark_tare(n=20)
+
+    @Slot(int, int)
+    def _on_dark_tare_progress(self, current: int, total: int) -> None:
+        self.statusbar_manager.show_info(f"Dunkelstrom messen… {current}/{total}")
+
+    @Slot(float)
+    def _on_dark_tare_done(self, offset_V: float) -> None:
+        self.ui.btnDarkTare.setEnabled(True)
+        self.ui.btnDarkReset.setEnabled(True)
+        if offset_V == 0.0:
+            self.ui.lblDarkOffsetValue.setText("Offset: –")
+            self.statusbar_manager.show_info("Dunkelstrom-Offset zurückgesetzt")
+        else:
+            offset_mV = offset_V * 1000.0
+            self.ui.lblDarkOffsetValue.setText(f"Offset: {offset_mV:.3f} mV")
+            self.statusbar_manager.show_success(
+                f"Dunkelstrom-Offset gesetzt: {offset_mV:.3f} mV"
+            )
+
+    @Slot()
+    def _on_dark_reset_clicked(self) -> None:
+        self.data_controller.reset_dark_offset()
 
     # ==================== Encoder Control ====================
 

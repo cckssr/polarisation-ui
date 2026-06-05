@@ -240,6 +240,28 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.lcdDetectorVoltage)
 
+        self.gbDarkTare = QGroupBox(self.centralwidget)
+        self.gbDarkTare.setObjectName("gbDarkTare")
+        self.vlDarkTare = QVBoxLayout(self.gbDarkTare)
+        self.vlDarkTare.setObjectName("vlDarkTare")
+        self.vlDarkTare.setContentsMargins(5, 8, 5, 5)
+        self.lblDarkOffsetValue = QLabel(self.gbDarkTare)
+        self.lblDarkOffsetValue.setObjectName("lblDarkOffsetValue")
+
+        self.vlDarkTare.addWidget(self.lblDarkOffsetValue)
+
+        self.btnDarkTare = QPushButton(self.gbDarkTare)
+        self.btnDarkTare.setObjectName("btnDarkTare")
+
+        self.vlDarkTare.addWidget(self.btnDarkTare)
+
+        self.btnDarkReset = QPushButton(self.gbDarkTare)
+        self.btnDarkReset.setObjectName("btnDarkReset")
+
+        self.vlDarkTare.addWidget(self.btnDarkReset)
+
+        self.verticalLayout_2.addWidget(self.gbDarkTare)
+
         self.verticalSpacer = QSpacerItem(
             20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
         )
@@ -1383,6 +1405,43 @@ class Ui_MainWindow(object):
                 "MainWindow",
                 "Berechnete Laserleistung in Mikrowatt (\u00b5W) \u2014 nur mit geladenem Kalibrierungsprofil",
                 None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.gbDarkTare.setTitle(
+            QCoreApplication.translate("MainWindow", "Dunkelstrom-Korrektur", None)
+        )
+        self.lblDarkOffsetValue.setText(
+            QCoreApplication.translate("MainWindow", "Offset: \u2013", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.lblDarkOffsetValue.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                "Aktuell abgezogener Dunkelstrom-Offset in Millivolt",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnDarkTare.setText(
+            QCoreApplication.translate("MainWindow", "Dunkelstrom nullen", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnDarkTare.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                "Detektor vollst\u00e4ndig abdecken, dann Dunkelstrom-Offset \u00fcber 2 s messen",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnDarkReset.setText(
+            QCoreApplication.translate("MainWindow", "Offset zur\u00fccksetzen", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnDarkReset.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Dunkelstrom-Offset auf 0 zur\u00fccksetzen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
