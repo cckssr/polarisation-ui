@@ -385,6 +385,18 @@ class GoniometerDeviceManager:
             Debug.error(f"Error setting PDTIA gain: {e}")
             return False
 
+    def get_pdtia_gain(self) -> int:
+        """Query current PDTIA gain stage from device; returns 0 if unavailable."""
+        device = self.get_encoder_device()
+        if device is None:
+            return 0
+        try:
+            result = device.adc.get_pdtia_gain()
+            return result.get("stage", 0) if result is not None else 0
+        except Exception as e:
+            Debug.error(f"Error querying PDTIA gain: {e}")
+            return 0
+
     def zero_both_encoders(self) -> bool:
         """Thin alias: zero both encoder stages."""
         return self.zero_encoder("BOTH")

@@ -44,6 +44,10 @@ from polarisation_ui.infrastructure.save_service import (
     compose_filename,
     save_tab_export,
 )
+from polarisation_ui.infrastructure.utils import (
+    create_dropbox_foldername,
+    sanitize_subterm_for_folder,
+)
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
@@ -147,15 +151,8 @@ class MainWindow(QMainWindow):
 
     def _setup_initial_state(self) -> None:
         """Setup initial UI state (disconnected)."""
-        # Make the combobox editable with a read-only line edit so the popup can show
-        # full port names while the collapsed view shows a truncated version.
-        self.ui.cbArduinoPort.setEditable(True)
-        self.ui.cbArduinoPort.lineEdit().setReadOnly(True)
-        self.ui.cbArduinoPort.setSizeAdjustPolicy(
-            self.ui.cbArduinoPort.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
-        )
-        self.ui.cbArduinoPort.setMinimumContentsLength(18)
         self._populate_ports()
+        self.ui.lblDropbox.setOpenExternalLinks(True)
 
         # Arduino connection group: start disconnected
         self.ui.ledArduinoStatus.setStyleSheet(LED_RED)
@@ -285,11 +282,11 @@ class MainWindow(QMainWindow):
         # Group selection — enables/disables experiment tabs and updates filename preview
         self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
         self.ui.leSuffix.textChanged.connect(self._update_filename_display)
+        self.ui.leTeamName.textChanged.connect(self._update_filename_display)
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
         self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
-        self.ui.cbArduinoPort.currentIndexChanged.connect(self._update_port_display)
 
         # KDC101 connection controls
         self.ui.btnKDCRefresh.clicked.connect(self._populate_kdc_devices)
@@ -399,8 +396,11 @@ class MainWindow(QMainWindow):
         else:
             hint, tokens = "messung", []
         stem = compose_filename(hint, group, suffix, tokens)
-        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
-        display = f"{base_folder}/{group}/{stem}.csv"
+        tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
+        team_raw = self.ui.leTeamName.text().strip()
+        subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
+        folder = create_dropbox_foldername(group, tk, subterm)
+        display = f"{folder}/{stem}.csv"
         self.ui.pteCurrentFilename.setPlainText(display)
 
     # ==================== Arduino Connection ====================
@@ -413,29 +413,7 @@ class MainWindow(QMainWindow):
             self.ui.cbArduinoPort.addItem(port)
         if not ports:
             self.ui.cbArduinoPort.addItem(CONFIG["messages"]["device_ports_missing"])
-
-        # Let the popup grow wide enough for the longest entry while the collapsed
-        # combobox stays narrow (limited by minimumContentsLength).
-        fm = self.ui.cbArduinoPort.fontMetrics()
-        all_items = ports if ports else [CONFIG["messages"]["device_ports_missing"]]
-        popup_width = max(fm.horizontalAdvance(p) for p in all_items) + 32
-        self.ui.cbArduinoPort.view().setMinimumWidth(popup_width)
-
-        # Truncate the collapsed display (signal may not be connected yet on first call)
-        self._update_port_display(self.ui.cbArduinoPort.currentIndex())
         Debug.info(f"Available serial ports: {ports}")
-
-    @Slot(int)
-    def _update_port_display(self, index: int) -> None:
-        """Show truncated port name in the collapsed combobox; full name stays in the popup."""
-        if index < 0 or not self.ui.cbArduinoPort.isEditable():
-            return
-        line_edit = self.ui.cbArduinoPort.lineEdit()
-        if line_edit is None:
-            return
-        full = self.ui.cbArduinoPort.itemText(index)
-        truncated = f"..{full[-13:]}" if len(full) > 15 else full
-        line_edit.setText(truncated)
 
     @Slot()
     def _connect_arduino(self) -> None:
@@ -450,7 +428,7 @@ class MainWindow(QMainWindow):
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
-            "Verbinde...",
+            "Wird verbunden",
             LED_YELLOW,
         )
         self.ui.cbArduinoPort.setEnabled(False)
@@ -588,6 +566,16 @@ class MainWindow(QMainWindow):
         self._adc_saturated = False
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
+
+        # Sync gain buttons to the stage the firmware already has active
+        stage = self.device_manager.get_pdtia_gain()
+        if 1 <= stage <= 4:
+            btn = getattr(self.ui, f"btnGain{stage}", None)
+            if btn is not None:
+                btn.setChecked(True)
+            self.data_controller._current_pdtia_gain = stage
+
+        self._update_detector_calibration_status()
 
     # ==================== KDC101 Connection ====================
 
@@ -865,11 +853,13 @@ class MainWindow(QMainWindow):
         if index < 0:
             self._calibration_profile = None
             self.data_controller.update_calibration_profile(None)
+            self._update_detector_calibration_status()
             return
         path: Path = self.ui.cbProfile.itemData(index)
         if path is None:
             self._calibration_profile = None
             self.data_controller.update_calibration_profile(None)
+            self._update_detector_calibration_status()
             return
         try:
             self._calibration_profile = PowerCalibrationProfile.load(path)
@@ -878,6 +868,26 @@ class MainWindow(QMainWindow):
             Debug.error(f"Failed to load calibration profile {path}: {exc}")
             self._calibration_profile = None
         self.data_controller.update_calibration_profile(self._calibration_profile)
+        self._update_detector_calibration_status()
+
+    def _update_detector_calibration_status(self) -> None:
+        """Show calibration hint in the detector status when connected and no profile is loaded."""
+        if not self._is_connected:
+            return
+        if self._calibration_profile is None:
+            set_connection_status(
+                self.ui.ledDetectorStatus,
+                self.ui.lblDetectorStatusValue,
+                "Kalibrierung auswählen",
+                LED_YELLOW,
+            )
+        else:
+            set_connection_status(
+                self.ui.ledDetectorStatus,
+                self.ui.lblDetectorStatusValue,
+                "ADC",
+                LED_GREEN,
+            )
 
     def _open_power_calibration(self) -> None:
         from polarisation_ui.ui.windows.power_calibration_window import (
@@ -1086,8 +1096,11 @@ class MainWindow(QMainWindow):
         stem = compose_filename(
             exp.filename_hint, group_letter, suffix, exp.filename_tokens
         )
-        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
-        default_dir = Path.home() / base_folder / group_letter
+        tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
+        team_raw = self.ui.leTeamName.text().strip()
+        subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
+        folder = create_dropbox_foldername(group_letter, tk, subterm)
+        default_dir = Path.home() / folder
         default_dir.mkdir(parents=True, exist_ok=True)
 
         path, _ = QFileDialog.getSaveFileName(

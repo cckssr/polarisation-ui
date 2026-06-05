@@ -177,7 +177,10 @@ class KDC101Polariser:
         if not _ensure_pylablib():
             return []
         try:
-            return list(_Thorlabs.list_kinesis_devices())
+            devices = _Thorlabs.list_kinesis_devices()
+            if isinstance(devices[0], tuple):
+                return devices
+            return []
         except Exception as exc:
             Debug.warning(f"KDC101Polariser.list_devices: {exc}")
             return []
