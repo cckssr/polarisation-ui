@@ -389,3 +389,169 @@ class AlignPolariserWorker(QThread):
             f"→ Polarisator-Versatz auf {angle_max:.2f}° gesetzt"
         )
         self.finished.emit(angle_max)
+
+
+class MalusSweepWorker(QThread):
+    """Off-main-thread worker for the automated Malus-law KDC101 sweep.
+
+    Sequence (``mode="malus"``, the default):
+        1. Home the KDC stage.
+        2. Auto-zero search: coarse sweep 0–180° in ~5° steps, fine pass ±5°
+           in 0.5° steps around the minimum.  Emits ``zero_offset(float)``.
+        3. User sweep: for each angle in [start, end] with the given step,
+           move to ``zero_offset + angle``, wait *settle_ms* ms, call
+           ``read_average()`` to get (intensity_V, Frame|None), emit
+           ``point_scanned(angle, kdc_pos, intensity_V)``.
+
+    ``mode="waveplate"`` skips the auto-zero search (home == zero).
+    """
+
+    zero_offset = Signal(float)
+    point_scanned = Signal(
+        float, float, float
+    )  # (analyser_angle, kdc_pos, intensity_V)
+    progress = Signal(int, int)
+    finished = Signal()
+    failed = Signal(str)
+    log = Signal(str)
+
+    def __init__(
+        self,
+        kdc: "KDC101Polariser",
+        read_average,  # Callable[[], tuple[float, Optional[Frame]]]
+        start_deg: float,
+        end_deg: float,
+        step_deg: float,
+        mode: str = "malus",
+        settle_ms: int = 150,
+        parent=None,
+    ) -> None:
+        super().__init__(parent)
+        self._kdc = kdc
+        self._read_average = read_average
+        self._start = start_deg
+        self._end = end_deg
+        self._step = step_deg
+        self._mode = mode
+        self._settle_ms = settle_ms / 1000.0
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        self._abort = True
+
+    def run(self) -> None:
+        try:
+            self._run()
+        except KDC101Error as exc:
+            self.failed.emit(f"KDC101 Fehler: {exc}")
+        except Exception as exc:
+            Debug.error(f"MalusSweepWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run(self) -> None:
+        # Step 1: home
+        self.log.emit("Referenzfahrt (Home) läuft…")
+        self._kdc.home()
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+
+        # Step 2: auto-zero search (malus only)
+        zero_offset = 0.0
+        if self._mode == "malus":
+            self.log.emit("Auto-Zero-Suche (grob)…")
+            zero_offset = self._find_zero_offset()
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+            self.log.emit(f"Zero-Offset: {zero_offset:.2f}°")
+            self.zero_offset.emit(zero_offset)
+
+        # Step 3: user sweep
+        angles = []
+        a = self._start
+        while a <= self._end + 1e-6:
+            angles.append(a)
+            a += self._step
+        n = len(angles)
+        self.log.emit(
+            f"Sweep: {self._start:.1f}° bis {self._end:.1f}°, Schritt {self._step:.1f}°, {n} Punkte"
+        )
+        for i, angle_set in enumerate(angles):
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+            target = zero_offset + angle_set
+            self._kdc.move_to(target)
+            actual_pos = self._kdc.get_position_deg()
+            time.sleep(self._settle_ms)
+            intensity_V, _frame = self._read_average()
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+            self.point_scanned.emit(angle_set, actual_pos, intensity_V)
+            self.progress.emit(i + 1, n)
+            self.log.emit(
+                f"  θ={angle_set:.1f}° | pos={actual_pos:.2f}° | I={intensity_V:.4f} V"
+            )
+
+        self.finished.emit()
+
+    def _find_zero_offset(self) -> float:
+        """Return the KDC angle at which intensity is minimal."""
+        # Coarse pass: 0–180° in 5° steps
+        coarse_results: list[tuple[float, float]] = []
+        for angle in range(0, 181, 5):
+            if self._abort:
+                return 0.0
+            self._kdc.move_to(float(angle))
+            time.sleep(0.2)
+            intensity_V, _ = self._read_average()
+            coarse_results.append((float(angle), intensity_V))
+
+        # Find coarse minimum (ignoring NaN)
+        valid = [(a, v) for a, v in coarse_results if not (v != v)]  # filter NaN
+        if not valid:
+            return 0.0
+        coarse_min_angle = min(valid, key=lambda x: x[1])[0]
+
+        # Fine pass: ±5° around coarse minimum in 0.5° steps
+        fine_start = max(0.0, coarse_min_angle - 5.0)
+        fine_end = min(180.0, coarse_min_angle + 5.0)
+        fine_results: list[tuple[float, float]] = []
+        a = fine_start
+        while a <= fine_end + 1e-6:
+            if self._abort:
+                return coarse_min_angle
+            self._kdc.move_to(a)
+            time.sleep(0.15)
+            intensity_V, _ = self._read_average()
+            fine_results.append((a, intensity_V))
+            a += 0.5
+
+        valid_fine = [(a, v) for a, v in fine_results if not (v != v)]
+        if not valid_fine:
+            return coarse_min_angle
+        return min(valid_fine, key=lambda x: x[1])[0]
+
+
+class KDC101HomeWorker(QThread):
+    """Runs KDC101 homing off the main thread.
+
+    Shared between MainWindow, Malus tab worker, and Waveplate tab worker so
+    each caller does not duplicate the same four lines.
+    """
+
+    done = Signal()
+    error = Signal(str)
+
+    def __init__(self, kdc: "KDC101Polariser", parent=None) -> None:
+        super().__init__(parent)
+        self._kdc = kdc
+
+    def run(self) -> None:
+        try:
+            self._kdc.home()
+            self.done.emit()
+        except KDC101Error as exc:
+            self.error.emit(str(exc))

@@ -14,8 +14,6 @@ Responsibilities:
     - Status indicators (LEDs)
 """
 
-import csv
-import json
 import math
 import shutil
 from collections.abc import Callable
@@ -23,23 +21,43 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from PySide6.QtCore import Qt, QTimer, Slot
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QDialog,
     QFileDialog,
     QMainWindow,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QCloseEvent
 
+from polarisation_ui.core.exceptions import KDC101Error
 from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
+from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.save_service import SENSOR_DESCRIPTIONS
+from polarisation_ui.infrastructure.modules import ModuleRegistry
+from polarisation_ui.infrastructure.modules.kdc101_adapter import KDC101ModuleAdapter
+from polarisation_ui.infrastructure.qt_threads import KDC101HomeWorker
+from polarisation_ui.infrastructure.save_service import (
+    compose_filename,
+    save_tab_export,
+)
+from polarisation_ui.infrastructure.utils import (
+    create_dropbox_foldername,
+    sanitize_subterm_for_folder,
+)
 from polarisation_ui.infrastructure.session_journal import SessionJournal
+from polarisation_ui.infrastructure.session_state import (
+    SessionState,
+    is_from_today,
+    load_session_state,
+    save_session_state,
+)
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
+from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.common.status_led import (
     LED_GREEN,
@@ -115,6 +133,23 @@ class MainWindow(QMainWindow):
         # Power calibration — lazily loaded from selected profile
         self._calibration_profile: Optional[PowerCalibrationProfile] = None
 
+        # KDC101 rotation stage
+        self._kdc = KDC101Polariser()
+        self._kdc_home_worker: Optional[KDC101HomeWorker] = None
+        # 250 ms timer that polls get_position_deg() while the KDC is connected
+        self._kdc_position_timer = QTimer(self)
+        self._kdc_position_timer.setInterval(250)
+        self._kdc_position_timer.timeout.connect(self._refresh_kdc_position)
+
+        # Gain stage to apply when Arduino next connects (set by session restore).
+        self._pending_gain_restore: int = 0
+
+        # Debounce timer for session-state persistence.
+        self._state_save_timer = QTimer(self)
+        self._state_save_timer.setSingleShot(True)
+        self._state_save_timer.setInterval(500)
+        self._state_save_timer.timeout.connect(self._save_session_state)
+
         self.data_controller.update_acq_settings(self._acq_settings)
 
         # Setup UI and connections
@@ -132,15 +167,8 @@ class MainWindow(QMainWindow):
 
     def _setup_initial_state(self) -> None:
         """Setup initial UI state (disconnected)."""
-        # Make the combobox editable with a read-only line edit so the popup can show
-        # full port names while the collapsed view shows a truncated version.
-        self.ui.cbArduinoPort.setEditable(True)
-        self.ui.cbArduinoPort.lineEdit().setReadOnly(True)
-        self.ui.cbArduinoPort.setSizeAdjustPolicy(
-            self.ui.cbArduinoPort.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
-        )
-        self.ui.cbArduinoPort.setMinimumContentsLength(18)
         self._populate_ports()
+        self.ui.lblDropbox.setOpenExternalLinks(True)
 
         # Arduino connection group: start disconnected
         self.ui.ledArduinoStatus.setStyleSheet(LED_RED)
@@ -161,19 +189,74 @@ class MainWindow(QMainWindow):
 
         self.statusbar_manager.show_info(CONFIG["messages"]["device_please_connect"])
 
+        # KDC101 group: populate device list and set initial state
+        self._populate_kdc_devices()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.lblKDCPositionValue.setText("—")
+
+        # Initialise inline acquisition settings from loaded config
+        self._sync_inline_acq_controls()
+
+    def _add_tab(self, tab_cls, modules) -> "PlotTabBase":
+        """Instantiate one tab, wire all standard signals, and append it to the widget."""
+        tab = tab_cls()
+        tab.build()
+        tab.status_message.connect(self._handle_tab_status)
+        tab.filename_hint_changed.connect(self._update_filename_display)
+        if hasattr(tab, "points_changed"):
+            tab.points_changed.connect(self._on_tab_points_changed)
+            tab.points_changed.connect(self._schedule_state_save)
+        self.data_controller.frame_ready.connect(tab.on_frame)
+        self.ui.tabWidget.addTab(tab, tab.tab_title)
+        self._tab_instances.append(tab)
+        tab.inject_modules(modules)
+        return tab
+
     def _setup_tabs(self) -> None:
         """Instantiate and register all available experiment tabs into tabWidget."""
         # Trigger tab registrations by importing the tabs package
         import polarisation_ui.ui.widgets.tabs  # NOQA: F401
 
-        for tab_cls in TabRegistry.available(modules={}):
-            tab = tab_cls()
-            tab.build()
-            tab.status_message.connect(self._handle_tab_status)
-            if hasattr(tab, "points_changed"):
-                tab.points_changed.connect(self._on_tab_points_changed)
-            self.ui.tabWidget.addTab(tab, tab.tab_title)
-            self._tab_instances.append(tab)
+        modules = ModuleRegistry.all()
+        for tab_cls in TabRegistry.available(modules=modules):
+            self._add_tab(tab_cls, modules)
+
+    def _refresh_tab_visibility(self) -> None:
+        """Re-evaluate which tabs are visible based on current module registry.
+
+        Tabs whose ``required_modules`` are not met become hidden; new tabs
+        that are now satisfied are added.  Existing satisfied tabs are kept in
+        place (their state is preserved).
+        """
+        modules = ModuleRegistry.all()
+        available_ids = {cls.tab_id for cls in TabRegistry.available(modules=modules)}
+        existing_ids = {tab.tab_id for tab in self._tab_instances}
+
+        # Inject modules into already-existing tabs (they may gain new capabilities)
+        for tab in self._tab_instances:
+            tab.inject_modules(modules)
+
+        # Add newly available tabs (tabs that need kdc101 and it just connected)
+        for tab_cls in TabRegistry.available(modules=modules):
+            if tab_cls.tab_id not in existing_ids:
+                self._add_tab(tab_cls, modules)
+
+        # Hide tabs whose requirements are no longer met
+        for tab in self._tab_instances:
+            if tab.tab_id not in available_ids:
+                idx = self.ui.tabWidget.indexOf(tab)
+                if idx >= 0:
+                    self.ui.tabWidget.setTabVisible(idx, False)
+            else:
+                idx = self.ui.tabWidget.indexOf(tab)
+                if idx >= 0:
+                    self.ui.tabWidget.setTabVisible(idx, True)
 
     # ==================== Signal Connections ====================
 
@@ -197,20 +280,52 @@ class MainWindow(QMainWindow):
             self.ui.gainButtonGroup.setId(getattr(self.ui, f"btnGain{stage}"), stage)
         self.ui.gainButtonGroup.idClicked.connect(self._on_gain_button_clicked)
 
+        # Second gain button group for the sidebar buttons (btnGain1_2 … btnGain4_2).
+        self._gain_button_group_2 = QButtonGroup(self)
+        for stage in (1, 2, 3, 4):
+            btn = getattr(self.ui, f"btnGain{stage}_2")
+            self._gain_button_group_2.addButton(btn, stage)
+        self._gain_button_group_2.idClicked.connect(self._on_gain_button_clicked)
+
         # Power calibration profile controls
         self.ui.cbProfile.currentIndexChanged.connect(self._on_profile_selected)
+        self.ui.cbProfile.currentIndexChanged.connect(self._schedule_state_save)
         self.ui.btnReloadProfiles.clicked.connect(self._reload_profiles)
         self.ui.btnOpenCalibration.clicked.connect(self._open_power_calibration)
         self._reload_profiles()
 
+        # Inline acquisition settings (averaging)
+        self.ui.cbSampleAverageOn.toggled.connect(self.ui.spbSampleAverages.setEnabled)
+        self.ui.cbDetectorAverageOn.toggled.connect(
+            self.ui.spbDetectorAverages.setEnabled
+        )
+        self.ui.cbSampleAverageOn.toggled.connect(self._on_acq_inline_changed)
+        self.ui.spbSampleAverages.valueChanged.connect(self._on_acq_inline_changed)
+        self.ui.cbDetectorAverageOn.toggled.connect(self._on_acq_inline_changed)
+        self.ui.spbDetectorAverages.valueChanged.connect(self._on_acq_inline_changed)
+        self.ui.cbSampleAverageOn.toggled.connect(self._schedule_state_save)
+        self.ui.spbSampleAverages.valueChanged.connect(self._schedule_state_save)
+        self.ui.cbDetectorAverageOn.toggled.connect(self._schedule_state_save)
+        self.ui.spbDetectorAverages.valueChanged.connect(self._schedule_state_save)
+
         # Group selection — enables/disables experiment tabs and updates filename preview
         self.ui.cbGroupLetter.currentIndexChanged.connect(self._on_group_changed)
         self.ui.leSuffix.textChanged.connect(self._update_filename_display)
+        self.ui.leTeamName.textChanged.connect(self._update_filename_display)
+
+        # Persist session state on every relevant settings change.
+        self.ui.cbGroupLetter.currentIndexChanged.connect(self._schedule_state_save)
+        self.ui.leSuffix.textChanged.connect(self._schedule_state_save)
+        self.ui.leTeamName.textChanged.connect(self._schedule_state_save)
 
         # Arduino connection controls
         self.ui.btnRefreshPorts.clicked.connect(self._populate_ports)
         self.ui.btnArduinoConnect.clicked.connect(self._connect_arduino)
-        self.ui.cbArduinoPort.currentIndexChanged.connect(self._update_port_display)
+
+        # KDC101 connection controls
+        self.ui.btnKDCRefresh.clicked.connect(self._populate_kdc_devices)
+        self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
+        self.ui.btnKDCHome.clicked.connect(self._home_kdc)
 
         # Zero buttons
         self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
@@ -223,6 +338,12 @@ class MainWindow(QMainWindow):
 
         # Save button
         self.ui.btnSave.clicked.connect(self._save_data)
+
+        # Dark-tare buttons and signals
+        self.ui.btnDarkTare.clicked.connect(self._on_dark_tare_clicked)
+        self.ui.btnDarkReset.clicked.connect(self._on_dark_reset_clicked)
+        self.data_controller.dark_tare_progress.connect(self._on_dark_tare_progress)
+        self.data_controller.dark_tare_done.connect(self._on_dark_tare_done)
 
         # Data controller signals
         self.data_controller.angles_updated.connect(self._update_angle_displays)
@@ -240,10 +361,6 @@ class MainWindow(QMainWindow):
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
         self.data_controller.measurement_stopped.connect(self._on_measurement_stopped)
-
-        # Fan frame_ready to all tab on_frame handlers
-        for tab in self._tab_instances:
-            self.data_controller.frame_ready.connect(tab.on_frame)
 
         # Connection state changes → all tabs
         self.data_controller.reconnect_succeeded.connect(
@@ -270,8 +387,8 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def _on_tab_changed(self, index: int) -> None:
-        for i, tab in enumerate(self._tab_instances):
-            if i == index:
+        for tab in self._tab_instances:
+            if self.ui.tabWidget.indexOf(tab) == index:
                 tab.on_activated()
             else:
                 tab.on_deactivated()
@@ -313,12 +430,17 @@ class MainWindow(QMainWindow):
 
         suffix = self.ui.leSuffix.text().strip()
         tab = self._get_active_export_tab()
-        hint = tab.build_export().filename_hint if tab is not None else "messung"
-        stem = (
-            f"messung_{hint}_{group}_{suffix}" if suffix else f"messung_{hint}_{group}"
-        )
-        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
-        display = f"{base_folder}/{group}/{stem}.csv"
+        if tab is not None:
+            exp = tab.build_export()
+            hint, tokens = exp.filename_hint, exp.filename_tokens
+        else:
+            hint, tokens = "messung", []
+        stem = compose_filename(hint, group, suffix, tokens)
+        tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
+        team_raw = self.ui.leTeamName.text().strip()
+        subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
+        folder = create_dropbox_foldername(group, tk, subterm)
+        display = f"{folder}/{stem}.csv"
         self.ui.pteCurrentFilename.setPlainText(display)
 
     # ==================== Arduino Connection ====================
@@ -331,29 +453,7 @@ class MainWindow(QMainWindow):
             self.ui.cbArduinoPort.addItem(port)
         if not ports:
             self.ui.cbArduinoPort.addItem(CONFIG["messages"]["device_ports_missing"])
-
-        # Let the popup grow wide enough for the longest entry while the collapsed
-        # combobox stays narrow (limited by minimumContentsLength).
-        fm = self.ui.cbArduinoPort.fontMetrics()
-        all_items = ports if ports else [CONFIG["messages"]["device_ports_missing"]]
-        popup_width = max(fm.horizontalAdvance(p) for p in all_items) + 32
-        self.ui.cbArduinoPort.view().setMinimumWidth(popup_width)
-
-        # Truncate the collapsed display (signal may not be connected yet on first call)
-        self._update_port_display(self.ui.cbArduinoPort.currentIndex())
         Debug.info(f"Available serial ports: {ports}")
-
-    @Slot(int)
-    def _update_port_display(self, index: int) -> None:
-        """Show truncated port name in the collapsed combobox; full name stays in the popup."""
-        if index < 0 or not self.ui.cbArduinoPort.isEditable():
-            return
-        line_edit = self.ui.cbArduinoPort.lineEdit()
-        if line_edit is None:
-            return
-        full = self.ui.cbArduinoPort.itemText(index)
-        truncated = f"..{full[-13:]}" if len(full) > 15 else full
-        line_edit.setText(truncated)
 
     @Slot()
     def _connect_arduino(self) -> None:
@@ -368,7 +468,7 @@ class MainWindow(QMainWindow):
         set_connection_status(
             self.ui.ledArduinoStatus,
             self.ui.lblArduinoStatusValue,
-            "Verbinde...",
+            "Wird verbunden",
             LED_YELLOW,
         )
         self.ui.cbArduinoPort.setEnabled(False)
@@ -507,28 +607,178 @@ class MainWindow(QMainWindow):
         self.data_controller.start_continuous_reading()
         self._notify_tabs_connection_state(ConnState.CONNECTED)
 
+        # Apply pending session-restore gain if set, else read from firmware.
+        pending = self._pending_gain_restore
+        self._pending_gain_restore = 0
+        if 1 <= pending <= 4:
+            ok = self.data_controller.set_pdtia_gain(pending)
+            if ok:
+                self._sync_gain_visual(pending)
+        else:
+            stage = self.device_manager.get_pdtia_gain()
+            if 1 <= stage <= 4:
+                self._sync_gain_visual(stage)
+                self.data_controller._current_pdtia_gain = stage
+
+        self._update_detector_calibration_status()
+
+    # ==================== KDC101 Connection ====================
+
+    def _populate_kdc_devices(self) -> None:
+        """Populate cbKDCDevice with currently discovered Thorlabs KDC101 devices."""
+        current = self.ui.cbKDCDevice.currentText()
+        self.ui.cbKDCDevice.clear()
+        devices = KDC101Polariser.list_devices()
+        for conn_id, desc in devices:
+            self.ui.cbKDCDevice.addItem(f"{conn_id} — {desc}", userData=conn_id)
+        if not devices:
+            self.ui.cbKDCDevice.addItem("Kein KDC101 gefunden")
+        # Restore previous selection if still present
+        if current:
+            idx = self.ui.cbKDCDevice.findText(current)
+            if idx >= 0:
+                self.ui.cbKDCDevice.setCurrentIndex(idx)
+        Debug.info(f"KDC101 devices found: {devices}")
+
+    @Slot()
+    def _connect_kdc(self) -> None:
+        """Connect to the selected KDC101 device."""
+        conn_id = self.ui.cbKDCDevice.currentData() or self.ui.cbKDCDevice.currentText()
+        if not conn_id or conn_id == "Kein KDC101 gefunden":
+            QMessageBox.warning(self, "KDC101", "Kein Gerät ausgewählt.")
+            return
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Verbinde...",
+            LED_YELLOW,
+        )
+        try:
+            self._kdc.connect(conn_id)
+        except KDC101Error as exc:
+            set_connection_status(
+                self.ui.ledKDCStatus,
+                self.ui.lblKDCStatusValue,
+                f"Fehler: {exc}",
+                LED_RED,
+            )
+            self.statusbar_manager.show_error(f"KDC101 Verbindungsfehler: {exc}")
+            return
+        ModuleRegistry.register(KDC101ModuleAdapter(self._kdc))
+        self._refresh_tab_visibility()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            f"Verbunden: {conn_id}",
+            LED_GREEN,
+        )
+        self.ui.btnKDCConnect.setText("Trennen")
+        self.ui.btnKDCConnect.clicked.disconnect(self._connect_kdc)
+        self.ui.btnKDCConnect.clicked.connect(self._disconnect_kdc)
+        self.ui.btnKDCHome.setEnabled(True)
+        self._kdc_position_timer.start()
+        self.statusbar_manager.show_success(f"KDC101 verbunden: {conn_id}")
+        Debug.info(f"KDC101 connected: {conn_id}")
+
+    @Slot()
+    def _disconnect_kdc(self) -> None:
+        """Disconnect from the currently connected KDC101 device."""
+        self._kdc_position_timer.stop()
+        self._kdc.disconnect()
+        ModuleRegistry.unregister("kdc101")
+        self._refresh_tab_visibility()
+        set_connection_status(
+            self.ui.ledKDCStatus,
+            self.ui.lblKDCStatusValue,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        self.ui.btnKDCConnect.setText("Verbinden")
+        self.ui.btnKDCConnect.clicked.disconnect(self._disconnect_kdc)
+        self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.lblKDCPositionValue.setText("—")
+        self.statusbar_manager.show_info("KDC101 getrennt")
+
+    @Slot()
+    def _home_kdc(self) -> None:
+        """Home the KDC101 stage off the main thread."""
+        if not self._kdc.is_connected():
+            return
+        self.ui.btnKDCHome.setEnabled(False)
+        self.ui.btnKDCConnect.setEnabled(False)
+        self._kdc_home_worker = KDC101HomeWorker(self._kdc, parent=self)
+        self._kdc_home_worker.done.connect(self._on_kdc_home_done)
+        self._kdc_home_worker.error.connect(self._on_kdc_home_error)
+        self._kdc_home_worker.start()
+        self.statusbar_manager.show_info("KDC101 Referenzfahrt läuft…")
+
+    @Slot()
+    def _on_kdc_home_done(self) -> None:
+        self.ui.btnKDCHome.setEnabled(True)
+        self.ui.btnKDCConnect.setEnabled(True)
+        self.statusbar_manager.show_success("KDC101 Referenzfahrt abgeschlossen")
+
+    @Slot(str)
+    def _on_kdc_home_error(self, msg: str) -> None:
+        self.ui.btnKDCHome.setEnabled(True)
+        self.ui.btnKDCConnect.setEnabled(True)
+        self.statusbar_manager.show_error(f"KDC101 Referenzfahrt fehlgeschlagen: {msg}")
+
+    @Slot()
+    def _refresh_kdc_position(self) -> None:
+        """Poll current KDC101 position and update the live display label."""
+        try:
+            pos = self._kdc.get_position_deg()
+            self.ui.lblKDCPositionValue.setText(f"{pos:.2f}°")
+        except KDC101Error:
+            pass  # transient read error — label stays at last known value
+
     # ==================== Acquisition Settings ====================
 
     def _load_acq_settings_from_config(self) -> AcquisitionSettings:
-        """Build AcquisitionSettings from config.json defaults.
+        return AcquisitionSettings.from_config(CONFIG.get("acquisition", {}))
 
-        Called once at startup. The returned object is the authoritative
-        session state; it is never written back to disk.
-        """
-        acq = CONFIG.get("acquisition", {})
-        return AcquisitionSettings(
-            det_average_on=acq.get("det_average_on", True),
-            det_averages=acq.get("det_averages", 5),
-            samp_average_on=acq.get("samp_average_on", True),
-            samp_averages=acq.get("samp_averages", 5),
-            sample_stage_inverted=acq.get("sample_stage_inverted", True),
-            spike_filter_enabled=acq.get("spike_filter_enabled", True),
-            spike_max_delta_deg=acq.get("spike_max_delta_deg", 10.0),
+    @Slot()
+    def _on_acq_inline_changed(self) -> None:
+        """Update AcquisitionSettings from the inline configuration-tab controls."""
+        self._acq_settings = AcquisitionSettings(
+            samp_average_on=self.ui.cbSampleAverageOn.isChecked(),
+            samp_averages=self.ui.spbSampleAverages.value(),
+            det_average_on=self.ui.cbDetectorAverageOn.isChecked(),
+            det_averages=self.ui.spbDetectorAverages.value(),
+            sample_stage_inverted=self._acq_settings.sample_stage_inverted,
+            spike_filter_enabled=self._acq_settings.spike_filter_enabled,
+            spike_max_delta_deg=self._acq_settings.spike_max_delta_deg,
         )
+        self.data_controller.update_acq_settings(self._acq_settings)
+
+    def _sync_inline_acq_controls(self) -> None:
+        """Push current _acq_settings to the inline configuration-tab widgets."""
+        for widget in (
+            self.ui.cbSampleAverageOn,
+            self.ui.spbSampleAverages,
+            self.ui.cbDetectorAverageOn,
+            self.ui.spbDetectorAverages,
+        ):
+            widget.blockSignals(True)
+        self.ui.cbSampleAverageOn.setChecked(self._acq_settings.samp_average_on)
+        self.ui.spbSampleAverages.setValue(self._acq_settings.samp_averages)
+        self.ui.spbSampleAverages.setEnabled(self._acq_settings.samp_average_on)
+        self.ui.cbDetectorAverageOn.setChecked(self._acq_settings.det_average_on)
+        self.ui.spbDetectorAverages.setValue(self._acq_settings.det_averages)
+        self.ui.spbDetectorAverages.setEnabled(self._acq_settings.det_average_on)
+        for widget in (
+            self.ui.cbSampleAverageOn,
+            self.ui.spbSampleAverages,
+            self.ui.cbDetectorAverageOn,
+            self.ui.spbDetectorAverages,
+        ):
+            widget.blockSignals(False)
 
     @Slot()
     def _open_acq_settings(self) -> None:
-        """Open the acquisition settings dialog. Main window is disabled while open."""
+        """Open the acquisition settings dialog (spike filter + inversion settings)."""
         dialog = AcquisitionSettingsDialog(self._acq_settings, parent=self)
         # exec() makes the dialog application-modal: the main window cannot
         # receive input while the dialog is open. setEnabled(False) is NOT
@@ -536,6 +786,7 @@ class MainWindow(QMainWindow):
         # dialog itself.
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._acq_settings = dialog.get_settings()
+            self._sync_inline_acq_controls()
             self.data_controller.update_acq_settings(self._acq_settings)
 
     # ==================== Data Display Updates ====================
@@ -598,21 +849,35 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def _on_gain_button_clicked(self, stage: int) -> None:
-        """Set PDTIA gain stage on the device and visually select the button."""
+        """Set PDTIA gain stage on the device and visually select both button groups."""
         ok = self.data_controller.set_pdtia_gain(stage)
         if not ok:
-            # Deselect all buttons so the UI doesn't show a wrong state
-            grp = self.ui.gainButtonGroup
+            self._clear_gain_visual()
+            self.statusbar_manager.show_error(
+                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
+            )
+        else:
+            self._sync_gain_visual(stage)
+            self._schedule_state_save()
+            self.statusbar_manager.show_info(f"PDTIA Gain auf Stufe {stage} gesetzt")
+
+    def _sync_gain_visual(self, stage: int) -> None:
+        """Check the matching button in both gain button groups without re-emitting."""
+        for grp in (self.ui.gainButtonGroup, self._gain_button_group_2):
+            btn = grp.button(stage)
+            if btn is not None and not btn.isChecked():
+                btn.blockSignals(True)
+                btn.setChecked(True)
+                btn.blockSignals(False)
+
+    def _clear_gain_visual(self) -> None:
+        """Uncheck all buttons in both gain button groups."""
+        for grp in (self.ui.gainButtonGroup, self._gain_button_group_2):
             checked = grp.checkedButton()
             if checked is not None:
                 grp.setExclusive(False)
                 checked.setChecked(False)
                 grp.setExclusive(True)
-            self.statusbar_manager.show_error(
-                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
-            )
-        else:
-            self.statusbar_manager.show_info(f"PDTIA Gain auf Stufe {stage} gesetzt")
 
     # ==================== Power / Wattage Display ====================
 
@@ -647,11 +912,13 @@ class MainWindow(QMainWindow):
         if index < 0:
             self._calibration_profile = None
             self.data_controller.update_calibration_profile(None)
+            self._update_detector_calibration_status()
             return
         path: Path = self.ui.cbProfile.itemData(index)
         if path is None:
             self._calibration_profile = None
             self.data_controller.update_calibration_profile(None)
+            self._update_detector_calibration_status()
             return
         try:
             self._calibration_profile = PowerCalibrationProfile.load(path)
@@ -660,6 +927,26 @@ class MainWindow(QMainWindow):
             Debug.error(f"Failed to load calibration profile {path}: {exc}")
             self._calibration_profile = None
         self.data_controller.update_calibration_profile(self._calibration_profile)
+        self._update_detector_calibration_status()
+
+    def _update_detector_calibration_status(self) -> None:
+        """Show calibration hint in the detector status when connected and no profile is loaded."""
+        if not self._is_connected:
+            return
+        if self._calibration_profile is None:
+            set_connection_status(
+                self.ui.ledDetectorStatus,
+                self.ui.lblDetectorStatusValue,
+                "Kalibrierung auswählen",
+                LED_YELLOW,
+            )
+        else:
+            set_connection_status(
+                self.ui.ledDetectorStatus,
+                self.ui.lblDetectorStatusValue,
+                "ADC",
+                LED_GREEN,
+            )
 
     def _open_power_calibration(self) -> None:
         from polarisation_ui.ui.windows.power_calibration_window import (
@@ -686,6 +973,48 @@ class MainWindow(QMainWindow):
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dialog.profile_saved.connect(self._reload_profiles)
         dialog.show()
+
+    # ==================== Dark-Current Tare ====================
+
+    @Slot()
+    def _on_dark_tare_clicked(self) -> None:
+        reply = QMessageBox.question(
+            self,
+            "Dunkelstrom messen",
+            "Bitte den Detektor vollständig und lichtdicht abdecken.\n\n"
+            "Der Dunkelstrom-Offset wird über 2 Sekunden gemittelt (20 Messungen) "
+            "und von allen folgenden Intensitätswerten abgezogen.\n\n"
+            "Fortfahren?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self.ui.btnDarkTare.setEnabled(False)
+        self.ui.btnDarkReset.setEnabled(False)
+        self.statusbar_manager.show_info("Dunkelstrom messen… 0/20")
+        self.data_controller.start_dark_tare(n=20)
+
+    @Slot(int, int)
+    def _on_dark_tare_progress(self, current: int, total: int) -> None:
+        self.statusbar_manager.show_info(f"Dunkelstrom messen… {current}/{total}")
+
+    @Slot(float)
+    def _on_dark_tare_done(self, offset_V: float) -> None:
+        self.ui.btnDarkTare.setEnabled(True)
+        self.ui.btnDarkReset.setEnabled(True)
+        if offset_V == 0.0:
+            self.ui.lblDarkOffsetValue.setText("Offset: –")
+            self.statusbar_manager.show_info("Dunkelstrom-Offset zurückgesetzt")
+        else:
+            offset_mV = offset_V * 1000.0
+            self.ui.lblDarkOffsetValue.setText(f"Offset: {offset_mV:.3f} mV")
+            self.statusbar_manager.show_success(
+                f"Dunkelstrom-Offset gesetzt: {offset_mV:.3f} mV"
+            )
+
+    @Slot()
+    def _on_dark_reset_clicked(self) -> None:
+        self.data_controller.reset_dark_offset()
 
     # ==================== Encoder Control ====================
 
@@ -838,12 +1167,15 @@ class MainWindow(QMainWindow):
     def _get_active_export_tab(self):
         """Return the currently selected tab if it exposes the export contract, else None."""
         idx = self.ui.tabWidget.currentIndex()
-        if idx < 0 or idx >= len(self._tab_instances):
+        if idx < 0:
             return None
-        tab = self._tab_instances[idx]
+        widget = self.ui.tabWidget.widget(idx)
+        tab = next((t for t in self._tab_instances if t is widget), None)
         return (
             tab
-            if hasattr(tab, "build_export") and hasattr(tab, "get_saved_points")
+            if tab is not None
+            and hasattr(tab, "build_export")
+            and hasattr(tab, "get_saved_points")
             else None
         )
 
@@ -862,63 +1194,40 @@ class MainWindow(QMainWindow):
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        stem = (
-            f"messung_{exp.filename_hint}_{group_letter}_{suffix}"
-            if suffix
-            else f"messung_{exp.filename_hint}_{group_letter}"
+        stem = compose_filename(
+            exp.filename_hint, group_letter, suffix, exp.filename_tokens
         )
-        default_name = f"{stem}.csv"
-        base_folder = CONFIG.get("save", {}).get("base_folder", "Polarisation")
-        default_dir = Path.home() / base_folder / group_letter
+        tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
+        team_raw = self.ui.leTeamName.text().strip()
+        subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
+        folder = create_dropbox_foldername(group_letter, tk, subterm)
+        default_dir = Path.home() / folder
         default_dir.mkdir(parents=True, exist_ok=True)
 
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Messdaten speichern",
-            str(default_dir / default_name),
+            str(default_dir / f"{stem}.csv"),
             "CSV-Dateien (*.csv);;Alle Dateien (*)",
         )
         if not path:
             return
 
-        saved_at = datetime.now()
-        csv_path = Path(path)
-
-        with open(csv_path, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(exp.columns)
-            for row in exp.rows:
-                writer.writerow(row)
-
         cal_meta: dict = {}
         if self._calibration_profile is not None:
-            cal_meta = {
-                "profile_name": self._calibration_profile.name,
-                "calibrated_at": self._calibration_profile.calibrated_at,
-                "gain_conversion_factors": {
-                    str(stage): cal.conversion_factor_W_per_V()
-                    for stage, cal in self._calibration_profile.gains.items()
-                    if cal.conversion_factor_W_per_V() is not None
-                },
-            }
+            cal_meta = self._calibration_profile.to_save_metadata()
 
-        metadata = {
-            "saved_at": saved_at.isoformat(),
-            "point_count": len(exp.rows),
-            "group": group_letter,
-            "suffix": suffix,
-            "power_calibration": cal_meta,
-            "sensors": SENSOR_DESCRIPTIONS,
-            **exp.metadata,
-        }
-        metadata_path = csv_path.with_name(csv_path.stem + "_metadata.json")
-        with open(metadata_path, "w", encoding="utf-8") as fh:
-            json.dump(metadata, fh, indent=2)
-
+        save_tab_export(
+            Path(path),
+            exp,
+            group_letter=group_letter,
+            suffix=suffix,
+            power_cal_meta=cal_meta,
+            saved_at=datetime.now(),
+        )
         self.statusbar_manager.show_success(
             f"{len(exp.rows)} Datenpunkte gespeichert: {path}"
         )
-        Debug.info(f"Data exported to {csv_path} ({len(exp.rows)} points)")
 
     # ==================== Error Handling ====================
 
@@ -1057,12 +1366,147 @@ class MainWindow(QMainWindow):
         if journal is not None and journal.row_count > 0:
             self._offer_partial_export(journal)
 
+    # ==================== Session State Persistence ====================
+
+    def _schedule_state_save(self, *_args) -> None:
+        """Restart the debounce timer so state is written 500 ms after the last change."""
+        self._state_save_timer.start()
+
+    def _save_session_state(self) -> None:
+        """Serialise current UI settings and tab points to last_session.json."""
+        from dataclasses import asdict as dc_asdict
+
+        now = datetime.now()
+        tab_points: dict[str, list[dict]] = {}
+        for tab in self._tab_instances:
+            if hasattr(tab, "get_saved_points"):
+                pts = tab.get_saved_points()
+                if pts:
+                    tab_points[tab.tab_id] = [dc_asdict(p) for p in pts]
+
+        state = SessionState(
+            saved_date=now.date().isoformat(),
+            saved_at=now.isoformat(),
+            group_letter=self.ui.cbGroupLetter.currentText(),
+            team_name=self.ui.leTeamName.text().strip(),
+            suffix=self.ui.leSuffix.text().strip(),
+            profile_name=(
+                self.ui.cbProfile.currentText()
+                if self.ui.cbProfile.currentIndex() >= 0
+                else ""
+            ),
+            gain_stage=self.data_controller.pdtia_gain,
+            acq_settings={
+                "samp_average_on": self._acq_settings.samp_average_on,
+                "samp_averages": self._acq_settings.samp_averages,
+                "det_average_on": self._acq_settings.det_average_on,
+                "det_averages": self._acq_settings.det_averages,
+                "sample_stage_inverted": self._acq_settings.sample_stage_inverted,
+                "spike_filter_enabled": self._acq_settings.spike_filter_enabled,
+                "spike_max_delta_deg": self._acq_settings.spike_max_delta_deg,
+            },
+            tab_points=tab_points,
+        )
+        try:
+            save_session_state(state)
+        except OSError as exc:
+            Debug.warning(f"Could not save session state: {exc}")
+
+    def _check_session_restore(self) -> None:
+        """After startup: offer to restore today's persisted session state."""
+        state = load_session_state()
+        if state is None or not is_from_today(state):
+            return
+
+        has_data = bool(
+            state.group_letter
+            or state.team_name
+            or state.suffix
+            or state.profile_name
+            or (1 <= state.gain_stage <= 4)
+            or any(v for v in state.tab_points.values())
+        )
+        if not has_data:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Sitzung wiederherstellen",
+            "Eine frühere Sitzung von heute wurde gefunden.\n"
+            "Einstellungen und Messpunkte wiederherstellen?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self._restore_session(state)
+
+    def _restore_session(self, state: SessionState) -> None:
+        """Apply a previously saved SessionState to the current UI."""
+        if state.group_letter:
+            idx = self.ui.cbGroupLetter.findText(state.group_letter)
+            if idx >= 0:
+                self.ui.cbGroupLetter.setCurrentIndex(idx)
+
+        if state.team_name:
+            self.ui.leTeamName.setText(state.team_name)
+        if state.suffix:
+            self.ui.leSuffix.setText(state.suffix)
+
+        if state.profile_name:
+            idx = self.ui.cbProfile.findText(state.profile_name)
+            if idx >= 0:
+                self.ui.cbProfile.setCurrentIndex(idx)
+
+        if 1 <= state.gain_stage <= 4:
+            self._pending_gain_restore = state.gain_stage
+
+        if state.acq_settings:
+            s = state.acq_settings
+            try:
+                self._acq_settings = AcquisitionSettings(
+                    samp_average_on=s.get(
+                        "samp_average_on", self._acq_settings.samp_average_on
+                    ),
+                    samp_averages=s.get(
+                        "samp_averages", self._acq_settings.samp_averages
+                    ),
+                    det_average_on=s.get(
+                        "det_average_on", self._acq_settings.det_average_on
+                    ),
+                    det_averages=s.get("det_averages", self._acq_settings.det_averages),
+                    sample_stage_inverted=s.get(
+                        "sample_stage_inverted",
+                        self._acq_settings.sample_stage_inverted,
+                    ),
+                    spike_filter_enabled=s.get(
+                        "spike_filter_enabled",
+                        self._acq_settings.spike_filter_enabled,
+                    ),
+                    spike_max_delta_deg=s.get(
+                        "spike_max_delta_deg",
+                        self._acq_settings.spike_max_delta_deg,
+                    ),
+                )
+                self._sync_inline_acq_controls()
+                self.data_controller.update_acq_settings(self._acq_settings)
+            except Exception as exc:
+                Debug.warning(f"Could not restore acquisition settings: {exc}")
+
+        for tab in self._tab_instances:
+            pts = state.tab_points.get(tab.tab_id, [])
+            if pts:
+                tab.restore_points(pts)
+
+        self.statusbar_manager.show_success("Sitzung wiederhergestellt")
+
     # ==================== Session Journal Helpers ====================
 
     def _check_orphan_journals(self) -> None:
         """On startup, scan for unfinalized session journals and offer recovery."""
         orphans = SessionJournal.find_orphans()
         if not orphans:
+            self._check_session_restore()
             return
         n = len(orphans)
         reply = QMessageBox.question(
@@ -1082,6 +1526,7 @@ class MainWindow(QMainWindow):
                     Debug.info(f"Orphan journal deleted: {session_dir}")
                 except OSError as e:
                     Debug.warning(f"Could not delete orphan {session_dir}: {e}")
+            self._check_session_restore()
             return
         for session_dir in orphans:
             path, _ = QFileDialog.getSaveFileName(
@@ -1093,6 +1538,8 @@ class MainWindow(QMainWindow):
             if path:
                 rows = SessionJournal.export_orphan(session_dir, Path(path))
                 self.statusbar_manager.show_success(f"{rows} Zeilen exportiert: {path}")
+
+        self._check_session_restore()
 
     def _offer_partial_export(self, journal: "SessionJournal") -> None:
         """Show a modal offering to export partial data after connection_lost."""

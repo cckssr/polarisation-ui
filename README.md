@@ -34,7 +34,7 @@ Experiments supported out of the box: Malus's Law. Additional experiments (Brews
 | AS5048A (encoder B)        | 14-bit magnetic rotary encoder — detector/analyser arm    | SPI → Arduino     |
 | ADS1220                    | 24-bit delta-sigma ADC — photodiode transimpedance output | SPI → Arduino     |
 | PD-TIA discrete gain       | 4-bit GPIO-controlled transimpedance gain stage           | 4× GPIO → Arduino |
-| Thorlabs KDC101 _(future)_ | Motorised rotation stage for automated angle scanning     | USB (Phase 6)     |
+| Thorlabs KDC101            | Motorised rotation stage for automated angle scanning     | USB (pylablib)    |
 
 The sample and detector stages are mechanically coupled: the detector arm moves at twice the angular velocity of the sample stage (`θ_detector = 2 × θ_sample`), as required by reflection geometry.
 
@@ -239,7 +239,7 @@ polarisation-ui/
 │   │   ├── mocks/            # MockArduino + mock devices + port registry (dev/test)
 │   │   └── modules/          # HostModule protocol + ModuleRegistry singleton
 │   └── ui/                   # PySide6 widgets, windows, controllers
-│       └── widgets/tabs/     # Experiment tabs (PlotTabBase subclasses)
+│       └── widgets/tabs/     # Experiment tabs: malus_tab, brewster_tab, waveplate_tab
 ├── calibration_tool/         # Sibling app — KDC101 encoder calibration
 ├── src_arduino/              # PlatformIO firmware (Arduino Nano ESP32)
 ├── tests/                    # pytest suite
@@ -281,6 +281,8 @@ Version is kept in sync across three files automatically:
 
 - **Malus's Law** — `I = I₀ cos²(θ)`: live cos² fit, peak readout, manual point capture to measurement table, CSV export
 - **Brewster's Angle** tab — sample scan, intensity vs. angle display, p/s polarisation selection
+- **Wave Plate (λ/4, λ/2)** tab — KDC101-driven automated angle sweep; records averaged intensity vs. waveplate angle; exports with `qwp`/`hwp` filename token and sweep metadata
+- **KDC101 motorised stage** — pylablib driver (`KDC101Polariser`): connect by serial number, home, move_to, get_position_deg, enable; `KDC101ModuleAdapter` wires it into `ModuleRegistry`; `MockKDC101Polariser` for headless tests
 - **Plot-Tab extensibility** — `PlotTabBase` + `TabRegistry`; new experiments register as subclasses in `ui/widgets/tabs/`
 - **Session journal** — append-only CSV autosave with `fsync` for crash-safe data recovery
 - **Module registry** — `HostModule` protocol + `ModuleRegistry` singleton; tabs gate on required modules (e.g. `kdc101`)
@@ -288,7 +290,7 @@ Version is kept in sync across three files automatically:
 
 ### Planned: Additional Polarisation Experiments
 
-Each experiment below is a `PlotTabBase` subclass registered in `polarisation_ui/ui/widgets/tabs/`. All work in manual mode immediately; automated scanning requires the KDC101 stage (Phase 6).
+Each experiment below is a `PlotTabBase` subclass registered in `polarisation_ui/ui/widgets/tabs/`. All work in manual mode immediately; automated scanning requires the KDC101 stage (now implemented — see `WaveplateTab` for the reference pattern).
 
 | Experiment                                      | Physics                         | Key Observable                                                         |
 | ----------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
@@ -317,7 +319,6 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 | Feature                  | Description                                                             |
 | ------------------------ | ----------------------------------------------------------------------- |
 | HDF5/Zarr export         | Optional dense export for large angle-scan datasets                     |
-| KDC101 motorised stage   | Thorlabs USB APT driver, automated angle sweeps for all tab experiments |
 | SCPI 2.0.0 firmware bump | Cleaner subsystem tree, ADS1220 integration, key=value streaming frames |
 
 ---

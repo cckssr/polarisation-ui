@@ -24,10 +24,12 @@ _POS_TOL_DEG = 0.5
 
 
 def test_list_devices_returns_list() -> None:
-    """list_devices() must return a list even without hardware present."""
+    """list_devices() must return a list of (conn_id, description) tuples."""
     devices = KDC101Polariser.list_devices()
     assert isinstance(devices, list)
-    assert all(isinstance(d, str) for d in devices)
+    assert all(
+        isinstance(d, tuple) and len(d) == 2 and isinstance(d[0], str) for d in devices
+    )
 
 
 def test_connect_invalid_port_raises() -> None:

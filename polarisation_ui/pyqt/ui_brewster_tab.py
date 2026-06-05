@@ -47,9 +47,11 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QPushButton,
+    QRadioButton,
     QSizePolicy,
     QSpacerItem,
     QTableWidget,
@@ -66,7 +68,7 @@ class Ui_BrewsterTab(object):
     def setupUi(self, BrewsterTab):
         if not BrewsterTab.objectName():
             BrewsterTab.setObjectName("BrewsterTab")
-        BrewsterTab.resize(856, 839)
+        BrewsterTab.resize(959, 839)
         self.gridLayout = QGridLayout(BrewsterTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -177,6 +179,24 @@ class Ui_BrewsterTab(object):
 
         self.rightLayout.addWidget(self.line)
 
+        self.gbPolarisation = QGroupBox(BrewsterTab)
+        self.gbPolarisation.setObjectName("gbPolarisation")
+        self.hlPolarisation = QHBoxLayout(self.gbPolarisation)
+        self.hlPolarisation.setObjectName("hlPolarisation")
+        self.hlPolarisation.setContentsMargins(6, 4, 6, 4)
+        self.rbPolP = QRadioButton(self.gbPolarisation)
+        self.rbPolP.setObjectName("rbPolP")
+        self.rbPolP.setChecked(True)
+
+        self.hlPolarisation.addWidget(self.rbPolP)
+
+        self.rbPolS = QRadioButton(self.gbPolarisation)
+        self.rbPolS.setObjectName("rbPolS")
+
+        self.hlPolarisation.addWidget(self.rbPolS)
+
+        self.rightLayout.addWidget(self.gbPolarisation)
+
         self.btnSaveCurrent = QPushButton(BrewsterTab)
         self.btnSaveCurrent.setObjectName("btnSaveCurrent")
         self.btnSaveCurrent.setEnabled(False)
@@ -262,11 +282,41 @@ class Ui_BrewsterTab(object):
                 "BrewsterTab", "Ausgew\u00e4hlten l\u00f6schen", None
             )
         )
+        # if QT_CONFIG(tooltip)
+        self.btnDeleteLast.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab", "Letzten gespeicherten Messpunkt entfernen", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.btnDeleteLast.setText(
             QCoreApplication.translate(
                 "BrewsterTab", "Letzten Punkt l\u00f6schen", None
             )
         )
+        self.gbPolarisation.setTitle(
+            QCoreApplication.translate("BrewsterTab", "Polarisation", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.rbPolP.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab",
+                "p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.rbPolP.setText(QCoreApplication.translate("BrewsterTab", "p", None))
+        # if QT_CONFIG(tooltip)
+        self.rbPolS.setToolTip(
+            QCoreApplication.translate(
+                "BrewsterTab",
+                "s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.rbPolS.setText(QCoreApplication.translate("BrewsterTab", "s", None))
         # if QT_CONFIG(tooltip)
         self.btnSaveCurrent.setToolTip(
             QCoreApplication.translate(

@@ -120,8 +120,11 @@ public:
     };
 
     // csPin: chip select (active low)
+    // misoPin: master in slave out (input)
+    // mosiPin: master out slave in (output)
+    // sckPin: serial clock (output)
     // drdyPin: dedicated DRDY output (active low); pass -1 to rely on DOUT/DRDY with DRDYM=1
-    ADS1220(uint8_t csPin, int8_t drdyPin, SPIClass &spi = SPI);
+    ADS1220(uint8_t csPin, uint8_t misoPin, uint8_t mosiPin, uint8_t sckPin, int8_t drdyPin, SPIClass &spi = SPI);
 
     // Initialise pins, SPI bus, and reset the device.
     // Returns false if the initial register readback does not match expected reset values.
@@ -187,6 +190,9 @@ public:
 
 private:
     uint8_t _csPin;
+    uint8_t _misoPin;
+    uint8_t _mosiPin;
+    uint8_t _sckPin;
     int8_t _drdyPin;
     SPIClass &_spi;
     uint32_t _spiFreq;

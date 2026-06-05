@@ -4,7 +4,7 @@ This module contains pure Python dataclasses representing the
 goniometer state without any Qt or UI dependencies.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
@@ -115,6 +115,18 @@ class AcquisitionSettings:
     spike_filter_enabled: bool = True
     spike_max_delta_deg: float = 10.0  # 100 °/s at default 10 Hz — rejects glitches
 
+    @classmethod
+    def from_config(cls, acq: dict) -> "AcquisitionSettings":
+        return cls(
+            det_average_on=acq.get("det_average_on", True),
+            det_averages=acq.get("det_averages", 5),
+            samp_average_on=acq.get("samp_average_on", True),
+            samp_averages=acq.get("samp_averages", 5),
+            sample_stage_inverted=acq.get("sample_stage_inverted", True),
+            spike_filter_enabled=acq.get("spike_filter_enabled", True),
+            spike_max_delta_deg=acq.get("spike_max_delta_deg", 10.0),
+        )
+
 
 @dataclass
 class DualEncoderReading:
@@ -169,3 +181,4 @@ class TabExport:
     columns: list
     rows: list
     metadata: dict
+    filename_tokens: list[str] = field(default_factory=list)

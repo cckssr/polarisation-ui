@@ -6,7 +6,10 @@
 #define SPI_HZ 1000000UL
 
 // ── ADS1220 ADC ───────────────────────────────────────────────────────────────
-#define ADC_CS_PIN 8    // chip select  (active low)
+#define ADC_MISO_PIN 5
+#define ADC_MOSI_PIN 6
+#define ADC_SCK_PIN 7
+#define ADC_CS_PIN 4    // chip select  (active low)
 #define ADC_DRDY_PIN -1 // DRDY not wired; time-based polling used instead
 #define ADC_SPI_HZ 4000000UL
 

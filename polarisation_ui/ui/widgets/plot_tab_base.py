@@ -39,6 +39,7 @@ class PlotTabBase(QWidget):
     request_module_action = Signal(str, dict)
     export_requested = Signal(str)
     status_message = Signal(str, str)  # (level, message) — "info"/"warning"/"error"
+    filename_hint_changed = Signal()  # emitted when filename_hint or tokens change
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -73,3 +74,6 @@ class PlotTabBase(QWidget):
 
     def inject_modules(self, modules: dict[str, object]) -> None:
         """Receive host-side module references (e.g. {"kdc101": KdcController})."""
+
+    def restore_points(self, points: list[dict]) -> None:
+        """Reload saved points from a prior session. Override in subclasses."""
