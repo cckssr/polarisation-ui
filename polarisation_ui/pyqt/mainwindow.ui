@@ -180,7 +180,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLCDNumber" name="lcdWattage">
+       <widget class="QLCDNumber" name="lcdDetectorVoltage_mV">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -227,7 +227,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLCDNumber" name="lcdDetectorVoltage">
+       <widget class="QLCDNumber" name="lcdDetectorPower">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -456,7 +456,7 @@
          <item>
           <widget class="QPlainTextEdit" name="pteCurrentFilename">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -581,6 +581,37 @@
            </item>
           </layout>
          </item>
+         <item>
+          <widget class="QPushButton" name="btnSave">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>1000</width>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>Messung speichern (Dateidialog)</string>
+           </property>
+           <property name="text">
+            <string>Speichern</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -645,7 +676,7 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Bitte vor Beginn der Messungen Gruppe auswählen.</string>
+              <string>Bitte vor Beginn der Messungen Gruppe auswählen und ggf. individuelle Team Bezeichnung hinzufügen</string>
              </property>
             </widget>
            </item>
@@ -805,7 +836,7 @@
                 <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
                </property>
                <property name="text">
-                <string>Team-Bezeichnung*</string>
+                <string>Team-Bezeichnung</string>
                </property>
               </widget>
              </item>
@@ -830,37 +861,6 @@
               </widget>
              </item>
             </layout>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btnSave">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>100</width>
-               <height>30</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>1000</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Messung speichern (Dateidialog)</string>
-             </property>
-             <property name="text">
-              <string>Speichern</string>
-             </property>
-            </widget>
            </item>
           </layout>
          </widget>
@@ -897,6 +897,292 @@
              <property name="rightMargin">
               <number>0</number>
              </property>
+             <item row="1" column="1">
+              <widget class="QLCDNumber" name="lcdDetectorVoltage_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="lineWidth">
+                <number>2</number>
+               </property>
+               <property name="digitCount">
+                <number>8</number>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::SegmentStyle::Filled</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lblDetectorVoltage">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Spannung (mV)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblDetectorStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Status</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <layout class="QHBoxLayout" name="hlDetectorStatus">
+               <item>
+                <widget class="QLabel" name="lblDetectorStatusValue">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>16</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>13</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="ledDetectorStatus">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>16</width>
+                   <height>16</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16</width>
+                   <height>16</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="4" column="0">
+              <widget class="QPushButton" name="btnDarkTare">
+               <property name="toolTip">
+                <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
+               </property>
+               <property name="text">
+                <string>Dunkelstrom nullen</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QPushButton" name="btnDarkReset">
+               <property name="toolTip">
+                <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
+               </property>
+               <property name="text">
+                <string>Offset zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0" colspan="2">
+              <widget class="QLabel" name="lblDarkOffsetValue">
+               <property name="toolTip">
+                <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
+               </property>
+               <property name="text">
+                <string>Offset: –</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0,0,1">
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="cbPdtiaAveragesOn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Mittelung aktivieren</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_3">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Policy::Fixed</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>10</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblPdtiaAverages">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Anzahl Mittelwerte</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spbPdtiaAverages">
+                 <property name="toolTip">
+                  <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+                 </property>
+                 <property name="minimum">
+                  <number>2</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
+                 </property>
+                 <property name="value">
+                  <number>5</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QComboBox" name="cbPdtiaID">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
+               </property>
+               <property name="placeholderText">
+                <string>- Kein Photodetektor ausgewählt! -</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <item row="3" column="1">
+              <widget class="QLCDNumber" name="lcdDetectorPower_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="lineWidth">
+                <number>2</number>
+               </property>
+               <property name="digitCount">
+                <number>10</number>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::SegmentStyle::Filled</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="btnReloadProfiles">
+               <property name="toolTip">
+                <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
+               </property>
+               <property name="text">
+                <string>Aktualisieren</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="lblWattage">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Leistung (µW)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="btnOpenCalibration">
+               <property name="toolTip">
+                <string>Leistungskalibrierungstool öffnen</string>
+               </property>
+               <property name="text">
+                <string>Kalibrierungstool…</string>
+               </property>
+              </widget>
+             </item>
              <item row="2" column="1">
               <layout class="QHBoxLayout" name="hlGainButtons" stretch="1,1,1,1">
                <property name="spacing">
@@ -905,7 +1191,7 @@
                <item>
                 <widget class="QPushButton" name="btnGain1">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -913,7 +1199,7 @@
                  <property name="maximumSize">
                   <size>
                    <width>100</width>
-                   <height>16777215</height>
+                   <height>40</height>
                   </size>
                  </property>
                  <property name="toolTip">
@@ -933,7 +1219,7 @@
                <item>
                 <widget class="QPushButton" name="btnGain2">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -941,7 +1227,7 @@
                  <property name="maximumSize">
                   <size>
                    <width>100</width>
-                   <height>16777215</height>
+                   <height>40</height>
                   </size>
                  </property>
                  <property name="toolTip">
@@ -961,7 +1247,7 @@
                <item>
                 <widget class="QPushButton" name="btnGain3">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -969,7 +1255,7 @@
                  <property name="maximumSize">
                   <size>
                    <width>100</width>
-                   <height>16777215</height>
+                   <height>40</height>
                   </size>
                  </property>
                  <property name="toolTip">
@@ -989,7 +1275,7 @@
                <item>
                 <widget class="QPushButton" name="btnGain4">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -997,7 +1283,7 @@
                  <property name="maximumSize">
                   <size>
                    <width>100</width>
-                   <height>16777215</height>
+                   <height>40</height>
                   </size>
                  </property>
                  <property name="toolTip">
@@ -1029,174 +1315,7 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QLCDNumber" name="lcdDetectorVoltage_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>40</height>
-                </size>
-               </property>
-               <property name="lineWidth">
-                <number>2</number>
-               </property>
-               <property name="digitCount">
-                <number>8</number>
-               </property>
-               <property name="segmentStyle">
-                <enum>QLCDNumber::SegmentStyle::Filled</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="lblDetectorVoltage">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Spannung (mV)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="lblWattage">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Leistung (µW)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLCDNumber" name="lcdWattage_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>40</height>
-                </size>
-               </property>
-               <property name="lineWidth">
-                <number>2</number>
-               </property>
-               <property name="digitCount">
-                <number>10</number>
-               </property>
-               <property name="segmentStyle">
-                <enum>QLCDNumber::SegmentStyle::Filled</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="lblDetectorStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Status</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <layout class="QHBoxLayout" name="hlDetectorStatus">
-               <item>
-                <widget class="QLabel" name="lblDetectorStatusValue">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string/>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="ledDetectorStatus">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>16</width>
-                   <height>16</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16</width>
-                   <height>16</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
-                 </property>
-                 <property name="text">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="gridLayout_4">
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="btnDarkTare">
-               <property name="toolTip">
-                <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
-               </property>
-               <property name="text">
-                <string>Dunkelstrom nullen</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="btnDarkReset">
-               <property name="toolTip">
-                <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
-               </property>
-               <property name="text">
-                <string>Offset zurücksetzen</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
+             <item row="0" column="0" colspan="2">
               <widget class="QComboBox" name="cbProfile">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -1209,40 +1328,6 @@
                </property>
                <property name="placeholderText">
                 <string>— Kein Profil geladen —</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <layout class="QHBoxLayout" name="hlProfileButtons">
-               <item>
-                <widget class="QPushButton" name="btnReloadProfiles">
-                 <property name="toolTip">
-                  <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
-                 </property>
-                 <property name="text">
-                  <string>Aktualisieren</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnOpenCalibration">
-                 <property name="toolTip">
-                  <string>Leistungskalibrierungstool öffnen</string>
-                 </property>
-                 <property name="text">
-                  <string>Kalibrierungstool…</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="0" column="0" colspan="2">
-              <widget class="QLabel" name="lblDarkOffsetValue">
-               <property name="toolTip">
-                <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
-               </property>
-               <property name="text">
-                <string>Offset: –</string>
                </property>
               </widget>
              </item>
@@ -1317,10 +1402,21 @@
              <item>
               <widget class="QLabel" name="lblDetectorStageStatusValue">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                </font>
                </property>
                <property name="text">
                 <string/>
@@ -1333,7 +1429,7 @@
              <item>
               <widget class="QLabel" name="ledDetectorStageStatus">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -1384,7 +1480,7 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>40</height>
+               <height>30</height>
               </size>
              </property>
              <property name="lineWidth">
@@ -1398,7 +1494,72 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0" colspan="2">
+           <item row="2" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,1">
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="cbDetectorAverageOn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Detektor-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Mittelung aktivieren</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblDetectorAverages">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Anzahl Mittelwerte</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spbDetectorAverages">
+               <property name="toolTip">
+                <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+               </property>
+               <property name="minimum">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0">
             <widget class="QPushButton" name="btnDetectorStageZero">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -1421,41 +1582,24 @@
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QSpinBox" name="spbDetectorAverages">
-             <property name="toolTip">
-              <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
-             </property>
-             <property name="minimum">
-              <number>2</number>
-             </property>
-             <property name="maximum">
-              <number>100</number>
-             </property>
-             <property name="value">
-              <number>5</number>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="lblDetectorAverages">
+            <widget class="QPushButton" name="btnDetectorStage180">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="text">
-              <string>Anzahl Mittelwerte</string>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QCheckBox" name="cbDetectorAverageOn">
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Detektor-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktuellen Winkel als halbe Rotation (180°) setzen (Encoder B)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>Mittelung aktivieren</string>
+              <string>180°-Kalibrierung</string>
              </property>
             </widget>
            </item>
@@ -1531,10 +1675,21 @@
              <item>
               <widget class="QLabel" name="lblSampleStatusValue">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                </font>
                </property>
                <property name="text">
                 <string/>
@@ -1547,7 +1702,7 @@
              <item>
               <widget class="QLabel" name="ledSampleStatus">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -1598,7 +1753,7 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>40</height>
+               <height>30</height>
               </size>
              </property>
              <property name="lineWidth">
@@ -1612,7 +1767,75 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0" colspan="2">
+           <item row="2" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,0">
+             <property name="spacing">
+              <number>-1</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="cbSampleAverageOn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Mittelung aktivieren</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblSampleAverages">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Anzahl Mittelwerte</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spbSampleAverages">
+               <property name="toolTip">
+                <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+               </property>
+               <property name="minimum">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0" colspan="2">
             <widget class="QPushButton" name="btnSampleZero">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -1631,45 +1854,6 @@
              </property>
              <property name="text">
               <string>Nullpunkt-Kalibrierung</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="lblSampleAverages">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Anzahl Mittelwerte</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="spbSampleAverages">
-             <property name="toolTip">
-              <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
-             </property>
-             <property name="minimum">
-              <number>2</number>
-             </property>
-             <property name="maximum">
-              <number>100</number>
-             </property>
-             <property name="value">
-              <number>5</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QCheckBox" name="cbSampleAverageOn">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Mittelung aktivieren</string>
              </property>
             </widget>
            </item>
@@ -1744,9 +1928,6 @@
              </property>
              <item>
               <widget class="QComboBox" name="cbKDCDevice">
-               <property name="editable">
-                <bool>true</bool>
-               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -1806,10 +1987,21 @@
              <item>
               <widget class="QLabel" name="lblKDCStatusValue">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                </font>
                </property>
                <property name="text">
                 <string>Nicht verbunden</string>
@@ -1822,7 +2014,7 @@
              <item>
               <widget class="QLabel" name="ledKDCStatus">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -1882,39 +2074,49 @@
             </widget>
            </item>
            <item row="3" column="0" colspan="2">
-            <widget class="QPushButton" name="btnKDCConnect">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <property name="rightMargin">
+              <number>0</number>
              </property>
-             <property name="toolTip">
-              <string>KDC101 Polarisationsrotator verbinden oder trennen</string>
+             <property name="bottomMargin">
+              <number>0</number>
              </property>
-             <property name="text">
-              <string>Verbinden</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QPushButton" name="btnKDCHome">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>KDC101 auf Nullposition fahren (Home)</string>
-             </property>
-             <property name="text">
-              <string>Home</string>
-             </property>
-            </widget>
+             <item>
+              <widget class="QPushButton" name="btnKDCConnect">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>KDC101 Polarisationsrotator verbinden oder trennen</string>
+               </property>
+               <property name="text">
+                <string>Verbinden</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnKDCHome">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>KDC101 auf Nullposition fahren (Home)</string>
+               </property>
+               <property name="text">
+                <string>Home</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </widget>
@@ -2046,10 +2248,21 @@
              <item>
               <widget class="QLabel" name="lblArduinoStatusValue">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                </font>
                </property>
                <property name="text">
                 <string>Nicht verbunden</string>
@@ -2062,7 +2275,7 @@
              <item>
               <widget class="QLabel" name="ledArduinoStatus">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>

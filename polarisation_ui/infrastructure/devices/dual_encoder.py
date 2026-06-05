@@ -74,7 +74,13 @@ class EncoderValue:
 
 @dataclass
 class DualEncoderValue:
-    """Represents simultaneous readings from both encoders."""
+    """Raw paired-angle response from the firmware (device layer).
+
+    Carries the raw `angle_a` / `angle_b` field names exactly as the firmware
+    returns them, before the device manager maps them to the semantic
+    `sample_angle` / `detector_angle` names in ``DualEncoderReading``.
+    Not the same type as ``polarisation_ui.core.models.DualEncoderReading``.
+    """
 
     angle_a: float
     angle_b: float
@@ -174,9 +180,13 @@ class ADCClient:
             Debug.error(f"Failed to parse CONF:PDTIA:GAIN? response: '{raw}' ({e})")
             return None
 
-    def read_voltage(self, channel: str = "DIFF01") -> Optional[float]:
-        """One-shot ADC voltage read via MEAS:ADC:VOLT?; returns volts or None."""
-        cmd = f"MEAS:ADC:VOLT? {channel}"
+    def read_voltage(self) -> Optional[float]:
+        """One-shot ADC voltage read via MEAS:ADC:VOLT?; returns volts or None.
+
+        The firmware reads from whatever input is currently selected by
+        CONF:ADC:MUX — the command takes no channel argument.
+        """
+        cmd = "MEAS:ADC:VOLT?"
         if not self._dev._device.send_command(cmd, add_newline=True):
             Debug.error(f"Failed to send: {cmd}")
             return None
@@ -547,6 +557,14 @@ class DualEncoderArduino:
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
+    def send_control_command(self, command: str) -> bool:
+        """Send a non-query SCPI command that produces no response (debug terminal use).
+
+        Thin public wrapper around ``_send_command_no_response`` so callers outside
+        this class do not have to access a private method.
+        """
+        return self._send_command_no_response(command)
+
     def reapply_desired_state(self, state: "DesiredState") -> bool:
         """Reapply a DesiredState snapshot after reconnect.
 
@@ -577,10 +595,17 @@ class DualEncoderArduino:
         return parts[3].strip() if len(parts) >= 4 else "unknown"
 
     def _check_firmware_version(self, idn: str) -> None:
-        """Raise IncompatibleFirmwareError if firmware version is < 2.0.0."""
+        """Raise IncompatibleFirmwareError if firmware version is < 2.0.0.
+
+        Also rejects unknown or non-semver version strings, which indicate a
+        garbled *IDN? response or a pre-2.0 device that doesn't report a version.
+        """
         version = self._parse_version(idn)
         if version == "unknown":
-            return
+            raise IncompatibleFirmwareError(
+                "Could not parse firmware version from *IDN? response. "
+                "Please flash firmware >= 2.0.0."
+            )
         try:
             major, minor, *_rest = version.split(".")
             if (int(major), int(minor)) < (2, 0):
@@ -588,8 +613,11 @@ class DualEncoderArduino:
                     f"Firmware {version} is incompatible; requires >= 2.0.0. "
                     "Please flash the latest firmware."
                 )
-        except ValueError:
-            return  # non-semver version string — skip check
+        except ValueError as exc:
+            raise IncompatibleFirmwareError(
+                f"Non-semver firmware version string '{version}'; "
+                "cannot confirm compatibility. Please flash firmware >= 2.0.0."
+            ) from exc
 
     def _query_and_log_error(self) -> None:
         self._device.flush_input_buffer()

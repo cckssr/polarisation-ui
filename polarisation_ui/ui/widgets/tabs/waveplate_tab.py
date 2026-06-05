@@ -15,6 +15,7 @@ Workflow:
 from __future__ import annotations
 
 import math
+import time
 from collections import deque
 from typing import TYPE_CHECKING, Optional
 
@@ -44,6 +45,8 @@ class WaveplateTab(PlotTabBase):
 
     points_changed = Signal(int)
 
+    _KDC_POLL_INTERVAL_S: float = 0.5  # How often to refresh KDC position in the label
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._buffer: deque[Frame] = deque(maxlen=_BUFFER_MAXLEN)
@@ -51,6 +54,8 @@ class WaveplateTab(PlotTabBase):
         self._is_measuring: bool = False
         self._kdc: Optional["KDC101Polariser"] = None
         self._sweep_worker: Optional[MalusSweepWorker] = None
+        self._kdc_pos_cache: Optional[float] = None
+        self._kdc_last_poll_ts: float = 0.0
 
     def build(self) -> None:
         self._ui = Ui_WaveplateTab()
@@ -212,12 +217,23 @@ class WaveplateTab(PlotTabBase):
             self._ui.lblKDCPosition.setText("—")
             return
         self._ui.lblLiveIntensity.setText(f"{frame.intensity:.4f} V")
+        # Refresh the KDC position at most every _KDC_POLL_INTERVAL_S seconds to avoid
+        # a blocking hardware read on every ~10 Hz frame.
         if self._kdc is not None and self._kdc.is_connected():
-            try:
-                pos = self._kdc.get_position_deg()
-                self._ui.lblKDCPosition.setText(f"{pos:.2f}°")
-            except Exception:
-                pass
+            now = time.monotonic()
+            if now - self._kdc_last_poll_ts >= self._KDC_POLL_INTERVAL_S:
+                try:
+                    self._kdc_pos_cache = self._kdc.get_position_deg()
+                    self._kdc_last_poll_ts = now
+                except Exception as exc:  # noqa: BLE001
+                    # Non-critical: keep showing the cached value on transient errors.
+                    from polarisation_ui.infrastructure.logging import Debug
+
+                    Debug.warning(f"WaveplateTab: KDC position read failed: {exc}")
+            if self._kdc_pos_cache is not None:
+                self._ui.lblKDCPosition.setText(f"{self._kdc_pos_cache:.2f}°")
+            else:
+                self._ui.lblKDCPosition.setText("—")
 
     def _update_sweep_button_state(self) -> None:
         can_start = (

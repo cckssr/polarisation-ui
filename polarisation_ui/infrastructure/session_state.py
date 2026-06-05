@@ -33,6 +33,8 @@ class SessionState:
     suffix: str = ""
     profile_name: str = ""  # stem of calibration profile; "" = none loaded
     gain_stage: int = 0  # active PDTIA stage (1–4); 0 = not set
+    pdtia_id: str = ""  # selected PDTIA device ID from cbPdtiaID
+    detector_offset_deg: float = 0.0  # host-side detector angle offset (0.0 or 180.0)
     acq_settings: dict = field(default_factory=dict)
     # keys are tab_id strings; values are lists of serialised point dicts
     tab_points: dict = field(default_factory=dict)
@@ -54,7 +56,9 @@ def load_session_state(
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return SessionState(**data)
+        # Filter to known fields so old JSON files with missing new keys still load.
+        known = {f.name for f in SessionState.__dataclass_fields__.values()}  # type: ignore[attr-defined]
+        return SessionState(**{k: v for k, v in data.items() if k in known})
     except Exception:
         return None
 

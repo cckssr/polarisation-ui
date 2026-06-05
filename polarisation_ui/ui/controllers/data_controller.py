@@ -90,7 +90,7 @@ class DataController(QObject):
     measurement_stopped = Signal()
 
     # --- Mock intensity parameters -------------------------------------------
-    # Replace _read_intensity() body with a real ADC read when hardware is ready.
+    # Used by _read_raw_adc() when use_mock_intensity=True (no hardware attached).
     _MOCK_PEAK_ANGLE: float = 90.0  # degrees — centre of simulated Gaussian
     _MOCK_SIGMA: float = 20.0  # width (degrees)
     _MOCK_AMPLITUDE: float = 1000.0  # peak intensity (a.u.)
@@ -167,6 +167,9 @@ class DataController(QObject):
             maxlen=self._acq_settings.samp_averages
         )
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
+        self._intensity_buffer: deque[float] = deque(
+            maxlen=self._acq_settings.pdtia_averages
+        )
 
         # Spike filter: last accepted angles for derivative check.
         self._last_sample_angle: Optional[float] = None
@@ -184,6 +187,12 @@ class DataController(QObject):
 
         # Current PDTIA gain stage (1–4; 0 = not set).
         self._current_pdtia_gain: int = 0
+
+        # Host-side detector angle offset in degrees, applied after the firmware
+        # zero.  0.0 for normal zeroing, 180.0 when the 180°-calibration button
+        # was used.  Survives reconnects (firmware zero is reapplied from
+        # DesiredState; this offset completes the reference frame).
+        self._detector_offset_deg: float = 0.0
 
         # Active detector calibration profile; None when not loaded.
         self._calibration_profile: Optional[PowerCalibrationProfile] = None
@@ -212,6 +221,9 @@ class DataController(QObject):
         # Current ReconnectWorker instance — kept as attribute to prevent GC while running.
         self._reconnect_worker: Optional[ReconnectWorker] = None
 
+        # Set to True by abort_reconnect() so queued worker callbacks are ignored.
+        self._reconnect_aborted: bool = False
+
         Debug.debug("Data controller initialized")
 
     # ==================== Polling Control ====================
@@ -228,11 +240,13 @@ class DataController(QObject):
         self._acq_settings = settings
         self._sample_buffer = deque(maxlen=settings.samp_averages)
         self._det_buffer = deque(maxlen=settings.det_averages)
+        self._intensity_buffer = deque(maxlen=settings.pdtia_averages)
         self.sample_inverted = settings.sample_stage_inverted
         Debug.info(
             f"Acq settings updated: "
             f"samp={settings.samp_averages}× (on={settings.samp_average_on}), "
             f"det={settings.det_averages}× (on={settings.det_average_on}), "
+            f"pdtia={settings.pdtia_averages}× (on={settings.pdtia_average_on}), "
             f"inverted={settings.sample_stage_inverted}, "
             f"spike_filter={settings.spike_filter_enabled} "
             f"(max_delta={settings.spike_max_delta_deg}°)"
@@ -296,6 +310,7 @@ class DataController(QObject):
             Debug.warning("Polling already active")
             return True
 
+        self._reconnect_aborted = False
         self._error_count = 0
         self._backoff_attempt = 0
         self.poll_timer.start(self.poll_interval)
@@ -304,11 +319,21 @@ class DataController(QObject):
         return True
 
     def stop_continuous_reading(self) -> None:
-        """Stop continuous sensor polling."""
-        if self.poll_timer.isActive():
-            self.poll_timer.stop()
-            self._diag_timer.stop()
-            Debug.info("Continuous reading stopped")
+        """Stop continuous sensor polling and cancel any pending reconnect.
+
+        This is a complete stop: poll timer, diagnostic timer, retry timer, and
+        the in-progress reconnect worker are all halted.  Any queued worker
+        callbacks are suppressed via the abort flag so the UI stays consistent
+        even if the worker thread emits just after this call returns.
+        """
+        self.poll_timer.stop()
+        self._diag_timer.stop()
+        self._retry_timer.stop()
+        self._reconnect_aborted = True
+        self._error_count = 0
+        self._backoff_attempt = 0
+        self._last_error_msg = None
+        Debug.info("Continuous reading stopped (retries cancelled)")
 
     def is_reading(self) -> bool:
         """Check if continuous reading is active."""
@@ -355,6 +380,19 @@ class DataController(QObject):
     def is_measuring(self) -> bool:
         """Check if measurement is active."""
         return self._is_measuring
+
+    # ==================== Detector Angle Offset ====================
+
+    @property
+    def detector_offset_deg(self) -> float:
+        """Host-side detector angle offset in degrees (0.0 or 180.0)."""
+        return self._detector_offset_deg
+
+    def set_detector_offset(self, offset_deg: float) -> None:
+        """Set the host-side detector angle offset and clear averaging buffers."""
+        self._detector_offset_deg = offset_deg % 360.0
+        self.clear_det_buffer()
+        Debug.info(f"Detector offset set to {self._detector_offset_deg:.1f}°")
 
     # ==================== PDTIA Gain Control ====================
 
@@ -456,6 +494,10 @@ class DataController(QObject):
             if self.sample_inverted:
                 sample_angle = (360.0 - sample_angle) % 360.0
 
+            # Apply host-side detector reference offset (0° or 180°, set by zero buttons)
+            if self._detector_offset_deg:
+                detector_angle = (detector_angle + self._detector_offset_deg) % 360.0
+
             # Track raw poll rate here, before the spike filter, so the displayed
             # Hz reflects the true timer rate rather than the acceptance rate.
             now = time.monotonic()
@@ -547,7 +589,14 @@ class DataController(QObject):
                 if not math.isnan(raw_intensity)
                 else raw_intensity
             )
-            self.intensity_updated.emit(intensity)
+            if not math.isnan(intensity):
+                self._intensity_buffer.append(intensity)
+            display_intensity = (
+                sum(self._intensity_buffer) / len(self._intensity_buffer)
+                if self._acq_settings.pdtia_average_on and self._intensity_buffer
+                else intensity
+            )
+            self.intensity_updated.emit(display_intensity)
             self.angles_updated.emit(display_sample, display_det)
             # Compute optical power from calibration profile (if loaded).
             conv_factor: Optional[float] = None
@@ -557,7 +606,7 @@ class DataController(QObject):
                     self._current_pdtia_gain
                 )
                 if conv_factor is not None:
-                    power_W = intensity * conv_factor
+                    power_W = display_intensity * conv_factor
 
             self.power_updated.emit(power_W if power_W is not None else float("nan"))
 
@@ -565,7 +614,7 @@ class DataController(QObject):
                 ts_ms=int(time.monotonic() * 1000),
                 sample_angle=display_sample,
                 detector_angle=display_det,
-                intensity=intensity,
+                intensity=display_intensity,
                 pdtia_gain=self._current_pdtia_gain,
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor,
@@ -627,6 +676,10 @@ class DataController(QObject):
     @Slot()
     def _attempt_reconnect(self) -> None:
         """Start a ReconnectWorker to re-establish the serial connection off the main thread."""
+        if self._reconnect_aborted:
+            Debug.info("Reconnect attempt skipped — aborted by user")
+            return
+
         Debug.info(f"Reconnect attempt {self._error_count}/{self._max_errors}...")
 
         # Clean up any previous worker that has already finished
@@ -644,7 +697,12 @@ class DataController(QObject):
     @Slot()
     def _on_reconnect_success(self) -> None:
         """Called on the main thread when ReconnectWorker reports success."""
+        aborted = self._reconnect_aborted
+        self._reconnect_aborted = False
         self._reconnect_worker = None
+        if aborted:
+            Debug.info("Reconnect success ignored — user aborted reconnect")
+            return
         self._error_count = 0
         self._backoff_attempt = 0
         self._last_error_msg = None
@@ -669,7 +727,12 @@ class DataController(QObject):
         Does NOT re-enter _handle_read_error — manages the backoff directly
         so the status bar is never written for retries (B2 contract).
         """
+        aborted = self._reconnect_aborted
+        self._reconnect_aborted = False
         self._reconnect_worker = None
+        if aborted:
+            Debug.info("Reconnect failure ignored — user aborted reconnect")
+            return
         self._error_count += 1
         Debug.warning(
             f"Reconnect attempt {self._backoff_attempt} failed "
@@ -693,32 +756,6 @@ class DataController(QObject):
             self._backoff_attempt += 1
             self._retry_timer.start(delay_ms)
             self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
-
-    # ==================== Manual Reading ====================
-
-    def read_once(self) -> Optional["DualEncoderReading"]:
-        """Perform single sensor read without starting continuous polling.
-
-        Returns:
-            DualEncoderReading or None on error.
-        """
-        if not self.device_manager.is_encoder_connected():
-            Debug.warning("Cannot read: encoders not connected")
-            return None
-
-        try:
-            angles = self.device_manager.read_angles()
-
-            if angles is not None:
-                self.angles_updated.emit(angles.sample_angle, angles.detector_angle)
-                return angles
-
-            return None
-
-        except Exception as e:
-            Debug.error(f"Error during manual read: {e}")
-            self.error_occurred.emit(str(e))
-            return None
 
     # ==================== Diagnostics ====================
 
@@ -769,8 +806,6 @@ class DataController(QObject):
 
     def cleanup(self) -> None:
         """Clean up resources."""
-        self._retry_timer.stop()
-        self._diag_timer.stop()
         self.stop_continuous_reading()
 
         if self._reconnect_worker is not None and self._reconnect_worker.isRunning():

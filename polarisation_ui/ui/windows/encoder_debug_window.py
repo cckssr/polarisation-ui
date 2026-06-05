@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from polarisation_ui.core.models import Frame
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.dual_encoder import (
     DualEncoderArduino,
@@ -101,6 +102,7 @@ class EncoderDebugDialog(QDialog):
 
         self._connect_signals()
         self._init_leds()
+        self._init_sys_info_static_rows()  # add build-once rows before first data load
 
         if device_manager.is_encoder_connected():
             self._load_system_info()
@@ -220,12 +222,13 @@ class EncoderDebugDialog(QDialog):
         self.ui.buttonBox.rejected.connect(self.reject)
 
         # When DataController is available, subscribe to its signals for live
-        # angles and intensity so we display the same processed values as the
-        # main window (inversion, averaging, spike filter applied) without
-        # competing on the serial port.
+        # angles, intensity, and stat bitmask so we display the same processed
+        # values as the main window (inversion, averaging, spike filter applied)
+        # without competing on the serial port.
         if self._data_controller is not None:
             self._data_controller.angles_updated.connect(self._on_angles_updated)
             self._data_controller.intensity_updated.connect(self._on_intensity_updated)
+            self._data_controller.frame_ready.connect(self._on_frame_ready)
 
     def _init_leds(self) -> None:
         """Reset all LEDs to gray until the first successful read."""
@@ -246,6 +249,19 @@ class EncoderDebugDialog(QDialog):
             getattr(self.ui, name).setStyleSheet(LED_GRAY)
         # ADS LEDs are instance vars created in _build_ads_tab — set after that call.
 
+    def _init_sys_info_static_rows(self) -> None:
+        """Add static form rows to the System Info group (call once on construction).
+
+        Avoids appending new widgets on every reconnect, which would create
+        duplicate rows.  The 'Probe invertiert' row uses a runtime value that
+        is fixed for the lifetime of the dialog.
+        """
+        lbl = QLabel("Probe invertiert:", self.ui.gbSysInfo)
+        cb = QCheckBox(self.ui.gbSysInfo)
+        cb.setChecked(self._sample_inverted)
+        cb.setEnabled(False)
+        self.ui.formSysInfo.addRow(lbl, cb)
+
     # ==================== DataController Signal Receivers ====================
 
     @Slot(float, float)
@@ -260,6 +276,20 @@ class EncoderDebugDialog(QDialog):
     def _on_intensity_updated(self, intensity: float) -> None:
         """Update ADC voltage display at 10 Hz from DataController."""
         self._lcd_adc_voltage.display(intensity)
+
+    @Slot(object)
+    def _on_frame_ready(self, frame: Frame) -> None:
+        """Drive error-flag LEDs from Frame.stat bits 2/3.
+
+        In polling mode ``stat`` is always 0 (the firmware only exposes the error
+        flag in streaming ``DATA:FRAME`` packets), so both LEDs appear green —
+        meaning "no error detected via this path".  When streaming mode is used
+        in the future, bits 2/3 will reflect the hardware self-latching error flag.
+        """
+        err_a = bool(frame.stat & 0x04)  # bit 2 — encoder A persistent error flag
+        err_b = bool(frame.stat & 0x08)  # bit 3 — encoder B persistent error flag
+        self.ui.ledErrorA.setStyleSheet(LED_RED if err_a else LED_GREEN)
+        self.ui.ledErrorB.setStyleSheet(LED_RED if err_b else LED_GREEN)
 
     # ==================== Device Access ====================
 
@@ -410,10 +440,8 @@ class EncoderDebugDialog(QDialog):
             LED_GREEN if ocf else LED_YELLOW
         )
 
-        # Error Flag: hardware self-latching error
-        # SYST:DIAG? does not expose the error flag directly; rely on the
-        # dedicated error-flag read via btnClearErrorFlag / _refresh_error_flags.
-        # Leave that LED unchanged here.
+        # Note: ledError{suffix} is driven from Frame.stat bits 2/3 via
+        # _on_frame_ready; DIAG:ENC? does not expose the error flag.
 
         # AGC — always an int (0–255) after the bug-fix in dual_encoder.py
         agc = int(diag.get("agc", 0))
@@ -449,13 +477,6 @@ class EncoderDebugDialog(QDialog):
             self.ui.cbDebugMode.blockSignals(True)
             self.ui.cbDebugMode.setChecked(raw_deb.strip() == "1")
             self.ui.cbDebugMode.blockSignals(False)
-
-        # Sample stage inverted flag — read-only, derived from hardware config
-        lbl = QLabel("Probe invertiert:", self.ui.gbSysInfo)
-        cb = QCheckBox(self.ui.gbSysInfo)
-        cb.setChecked(self._sample_inverted)
-        cb.setEnabled(False)
-        self.ui.formSysInfo.addRow(lbl, cb)
 
     # ==================== Controls ====================
 
@@ -533,7 +554,7 @@ class EncoderDebugDialog(QDialog):
             )
         else:
             # Control command — no response from firmware
-            ok = device._send_command_no_response(cmd)  # noqa: SLF001
+            ok = device.send_control_command(cmd)
             self._log(
                 "            <<< OK" if ok else "            <<< [Fehler beim Senden]"
             )

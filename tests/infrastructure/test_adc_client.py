@@ -63,19 +63,19 @@ class TestVoltageRead:
         assert isinstance(v, float)
 
     def test_read_voltage_in_range(self, encoder_client):
-        """Voltage must be within [0, V_REF=2.048]."""
+        """Voltage must be within [0, V_REF=2.5 (EXT reference configured on connect)]."""
         for _ in range(5):
             v = encoder_client.adc.read_voltage()
             assert v is not None
-            assert 0.0 <= v <= 2.1  # small headroom above V_REF for noise
+            assert 0.0 <= v <= 2.6  # small headroom above V_REF_EXT (2.5 V) for noise
 
     def test_voltage_malus_law_at_zero_angle(self, encoder_client, mock_arduino):
-        """At sample angle = 0°, cos²(0) = 1 → voltage near V_REF."""
+        """At sample angle = 0°, cos²(0) = 1 → voltage near V_REF_EXT (2.5 V)."""
         mock, _ = mock_arduino
         mock.set_encoder_angle("A", 0.0)
         v = encoder_client.adc.read_voltage()
         assert v is not None
-        assert v > 1.9  # close to 2.048 V
+        assert v > 2.4  # close to 2.5 V
 
     def test_voltage_malus_law_at_90_degrees(self, encoder_client, mock_arduino):
         """At sample angle = 90°, cos²(90°) = 0 → voltage near 0 V."""

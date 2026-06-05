@@ -30,7 +30,9 @@ if _PTY_AVAILABLE:
 
 # ── Simulation constants ─────────────────────────────────────────────────────
 
-_V_REF = 2.048  # ADS1220 reference voltage (V)
+_V_REF_INT = 2.048  # ADS1220 internal reference (V)
+_V_REF_EXT = 2.5  # External reference on this board (V)
+_V_REF_AVDD = 3.3  # AVDD reference (V)
 _TEMP_NOMINAL = 25.0  # °C — approximate room temperature
 
 
@@ -165,6 +167,26 @@ class MockArduino:
         self._running = False
         if self._thread:
             self._thread.join(timeout=1.0)
+
+    def kill_pty(self) -> None:
+        """Close the PTY master fd mid-stream, simulating a hardware disconnect.
+
+        The run loop detects the broken fd via ``select``'s ``OSError`` and exits
+        cleanly through the finally→_cleanup path.  The PTY slave path becomes
+        unreadable to any connected serial client, which should trigger a read
+        error and subsequently the reconnect backoff.
+
+        Use in disconnection-path tests to exercise the real PTY transport instead
+        of a ``MagicMock``.
+        """
+        self._stop_flag = True
+        self._running = False
+        if self.pty_master is not None:
+            try:
+                os.close(self.pty_master)
+            except OSError:
+                pass
+            self.pty_master = None
 
     def set_encoder_angle(self, target: str, angle: float) -> None:
         """Set encoder angle. target: 'A' or 'B'."""
@@ -556,11 +578,21 @@ class MockArduino:
     # ── Simulation helpers ────────────────────────────────────────────────────
 
     def _compute_adc_voltage(self) -> float:
-        """Malus's law: V = V_REF * cos²(sample_angle)."""
+        """Malus's law: V = V_REF * cos²(sample_angle).
+
+        Uses the reference voltage that matches the currently configured
+        CONF:ADC:VREF (INT / EXT / AVDD) so mock scaling agrees with the
+        real device path.
+        """
+        v_ref = {
+            "INT": _V_REF_INT,
+            "EXT": _V_REF_EXT,
+            "AVDD": _V_REF_AVDD,
+        }.get(self.adc_vref, _V_REF_EXT)
         angle_rad = math.radians(self.encoder_a.get_effective_angle())
-        signal = _V_REF * (math.cos(angle_rad) ** 2)
+        signal = v_ref * (math.cos(angle_rad) ** 2)
         signal += random.gauss(0.0, 0.002)
-        return round(max(0.0, min(_V_REF, signal)), 6)
+        return round(max(0.0, min(v_ref, signal)), 6)
 
     def _compute_adc_temperature(self) -> float:
         return round(_TEMP_NOMINAL + random.gauss(0.0, 0.1), 2)
@@ -576,7 +608,7 @@ class MockArduino:
         self.adc_mode = "NORM"
         self.adc_fir = "OFF"
         self.adc_vref = "EXT"
-        self.adc_temp_enabled = True
+        self.adc_temp_enabled = False
         self.pdtia_gain = 0
         self._frame_seq = 0
 

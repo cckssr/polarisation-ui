@@ -1,8 +1,5 @@
 """Mock KDC101Polariser for headless tests."""
 
-import math
-from typing import Optional
-
 
 class MockKDC101Polariser:
     """Simulated KDC101Polariser.

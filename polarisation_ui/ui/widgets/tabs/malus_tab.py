@@ -231,7 +231,11 @@ class MalusTab(PlotTabBase):
         self.points_changed.emit(len(self._ui.malusCurvePlot.get_points()))
 
     def _compute_average(self) -> tuple[float, Optional[Frame]]:
-        """Compute average intensity over last _AVERAGE_WINDOW_MS.  Main-thread safe."""
+        """Compute average intensity over last _AVERAGE_WINDOW_MS.
+
+        Acquires the buffer mutex — safe to call from both the main thread
+        and worker threads (e.g. via the MalusSweepWorker callback).
+        """
         with QMutexLocker(self._buffer_mutex):
             return self._compute_average_locked()
 
@@ -249,11 +253,6 @@ class MalusTab(PlotTabBase):
         if not valid:
             return float("nan"), latest
         return sum(valid) / len(valid), latest
-
-    def _compute_average_safe(self) -> tuple[float, Optional[Frame]]:
-        """Thread-safe compute average — callable from worker threads."""
-        with QMutexLocker(self._buffer_mutex):
-            return self._compute_average_locked()
 
     @Slot()
     def _delete_last_point(self) -> None:
@@ -346,7 +345,7 @@ class MalusTab(PlotTabBase):
             return
         self._sweep_worker = MalusSweepWorker(
             kdc=self._kdc,
-            read_average=self._compute_average_safe,
+            read_average=self._compute_average,
             start_deg=self._ui.spinSweepStart.value(),
             end_deg=self._ui.spinSweepEnd.value(),
             step_deg=self._ui.spinSweepStep.value(),

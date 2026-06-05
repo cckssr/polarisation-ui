@@ -20,7 +20,7 @@ Hardware surface (fixed — no sensors beyond these are planned):
 
 ## Phased overhaul in progress
 
-A broad SCPI redesign + UI abstraction is rolling out in phases. Plan lives at `~/.claude/plans/analyse-the-current-state-swift-cocoa.md`. Current phase is noted in `TODO.md`. Items marked **(planned Phase N)** below do not yet exist — do not reference them as implemented code.
+A broad SCPI redesign + UI abstraction is rolling out in phases. Plan lives at `~/.claude/plans/analyse-the-current-state-swift-cocoa.md` and is tracked in `ARCHITECTURE.md`. Items marked **(planned Phase N)** below do not yet exist — do not reference them as implemented code.
 
 ## Architecture
 
@@ -59,15 +59,10 @@ Rules:
 
 Pure Python — **no PySide6, no Qt, no hardware I/O, no serial imports**.
 
-- `models.py` — dataclasses: `GoniometerState`, `EncoderReading`, `PhotodiodeReading`, `MeasurementPoint`, `MeasurementSession`, `AcquisitionSettings`, `DeviceInfo`.
-- `services.py` — `GoniometerService` orchestrates state transitions.
-- `exceptions.py` — `GoniometerError`, `AngleLimitError`, `AngleMismatchError`, `InvalidEncoderReading`, `KDC101Error`, `KDC101TimeoutError`, `PM400Error`.
-- `utils.py` — `circular_mean_deg`, `calculate_statistics`.
-- `formatting.py` — display formatting helpers.
-- `calibration_hooks.py` — pure-Python calibration data surface.
+- `models.py` — dataclasses: `AcquisitionSettings`, `DualEncoderReading`, `Frame`, `BrewsterPoint`, `MalusPoint`, `TabExport`.
+- `exceptions.py` — `GoniometerError`, `AngleLimitError`, `AngleMismatchError`, `InvalidEncoderReading`, `IncompatibleFirmwareError`, `KDC101Error`, `KDC101TimeoutError`, `PM400Error`.
+- `utils.py` — `circular_mean_deg`.
 - `auto_calibration_settings.py`, `power_calibration.py` — auto-calibration settings and power-calibration logic.
-
-`GoniometerState` enforces `detector_angle = 2 × sample_angle` (mechanical geometry).
 
 ### `polarisation_ui/infrastructure/`
 
@@ -95,7 +90,6 @@ PySide6 widgets. Thin event handlers — delegate all logic to core/infrastructu
 - `windows/auto_power_calibration_window.py` — automated power-calibration wizard.
 - `controllers/data_controller.py` — `DataController` polls at 10 Hz via `QTimer`, emits Qt signals (`angles_updated`, `intensity_updated`, `diagnostics_updated`, `error_occurred`, `retry_connecting`, `reconnect_succeeded`, `connection_lost`, `measurement_started/stopped`).
 - `widgets/brewster_curve_plot.py`, `widgets/brewster_detector_plot.py`, `widgets/malus_curve_plot.py` — pyqtgraph plots.
-- `widgets/connection_banner.py` — non-blocking reconnect status overlay.
 - `widgets/event_log_panel.py` — collapsible event-log panel.
 - `widgets/plot_tab_base.py` — `PlotTabBase` abstract base class for experiment tabs.
 - `widgets/tab_registry.py` — `TabRegistry` singleton; hides tabs whose `required_modules` are absent.
@@ -108,13 +102,12 @@ PySide6 widgets. Thin event handlers — delegate all logic to core/infrastructu
 ### Data flow
 
 ```
-Arduino (SCPI over serial)
+Arduino (SCPI 2.0.x over serial)
   → DualEncoderArduino (parses responses)
   → GoniometerDeviceManager (lifecycle, reconnect)
   → DataController (QTimer 10 Hz, circular averaging)
   → Qt signals
-  → MainWindow / plot widgets
-  → GoniometerService (state transitions)
+  → MainWindow / plot widgets / PlotTabBase subclasses
 ```
 
 ## Build & Run
@@ -132,7 +125,6 @@ Arduino (SCPI over serial)
 .venv/bin/pytest tests/
 
 # Single test file
-.venv/bin/pytest tests/test_goniometer_system.py
 .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 
 # Calibration-tool tests (shared venv)
@@ -150,21 +142,27 @@ pio device monitor         # serial monitor (for manual SCPI)
 
 ## SCPI Reference
 
-The Arduino firmware speaks SCPI-style commands over USB serial. **Source of truth: `src_arduino/src/scpi.cpp`** — do not duplicate the full tree here; regenerate `docs/scpi-reference.md` via `/update-docs` **(planned Phase 7)** when the firmware changes.
+The Arduino firmware (v2.0.1) speaks SCPI-style commands over USB serial. **Source of truth: `src_arduino/src/scpi.cpp`** — do not duplicate the full tree here; full documentation is in `docs/scpi-reference.md`. Clients must check `SYST:VERS?` on connect and reject firmware `< 2.0.0` with `IncompatibleFirmwareError`.
 
-Current top-level subsystems (as implemented today):
+Top-level subsystems (as implemented in firmware 2.0.1):
 
-| Subsystem                                                 | Purpose                          | Example                     |
-| --------------------------------------------------------- | -------------------------------- | --------------------------- |
-| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI` | IEEE 488.2 common                | `*IDN?`                     |
-| `MEAS`                                                    | One-shot reads                   | `MEAS:ANGL? BOTH`           |
-| `CONF`                                                    | Device config                    | `CONF:ZERO A`               |
-| `INIT:CONT`                                               | Start/stop streaming             | `INIT:CONT ON,BOTH`         |
-| `ABOR`                                                    | Stop streaming                   | `ABOR`                      |
-| `SENS:INT`                                                | Poll interval                    | `SENS:INT 100`              |
-| `SYST`                                                    | Errors, diagnostics, debug, help | `SYST:ERR?`, `SYST:DIAG? A` |
+| Subsystem                                                   | Purpose                             | Example                           |
+| ----------------------------------------------------------- | ----------------------------------- | --------------------------------- |
+| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI` | IEEE 488.2 common                   | `*IDN?`                           |
+| `MEAS:ENC:ANGL?`, `MEAS:ENC:MAGN?`                         | One-shot encoder reads              | `MEAS:ENC:ANGL? BOTH`             |
+| `MEAS:ADC:VOLT?`, `MEAS:ADC:TEMP?`, `MEAS:ALL?`            | One-shot ADC reads                  | `MEAS:ADC:VOLT?`                  |
+| `CONF:ENC:ZERO`, `CONF:ENC:ERR`                             | Encoder config (zero, error-clear)  | `CONF:ENC:ZERO A`                 |
+| `CONF:ADC:MUX/GAIN/RATE/MODE/FIR/VREF/TEMP/PWR`            | ADS1220 config                      | `CONF:ADC:VREF EXT`               |
+| `CONF:PDTIA:GAIN`                                           | PD-TIA discrete gain stage          | `CONF:PDTIA:GAIN 2`               |
+| `CONF:SRC`, `CONF:RATE`                                     | Streaming sources and rate          | `CONF:SRC ENC:BOTH,ADC`           |
+| `INIT:CONT ON/OFF`, `INIT`, `ABOR`                          | Stream control                      | `INIT:CONT ON`                    |
+| `FETC:ENC:ANGL?`, `FETC:ADC:VOLT?`, `FETC:ALL?`            | Fetch last frame (aliases MEAS:*)   | `FETC:ALL?`                       |
+| `READ?`, `READ? ADC`, `READ? ADC:T`                         | Arm and fetch                       | `READ?`                           |
+| `SENS:ADC:*?`, `SENS:PDTIA:GAIN?`, `SENS:SRC?`, `SENS:RATE?` | Query current config              | `SENS:ADC:VREF?`                  |
+| `SYST:ERR?`, `SYST:VERS?`, `SYST:UPTIME?`, `SYST:HELP?`, `SYST:DEB` | System/error/version       | `SYST:ERR?`                       |
+| `DIAG:ENC?`, `DIAG:ADC?`, `DIAG:PDTIA?`, `DIAG:SELF?`     | Diagnostics                         | `DIAG:ADC?`                       |
 
-**Breaking redesign (planned Phase 2)** bumps firmware to `2.0.0` and introduces a cleaner tree (`MEAS:ENC:ANGL?`, `MEAS:ADC:VOLT?`, `CONF:ADC:*`, `CONF:PDTIA:GAIN`, `DIAG:*`, key=value streaming frames). See the plan file for the full tree. When that phase lands, this table is regenerated and the Python client bumps in lockstep.
+Streaming frame format: `DATA:FRAME tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<n>,stat=<flags>` (only sources enabled by `CONF:SRC` are included; `tsMs` and `stat` are always present).
 
 ## Plot-Tab Extensibility
 
@@ -199,7 +197,7 @@ Registry hides tabs whose `required_modules` are not currently injected. Malus a
 
 - On read failure, poll pauses and `error_occurred` is emitted.
 - Reconnect attempts use exponential backoff: 1 s → 2 s → 4 s → 8 s, cap 15 s.
-- A non-blocking `ConnectionBanner` shows state; controls are **not** disabled during `RECONNECTING`.
+- Reconnect state is surfaced via the status bar; controls are **not** disabled during `RECONNECTING`.
 - **Measurement session and buffers survive reconnect** — a gap marker is written to the journal.
 - All `CONF:*` state (ADC gain, mux, PD-TIA stage, stream sources/rate) is reapplied automatically on reconnect from a `DesiredState` snapshot.
 - Every `frame_ready` is flushed to an append-only session journal (`~/.polarisation-ui/sessions/<ts>/journal.csv`) with `fsync` every ~1 s, so recorded data is durable across crashes or unrecoverable disconnects. Explicit Save exports the journal to the user's chosen file.
@@ -234,26 +232,25 @@ Keep main context lean so Pro-plan rate limits go further:
 ## Testing Conventions
 
 - `pytest` at repo root for `tests/`; `calibration_tool/tests/` has its own suite (same venv).
-- **Mock hardware via `MockArduino`** (PTY-based SCPI simulator at `polarisation_ui/infrastructure/devices/mock_arduino.py`) — do not invent new mock transports.
-- **Every resilience change gets a disconnection-path test.** Use `MockArduino.kill_pty()` / equivalents to simulate mid-stream loss.
+- **Mock hardware via `MockArduino`** (PTY-based SCPI simulator at `polarisation_ui/infrastructure/mocks/mock_arduino.py`) — do not invent new mock transports.
+- **Every resilience change gets a disconnection-path test.** Use `MockArduino.kill_pty()` to tear down the PTY mid-stream and simulate a sudden disconnect.
 - Type hints required on new code; no unqualified `Any`.
 
 ## Troubleshooting
 
 - **Serial port busy** on connect → close `pio device monitor`, Arduino IDE, or other serial clients; replug USB if the TTY is orphaned.
-- **ADS1220 no response** → check CS/DRDY pins in `src_arduino/src/config.h`; `DIAG:ADC?` dumps registers when reachable (Phase 2+).
-- **Firmware version mismatch** → client queries `*IDN?` / `SYST:VERS?` on connect and refuses incompatible firmware with `IncompatibleFirmwareError` (Phase 3+).
+- **ADS1220 no response** → check CS/DRDY pins in `src_arduino/src/config.h`; `DIAG:ADC?` dumps registers when reachable.
+- **Firmware version mismatch** → client queries `*IDN?` on connect and refuses incompatible firmware (< 2.0.0) with `IncompatibleFirmwareError`.
 - **PTY mock tests hang on macOS** → confirm `select.select()` path in `MockArduino`; check `mock_arduino.py` daemon thread lifecycle.
 
 ## New Feature Workflow
 
 1. Define / extend domain dataclass in `core/models.py`.
-2. Add service method in `core/services.py`.
-3. Add adapter method in `infrastructure/devices/*` (and its mock counterpart in `mock_arduino.py`).
-4. Surface via `DataController` signals or a dedicated controller method.
-5. Consume from the owning `PlotTabBase` subclass (Phase 4+) or existing widget.
-6. Add tests alongside: core → pure unit; infrastructure → against `MockArduino`; ui → with `QTest`.
-7. Run `/update-docs` (Phase 7+) if the change touches public APIs or SCPI.
+2. Add adapter method in `infrastructure/devices/*` (and its mock counterpart in `mocks/mock_arduino.py`).
+3. Surface via `DataController` signals or a dedicated controller method.
+4. Consume from the owning `PlotTabBase` subclass or existing widget.
+5. Add tests alongside: core → pure unit; infrastructure → against `MockArduino`; ui → with `QTest`.
+6. Run `/update-docs` (Phase 7+) if the change touches public APIs or SCPI.
 
 ## Naming Conventions
 
@@ -282,4 +279,4 @@ Key files:
 - `src/state.cpp` / `state.h` — `ErrorQueue`, `AcqStats`, `AcqMode`, `AppState`.
 - `src/config.h` — pins, firmware identity, baud rate, `FW_VERSION`.
 - `lib/AS5048A/` — SPI encoder driver.
-- `lib/ADS1220/` — ADS1220 driver (**present, wired into SCPI in Phase 2**).
+- `lib/ADS1220/` — ADS1220 driver (wired into SCPI; all `CONF:ADC:*` / `MEAS:ADC:*` / `DIAG:ADC?` commands are implemented).

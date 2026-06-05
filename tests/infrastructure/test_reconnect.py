@@ -2,10 +2,13 @@
 
 Verifies exponential backoff, buffer preservation across reconnects,
 gap markers in the session journal, and DesiredState reapplication.
+Also includes a PTY-based disconnection-path test against the real MockArduino
+(exercises the real PTY transport instead of a MagicMock).
 
 Run with: .venv/bin/pytest tests/infrastructure/test_reconnect.py
 """
 
+import sys
 import time
 from collections import deque
 from unittest.mock import MagicMock, patch, call
@@ -264,3 +267,47 @@ class TestJournalGapMarker:
         finally:
             sj_mod.JOURNAL_BASE = original_base
             dc.cleanup()
+
+
+# ── PTY disconnection-path (real MockArduino transport) ───────────────────────
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
+class TestPtyDisconnection:
+    """Disconnection-path tests that drive the real PTY transport via MockArduino.
+
+    These verify that a mid-stream kill of the PTY master (simulating cable unplug)
+    causes DualEncoderArduino.read_angle() to return None — the signal the
+    DataController uses to trigger the reconnect backoff.
+    """
+
+    def test_kill_pty_causes_read_failure(self):
+        """kill_pty() must make subsequent MEAS:ENC:ANGL? return None."""
+        from polarisation_ui.infrastructure.mocks import MockArduino
+        from polarisation_ui.infrastructure.devices import DualEncoderArduino, EncoderID
+
+        mock = MockArduino(start_angle_a=45.0, start_angle_b=90.0)
+        pty_path = mock.start()
+        try:
+            encoder = DualEncoderArduino(port=pty_path)
+            assert encoder.connect(), "encoder should connect to mock"
+
+            # Confirm normal reading works before the kill.
+            val = encoder.read_angle(EncoderID.A)
+            assert val is not None, "read_angle should succeed before kill_pty"
+
+            # Tear down the PTY master — simulates cable unplug.
+            mock.kill_pty()
+            # Give the mock thread a moment to detect the broken fd.
+            time.sleep(0.05)
+
+            # Now reads must fail (timeout → None).
+            val_after = encoder.read_angle(EncoderID.A)
+            assert val_after is None, "read_angle must return None after kill_pty"
+        finally:
+            # Stop gracefully in case kill_pty was not called (test failure).
+            mock.stop()
+            try:
+                encoder.disconnect()
+            except Exception:
+                pass

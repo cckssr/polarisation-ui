@@ -332,7 +332,7 @@ class GoniometerDeviceManager:
     def read_diagnostics_both(
         self,
     ) -> Optional[tuple[Optional[dict], Optional[dict]]]:
-        """Read SYST:DIAG? for both encoders.
+        """Read DIAG:ENC? for both encoders.
 
         Returns:
             (diag_a, diag_b) where each entry is a dict with keys

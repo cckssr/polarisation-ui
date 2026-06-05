@@ -11,13 +11,10 @@
     },
     "connection": {
       "max_retry_attempts": 10,
-      "backoff_delays_ms": [
-        1000,
-        2000,
-        4000,
-        8000,
-        15000
-      ]
+      "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
+    },
+    "pdtia": {
+      "device_ids": ["E20057", "E83569"]
     },
     "plot": {
       "max_points": 300,

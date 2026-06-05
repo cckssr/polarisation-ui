@@ -73,11 +73,11 @@ class Debug:
     @classmethod
     def init(
         cls,
-        debug_level=DEBUG_LEVEL,
-        log_dir=None,
-        app_name="Application",
-        supress_logfile=False,
-    ):
+        debug_level: int = DEBUG_LEVEL,
+        log_dir: "str | None" = None,
+        app_name: str = "Application",
+        supress_logfile: bool = False,
+    ) -> None:
         """Initialise the logger with the specified debug level and log directory.
 
         If no log directory is specified, a platform-specific temp directory is used.
@@ -151,12 +151,12 @@ class Debug:
             cls.LOG_FILE = None
 
     @classmethod
-    def error(cls, message, exc_info=None):
+    def error(cls, message: str, exc_info: bool = False) -> None:
         """Log an error message.
 
         Args:
             message: Error message to log
-            exc_info: Exception info (optional)
+            exc_info: If True, attach current exception traceback (default False)
         """
         # Klassennamen und Funktionsnamen ermitteln
         if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
@@ -173,7 +173,7 @@ class Debug:
             cls.logger.error(message)
 
     @classmethod
-    def info(cls, message):
+    def info(cls, message: str) -> None:
         """Log an informational message.
 
         Args:
@@ -192,7 +192,7 @@ class Debug:
         cls.logger.info(message)
 
     @classmethod
-    def debug(cls, message):
+    def debug(cls, message: str) -> None:
         """Log detailed debug information.
 
         Args:
@@ -211,7 +211,7 @@ class Debug:
         cls.logger.debug(message)
 
     @classmethod
-    def warning(cls, message):
+    def warning(cls, message: str) -> None:
         """Log information as warning for non critical issues.
 
         Args:
@@ -230,7 +230,7 @@ class Debug:
         cls.logger.warning(message)
 
     @classmethod
-    def critical(cls, message):
+    def critical(cls, message: str) -> None:
         """Log a critical error message.
 
         Args:
@@ -248,7 +248,9 @@ class Debug:
         cls.logger.critical(message)
 
     @classmethod
-    def exception_hook(cls, exc_type, exc_value, exc_traceback):
+    def exception_hook(
+        cls, exc_type: type, exc_value: BaseException, exc_traceback: object
+    ) -> None:
         """Callback function for unhandled exceptions.
 
         Logs the exception and forwards it to sys.__excepthook__.
