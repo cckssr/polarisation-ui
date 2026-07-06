@@ -40,11 +40,6 @@ AS5048A_SPI::FrameResult encReadMagn(AS5048A_SPI &enc)
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-float rawToDeg(uint16_t raw14)
-{
-  return (raw14 & 0x3FFFu) * (360.0f / 16384.0f);
-}
-
 bool frameOk(const AS5048A_SPI::FrameResult &r)
 {
   return r.parityOk && !r.errorFlag;

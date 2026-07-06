@@ -12,6 +12,10 @@ struct ErrorQueue
   {
     if (count < ERR_QUEUE_SIZE)
       msgs[count++] = msg;
+    else
+      // SCPI convention: don't silently drop the error — overwrite the last
+      // slot so SYST:ERR? eventually reports that the queue overflowed.
+      msgs[ERR_QUEUE_SIZE - 1] = F("-350,\"Queue overflow\"");
   }
 
   String pop()
