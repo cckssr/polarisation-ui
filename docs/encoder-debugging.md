@@ -261,14 +261,14 @@ Checklist:
 - **Wire length:** Keep SPI wires < 20 cm on a breadboard. At 1 MHz, capacitive loading on long wires causes ringing on MISO.
 - **Ground:** Confirm Arduino GND and encoder GND are on the same node with a low-resistance path (< 1 Ω).
 - **Decoupling:** Place a 100 nF ceramic capacitor from VCC to GND directly at each AS5048A pin 1 (VDD3.3) and pin 8 (GND).
-- **CS crosstalk:** CS_A (pin 9), CS_B (pin 10), and ADC_CS (pin 8) are adjacent GPIO pins. On a breadboard, adjacent rails couple capacitively. If removing SRC_ADC from the stream eliminates parity errors, the ADC CS is glitching into the encoder CS lines. Add a 33 Ω series resistor on each CS line.
+- **CS crosstalk:** CS_A (pin 10) and CS_B (pin 9) are adjacent GPIO pins on the shared encoder SPI bus. ADC_CS (pin 4) is on the ADS1220's separate HSPI bus, so it cannot crosstalk with the encoder CS lines electrically, but a shared breadboard rail can still couple noise between them. If removing SRC_ADC from the stream eliminates parity errors, suspect rail/ground coupling from the ADC transactions. Add a 33 Ω series resistor on each CS line.
 - **SPI mode:** The AS5048A uses SPI Mode 1 (CPOL=0, CPHA=1). Confirm with a logic analyser — data samples on the falling edge of SCLK.
 
 **Oscilloscope probe points (per CS):**
 
 | Signal        | Where             | What to check                                                             |
 | ------------- | ----------------- | ------------------------------------------------------------------------- |
-| CS_A (pin D9) | Arduino → encoder | Low during transaction, no glitches while CS_B or ADC_CS switches         |
+| CS_A (pin D10) | Arduino → encoder | Low during transaction, no glitches while CS_B or ADC_CS switches         |
 | SCLK          | Shared bus        | Clean edges, no ringing >10% of amplitude between transitions             |
 | MISO          | Encoder → Arduino | Stable during clock pulses; goes high-Z (or holds last bit) after CS high |
 | MOSI          | Arduino → encoder | Stable during clock pulses                                                |
@@ -320,7 +320,7 @@ CONF:SRC ENC:BOTH
 INIT:CONT ON
 ```
 
-Both `angA` and `angB` should be ~0.00° after zeroing. If they're not zero in the stream but `MEAS:ENC:ANGL? BOTH` returns 0, the firmware had the SW-zero bug — this is fixed in the current firmware (v2.0.0 with the recent update).
+Both `angA` and `angB` should be ~0.00° after zeroing. If they're not zero in the stream but `MEAS:ENC:ANGL? BOTH` returns 0, the firmware had the SW-zero bug — this is fixed in the current firmware (v2.1.0).
 
 ### 4.2 Verify parity + EF checking is active
 
@@ -363,10 +363,12 @@ Healthy frame: `dstatA=1` (only OCF set). Any other bit set indicates a hardware
 
 Open the debug dialog (`Ctrl+D` in the main window):
 
-1. **Encoder A / B tabs** — LEDs for COMP_H, COMP_L, COF, OCF update every 500 ms while the dialog is open (faster than the background 5 s poll). AGC is shown on a 0–255 progress bar.
-2. **Raw Stream tab** — live `DATA:FRAME` log. Verify `angA`, `angB` change smoothly and `stat=0` on every frame.
-3. **Selbsttest tab** — click "Selbsttest ausführen" to run `DIAG:SELF?`.
-4. **SCPI Terminal tab** — run arbitrary commands from the UI.
+1. **Messwerte tab** — select encoder A / B / Both from the combo box; LEDs for COMP_H, COMP_L, COF, OCF update every 500 ms while the dialog is open (faster than the background 5 s poll). AGC is shown on a 0–255 progress bar.
+2. **ADS1220 tab** — ADC register dump, voltage/temperature readouts, and PD-TIA gain-stage control.
+3. **Raw Stream tab** — live `DATA:FRAME` log. Verify `angA`, `angB` change smoothly and `stat=0` on every frame.
+4. **Selbsttest tab** — click "Selbsttest ausführen (DIAG:SELF?)" to run the full self-test; each subsystem line is shown PASS/FAIL/ABSENT.
+5. **System tab** — firmware version, uptime, error queue.
+6. **SCPI Terminal tab** — run arbitrary commands from the UI.
 
 ### 4.6 Check the spike filter is not masking bad readings
 
@@ -390,7 +392,7 @@ With the non-blocking serial accumulator now in the firmware, commands typed dur
 
 - Probe ground clip at Arduino GND (not the USB connector shield).
 - Use ×10 probes if cable is long; at 1 MHz this reduces capacitive loading.
-- Trigger: falling edge of CS_A (D9) or CS_B (D10).
+- Trigger: falling edge of CS_A (D10) or CS_B (D9).
 
 ### 5.2 Normal SPI transaction (pipelined read)
 
@@ -425,7 +427,7 @@ If the PAR bit does not make the total count of 1-bits even, the firmware will s
 
 Probe CS_A while triggering on a falling edge of CS_B. Any pulse visible on CS_A during a CS_B transaction is cross-talk. Similarly probe CS_B while triggering on CS_A.
 
-On a breadboard, pins D8/D9/D10 are adjacent. Add 33 Ω series resistors on all three CS lines (between Arduino pin and wire-to-sensor) to dampen capacitive coupling.
+On a breadboard, pins D9/D10 (the two encoder CS lines) are adjacent. Add 33 Ω series resistors on both CS lines (between Arduino pin and wire-to-sensor) to dampen capacitive coupling.
 
 ### 5.5 Checking for floating MISO
 

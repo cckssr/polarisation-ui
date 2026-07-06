@@ -1,6 +1,6 @@
 """Acquisition Settings Dialog.
 
-Wraps the Qt Designer UI (acq_settings_ui.py) and provides
+Wraps the Qt Designer UI (ui_acq_settings.py) and provides
 a clean interface to read/write AcquisitionSettings values.
 
 Settings changed here apply only to the current session;

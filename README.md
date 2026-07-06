@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/cckssr/polarisation-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/cckssr/polarisation-ui/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
-Desktop application for polarisation experiments on a manual goniometer bench. The application reads two absolute magnetic encoder angles (sample stage and detector arm) and an ADS1220 photodiode intensity simultaneously over SCPI from an Arduino Nano ESP32. There is no motor control — all angle changes are manual. The focus is on stable live display, reproducible point capture, and clean export.
+Desktop application for polarisation experiments on a manual goniometer bench. The application reads two absolute magnetic encoder angles (sample stage and detector arm) and an ADS1220 photodiode intensity simultaneously over SCPI from an Arduino Nano ESP32. Angle changes are manual by default; an optional Thorlabs KDC101 + PRM1-Z8 motorised stage drives the automated wave-plate sweep and power-calibration workflows. The focus is on stable live display, reproducible point capture, and clean export.
 
-Experiments supported out of the box: Malus's Law. Additional experiments (Brewster angle, wave plates, optical rotation, Fresnel coefficients) are planned for Phase 4 as pluggable tab modules.
+Experiments supported out of the box: Malus's Law, Brewster's angle, and wave plates (λ/4, λ/2). Additional experiments (optical rotation, Fresnel coefficients, ellipsometry) are planned as pluggable tab modules — see [Roadmap](#roadmap).
 
 ---
 
@@ -29,7 +29,7 @@ Experiments supported out of the box: Malus's Law. Additional experiments (Brews
 
 | Component                  | Role                                                      | Interface         |
 | -------------------------- | --------------------------------------------------------- | ----------------- |
-| Arduino Nano ESP32         | SCPI 2.0.0 host — runs firmware in `src_arduino/`         | USB serial        |
+| Arduino Nano ESP32         | SCPI 2.1.0 host — runs firmware in `src_arduino/`         | USB serial        |
 | AS5048A (encoder A)        | 14-bit magnetic rotary encoder — sample/polariser stage   | SPI → Arduino     |
 | AS5048A (encoder B)        | 14-bit magnetic rotary encoder — detector/analyser arm    | SPI → Arduino     |
 | ADS1220                    | 24-bit delta-sigma ADC — photodiode transimpedance output | SPI → Arduino     |
@@ -166,13 +166,15 @@ The application is organised into three strictly separated layers:
 │  │ ui/.           │──▶│ infrastructure/   │──▶│ core/           │  │
 │  │                │   │                   │   │                 │  │
 │  │   windows/     │   │   device_manager  │   │   models.py     │  │
-│  │   widgets/     │   │   devices/        │   │   services.py   │  │
+│  │   widgets/     │   │   devices/        │   │   power_calibration.py│
 │  │   controllers/ │   │     dual_encoder  │   │   exceptions.py │  │
-│  │   dialogs/     │   │     base          │   │   utils.py      │  │
-│  └────────────────┘   │   serial_device   │   └─────────────────┘  │
-│         │             │   qt_threads      │                        │
-│         └────────────▶│   config, logging │                        │
+│  │   dialogs/     │   │     kdc101_polariser│  │   utils.py     │  │
+│  └────────────────┘   │     pm400         │   └─────────────────┘  │
+│         │             │   serial_device   │                        │
+│         └────────────▶│   qt_threads      │                        │
+│                       │   config, logging │                        │
 │                       │   save_service    │                        │
+│                       │   session_journal │                        │
 │                       └───────────────────┘                        │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -188,7 +190,7 @@ The application is organised into three strictly separated layers:
 ### Data Flow
 
 ```ascii
-Arduino Nano ESP32 (SCPI 2.0.0 over USB serial)
+Arduino Nano ESP32 (SCPI 2.1.0 over USB serial)
   ↓
 DualEncoderArduino  ← parses SCPI responses, drives ADCClient
   ↓
@@ -196,16 +198,16 @@ GoniometerDeviceManager  ← connection lifecycle, auto-reconnect
   ↓
 DataController  ← QTimer 10 Hz, circular angle averaging, Qt signals
   ↓
-Qt signals: angles_updated, intensity_updated, measurement_started/stopped
+Qt signals: angles_updated, intensity_updated, diagnostics_updated,
+            error_occurred, retry_connecting, reconnect_succeeded,
+            connection_lost, measurement_started/stopped
   ↓
-MainWindow, MalusCurvePlot, MalusDetectorPlot
-  ↓
-GoniometerService  ← state transitions (idle → measuring → saving)
+MainWindow, PlotTabBase subclasses (MalusTab, BrewsterTab, WaveplateTab)
 ```
 
 ### Testing
 
-The test suite runs against `MockArduino` — a PTY-based SCPI 2.0.0 simulator that produces Malus-law-correct intensity without real hardware.
+The test suite runs against `MockArduino` — a PTY-based SCPI 2.1.0 simulator that produces Malus-law-correct intensity without real hardware.
 
 ```bash
 # All tests
@@ -224,7 +226,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/pytest tests/ -v
 
 ### Prerequisites
 
-- Python 3.9–3.12
+- Python 3.10+
 - PlatformIO (for firmware builds): `pip install platformio`
 - A Unix-like OS for PTY-based tests (macOS / Linux); Windows is supported for the UI but not for the mock simulator
 
@@ -289,25 +291,19 @@ Version is kept in sync across three files automatically:
 
 ### Planned: Additional Polarisation Experiments
 
-Each experiment below is a `PlotTabBase` subclass registered in `polarisation_ui/ui/widgets/tabs/`. All work in manual mode immediately; automated scanning requires the KDC101 stage (now implemented — see `WaveplateTab` for the reference pattern).
+Brewster's angle and wave plates (λ/4, λ/2) are already implemented — see
+`BrewsterTab` / `WaveplateTab` in the Implemented list above. Each experiment
+below is a still-planned `PlotTabBase` subclass to be registered in
+`polarisation_ui/ui/widgets/tabs/`. All would work in manual mode immediately;
+automated scanning can reuse the KDC101-driven sweep pattern already
+implemented in `WaveplateTab`.
 
 | Experiment                                      | Physics                         | Key Observable                                                         |
 | ----------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| **Brewster's Angle**                            | `θ_B = arctan(n₂/n₁)`           | Null in p-polarised reflection → refractive index of sample            |
-| **Half-Wave Plate (λ/2)**                       | Output rotation `= 2α`          | Verify Jones matrix: rotate HWP by α → polarisation rotates by 2α      |
-| **Quarter-Wave Plate (λ/4)**                    | Linear → elliptical/circular    | Stokes parameters S₁–S₃ from rotating-analyser method                  |
 | **Optical Rotation (chiral media)**             | Biot: `[α] = α / (l·c)`         | Specific rotation of sugar solutions at varying concentration          |
 | **Fresnel Coefficients**                        | `Rs`, `Rp` vs incidence angle   | Experimental verification with adjustable refractive-index fit overlay |
-| **Birefringence / wave plate characterisation** | Retardance `Γ` from ellipticity | Characterise unknown wave plates (λ/4, λ/2, full-wave)                 |
+| **Birefringence / wave plate characterisation** | Retardance `Γ` from ellipticity | Characterise unknown wave plates beyond fixed λ/4, λ/2 (full-wave, custom retarders) |
 | **Basic Ellipsometry**                          | `Δ`, `Ψ` → film thickness       | Thin film characterisation via Drude approximation                     |
-
-#### Brewster's Angle (Detail)
-
-Place a glass sample on the rotation stage. Sweep incident angle (Encoder A) and record reflected intensity for s- and p-polarisations separately by rotating the analyser (Encoder B) to each orientation. The p-polarised reflection drops to zero at `θ_B`, giving the refractive index directly without a priori knowledge of the material.
-
-#### Half-Wave Plate (Detail)
-
-Insert a λ/2 plate between polariser and analyser. Mount it on Encoder A and rotate it by angle α. The transmitted intensity through a fixed analyser varies as the output polarisation rotates by 2α. A live 2α overlay on the rotation plot allows quick verification of the Jones matrix prediction and determination of the fast-axis orientation.
 
 #### Optical Rotation (Detail)
 

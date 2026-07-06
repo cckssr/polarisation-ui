@@ -14,7 +14,7 @@ When the magnet on an AS5048A encoder is not perfectly centered, systematic angu
 ## Requirements
 
 ```bash
-pip install pyserial numpy matplotlib PySide6
+pip install pyserial numpy matplotlib PySide6 pylablib
 ```
 
 ## Hardware Setup
@@ -101,17 +101,20 @@ python main.py
 
 ```
 calibration_tool/
-├── main.py              # GUI application
-├── config.py            # Configuration
-├── requirements.txt     # Dependencies
+├── main.py                       # GUI application
+├── config.py                     # Configuration
+├── requirements.txt              # Dependencies
+├── manual_calibration_dialog.py  # Manual (jog-wheel) calibration dialog
 ├── devices/
-│   ├── arduino_encoder.py  # AS5048A via Arduino
-│   └── kdc101_stage.py     # Thorlabs KDC101 serial
+│   ├── arduino_encoder.py        # AS5048A via Arduino
+│   └── kdc101_stage.py           # Thorlabs KDC101 serial
 ├── calibration/
-│   ├── measurement.py      # Data acquisition
-│   └── analysis.py         # Error analysis
-└── plotting/
-    └── polar_plot.py       # Visualization
+│   ├── measurement.py            # Data acquisition
+│   ├── manual_runner.py          # Manual-calibration run controller
+│   └── analysis.py               # Error analysis
+├── plotting/
+│   └── polar_plot.py             # Visualization
+└── tests/                        # pytest suite (same venv as the main app)
 ```
 
 ## Notes for macOS

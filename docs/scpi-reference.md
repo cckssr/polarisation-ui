@@ -1,4 +1,4 @@
-# SCPI Command Reference — Firmware 2.0.1
+# SCPI Command Reference — Firmware 2.1.0
 
 **Source of truth**: `src_arduino/src/scpi.cpp`  
 **Protocol**: ASCII over USB serial, 115200 baud, LF-terminated lines  
@@ -72,28 +72,33 @@ All MEAS commands trigger a fresh hardware read.
 | `CONF:ADC:RATE <sps>`            | `20 45 90 175 330 600 1000`                                                                                       | `20`     | Sample rate (SPS)                                                                                  |
 | `CONF:ADC:MODE NORM\|TURBO`      | —                                                                                                                 | `NORM`   | Normal = 256 kHz, Turbo = 512 kHz modulator                                                        |
 | `CONF:ADC:FIR OFF\|50\|60\|BOTH` | —                                                                                                                 | `OFF`    | FIR filter (effective at 20 SPS only)                                                              |
-| `CONF:ADC:VREF INT\|EXT\|AVDD`   | —                                                                                                                 | `INT`    | `INT`=2.048 V internal; `EXT`=REFP0/REFN0 (2.5 V nominal); `AVDD`=3.3 V nominal                    |
+| `CONF:ADC:VREF INT\|EXT\|AVDD`   | —                                                                                                                 | `EXT`    | `INT`=2.048 V internal; `EXT`=REFP0/REFN0 (2.5 V nominal); `AVDD`=3.3 V nominal                    |
 | `CONF:ADC:TEMP ON\|OFF`          | —                                                                                                                 | `OFF`    | Enable temperature sensor on-demand (OFF by default to prevent interference with voltage readings) |
+| `CONF:ADC:PWR ON\|OFF`           | —                                                                                                                 | `ON`     | Hardware power-down (`OFF`) / power-up (`ON`); power-down also inhibits auto-recovery until powered back up |
+| `CONF:ADC:PWR?`                  | `ON` or `OFF`                                                                                                     | —        | Query current power state                                                                          |
 
 ### PD-TIA Discrete Gain
 
 | Command                   | Response           | Notes                                                                   |
 | ------------------------- | ------------------ | ----------------------------------------------------------------------- |
-| `CONF:PDTIA:GAIN <stage>` | —                  | Integer `0` to `PDTIA_NUM_STAGES-1` (currently 0–4); writes 4 GPIO pins |
+| `CONF:PDTIA:GAIN <stage>` | —                  | Integer `0` to `PDTIA_NUM_STAGES-1` (currently 0–3); writes 4 GPIO pins |
 | `CONF:PDTIA:GAIN?`        | `<stage>,0b<bits>` | Returns current stage and the 4-bit GPIO pattern                        |
 
 ### Streaming Sources and Rate
 
-| Command                     | Notes                                                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `CONF:SRC <src>[,<src>...]` | Set streaming source set. Valid tokens: `ENC:A` `ENC:B` `ENC:BOTH` `ADC` `ADC:T` `PDTIA`. Default: `ENC:A,ENC:B` |
-| `CONF:RATE <hz>`            | Streaming rate 1–1000 Hz. Default: 20 Hz                                                                         |
+| Command                     | Notes                                                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `CONF:SRC <src>[,<src>...]` | Set streaming source set. Valid tokens: `ENC:A` `ENC:B` `ENC:BOTH` `ADC` `ADC:T` `PDTIA` `DIAG`. Default: `ENC:A,ENC:B` |
+| `CONF:RATE <hz>`            | Streaming rate 1–1000 Hz. Default: 20 Hz                                                                                    |
 
 ---
 
 ## SENSe — Query Current Configuration
 
-All `SENS:*` commands are query-only.
+All `SENS:*` commands are query-only. As of firmware 2.1.0 these are real
+dispatch entries in `scpiDispatch()` (not just reachable via the equivalent
+`CONF:*?` query forms) — sending a literal `SENS:*` command on firmware
+< 2.1.0 returns `-113 Undefined header`.
 
 | Query              | Returns                                                |
 | ------------------ | ------------------------------------------------------ |
@@ -151,11 +156,12 @@ All `SENS:*` commands are query-only.
 Emitted each interval when `INIT:CONT ON` is active, or once on `INIT`.
 
 ```
-DATA:FRAME tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<stage>,stat=<flags>
+DATA:FRAME seq=<n>,tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<stage>,stat=<flags>
 ```
 
 - Fields are **only included** for sources enabled via `CONF:SRC`.
-- `tsMs` and `stat` are **always** present.
+- `seq` and `tsMs` and `stat` are **always** present. `seq` is a monotonic
+  frame counter (wraps at 2^32) that lets consumers detect dropped frames.
 - Parsers must ignore unknown keys (forward compatibility).
 
 ### `stat` bitmask
@@ -174,8 +180,8 @@ CONF:SRC ENC:BOTH,ADC
 CONF:RATE 20
 INIT:CONT ON
 
-DATA:FRAME tsMs=1234,angA=90.12,angB=180.24,adcV=1.234567,stat=0
-DATA:FRAME tsMs=1284,angA=90.14,angB=180.28,adcV=1.234231,stat=0
+DATA:FRAME seq=1,tsMs=1234,angA=90.12,angB=180.24,adcV=1.234567,stat=0
+DATA:FRAME seq=2,tsMs=1284,angA=90.14,angB=180.28,adcV=1.234231,stat=0
 ```
 
 ---
@@ -185,7 +191,7 @@ DATA:FRAME tsMs=1284,angA=90.14,angB=180.28,adcV=1.234231,stat=0
 | Command            | Returns          | Notes                                                |
 | ------------------ | ---------------- | ---------------------------------------------------- |
 | `SYST:ERR?`        | `<code>,"<msg>"` | Pop oldest error from queue; `0,"No error"` if empty |
-| `SYST:VERS?`       | `2.0.1`          | Firmware version string                              |
+| `SYST:VERS?`       | `2.1.0`          | Firmware version string                              |
 | `SYST:UPTIME?`     | `<ms>`           | Milliseconds since power-on                          |
 | `SYST:HELP?`       | Multi-line text  | Full command summary                                 |
 | `SYST:DEB ON\|OFF` | —                | Enable/disable verbose debug output                  |
@@ -222,16 +228,19 @@ DATA:FRAME tsMs=1284,angA=90.14,angB=180.28,adcV=1.234231,stat=0
 
 | Function          | Default pin |
 | ----------------- | ----------- |
-| Encoder A CS      | 9           |
-| Encoder B CS      | 10          |
-| ADS1220 CS        | 5           |
-| ADS1220 DRDY      | 4           |
-| PD-TIA gain bit 0 | 6           |
-| PD-TIA gain bit 1 | 7           |
-| PD-TIA gain bit 2 | 8           |
-| PD-TIA gain bit 3 | 3           |
+| Encoder A CS      | 10          |
+| Encoder B CS      | 9           |
+| ADS1220 CS        | 4           |
+| ADS1220 DRDY      | -1 (not wired; time-based polling used instead) |
+| PD-TIA gain bit 0 | A4          |
+| PD-TIA gain bit 1 | A5          |
+| PD-TIA gain bit 2 | A6          |
+| PD-TIA gain bit 3 | A7          |
 
-All SPI devices share the hardware SPI bus (MOSI/MISO/SCK). The ADS1220 operates at 4 MHz (SPI mode 1); the AS5048A at 100 kHz (SPI mode 1). `SPISettings` + `beginTransaction` prevent conflicts.
+The two AS5048A encoders share one SPI bus at 1 MHz. The ADS1220 is on a
+**separate** SPI bus (ESP32 HSPI peripheral) at 4 MHz to avoid contention
+with the encoders. `SPISettings` + `beginTransaction` prevent conflicts on
+the shared encoder bus.
 
 ---
 
