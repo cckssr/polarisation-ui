@@ -4,33 +4,10 @@
 #include <math.h>
 
 // ── Parser ────────────────────────────────────────────────────────────────────
+// Definition lives in scpi_parse.inc so the native unit test compiles the
+// exact same source against a lightweight String mock (see that file).
 
-bool scpiParse(const String &line, String &header, String &param, bool &isQuery)
-{
-  if (line.length() == 0)
-    return false;
-
-  int sp = line.indexOf(' ');
-  if (sp >= 0)
-  {
-    header = line.substring(0, sp);
-    param = line.substring(sp + 1);
-    param.trim();
-  }
-  else
-  {
-    header = line;
-    param = "";
-  }
-
-  isQuery = header.endsWith("?");
-  if (isQuery)
-    header = header.substring(0, header.length() - 1);
-
-  header.toUpperCase();
-  param.toUpperCase();
-  return true;
-}
+#include "scpi_parse.inc"
 
 // ── Error helpers ─────────────────────────────────────────────────────────────
 

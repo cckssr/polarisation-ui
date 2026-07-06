@@ -85,6 +85,16 @@ TEST_ASSERT_GREATER_THAN(threshold, actual)
 // ... und viele mehr (siehe unity.h)
 ```
 
+## Testen des echten Quellcodes (`.inc`-Pattern)
+
+`scpiParse()` lebt in `src/scpi_parse.inc` und wird per `#include` sowohl von
+`src/scpi.cpp` (Firmware, `String` = Arduinos echte Klasse) als auch von
+`test_scpi_parser.cpp` (nativer Test, `String` = `StringMock`) eingebunden.
+So testet der native Test exakt denselben Quellcode wie die Firmware, statt
+einer separat gepflegten Kopie, die unbemerkt abweichen könnte. Für weitere
+Funktionen, die ohne Hardware-Zugriff testbar sind, denselben Ansatz nutzen:
+Logik in eine `.inc`-Datei auslagern und von beiden Seiten einbinden.
+
 ## Mock-Objekte
 
 Die `StringMock`-Klasse in `test_scpi_parser.cpp` simuliert Arduino's `String` Klasse.
