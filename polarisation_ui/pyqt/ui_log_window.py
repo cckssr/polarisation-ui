@@ -84,8 +84,6 @@ class Ui_LogWindow(object):
     # setupUi
 
     def retranslateUi(self, LogWindow):
-        LogWindow.setWindowTitle(
-            QCoreApplication.translate("LogWindow", "Log-Ausgabe", None)
-        )
+        LogWindow.setWindowTitle(QCoreApplication.translate("LogWindow", "Log-Ausgabe", None))
 
     # retranslateUi

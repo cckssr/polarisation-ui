@@ -98,9 +98,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.comboArduinoPort.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.comboArduinoPort.sizePolicy().hasHeightForWidth())
         self.comboArduinoPort.setSizePolicy(sizePolicy)
 
         self.arduinoGrid.addWidget(self.comboArduinoPort, 0, 1, 1, 1)
@@ -229,14 +227,10 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAlignStart = QDoubleSpinBox(self.gbAlignment)
         self.spinAlignStart.setObjectName("spinAlignStart")
-        sizePolicy1 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(
-            self.spinAlignStart.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAlignStart.sizePolicy().hasHeightForWidth())
         self.spinAlignStart.setSizePolicy(sizePolicy1)
         self.spinAlignStart.setDecimals(1)
         self.spinAlignStart.setMinimum(0.000000000000000)
@@ -252,9 +246,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAlignEnd = QDoubleSpinBox(self.gbAlignment)
         self.spinAlignEnd.setObjectName("spinAlignEnd")
-        sizePolicy1.setHeightForWidth(
-            self.spinAlignEnd.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAlignEnd.sizePolicy().hasHeightForWidth())
         self.spinAlignEnd.setSizePolicy(sizePolicy1)
         self.spinAlignEnd.setDecimals(1)
         self.spinAlignEnd.setMinimum(0.000000000000000)
@@ -266,23 +258,17 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.lblAlignNPoints = QLabel(self.gbAlignment)
         self.lblAlignNPoints.setObjectName("lblAlignNPoints")
 
-        self.alignForm.setWidget(
-            2, QFormLayout.ItemRole.LabelRole, self.lblAlignNPoints
-        )
+        self.alignForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblAlignNPoints)
 
         self.spinAlignNPoints = QSpinBox(self.gbAlignment)
         self.spinAlignNPoints.setObjectName("spinAlignNPoints")
-        sizePolicy1.setHeightForWidth(
-            self.spinAlignNPoints.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAlignNPoints.sizePolicy().hasHeightForWidth())
         self.spinAlignNPoints.setSizePolicy(sizePolicy1)
         self.spinAlignNPoints.setMinimum(3)
         self.spinAlignNPoints.setMaximum(360)
         self.spinAlignNPoints.setValue(36)
 
-        self.alignForm.setWidget(
-            2, QFormLayout.ItemRole.FieldRole, self.spinAlignNPoints
-        )
+        self.alignForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinAlignNPoints)
 
         self.lblAlignSettle = QLabel(self.gbAlignment)
         self.lblAlignSettle.setObjectName("lblAlignSettle")
@@ -291,9 +277,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAlignSettle = QDoubleSpinBox(self.gbAlignment)
         self.spinAlignSettle.setObjectName("spinAlignSettle")
-        sizePolicy1.setHeightForWidth(
-            self.spinAlignSettle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAlignSettle.sizePolicy().hasHeightForWidth())
         self.spinAlignSettle.setSizePolicy(sizePolicy1)
         self.spinAlignSettle.setDecimals(2)
         self.spinAlignSettle.setMinimum(0.000000000000000)
@@ -301,9 +285,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.spinAlignSettle.setSingleStep(0.050000000000000)
         self.spinAlignSettle.setValue(0.200000000000000)
 
-        self.alignForm.setWidget(
-            3, QFormLayout.ItemRole.FieldRole, self.spinAlignSettle
-        )
+        self.alignForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinAlignSettle)
 
         self.alignLayout.addLayout(self.alignForm)
 
@@ -344,9 +326,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinWavelength = QDoubleSpinBox(self.gbBeam)
         self.spinWavelength.setObjectName("spinWavelength")
-        sizePolicy1.setHeightForWidth(
-            self.spinWavelength.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinWavelength.sizePolicy().hasHeightForWidth())
         self.spinWavelength.setSizePolicy(sizePolicy1)
         self.spinWavelength.setDecimals(1)
         self.spinWavelength.setMinimum(200.000000000000000)
@@ -362,9 +342,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAttenuation = QDoubleSpinBox(self.gbBeam)
         self.spinAttenuation.setObjectName("spinAttenuation")
-        sizePolicy1.setHeightForWidth(
-            self.spinAttenuation.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAttenuation.sizePolicy().hasHeightForWidth())
         self.spinAttenuation.setSizePolicy(sizePolicy1)
         self.spinAttenuation.setDecimals(3)
         self.spinAttenuation.setMinimum(-60.000000000000000)
@@ -381,9 +359,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinPmAveraging = QSpinBox(self.gbBeam)
         self.spinPmAveraging.setObjectName("spinPmAveraging")
-        sizePolicy1.setHeightForWidth(
-            self.spinPmAveraging.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinPmAveraging.sizePolicy().hasHeightForWidth())
         self.spinPmAveraging.setSizePolicy(sizePolicy1)
         self.spinPmAveraging.setMinimum(1)
         self.spinPmAveraging.setMaximum(300000)
@@ -410,9 +386,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAngleStart = QDoubleSpinBox(self.gbSweep)
         self.spinAngleStart.setObjectName("spinAngleStart")
-        sizePolicy1.setHeightForWidth(
-            self.spinAngleStart.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAngleStart.sizePolicy().hasHeightForWidth())
         self.spinAngleStart.setSizePolicy(sizePolicy1)
         self.spinAngleStart.setDecimals(1)
         self.spinAngleStart.setMinimum(0.000000000000000)
@@ -428,9 +402,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinAngleEnd = QDoubleSpinBox(self.gbSweep)
         self.spinAngleEnd.setObjectName("spinAngleEnd")
-        sizePolicy1.setHeightForWidth(
-            self.spinAngleEnd.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinAngleEnd.sizePolicy().hasHeightForWidth())
         self.spinAngleEnd.setSizePolicy(sizePolicy1)
         self.spinAngleEnd.setDecimals(1)
         self.spinAngleEnd.setMinimum(0.000000000000000)
@@ -461,9 +433,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinPointSettle = QDoubleSpinBox(self.gbSweep)
         self.spinPointSettle.setObjectName("spinPointSettle")
-        sizePolicy1.setHeightForWidth(
-            self.spinPointSettle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinPointSettle.sizePolicy().hasHeightForWidth())
         self.spinPointSettle.setSizePolicy(sizePolicy1)
         self.spinPointSettle.setDecimals(2)
         self.spinPointSettle.setMinimum(0.000000000000000)
@@ -471,9 +441,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.spinPointSettle.setSingleStep(0.050000000000000)
         self.spinPointSettle.setValue(0.200000000000000)
 
-        self.sweepForm.setWidget(
-            3, QFormLayout.ItemRole.FieldRole, self.spinPointSettle
-        )
+        self.sweepForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinPointSettle)
 
         self.lblGainSettle = QLabel(self.gbSweep)
         self.lblGainSettle.setObjectName("lblGainSettle")
@@ -482,9 +450,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.spinGainSettle = QDoubleSpinBox(self.gbSweep)
         self.spinGainSettle.setObjectName("spinGainSettle")
-        sizePolicy1.setHeightForWidth(
-            self.spinGainSettle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinGainSettle.sizePolicy().hasHeightForWidth())
         self.spinGainSettle.setSizePolicy(sizePolicy1)
         self.spinGainSettle.setDecimals(2)
         self.spinGainSettle.setMinimum(0.000000000000000)
@@ -497,36 +463,26 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.lblDetectorSamples = QLabel(self.gbSweep)
         self.lblDetectorSamples.setObjectName("lblDetectorSamples")
 
-        self.sweepForm.setWidget(
-            5, QFormLayout.ItemRole.LabelRole, self.lblDetectorSamples
-        )
+        self.sweepForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblDetectorSamples)
 
         self.spinDetectorSamples = QSpinBox(self.gbSweep)
         self.spinDetectorSamples.setObjectName("spinDetectorSamples")
-        sizePolicy1.setHeightForWidth(
-            self.spinDetectorSamples.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinDetectorSamples.sizePolicy().hasHeightForWidth())
         self.spinDetectorSamples.setSizePolicy(sizePolicy1)
         self.spinDetectorSamples.setMinimum(1)
         self.spinDetectorSamples.setMaximum(100)
         self.spinDetectorSamples.setValue(5)
 
-        self.sweepForm.setWidget(
-            5, QFormLayout.ItemRole.FieldRole, self.spinDetectorSamples
-        )
+        self.sweepForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.spinDetectorSamples)
 
         self.lblSaturationThreshold = QLabel(self.gbSweep)
         self.lblSaturationThreshold.setObjectName("lblSaturationThreshold")
 
-        self.sweepForm.setWidget(
-            6, QFormLayout.ItemRole.LabelRole, self.lblSaturationThreshold
-        )
+        self.sweepForm.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblSaturationThreshold)
 
         self.spinSaturationThreshold = QDoubleSpinBox(self.gbSweep)
         self.spinSaturationThreshold.setObjectName("spinSaturationThreshold")
-        sizePolicy1.setHeightForWidth(
-            self.spinSaturationThreshold.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.spinSaturationThreshold.sizePolicy().hasHeightForWidth())
         self.spinSaturationThreshold.setSizePolicy(sizePolicy1)
         self.spinSaturationThreshold.setDecimals(2)
         self.spinSaturationThreshold.setMinimum(1.000000000000000)
@@ -534,9 +490,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.spinSaturationThreshold.setSingleStep(0.050000000000000)
         self.spinSaturationThreshold.setValue(2.350000000000000)
 
-        self.sweepForm.setWidget(
-            6, QFormLayout.ItemRole.FieldRole, self.spinSaturationThreshold
-        )
+        self.sweepForm.setWidget(6, QFormLayout.ItemRole.FieldRole, self.spinSaturationThreshold)
 
         self.sweepLayout.addLayout(self.sweepForm)
 
@@ -605,28 +559,20 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.lblProfileName = QLabel(self.gbProfile)
         self.lblProfileName.setObjectName("lblProfileName")
 
-        self.profileForm.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblProfileName
-        )
+        self.profileForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblProfileName)
 
         self.lineProfileName = QLineEdit(self.gbProfile)
         self.lineProfileName.setObjectName("lineProfileName")
-        sizePolicy1.setHeightForWidth(
-            self.lineProfileName.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.lineProfileName.sizePolicy().hasHeightForWidth())
         self.lineProfileName.setSizePolicy(sizePolicy1)
 
-        self.profileForm.setWidget(
-            0, QFormLayout.ItemRole.FieldRole, self.lineProfileName
-        )
+        self.profileForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineProfileName)
 
         self.lblOutputPath = QLabel(self.gbProfile)
         self.lblOutputPath.setObjectName("lblOutputPath")
         self.lblOutputPath.setWordWrap(True)
 
-        self.profileForm.setWidget(
-            1, QFormLayout.ItemRole.SpanningRole, self.lblOutputPath
-        )
+        self.profileForm.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.lblOutputPath)
 
         self.leftPanelLayout.addWidget(self.gbProfile)
 
@@ -678,9 +624,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.rightPanelLayout.setObjectName("rightPanelLayout")
         self.plotWidget = MultiGainCalibrationPlot(AutoPowerCalibrationDialog)
         self.plotWidget.setObjectName("plotWidget")
-        sizePolicy2 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(3)
         sizePolicy2.setHeightForWidth(self.plotWidget.sizePolicy().hasHeightForWidth())
@@ -691,14 +635,10 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.plainTextLog = QPlainTextEdit(AutoPowerCalibrationDialog)
         self.plainTextLog.setObjectName("plainTextLog")
-        sizePolicy3 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
-        )
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(1)
-        sizePolicy3.setHeightForWidth(
-            self.plainTextLog.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.plainTextLog.sizePolicy().hasHeightForWidth())
         self.plainTextLog.setSizePolicy(sizePolicy3)
         self.plainTextLog.setMaximumSize(QSize(16777215, 150))
         self.plainTextLog.setReadOnly(True)
@@ -724,9 +664,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         self.gbConnections.setTitle(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Verbindungen", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbindungen", None)
         )
         self.gbArduino.setTitle(
             QCoreApplication.translate(
@@ -737,14 +675,10 @@ class Ui_AutoPowerCalibrationDialog(object):
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Port:", None)
         )
         self.btnRefreshArduino.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Aktualisieren", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
         self.lblArduinoStatus.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Nicht verbunden", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
         self.btnConnectArduino.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
@@ -755,27 +689,19 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         self.lblKDCDevice.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Ger\u00e4t:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Ger\u00e4t:", None)
         )
         self.btnRefreshKDC.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Aktualisieren", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
         self.lblKDCStatus.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Nicht verbunden", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
         self.btnConnectKDC.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
         self.btnHomeKDC.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Referenzfahrt (Home)", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Referenzfahrt (Home)", None)
         )
         self.gbPM400.setTitle(
             QCoreApplication.translate(
@@ -788,22 +714,16 @@ class Ui_AutoPowerCalibrationDialog(object):
             QCoreApplication.translate("AutoPowerCalibrationDialog", "VISA:", None)
         )
         self.btnRefreshPM400.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Aktualisieren", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
         self.lblPM400Status.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Nicht verbunden", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
         self.btnConnectPM400.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
         self.btnZeroPM400.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Nullabgleich (Zero)", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Nullabgleich (Zero)", None)
         )
         self.gbAlignment.setTitle(
             QCoreApplication.translate(
@@ -811,9 +731,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         self.lblAlignStart.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Scanstart (\u00b0):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Scanstart (\u00b0):", None)
         )
         # if QT_CONFIG(tooltip)
         self.spinAlignStart.setToolTip(
@@ -825,9 +743,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAlignEnd.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Scanende (\u00b0):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Scanende (\u00b0):", None)
         )
         # if QT_CONFIG(tooltip)
         self.spinAlignEnd.setToolTip(
@@ -851,14 +767,10 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAlignSettle.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Wartezeit (s):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
         self.btnAlignPolariser.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Ausrichtung starten", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Ausrichtung starten", None)
         )
         self.btnAbortAlign.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
@@ -874,9 +786,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         self.lblWavelength.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Wellenl\u00e4nge (nm):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Wellenl\u00e4nge (nm):", None)
         )
         self.lblAttenuation.setText(
             QCoreApplication.translate(
@@ -893,44 +803,28 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblPmAveraging.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "PM400 Mittelwerte:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "PM400 Mittelwerte:", None)
         )
         self.gbSweep.setTitle(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Sweep-Einstellungen", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Sweep-Einstellungen", None)
         )
         self.lblAngleStart.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Startwinkel (\u00b0):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Startwinkel (\u00b0):", None)
         )
         self.lblAngleEnd.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Endwinkel (\u00b0):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Endwinkel (\u00b0):", None)
         )
         self.lblNPoints.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Anzahl Punkte:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Anzahl Punkte:", None)
         )
         self.lblPointSettle.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Wartezeit / Punkt (s):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit / Punkt (s):", None)
         )
         self.lblGainSettle.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Wartezeit / Gain (s):", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit / Gain (s):", None)
         )
         self.lblDetectorSamples.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Detektor-Samples:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Detektor-Samples:", None)
         )
         self.lblSaturationThreshold.setText(
             QCoreApplication.translate(
@@ -947,14 +841,10 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblGridMode.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Winkelraster:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Winkelraster:", None)
         )
         self.radioLinearAngle.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Linear in \u03b8", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Linear in \u03b8", None)
         )
         self.radioLinearCos2.setText(
             QCoreApplication.translate(
@@ -962,34 +852,20 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         self.lblGains.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Gain-Stufen:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Gain-Stufen:", None)
         )
-        self.chkGain1.setText(
-            QCoreApplication.translate("AutoPowerCalibrationDialog", "1", None)
-        )
-        self.chkGain2.setText(
-            QCoreApplication.translate("AutoPowerCalibrationDialog", "2", None)
-        )
-        self.chkGain3.setText(
-            QCoreApplication.translate("AutoPowerCalibrationDialog", "3", None)
-        )
-        self.chkGain4.setText(
-            QCoreApplication.translate("AutoPowerCalibrationDialog", "4", None)
-        )
+        self.chkGain1.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "1", None))
+        self.chkGain2.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "2", None))
+        self.chkGain3.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "3", None))
+        self.chkGain4.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "4", None))
         self.gbProfile.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Profil", None)
         )
         self.lblProfileName.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Profilname:", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Profilname:", None)
         )
         self.lineProfileName.setPlaceholderText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "z.B. Det-A_auto", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "z.B. Det-A_auto", None)
         )
         self.lblOutputPath.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "\u2013", None)
@@ -1001,17 +877,13 @@ class Ui_AutoPowerCalibrationDialog(object):
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
         self.btnSave.setText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Profil speichern", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Profil speichern", None)
         )
         self.lblPhase.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Bereit", None)
         )
         self.plainTextLog.setPlaceholderText(
-            QCoreApplication.translate(
-                "AutoPowerCalibrationDialog", "Log-Ausgabe\u2026", None
-            )
+            QCoreApplication.translate("AutoPowerCalibrationDialog", "Log-Ausgabe\u2026", None)
         )
 
     # retranslateUi

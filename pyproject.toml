@@ -5,11 +5,24 @@ build-backend = "setuptools.build_meta"
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.ruff]
+line-length = 100
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint]
-select = ["D"]
+select = ["E", "F", "I", "UP", "B", "D"]
+
+[tool.ruff.lint.per-file-ignores]
+# Vendored from PyMeasure (MIT) — not our style to enforce.
+"polarisation_ui/infrastructure/modules/pm400.py" = ["E", "F", "I", "UP", "B", "D"]
+# pyuic6-generated — regenerated from .ui sources, never hand-edited.
+"polarisation_ui/pyqt/ui_*.py" = ["E", "F", "I", "UP", "B", "D"]
+# Test names are self-documenting (test_reads_angle_a needs no docstring
+# restating "reads angle a"); still enforce E/F/I/UP/B in tests.
+"tests/**" = ["D"]
+"calibration_tool/tests/**" = ["D"]
 
 [project]
 name = "Polarisation-UI"

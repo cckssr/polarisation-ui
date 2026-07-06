@@ -15,12 +15,12 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
 from matplotlib.projections.polar import PolarAxes
+from scipy.optimize import curve_fit
 
 
 @dataclass
@@ -94,7 +94,7 @@ class MagnetAnalyzer:
 
     def _load_csv(self, csv_path: str) -> list[MagnetSeries]:
         """Load one angle column and multiple magnet columns from CSV."""
-        with open(csv_path, "r", encoding="utf-8-sig", newline="") as handle:
+        with open(csv_path, encoding="utf-8-sig", newline="") as handle:
             reader = csv.DictReader(handle)
             if reader.fieldnames is None:
                 return []
@@ -113,9 +113,7 @@ class MagnetAnalyzer:
                 if column != angle_column and not self._is_uncertainty_column(column)
             ]
             if not series_columns:
-                raise ValueError(
-                    "CSV must contain at least one magnet measurement column."
-                )
+                raise ValueError("CSV must contain at least one magnet measurement column.")
 
             parsed_rows: list[dict[str, str]] = []
             for row in reader:
@@ -158,7 +156,7 @@ class MagnetAnalyzer:
 
         return series_list
 
-    def _find_angle_column(self, fieldnames: list[str]) -> Optional[str]:
+    def _find_angle_column(self, fieldnames: list[str]) -> str | None:
         """Return the first column that looks like an angle column."""
         normalized = {name.lower().strip(): name for name in fieldnames}
         for alias in self.ANGLE_COLUMN_ALIASES:
@@ -171,9 +169,7 @@ class MagnetAnalyzer:
         lower_name = column_name.lower()
         return any(suffix.strip() in lower_name for suffix in self.UNCERTAINTY_SUFFIXES)
 
-    def _find_uncertainty_column(
-        self, data_column: str, fieldnames: list[str]
-    ) -> Optional[str]:
+    def _find_uncertainty_column(self, data_column: str, fieldnames: list[str]) -> str | None:
         """Find a matching uncertainty column for one magnet series."""
         candidates = [f"{data_column}{suffix}" for suffix in self.UNCERTAINTY_SUFFIXES]
         normalized = {name.lower().strip(): name for name in fieldnames}
@@ -182,7 +178,7 @@ class MagnetAnalyzer:
                 return normalized[candidate.lower().strip()]
         return None
 
-    def _parse_optional_float(self, value: str) -> Optional[float]:
+    def _parse_optional_float(self, value: str) -> float | None:
         """Parse a numeric cell if it exists."""
         if value == "":
             return None
@@ -328,9 +324,7 @@ class MagnetAnalyzer:
     ) -> np.ndarray:
         """Propagate angle and field uncertainties into the field axis."""
         angle_term = np.abs(
-            amplitude
-            * np.cos(np.radians(angles) + phase)
-            * np.radians(self.ANGLE_UNCERTAINTY)
+            amplitude * np.cos(np.radians(angles) + phase) * np.radians(self.ANGLE_UNCERTAINTY)
         )
         return np.sqrt(field_uncertainties**2 + angle_term**2)
 
@@ -340,8 +334,8 @@ class MagnetAnalyzer:
         fields: np.ndarray,
         field_uncertainties: np.ndarray,
     ) -> tuple[float, np.ndarray]:
-        """
-        Check symmetry by comparing opposite poles (180° apart).
+        """Check symmetry by comparing opposite poles (180° apart).
+
         Returns a score in [0, 1] and the signed symmetry residuals.
         """
         pair_scores = []
@@ -361,9 +355,7 @@ class MagnetAnalyzer:
                 if pair_uncertainty <= 0:
                     continue
 
-                normalized_error = abs(pair_difference) / (
-                    field_scale + 3.0 * pair_uncertainty
-                )
+                normalized_error = abs(pair_difference) / (field_scale + 3.0 * pair_uncertainty)
                 pair_scores.append(max(0.0, 1.0 - normalized_error))
                 pair_residuals.append(pair_difference / field_scale)
 
@@ -373,8 +365,8 @@ class MagnetAnalyzer:
         return float(np.mean(pair_scores)), np.array(pair_residuals)
 
     def _check_pole_balance(self, fields: np.ndarray) -> tuple[float, float, float]:
-        """
-        Calculate north and south pole strengths and their balance ratio.
+        """Calculate north and south pole strengths and their balance ratio.
+
         Returns: (north_strength, south_strength, balance_ratio)
         """
         # Positive fields = north pole, negative = south pole
@@ -401,9 +393,7 @@ class MagnetAnalyzer:
         amplitude: float,
         phase: float,
     ) -> bool:
-        """
-        Check if model residuals are within measurement tolerance.
-        """
+        """Check if model residuals are within measurement tolerance."""
 
         def model(angle):
             return amplitude * np.sin(np.radians(angle) + phase)
@@ -424,26 +414,22 @@ class MagnetAnalyzer:
     def plot_analysis(
         self,
         results: list[AnalysisResults],
-        output_dir: Optional[Path] = None,
+        output_dir: Path | None = None,
     ) -> None:
         """Generate one detailed plot per magnet series."""
         output_dir = output_dir or Path.cwd()
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        for series, result in zip(self.series, results):
+        for series, result in zip(self.series, results, strict=True):
             angles = np.array([m.angle for m in series.measurements])
             fields = np.array([m.field for m in series.measurements])
-            field_uncertainties = np.array(
-                [m.field_uncertainty for m in series.measurements]
-            )
+            field_uncertainties = np.array([m.field_uncertainty for m in series.measurements])
 
             fit = self._fit_model(angles, fields, field_uncertainties)
             angle_smooth = np.linspace(0, 360, 720)
             y_pred = fit["amplitude"] * np.sin(np.radians(angles) + fit["phase"])
             residuals = fields - y_pred
-            fields_smooth = fit["amplitude"] * np.sin(
-                np.radians(angle_smooth) + fit["phase"]
-            )
+            fields_smooth = fit["amplitude"] * np.sin(np.radians(angle_smooth) + fit["phase"])
             combined_uncertainty = self._combined_uncertainty(
                 angles,
                 field_uncertainties,
@@ -453,9 +439,7 @@ class MagnetAnalyzer:
             mean_combined_uncertainty = float(np.mean(combined_uncertainty))
 
             figure = plt.figure(figsize=(18, 11))
-            grid = figure.add_gridspec(
-                2, 3, height_ratios=[1, 1], width_ratios=[1, 1.2, 1]
-            )
+            grid = figure.add_gridspec(2, 3, height_ratios=[1, 1], width_ratios=[1, 1.2, 1])
 
             ax_raw = figure.add_subplot(grid[0, 0])
             ax_summary = figure.add_subplot(grid[1, 0])
@@ -463,12 +447,8 @@ class MagnetAnalyzer:
             ax_sym = figure.add_subplot(grid[0, 1])
             ax_residuals = figure.add_subplot(grid[1, 1])
 
-            ax_polar_raw = cast(
-                PolarAxes, figure.add_subplot(grid[0, 2], projection="polar")
-            )
-            ax_polar_residuals = cast(
-                PolarAxes, figure.add_subplot(grid[1, 2], projection="polar")
-            )
+            ax_polar_raw = cast(PolarAxes, figure.add_subplot(grid[0, 2], projection="polar"))
+            ax_polar_residuals = cast(PolarAxes, figure.add_subplot(grid[1, 2], projection="polar"))
 
             ax_raw.errorbar(
                 angles,
@@ -481,9 +461,7 @@ class MagnetAnalyzer:
                 alpha=0.85,
                 color="blue",
             )
-            ax_raw.plot(
-                angle_smooth, fields_smooth, "r-", label="Model fit", linewidth=2
-            )
+            ax_raw.plot(angle_smooth, fields_smooth, "r-", label="Model fit", linewidth=2)
             ax_raw.fill_between(
                 angle_smooth,
                 fields_smooth - mean_combined_uncertainty,
@@ -577,7 +555,6 @@ class MagnetAnalyzer:
             theta_min = float(angles[min_idx])
             # Calculate rotation so minimum points downward (South/270°)
             rotation_deg = (270.0 - theta_min) % 360.0
-            rotation_rad = np.radians(rotation_deg)
 
             # Rotate all angles and smooth curve
             rotated_angles = (angles + rotation_deg) % 360.0
@@ -625,9 +602,7 @@ class MagnetAnalyzer:
                 color="orange",
                 label="Residuals",
             )
-            ax_polar_residuals.axhline(
-                0.0, color="k", linestyle="-", linewidth=0.5, alpha=0.5
-            )
+            ax_polar_residuals.axhline(0.0, color="k", linestyle="-", linewidth=0.5, alpha=0.5)
             ax_polar_residuals.set_theta_zero_location("N")
             ax_polar_residuals.set_theta_direction(-1)
             # Set custom theta labels showing original angles
@@ -639,8 +614,12 @@ class MagnetAnalyzer:
 
             ax_summary.axis("off")
             symmetry_text = (
-                f"{result.symmetry_score:.1%}"
-                f"\nmax symmetry residual: {result.max_residual:.2f} mT"
+                f"{result.symmetry_score:.1%}\nmax symmetry residual: {result.max_residual:.2f} mT"
+            )
+            overall_text = (
+                "CALIBRATED & SYMMETRIC"
+                if result.is_calibrated and result.is_symmetric
+                else "REQUIRES ADJUSTMENT"
             )
             summary_text = f"""
 SERIES: {result.series_name}
@@ -666,7 +645,7 @@ Residuals within tolerance:
   → {"YES" if result.residuals_within_tolerance else "NO"}
 
 Overall:
-  → {"CALIBRATED & SYMMETRIC" if result.is_calibrated and result.is_symmetric else "REQUIRES ADJUSTMENT"}
+  → {overall_text}
             """
             ax_summary.text(
                 0.02,
@@ -678,9 +657,7 @@ Overall:
             )
 
             figure.tight_layout()
-            output_path = (
-                output_dir / f"{self._slugify(result.series_name)}_analysis.png"
-            )
+            output_path = output_dir / f"{self._slugify(result.series_name)}_analysis.png"
             figure.savefig(output_path, dpi=150, bbox_inches="tight")
             plt.close(figure)
             print(f"Plot saved to {output_path}")
@@ -739,31 +716,29 @@ def main():
         print(f"  → North pole (positive): {result.north_pole_strength:.2f} mT")
         print(f"  → South pole (negative): {result.south_pole_strength:.2f} mT")
         print(
-            "  → Difference: "
-            f"{abs(result.north_pole_strength - result.south_pole_strength):.2f} mT"
+            f"  → Difference: {abs(result.north_pole_strength - result.south_pole_strength):.2f} mT"
         )
-        print(
-            f"  → Threshold: {MagnetAnalyzer.BALANCE_THRESHOLD:.1%} imbalance tolerance"
-        )
+        print(f"  → Threshold: {MagnetAnalyzer.BALANCE_THRESHOLD:.1%} imbalance tolerance")
         print(f"  → Status: {'✓ BALANCED' if result.is_calibrated else '✗ UNBALANCED'}")
         print()
 
         print(f"Model fit (R²): {result.model_fit_r2:.4f}")
         print(f"  → Threshold: {MagnetAnalyzer.FIT_THRESHOLD:.2f}")
-        print(
-            f"  → Status: {'✓ GOOD FIT' if result.model_fit_r2 > MagnetAnalyzer.FIT_THRESHOLD else '✗ POOR FIT'}"
+        fit_status = (
+            "✓ GOOD FIT" if result.model_fit_r2 > MagnetAnalyzer.FIT_THRESHOLD else "✗ POOR FIT"
         )
+        print(f"  → Status: {fit_status}")
         print(f"  → Amplitude: {result.fit_amplitude:.2f} mT")
         print(f"  → Max residual: {result.max_residual:.2f} mT")
-        print(
-            f"  → Mean combined uncertainty: {result.mean_combined_uncertainty:.2f} mT"
-        )
+        print(f"  → Mean combined uncertainty: {result.mean_combined_uncertainty:.2f} mT")
         print()
 
-        print(
-            "Residuals: "
-            f"{'✓ Within measurement tolerance' if result.residuals_within_tolerance else '✗ Exceed measurement tolerance'}"
+        residuals_status = (
+            "✓ Within measurement tolerance"
+            if result.residuals_within_tolerance
+            else "✗ Exceed measurement tolerance"
         )
+        print(f"Residuals: {residuals_status}")
         print()
 
         print("Final verdict")
@@ -778,9 +753,7 @@ def main():
             if not result.is_symmetric:
                 print(f"    → Asymmetry detected (score: {result.symmetry_score:.1%})")
             if not result.is_calibrated:
-                print(
-                    f"    → Pole imbalance detected (ratio: {result.pole_balance:.3f})"
-                )
+                print(f"    → Pole imbalance detected (ratio: {result.pole_balance:.3f})")
             if result.model_fit_r2 < 0.95:
                 print(f"    → Poor sinusoidal fit (R²: {result.model_fit_r2:.4f})")
 

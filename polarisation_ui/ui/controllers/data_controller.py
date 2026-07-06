@@ -8,9 +8,9 @@ import math
 import random
 import time
 from collections import deque
-from typing import Optional
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
+
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.core.utils import circular_mean_deg
@@ -23,7 +23,7 @@ from polarisation_ui.infrastructure.session_journal import SessionJournal
 CONFIG = import_config()
 
 
-def _evaluate_encoder(diag: Optional[dict], label: str) -> tuple[bool, str]:
+def _evaluate_encoder(diag: dict | None, label: str) -> tuple[bool, str]:
     """Evaluate one encoder's SYST:DIAG? dict.
 
     Returns (ok, description) — description is "<label>: OK" when healthy or
@@ -111,7 +111,7 @@ class DataController(QObject):
     def __init__(
         self,
         device_manager: GoniometerDeviceManager,
-        parent: Optional[QObject] = None,
+        parent: QObject | None = None,
         use_mock_intensity: bool = False,
     ):
         """Initialize data controller.
@@ -163,17 +163,13 @@ class DataController(QObject):
         # Populated with defaults here; call update_acq_settings() from MainWindow
         # at startup and whenever the settings dialog is accepted.
         self._acq_settings: AcquisitionSettings = AcquisitionSettings()
-        self._sample_buffer: deque[float] = deque(
-            maxlen=self._acq_settings.samp_averages
-        )
+        self._sample_buffer: deque[float] = deque(maxlen=self._acq_settings.samp_averages)
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
-        self._intensity_buffer: deque[float] = deque(
-            maxlen=self._acq_settings.pdtia_averages
-        )
+        self._intensity_buffer: deque[float] = deque(maxlen=self._acq_settings.pdtia_averages)
 
         # Spike filter: last accepted angles for derivative check.
-        self._last_sample_angle: Optional[float] = None
-        self._last_det_angle: Optional[float] = None
+        self._last_sample_angle: float | None = None
+        self._last_det_angle: float | None = None
         # Consecutive spike rejections; reference is cleared after this many in a row.
         self._spike_reject_streak: int = 0
         self._spike_reset_after: int = int(_acq_cfg.get("spike_reset_after", 5))
@@ -195,7 +191,7 @@ class DataController(QObject):
         self._detector_offset_deg: float = 0.0
 
         # Active detector calibration profile; None when not loaded.
-        self._calibration_profile: Optional[PowerCalibrationProfile] = None
+        self._calibration_profile: PowerCalibrationProfile | None = None
 
         # When True, the raw_frame signal is emitted with the DATA:FRAME string
         # on every poll.  Disabled by default — only enabled when the Raw Stream
@@ -203,10 +199,10 @@ class DataController(QObject):
         self._raw_frame_enabled: bool = False
 
         # Quiet self-heal: track the last error message to detect new error types
-        self._last_error_msg: Optional[str] = None
+        self._last_error_msg: str | None = None
 
         # Last seen DATA:FRAME sequence number — used to detect gaps in the stream.
-        self._last_frame_seq: Optional[int] = None
+        self._last_frame_seq: int | None = None
 
         # Dark-current tare state
         self._dark_V: float = 0.0
@@ -216,10 +212,10 @@ class DataController(QObject):
 
         # Active session journal — created on start_measurement(), closed/finalized
         # when the user explicitly exports or stops. Preserved across reconnects.
-        self._journal: Optional[SessionJournal] = None
+        self._journal: SessionJournal | None = None
 
         # Current ReconnectWorker instance — kept as attribute to prevent GC while running.
-        self._reconnect_worker: Optional[ReconnectWorker] = None
+        self._reconnect_worker: ReconnectWorker | None = None
 
         # Set to True by abort_reconnect() so queued worker callbacks are ignored.
         self._reconnect_aborted: bool = False
@@ -362,7 +358,10 @@ class DataController(QObject):
         return True
 
     def stop_measurement(self) -> None:
-        """Stop measurement session. Continuous reading keeps running. Journal closed but not finalized."""
+        """Stop measurement session.
+
+        Continuous reading keeps running. Journal is closed but not finalized.
+        """
         if not self._is_measuring:
             return
 
@@ -373,7 +372,7 @@ class DataController(QObject):
         Debug.info("Measurement session stopped")
 
     @property
-    def current_journal(self) -> Optional[SessionJournal]:
+    def current_journal(self) -> SessionJournal | None:
         """The active (or most-recently closed) session journal, or None."""
         return self._journal
 
@@ -416,14 +415,10 @@ class DataController(QObject):
             Debug.info(f"DataController: PDTIA gain updated to stage {stage}")
         return ok
 
-    def update_calibration_profile(
-        self, profile: Optional[PowerCalibrationProfile]
-    ) -> None:
+    def update_calibration_profile(self, profile: PowerCalibrationProfile | None) -> None:
         """Set the detector calibration profile used to convert voltage → watts."""
         self._calibration_profile = profile
-        Debug.info(
-            f"Calibration profile updated: {profile.name if profile else 'None'}"
-        )
+        Debug.info(f"Calibration profile updated: {profile.name if profile else 'None'}")
 
     @property
     def pdtia_gain(self) -> int:
@@ -463,9 +458,7 @@ class DataController(QObject):
         """Return the raw ADC voltage without dark offset applied."""
         if self._use_mock_intensity:
             diff = detector_angle - self._MOCK_PEAK_ANGLE
-            signal = self._MOCK_AMPLITUDE * math.exp(
-                -(diff**2) / (2.0 * self._MOCK_SIGMA**2)
-            )
+            signal = self._MOCK_AMPLITUDE * math.exp(-(diff**2) / (2.0 * self._MOCK_SIGMA**2))
             return signal + random.gauss(0.0, self._MOCK_NOISE)
 
         voltage = self.device_manager.read_adc_voltage()
@@ -515,13 +508,11 @@ class DataController(QObject):
                 threshold = self._acq_settings.spike_max_delta_deg
                 sample_spike = (
                     self._last_sample_angle is not None
-                    and _circular_delta(sample_angle, self._last_sample_angle)
-                    > threshold
+                    and _circular_delta(sample_angle, self._last_sample_angle) > threshold
                 )
                 det_spike = (
                     self._last_det_angle is not None
-                    and _circular_delta(detector_angle, self._last_det_angle)
-                    > threshold
+                    and _circular_delta(detector_angle, self._last_det_angle) > threshold
                 )
                 if sample_spike or det_spike:
                     self._spike_reject_streak += 1
@@ -580,9 +571,7 @@ class DataController(QObject):
                     self._tare_active = False
                     self._tare_samples.clear()
                     self.dark_tare_done.emit(self._dark_V)
-                    Debug.info(
-                        f"Dark tare complete: offset={self._dark_V * 1000:.3f} mV"
-                    )
+                    Debug.info(f"Dark tare complete: offset={self._dark_V * 1000:.3f} mV")
 
             intensity = (
                 max(0.0, raw_intensity - self._dark_V)
@@ -599,12 +588,10 @@ class DataController(QObject):
             self.intensity_updated.emit(display_intensity)
             self.angles_updated.emit(display_sample, display_det)
             # Compute optical power from calibration profile (if loaded).
-            conv_factor: Optional[float] = None
-            power_W: Optional[float] = None
+            conv_factor: float | None = None
+            power_W: float | None = None
             if self._calibration_profile is not None:
-                conv_factor = self._calibration_profile.conversion_factor(
-                    self._current_pdtia_gain
-                )
+                conv_factor = self._calibration_profile.conversion_factor(self._current_pdtia_gain)
                 if conv_factor is not None:
                     power_W = display_intensity * conv_factor
 
@@ -644,9 +631,7 @@ class DataController(QObject):
         the error persists or is a new error type (B1 contract).
         """
         is_first_failure = self._error_count == 0
-        is_new_error_type = (
-            self._last_error_msg is not None and error_msg != self._last_error_msg
-        )
+        is_new_error_type = self._last_error_msg is not None and error_msg != self._last_error_msg
 
         self._error_count += 1
         self._last_error_msg = error_msg
@@ -667,9 +652,7 @@ class DataController(QObject):
                 min(self._backoff_attempt, len(self._backoff_delays_ms) - 1)
             ]
             self._backoff_attempt += 1
-            Debug.info(
-                f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})"
-            )
+            Debug.info(f"Scheduling reconnect in {delay_ms} ms (attempt {self._backoff_attempt})")
             self._retry_timer.start(delay_ms)
             self.retry_connecting.emit(self._error_count, delay_ms / 1000.0)
 
@@ -793,9 +776,7 @@ class DataController(QObject):
         """Create and start a new session journal for the current measurement."""
         firmware = self.device_manager.get_firmware_version()
         config = self.device_manager.get_desired_state().as_config_snapshot()
-        self._journal = SessionJournal(
-            firmware_version=firmware, config_snapshot=config
-        )
+        self._journal = SessionJournal(firmware_version=firmware, config_snapshot=config)
         try:
             self._journal.start()
         except OSError as e:

@@ -2,7 +2,6 @@
 
 import math
 from collections.abc import Sequence
-from typing import Optional
 
 from polarisation_ui.core.models import Frame
 
@@ -52,7 +51,7 @@ def circular_mean_deg(angles: Sequence[float]) -> float:
 
 def windowed_average_intensity(
     frames: Sequence[Frame], window_ms: int
-) -> tuple[float, Optional[Frame]]:
+) -> tuple[float, Frame | None]:
     """Average ``Frame.intensity`` over the trailing *window_ms* ending at the latest frame.
 
     Shared by tabs that support a manual "confirm point" workflow (Malus,
@@ -73,11 +72,7 @@ def windowed_average_intensity(
         return float("nan"), None
     latest = frames[-1]
     cutoff_ms = latest.ts_ms - window_ms
-    valid = [
-        f.intensity
-        for f in frames
-        if f.ts_ms >= cutoff_ms and not math.isnan(f.intensity)
-    ]
+    valid = [f.intensity for f in frames if f.ts_ms >= cutoff_ms and not math.isnan(f.intensity)]
     if not valid:
         return float("nan"), latest
     return sum(valid) / len(valid), latest

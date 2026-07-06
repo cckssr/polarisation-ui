@@ -12,13 +12,11 @@ they exercise the real code paths without a physical device.
 import os
 import sys
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-pytestmark = pytest.mark.skipif(
-    sys.platform == "win32", reason="PTY not available on Windows"
-)
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
 
 
 # ---------------------------------------------------------------------------
@@ -140,9 +138,7 @@ def test_reconnect_failed_increments_error_count_once(qtbot, controller):
     ctrl._on_reconnect_failed()
     after = ctrl._error_count
 
-    assert after == before + 1, (
-        "error_count must increment by exactly 1 per failed reconnect"
-    )
+    assert after == before + 1, "error_count must increment by exactly 1 per failed reconnect"
     ctrl._retry_timer.stop()
 
 

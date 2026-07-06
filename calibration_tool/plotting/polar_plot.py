@@ -1,5 +1,4 @@
-"""
-Calibration Plotting Module.
+"""Calibration Plotting Module.
 
 Creates visualization of encoder calibration data:
 - Polar plot showing error magnitude vs. angle
@@ -8,14 +7,13 @@ Creates visualization of encoder calibration data:
 """
 
 import math
-from typing import Optional, Tuple, List
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.axes import Axes
 
-from calibration.measurement import CalibrationRun
+import matplotlib.pyplot as plt
+import numpy as np
 from calibration.analysis import CalibrationAnalysis, CalibrationResult
+from calibration.measurement import CalibrationRun
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 
 class CalibrationPlotter:
@@ -31,11 +29,8 @@ class CalibrationPlotter:
         3. Combined analysis: Both plots with fitted curves.
     """
 
-    def __init__(
-        self, run: CalibrationRun, analysis: Optional[CalibrationAnalysis] = None
-    ):
-        """
-        Initialize plotter with calibration data.
+    def __init__(self, run: CalibrationRun, analysis: CalibrationAnalysis | None = None):
+        """Initialize plotter with calibration data.
 
         Args:
             run: CalibrationRun with measurement data
@@ -43,7 +38,7 @@ class CalibrationPlotter:
         """
         self.run = run
         self.analysis = analysis or CalibrationAnalysis(run)
-        self._result: Optional[CalibrationResult] = None
+        self._result: CalibrationResult | None = None
 
     def _ensure_analyzed(self) -> CalibrationResult:
         """Ensure analysis has been performed."""
@@ -53,12 +48,11 @@ class CalibrationPlotter:
 
     def plot_polar(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         show_fit: bool = True,
         title: str = "Encoder Error (Polar)",
     ) -> Axes:
-        """
-        Create polar plot of error vs angle.
+        """Create polar plot of error vs angle.
 
         The radius represents error magnitude, showing where
         the encoder has the largest deviations.
@@ -128,13 +122,12 @@ class CalibrationPlotter:
 
     def plot_error_vs_angle(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         show_fit: bool = True,
         show_components: bool = True,
         title: str = "Error vs Reference Angle",
     ) -> Axes:
-        """
-        Create Cartesian plot of error vs reference angle.
+        """Create Cartesian plot of error vs reference angle.
 
         Args:
             ax: Optional matplotlib axes (created if None)
@@ -155,11 +148,6 @@ class CalibrationPlotter:
         angles_deg = self.run.get_reference_angles()
         errors = self.run.get_errors()
 
-        # Sort by angle for clean line plots
-        sorted_idx = np.argsort(angles_deg)
-        angles_sorted = np.array(angles_deg)[sorted_idx]
-        errors_sorted = np.array(errors)[sorted_idx]
-
         # Plot measured data
         ax.scatter(angles_deg, errors, c="blue", alpha=0.5, s=15, label="Measured")
 
@@ -174,9 +162,7 @@ class CalibrationPlotter:
             fit_angles_rad = np.deg2rad(fit_angles)
 
             # 1x component
-            comp_1x = result.amplitude_1x * np.sin(
-                fit_angles_rad + np.deg2rad(result.phase_1x)
-            )
+            comp_1x = result.amplitude_1x * np.sin(fit_angles_rad + np.deg2rad(result.phase_1x))
             ax.plot(
                 fit_angles,
                 comp_1x + result.mean_error,
@@ -187,9 +173,7 @@ class CalibrationPlotter:
             )
 
             # 2x component
-            comp_2x = result.amplitude_2x * np.sin(
-                2 * fit_angles_rad + np.deg2rad(result.phase_2x)
-            )
+            comp_2x = result.amplitude_2x * np.sin(2 * fit_angles_rad + np.deg2rad(result.phase_2x))
             ax.plot(
                 fit_angles,
                 comp_2x + result.mean_error,
@@ -224,10 +208,9 @@ class CalibrationPlotter:
     def plot_combined(
         self,
         title: str = "Encoder Calibration Analysis",
-        figsize: Tuple[int, int] = (16, 8),
+        figsize: tuple[int, int] = (16, 8),
     ) -> Figure:
-        """
-        Create combined figure with polar and Cartesian plots.
+        """Create combined figure with polar and Cartesian plots.
 
         Args:
             title: Overall figure title
@@ -277,8 +260,7 @@ class CalibrationPlotter:
         plt.show()
 
     def save(self, filepath: str, dpi: int = 150) -> None:
-        """
-        Save combined plot to file.
+        """Save combined plot to file.
 
         Args:
             filepath: Output file path (e.g., "calibration.png")
@@ -293,8 +275,9 @@ class CalibrationPlotter:
 # Demo with synthetic data
 def demo():
     """Generate demo plot with synthetic data."""
-    from calibration.measurement import MeasurementPoint, CalibrationRun
     from datetime import datetime
+
+    from calibration.measurement import CalibrationRun, MeasurementPoint
 
     # Create synthetic data with known error pattern
     run = CalibrationRun(name="demo", start_time=datetime.now())
@@ -309,9 +292,7 @@ def demo():
 
         measured = ref_angle + error_1x + error_2x + noise
 
-        point = MeasurementPoint(
-            timestamp=i, reference_deg=ref_angle, measured_deg=measured
-        )
+        point = MeasurementPoint(timestamp=i, reference_deg=ref_angle, measured_deg=measured)
         run.add_point(point)
 
     # Create plotter and show

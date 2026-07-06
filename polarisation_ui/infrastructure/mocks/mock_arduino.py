@@ -16,7 +16,6 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from ..logging import Debug
 from .mock_port_registry import register_mock_port, unregister_mock_port
@@ -50,9 +49,11 @@ class MockEncoderState:
     poll_count: int = 0
 
     def get_effective_angle(self) -> float:
+        """Return the current angle with the software zero offset applied."""
         return self.current_angle - self.zero_offset
 
     def get_raw_value(self) -> int:
+        """Return the effective angle encoded as a raw 14-bit AS5048A-style value."""
         return int((self.get_effective_angle() % 360.0) / 360.0 * 16384) % 65536
 
 
@@ -79,6 +80,7 @@ class MockArduino:
         start_angle_b: float = 0.0,
         encoder_b_present: bool = True,
     ):
+        """Configure the simulated encoder speeds, poll rate, and starting angles."""
         self.encoder_a_speed = encoder_a_speed
         self.encoder_b_speed = encoder_b_speed
         self.poll_interval_ms = poll_interval_ms
@@ -86,12 +88,8 @@ class MockArduino:
         # and DIAG:SELF? the same way the real dispatcher does.
         self.encoder_b_present = encoder_b_present
 
-        self.encoder_a = MockEncoderState(
-            current_angle=start_angle_a, base_angle=start_angle_a
-        )
-        self.encoder_b = MockEncoderState(
-            current_angle=start_angle_b, base_angle=start_angle_b
-        )
+        self.encoder_a = MockEncoderState(current_angle=start_angle_a, base_angle=start_angle_a)
+        self.encoder_b = MockEncoderState(current_angle=start_angle_b, base_angle=start_angle_b)
 
         # ADC config mirrors CONF:ADC:* commands
         self.adc_gain: int = 1
@@ -122,15 +120,15 @@ class MockArduino:
         self._frame_seq: int = 0
 
         # PTY pair
-        self.pty_master: Optional[int] = None
-        self.pty_slave: Optional[int] = None
-        self.pty_slave_path: Optional[str] = None
+        self.pty_master: int | None = None
+        self.pty_slave: int | None = None
+        self.pty_slave_path: str | None = None
 
         self._running = False
         self._stop_flag = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._start_time = time.time()
-        self._port_file: Optional[Path] = None
+        self._port_file: Path | None = None
         # Guards close-then-null of pty_master so kill_pty() (called from a test
         # thread) can never race the run loop into passing a stale/None fd to
         # select()/os.read()/os.write().
@@ -308,7 +306,7 @@ class MockArduino:
 
     # ── SCPI command dispatcher ───────────────────────────────────────────────
 
-    def _handle_command(self, raw_cmd: str, fd: int) -> Optional[str]:
+    def _handle_command(self, raw_cmd: str, fd: int) -> str | None:
         cmd = raw_cmd.upper().strip()
 
         # '?' may appear inside the command before a parameter
@@ -453,14 +451,10 @@ class MockArduino:
                     if not t:
                         continue
                     if t not in _VALID_SRC_TOKENS:
-                        Debug.debug(
-                            f"MockArduino: CONF:SRC rejected unknown token '{t}'"
-                        )
+                        Debug.debug(f"MockArduino: CONF:SRC rejected unknown token '{t}'")
                         return None
                     if t in ("ENC:B", "ENC:BOTH") and not self.encoder_b_present:
-                        Debug.debug(
-                            f"MockArduino: CONF:SRC rejected '{t}' (encoder B absent)"
-                        )
+                        Debug.debug(f"MockArduino: CONF:SRC rejected '{t}' (encoder B absent)")
                         return None
                     if t == "ENC:BOTH":
                         tokens.add("ENC:A")
@@ -572,9 +566,7 @@ class MockArduino:
             # Matches firmware's handleDiagSelf(): one "DIAG:SELF <what>,<result>"
             # line per subsystem, not a single comma-joined line.
             enc_b_line = (
-                "DIAG:SELF ENC:B,PASS"
-                if self.encoder_b_present
-                else "DIAG:SELF ENC:B,ABSENT"
+                "DIAG:SELF ENC:B,PASS" if self.encoder_b_present else "DIAG:SELF ENC:B,ABSENT"
             )
             return "\n".join(
                 [
@@ -739,15 +731,9 @@ def main() -> int:
         return 1
 
     parser = argparse.ArgumentParser(description="MockArduino SCPI 2.0.0 via PTY")
-    parser.add_argument(
-        "--speed-a", type=float, default=MockArduino.ENCODER_A_BASE_SPEED
-    )
-    parser.add_argument(
-        "--speed-b", type=float, default=MockArduino.ENCODER_B_BASE_SPEED
-    )
-    parser.add_argument(
-        "--interval", type=int, default=MockArduino.DEFAULT_POLL_INTERVAL_MS
-    )
+    parser.add_argument("--speed-a", type=float, default=MockArduino.ENCODER_A_BASE_SPEED)
+    parser.add_argument("--speed-b", type=float, default=MockArduino.ENCODER_B_BASE_SPEED)
+    parser.add_argument("--interval", type=int, default=MockArduino.DEFAULT_POLL_INTERVAL_MS)
     parser.add_argument("--start-a", type=float, default=0.0)
     parser.add_argument("--start-b", type=float, default=0.0)
     parser.add_argument(

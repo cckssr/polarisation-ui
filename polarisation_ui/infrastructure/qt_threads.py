@@ -6,7 +6,8 @@ free of PySide6 imports.
 
 import dataclasses
 import time
-from typing import TYPE_CHECKING, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QThread, Signal
 
@@ -14,11 +15,11 @@ from polarisation_ui.core.auto_calibration_settings import (
     AutoCalibrationParams,
     build_angle_grid,
 )
-from polarisation_ui.core.utils import linear_angle_grid
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
 )
+from polarisation_ui.core.utils import linear_angle_grid
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -41,8 +42,7 @@ _SENSOR_INFO_KEYS = (
 def _parse_sensor_info(raw: list) -> dict:
     """Convert the flat PM400 sensor_info list to a labelled dict."""
     return {
-        key: str(raw[i]).strip() if i < len(raw) else ""
-        for i, key in enumerate(_SENSOR_INFO_KEYS)
+        key: str(raw[i]).strip() if i < len(raw) else "" for i, key in enumerate(_SENSOR_INFO_KEYS)
     }
 
 
@@ -65,10 +65,12 @@ class ReconnectWorker(QThread):
         device_manager: GoniometerDeviceManager,
         parent=None,
     ) -> None:
+        """Store the device manager whose reconnect_encoders() this worker will call."""
         super().__init__(parent)
         self._device_manager = device_manager
 
     def run(self) -> None:
+        """Attempt one reconnect and emit succeeded or failed."""
         Debug.info("ReconnectWorker: attempting reconnect on worker thread")
         try:
             success = self._device_manager.reconnect_encoders()
@@ -114,6 +116,7 @@ class AutoPowerCalibrationWorker(QThread):
         params: AutoCalibrationParams,
         parent=None,
     ) -> None:
+        """Store the devices and sweep parameters this worker will drive."""
         super().__init__(parent)
         self._device_manager = device_manager
         self._kdc = kdc
@@ -126,13 +129,12 @@ class AutoPowerCalibrationWorker(QThread):
         self._abort = True
 
     def run(self) -> None:
+        """Run the full calibration sweep, catching and reporting unexpected errors."""
         Debug.info("AutoPowerCalibrationWorker: starting sweep")
         try:
             self._run_sweep()
         except Exception as exc:
-            Debug.error(
-                f"AutoPowerCalibrationWorker: unexpected error: {exc}", exc_info=True
-            )
+            Debug.error(f"AutoPowerCalibrationWorker: unexpected error: {exc}", exc_info=True)
             self.failed.emit(str(exc))
 
     def _run_sweep(self) -> None:
@@ -227,9 +229,7 @@ class AutoPowerCalibrationWorker(QThread):
                     if v is not None:
                         voltages.append(v)
                 if not voltages:
-                    self.log.emit(
-                        f"  Warning: no ADC readings at θ={angle:.2f}°, skipping"
-                    )
+                    self.log.emit(f"  Warning: no ADC readings at θ={angle:.2f}°, skipping")
                     done += 1
                     self.progress.emit(done, total)
                     idx += 1
@@ -253,10 +253,7 @@ class AutoPowerCalibrationWorker(QThread):
                 # range is sampled at the originally requested density.
                 # Example: 30 steps over 0–90°, first 10 saturated → rebuild
                 # 30 steps over 30–90°, giving 2° spacing instead of 3°.
-                if (
-                    not first_valid_found
-                    and profile.gains[gain].n_saturated_skipped > 0
-                ):
+                if not first_valid_found and profile.gains[gain].n_saturated_skipped > 0:
                     sub = dataclasses.replace(
                         p,
                         angle_start_deg=angle,
@@ -282,17 +279,13 @@ class AutoPowerCalibrationWorker(QThread):
                 done += 1
                 self.point_recorded.emit(gain, angle, voltage_mean, power_W)
                 self.progress.emit(done, total)
-                self.log.emit(
-                    f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W"
-                )
+                self.log.emit(f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W")
                 idx += 1
 
             n_sat = profile.gains[gain].n_saturated_skipped
             n_rec = len(profile.gains[gain].points)
             if n_sat:
-                self.log.emit(
-                    f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)"
-                )
+                self.log.emit(f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)")
 
         self.log.emit("Sweep complete.")
         self.finished.emit(profile)
@@ -327,6 +320,7 @@ class AlignPolariserWorker(QThread):
         settle_s: float,
         parent=None,
     ) -> None:
+        """Store the devices and scan parameters this worker will drive."""
         super().__init__(parent)
         self._kdc = kdc
         self._pm = pm
@@ -341,6 +335,7 @@ class AlignPolariserWorker(QThread):
         self._abort = True
 
     def run(self) -> None:
+        """Run the alignment scan, catching and reporting unexpected errors."""
         Debug.info("AlignPolariserWorker: starting alignment scan")
         try:
             self._run_scan()
@@ -354,8 +349,7 @@ class AlignPolariserWorker(QThread):
         step = (self._end - self._start) / (n - 1) if n > 1 else 0.0
 
         self.log.emit(
-            f"Ausrichtungsscan: {self._start:.1f}°…{self._end:.1f}° "
-            f"({n} Punkte, Δθ={step:.2f}°)"
+            f"Ausrichtungsscan: {self._start:.1f}°…{self._end:.1f}° ({n} Punkte, Δθ={step:.2f}°)"
         )
 
         scan: list[tuple[float, float]] = []  # (angle_deg, power_W)
@@ -410,9 +404,7 @@ class MalusSweepWorker(QThread):
     """
 
     zero_offset = Signal(float)
-    point_scanned = Signal(
-        float, float, float
-    )  # (analyser_angle, kdc_pos, intensity_V)
+    point_scanned = Signal(float, float, float)  # (analyser_angle, kdc_pos, intensity_V)
     progress = Signal(int, int)
     finished = Signal()
     failed = Signal(str)
@@ -421,7 +413,7 @@ class MalusSweepWorker(QThread):
     def __init__(
         self,
         kdc: "KDC101Polariser",
-        read_average: Callable[[], "tuple[float, Optional[Frame]]"],
+        read_average: Callable[[], "tuple[float, Frame | None]"],
         start_deg: float,
         end_deg: float,
         step_deg: float,
@@ -429,6 +421,7 @@ class MalusSweepWorker(QThread):
         settle_ms: int = 150,
         parent=None,
     ) -> None:
+        """Store the KDC handle, intensity-reader callback, and sweep parameters."""
         super().__init__(parent)
         self._kdc = kdc
         self._read_average = read_average
@@ -440,9 +433,11 @@ class MalusSweepWorker(QThread):
         self._abort: bool = False
 
     def abort(self) -> None:
+        """Request a clean stop."""
         self._abort = True
 
     def run(self) -> None:
+        """Run the full home → auto-zero → sweep sequence, reporting errors via failed."""
         try:
             self._run()
         except KDC101Error as exc:
@@ -490,9 +485,7 @@ class MalusSweepWorker(QThread):
                 return
             self.point_scanned.emit(angle_set, actual_pos, intensity_V)
             self.progress.emit(i + 1, n)
-            self.log.emit(
-                f"  θ={angle_set:.1f}° | pos={actual_pos:.2f}° | I={intensity_V:.4f} V"
-            )
+            self.log.emit(f"  θ={angle_set:.1f}° | pos={actual_pos:.2f}° | I={intensity_V:.4f} V")
 
         self.finished.emit()
 
@@ -544,10 +537,12 @@ class KDC101HomeWorker(QThread):
     error = Signal(str)
 
     def __init__(self, kdc: "KDC101Polariser", parent=None) -> None:
+        """Store the KDC handle to home when run() executes."""
         super().__init__(parent)
         self._kdc = kdc
 
     def run(self) -> None:
+        """Home the stage, emitting done on success or error on failure."""
         try:
             self._kdc.home()
             self.done.emit()

@@ -24,7 +24,6 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from polarisation_ui.core.models import Frame
 from polarisation_ui.infrastructure.logging import Debug
@@ -45,15 +44,16 @@ class SessionJournal:
     def __init__(
         self,
         firmware_version: str = "unknown",
-        config_snapshot: Optional[dict] = None,
+        config_snapshot: dict | None = None,
     ) -> None:
+        """Assign this session a timestamped directory under JOURNAL_BASE; start() opens it."""
         ts = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
         self._session_dir = JOURNAL_BASE / ts
         self._journal_path = self._session_dir / "journal.csv"
         self._firmware_version = firmware_version
         self._config_snapshot: dict = config_snapshot or {}
-        self._file: Optional[object] = None
-        self._writer: Optional[csv.writer] = None  # type: ignore[type-arg]
+        self._file: object | None = None
+        self._writer: csv.writer | None = None  # type: ignore[type-arg]
         self._last_fsync: float = 0.0
         self._row_count: int = 0
 
@@ -61,18 +61,22 @@ class SessionJournal:
 
     @property
     def session_dir(self) -> Path:
+        """Directory holding this session's journal.csv and finalized marker."""
         return self._session_dir
 
     @property
     def journal_path(self) -> Path:
+        """Path to this session's journal.csv."""
         return self._journal_path
 
     @property
     def is_active(self) -> bool:
+        """Whether the journal file is currently open for writing."""
         return self._file is not None
 
     @property
     def row_count(self) -> int:
+        """Number of data rows (frames) written so far, excluding gap markers."""
         return self._row_count
 
     # ── lifecycle ──────────────────────────────────────────────────────────────
@@ -90,9 +94,7 @@ class SessionJournal:
             f.write(f"# config_{key}: {safe_val}\n")
         self._writer = csv.writer(f)
         if self._writer:
-            self._writer.writerow(
-                ["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"]
-            )
+            self._writer.writerow(["ts_ms", "sample_angle", "detector_angle", "intensity", "gap"])
         else:
             Debug.error("SessionJournal failed to initialize CSV writer")
         f.flush()
@@ -217,12 +219,10 @@ def _copy_data_rows(src: Path, dst: Path) -> int:
     """
     rows_written = 0
     try:
-        with open(src, "r", encoding="utf-8") as fh_in:
+        with open(src, encoding="utf-8") as fh_in:
             with open(dst, "w", newline="", encoding="utf-8") as fh_out:
                 writer = csv.writer(fh_out)
-                writer.writerow(
-                    ["ts_ms", "sample_angle", "detector_angle", "intensity"]
-                )
+                writer.writerow(["ts_ms", "sample_angle", "detector_angle", "intensity"])
                 header_skipped = False
                 for raw_line in fh_in:
                     line = raw_line.rstrip("\n")

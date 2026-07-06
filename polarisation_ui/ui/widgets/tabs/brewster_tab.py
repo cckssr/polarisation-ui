@@ -15,7 +15,7 @@ Both modes reset the detector scan after saving so the next sweep starts clean.
 from __future__ import annotations
 
 import math
-from typing import Literal, Optional
+from typing import Literal
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QButtonGroup, QHeaderView, QTableWidgetItem, QWidget
@@ -26,37 +26,35 @@ from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 
 
 class BrewsterTab(PlotTabBase):
+    """Brewster-angle experiment tab: detector scan plot + saved-curve plot."""
+
     tab_id = "brewster"
     tab_title = "Brewster"
     required_sources: set[str] = {"ENC:BOTH", "ADC"}
     required_modules: set[str] = set()
 
-    points_changed = Signal(
-        int
-    )  # emits current point count after every add/remove/clear
+    points_changed = Signal(int)  # emits current point count after every add/remove/clear
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialise empty buffers; build() constructs the widgets."""
         super().__init__(parent)
-        self._latest_frame: Optional[Frame] = None
+        self._latest_frame: Frame | None = None
         self._peak_intensity: float = float("nan")
         self._peak_angle: float = float("nan")
         self._polarisation: Literal["p", "s"] = "p"
         self._is_measuring: bool = False
 
     def build(self) -> None:
+        """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_BrewsterTab()
         self._ui.setupUi(self)
-        self._ui.pointsTable.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self._ui.pointsTable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self._ui.btnClearDetector.clicked.connect(self._clear_detector_plot)
         self._ui.btnDeleteLast.clicked.connect(self._delete_last_point)
         self._ui.btnDeleteSelected.clicked.connect(self._delete_selected_point)
         self._ui.btnSaveCurrent.clicked.connect(self._save_point_current)
         self._ui.btnSaveMax.clicked.connect(self._save_point_max)
-        self._ui.pointsTable.itemSelectionChanged.connect(
-            self._on_table_selection_changed
-        )
+        self._ui.pointsTable.itemSelectionChanged.connect(self._on_table_selection_changed)
         self._ui.detectorPlot.peak_changed.connect(self._update_max_labels)
 
         # p/s polarisation selection — QButtonGroup is a non-visual logical helper
@@ -68,25 +66,28 @@ class BrewsterTab(PlotTabBase):
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
     def on_frame(self, frame: Frame) -> None:
+        """Cache the latest frame and update the live detector-scan plot."""
         self._latest_frame = frame
         self._ui.detectorPlot.update_data(frame.detector_angle, frame.intensity)
 
     def on_reset(self) -> None:
+        """Clear both plots and the saved-points table."""
         self._ui.detectorPlot.clear()
         self._ui.brewsterCurvePlot.clear()
         self._refresh_table()
         self.points_changed.emit(0)
 
     def on_connection_state(self, state: ConnState) -> None:
-        pass
+        """No-op — this tab has no connection-state-dependent UI."""
 
     def on_activated(self) -> None:
-        pass
+        """No-op — this tab has no activation-dependent UI."""
 
     def on_deactivated(self) -> None:
-        pass
+        """No-op — this tab has no deactivation-dependent UI."""
 
     def on_measurement_started(self) -> None:
+        """Enable the save/clear controls for the new measurement session."""
         self._is_measuring = True
         self._ui.btnClearDetector.setEnabled(True)
         self._ui.btnDeleteLast.setEnabled(True)
@@ -95,6 +96,7 @@ class BrewsterTab(PlotTabBase):
         self._on_table_selection_changed()
 
     def on_measurement_stopped(self) -> None:
+        """Disable the save/clear controls until the next measurement session."""
         self._is_measuring = False
         self._ui.btnClearDetector.setEnabled(False)
         self._ui.btnDeleteLast.setEnabled(False)
@@ -103,7 +105,7 @@ class BrewsterTab(PlotTabBase):
         self._ui.btnSaveMax.setEnabled(False)
 
     def inject_modules(self, modules: dict[str, object]) -> None:
-        pass
+        """No-op — this tab does not require any host modules."""
 
     @Slot(int, bool)
     def _on_polarisation_toggled(self, btn_id: int, checked: bool) -> None:
@@ -114,9 +116,11 @@ class BrewsterTab(PlotTabBase):
     # ── Export contract ───────────────────────────────────────────────────────
 
     def get_saved_points(self) -> list[BrewsterPoint]:
+        """Return all points saved to the Brewster curve plot."""
         return self._ui.brewsterCurvePlot.get_points()
 
     def build_export(self) -> TabExport:
+        """Build the CSV-ready export of all saved Brewster points."""
         points = self.get_saved_points()
         columns = [
             "sample_angle_deg",
@@ -133,11 +137,7 @@ class BrewsterTab(PlotTabBase):
                 f"{pt.intensity_V:.6f}",
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
-                (
-                    f"{pt.conv_factor_W_per_V:.6e}"
-                    if pt.conv_factor_W_per_V is not None
-                    else ""
-                ),
+                (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
             ]
             for pt in points
         ]
@@ -161,6 +161,7 @@ class BrewsterTab(PlotTabBase):
         )
 
     def restore_points(self, points: list[dict]) -> None:
+        """Reload previously-saved points from a prior session."""
         for p in points:
             try:
                 self._ui.brewsterCurvePlot.add_point(
@@ -259,22 +260,14 @@ class BrewsterTab(PlotTabBase):
         points = self._ui.brewsterCurvePlot.get_points()
         self._ui.pointsTable.setRowCount(len(points))
         for row, pt in enumerate(points):
-            self._ui.pointsTable.setItem(
-                row, 0, QTableWidgetItem(f"{pt.sample_angle:.3f}")
-            )
-            self._ui.pointsTable.setItem(
-                row, 1, QTableWidgetItem(f"{pt.detector_angle:.3f}")
-            )
-            self._ui.pointsTable.setItem(
-                row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}")
-            )
+            self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.sample_angle:.3f}"))
+            self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(f"{pt.detector_angle:.3f}"))
+            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}"))
             self._ui.pointsTable.setItem(
                 row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
             )
             if pt.power_W is not None:
-                self._ui.pointsTable.setItem(
-                    row, 4, QTableWidgetItem(f"{pt.power_W:.3e}")
-                )
+                self._ui.pointsTable.setItem(row, 4, QTableWidgetItem(f"{pt.power_W:.3e}"))
             else:
                 self._ui.pointsTable.setItem(row, 4, QTableWidgetItem("—"))
         self._on_table_selection_changed()

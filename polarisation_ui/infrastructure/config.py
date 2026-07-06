@@ -2,8 +2,9 @@
 
 import json
 import sys
-from pathlib import Path
 from importlib.resources import files
+from pathlib import Path
+
 from .logging import Debug
 
 
@@ -33,7 +34,7 @@ def import_config(language: str = "de") -> dict:
     for config_path in possible_paths:
         try:
             if config_path.exists():
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     config = json.load(f)
                     Debug.debug(f"Config loaded from: {config_path}")
                     return config.get(language, config.get("de", {}))
@@ -42,15 +43,12 @@ def import_config(language: str = "de") -> dict:
 
     # Fallback: try to load from package resources
     try:
-        package_name = (
-            __package__.split(".", maxsplit=1)[0] if __package__ else "application"
-        )
-        if sys.version_info >= (3, 9):
-            package_config = files(package_name).joinpath("config.json")
-            if hasattr(package_config, "read_text"):
-                config = json.loads(package_config.read_text(encoding="utf-8"))
-                Debug.debug(f"Config loaded from package resources ({package_name}).")
-                return config.get(language, config.get("de", {}))
+        package_name = __package__.split(".", maxsplit=1)[0] if __package__ else "application"
+        package_config = files(package_name).joinpath("config.json")
+        if hasattr(package_config, "read_text"):
+            config = json.loads(package_config.read_text(encoding="utf-8"))
+            Debug.debug(f"Config loaded from package resources ({package_name}).")
+            return config.get(language, config.get("de", {}))
     except Exception as e:  # pylint: disable=broad-except
         Debug.debug(f"Failed to load config from package resources: {e}")
 

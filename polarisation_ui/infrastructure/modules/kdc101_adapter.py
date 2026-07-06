@@ -20,17 +20,22 @@ class KDC101ModuleAdapter:
 
     id: str = "kdc101"
 
-    def __init__(self, kdc: "KDC101Polariser") -> None:
+    def __init__(self, kdc: KDC101Polariser) -> None:
+        """Wrap an already-constructed KDC101Polariser instance."""
         self._kdc = kdc
 
     def connect(self) -> bool:
+        """Return whether the wrapped stage is connected (connection is managed elsewhere)."""
         return self._kdc.is_connected()
 
     def disconnect(self) -> None:
+        """Disconnect the wrapped stage."""
         self._kdc.disconnect()
 
     def is_connected(self) -> bool:
+        """Return whether the wrapped stage is currently connected."""
         return self._kdc.is_connected()
 
     def describe(self) -> str:
+        """Return a human-readable label including current connection state."""
         return f"KDC101 polariser stage (connected={self._kdc.is_connected()})"

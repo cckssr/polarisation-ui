@@ -13,9 +13,9 @@ Architecture:
 
 from __future__ import annotations
 
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from serial.tools import list_ports
 
@@ -52,9 +52,9 @@ class DeviceStatus:
     """Status information for a device."""
 
     state: DeviceState
-    port: Optional[str] = None
-    baudrate: Optional[int] = None
-    error_message: Optional[str] = None
+    port: str | None = None
+    baudrate: int | None = None
+    error_message: str | None = None
 
     def is_ready(self) -> bool:
         """Check if device is ready for operations."""
@@ -81,7 +81,7 @@ class GoniometerDeviceManager:
         self.use_mock = use_mock
 
         # Device instances
-        self._encoder_device: Optional[DualEncoderArduino] = None
+        self._encoder_device: DualEncoderArduino | None = None
 
         # Status tracking
         self._encoder_status = DeviceStatus(state=DeviceState.DISCONNECTED)
@@ -103,9 +103,7 @@ class GoniometerDeviceManager:
 
     # ==================== Connection Management ====================
 
-    def connect_encoders(
-        self, port: str, baudrate: int = 115200, timeout: float = 1.0
-    ) -> bool:
+    def connect_encoders(self, port: str, baudrate: int = 115200, timeout: float = 1.0) -> bool:
         """Connect to encoder Arduino.
 
         Args:
@@ -145,9 +143,7 @@ class GoniometerDeviceManager:
         except Exception as e:
             error_msg = f"Exception during encoder connection: {e}"
             Debug.error(error_msg)
-            self._encoder_status = DeviceStatus(
-                state=DeviceState.ERROR, error_message=str(e)
-            )
+            self._encoder_status = DeviceStatus(state=DeviceState.ERROR, error_message=str(e))
             return False
 
     def reconnect_encoders(self) -> bool:
@@ -220,7 +216,7 @@ class GoniometerDeviceManager:
         """Get encoder connection status."""
         return self._encoder_status
 
-    def get_connection_info(self) -> Dict[str, Any]:
+    def get_connection_info(self) -> dict[str, Any]:
         """Get detailed connection information for all devices.
 
         Returns:
@@ -239,7 +235,7 @@ class GoniometerDeviceManager:
 
     # ==================== Device Access ====================
 
-    def get_encoder_device(self) -> Optional[DualEncoderArduino]:
+    def get_encoder_device(self) -> DualEncoderArduino | None:
         """Get encoder device instance.
 
         Returns:
@@ -252,7 +248,7 @@ class GoniometerDeviceManager:
 
     # ==================== Data Reading ====================
 
-    def read_angles(self) -> Optional[DualEncoderReading]:
+    def read_angles(self) -> DualEncoderReading | None:
         """Read current angles from both encoders.
 
         Returns:
@@ -279,7 +275,7 @@ class GoniometerDeviceManager:
             Debug.error(f"Error reading angles: {e}")
             return None
 
-    def read_sample_angle(self) -> Optional[float]:
+    def read_sample_angle(self) -> float | None:
         """Read sample stage angle (Encoder A)."""
         if not self.is_encoder_connected():
             return None
@@ -294,7 +290,7 @@ class GoniometerDeviceManager:
             Debug.error(f"Error reading sample angle: {e}")
             return None
 
-    def read_detector_angle(self) -> Optional[float]:
+    def read_detector_angle(self) -> float | None:
         """Read detector stage angle (Encoder B)."""
         if not self.is_encoder_connected():
             return None
@@ -309,7 +305,7 @@ class GoniometerDeviceManager:
             Debug.error(f"Error reading detector angle: {e}")
             return None
 
-    def read_adc_voltage(self) -> Optional[float]:
+    def read_adc_voltage(self) -> float | None:
         """Read photodiode voltage via MEAS:ADC:VOLT? (requires firmware >= 2.0.0)."""
         device = self.get_encoder_device()
         if device is None:
@@ -322,7 +318,7 @@ class GoniometerDeviceManager:
 
     def read_diagnostics_both(
         self,
-    ) -> Optional[tuple[Optional[dict], Optional[dict]]]:
+    ) -> tuple[dict | None, dict | None] | None:
         """Read DIAG:ENC? for both encoders.
 
         Returns:

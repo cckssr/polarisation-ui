@@ -1,15 +1,14 @@
 """Standardised QMessageBox wrappers for the UI layer."""
 
-from typing import Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox, QWidget
 
 
 def show_error(
-    parent: Optional[QWidget],
+    parent: QWidget | None,
     title: str,
     message: str,
-    detailed_text: Optional[str] = None,
+    detailed_text: str | None = None,
 ) -> None:
     """Show a critical-error dialog.
 

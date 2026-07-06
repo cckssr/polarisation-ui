@@ -12,6 +12,7 @@ entrypoint (``python main.py``) or the installed entrypoint that points here.
 """
 
 from __future__ import annotations
+
 import runpy
 import sys
 from importlib import import_module
@@ -44,7 +45,7 @@ def _import_and_call_main(module_names: list[str]) -> None:
     for mod in module_names:
         try:
             m = import_module(mod)
-            if hasattr(m, "main") and callable(getattr(m, "main")):
+            if hasattr(m, "main") and callable(m.main):
                 m.main()
                 return
         except Exception as exc:
@@ -63,7 +64,7 @@ if __name__ == "__main__":
         # Last resort: try import and call main()
         try:
             _import_and_call_main(module_candidates)
-        except Exception as exc:  # pragma: no cover - report to user
+        except Exception:  # pragma: no cover - report to user
             print(
                 "Failed to start application; attempted modules:",
                 module_candidates,

@@ -101,15 +101,9 @@ class Ui_BrewsterTab(object):
         self.pointsTable.setMaximumSize(QSize(16777215, 400))
         self.pointsTable.setAutoScroll(True)
         self.pointsTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.pointsTable.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
-        self.pointsTable.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
-        self.pointsTable.setVerticalScrollMode(
-            QAbstractItemView.ScrollMode.ScrollPerItem
-        )
+        self.pointsTable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.pointsTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.pointsTable.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
         self.pointsTable.verticalHeader().setVisible(False)
 
         self.gridLayout.addWidget(self.pointsTable, 2, 0, 1, 1)
@@ -133,9 +127,7 @@ class Ui_BrewsterTab(object):
         self.lblMaxIntensityLabel = QLabel(self.gbMax)
         self.lblMaxIntensityLabel.setObjectName("lblMaxIntensityLabel")
 
-        self.formMax.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblMaxIntensityLabel
-        )
+        self.formMax.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblMaxIntensityLabel)
 
         self.lblMaxIntensity = QLabel(self.gbMax)
         self.lblMaxIntensity.setObjectName("lblMaxIntensity")
@@ -232,17 +224,11 @@ class Ui_BrewsterTab(object):
             QCoreApplication.translate("BrewsterTab", "\u03b8_D (\u00b0)", None)
         )
         ___qtablewidgetitem2 = self.pointsTable.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(
-            QCoreApplication.translate("BrewsterTab", "I (mV)", None)
-        )
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("BrewsterTab", "I (mV)", None))
         ___qtablewidgetitem3 = self.pointsTable.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(
-            QCoreApplication.translate("BrewsterTab", "P (\u00b5W)", None)
-        )
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("BrewsterTab", "P (\u00b5W)", None))
         ___qtablewidgetitem4 = self.pointsTable.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(
-            QCoreApplication.translate("BrewsterTab", "Gain", None)
-        )
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("BrewsterTab", "Gain", None))
         # if QT_CONFIG(tooltip)
         self.btnClearDetector.setToolTip(
             QCoreApplication.translate(
@@ -253,23 +239,13 @@ class Ui_BrewsterTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnClearDetector.setText(
-            QCoreApplication.translate(
-                "BrewsterTab", "Detektorgraph l\u00f6schen", None
-            )
+            QCoreApplication.translate("BrewsterTab", "Detektorgraph l\u00f6schen", None)
         )
         self.gbMax.setTitle(QCoreApplication.translate("BrewsterTab", "Maximum", None))
-        self.lblMaxIntensityLabel.setText(
-            QCoreApplication.translate("BrewsterTab", "I:", None)
-        )
-        self.lblMaxIntensity.setText(
-            QCoreApplication.translate("BrewsterTab", "\u2014", None)
-        )
-        self.lblMaxAngleLabel.setText(
-            QCoreApplication.translate("BrewsterTab", "\u03b8:", None)
-        )
-        self.lblMaxAngle.setText(
-            QCoreApplication.translate("BrewsterTab", "\u2014", None)
-        )
+        self.lblMaxIntensityLabel.setText(QCoreApplication.translate("BrewsterTab", "I:", None))
+        self.lblMaxIntensity.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
+        self.lblMaxAngleLabel.setText(QCoreApplication.translate("BrewsterTab", "\u03b8:", None))
+        self.lblMaxAngle.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
         # if QT_CONFIG(tooltip)
         self.btnDeleteSelected.setToolTip(
             QCoreApplication.translate(
@@ -278,9 +254,7 @@ class Ui_BrewsterTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnDeleteSelected.setText(
-            QCoreApplication.translate(
-                "BrewsterTab", "Ausgew\u00e4hlten l\u00f6schen", None
-            )
+            QCoreApplication.translate("BrewsterTab", "Ausgew\u00e4hlten l\u00f6schen", None)
         )
         # if QT_CONFIG(tooltip)
         self.btnDeleteLast.setToolTip(
@@ -290,9 +264,7 @@ class Ui_BrewsterTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnDeleteLast.setText(
-            QCoreApplication.translate(
-                "BrewsterTab", "Letzten Punkt l\u00f6schen", None
-            )
+            QCoreApplication.translate("BrewsterTab", "Letzten Punkt l\u00f6schen", None)
         )
         self.gbPolarisation.setTitle(
             QCoreApplication.translate("BrewsterTab", "Polarisation", None)

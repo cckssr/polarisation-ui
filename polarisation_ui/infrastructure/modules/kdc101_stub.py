@@ -27,13 +27,16 @@ class Kdc101Stub:
 
     @property
     def id(self) -> str:
+        """Module registry key: 'kdc101'."""
         return "kdc101"
 
     def connect(self) -> bool:
+        """No-op; always reports success."""
         Debug.info("Kdc101Stub.connect() — stub, no hardware action")
         return True
 
     def disconnect(self) -> None:
+        """No-op."""
         Debug.info("Kdc101Stub.disconnect() — stub, no hardware action")
 
     def is_connected(self) -> bool:
@@ -41,18 +44,19 @@ class Kdc101Stub:
         return True
 
     def describe(self) -> str:
+        """Return a human-readable label identifying this as the hardware-free stub."""
         return "Thorlabs KDC101 (stub — no hardware)"
 
     # ── Type-check that the stub satisfies the protocol ───────────────────────
 
     def __init_subclass__(cls, **kwargs: object) -> None:
+        """Standard subclass-init passthrough (no stub-specific behavior)."""
         super().__init_subclass__(**kwargs)
 
     def __class_getitem__(cls, item: object) -> object:  # type: ignore[override]
+        """Support subscripting the class itself (generic-alias syntax); returns cls unchanged."""
         return cls
 
 
 # Runtime assertion — caught at import time during tests.
-assert isinstance(Kdc101Stub(), HostModule), (
-    "Kdc101Stub does not satisfy the HostModule protocol"
-)
+assert isinstance(Kdc101Stub(), HostModule), "Kdc101Stub does not satisfy the HostModule protocol"

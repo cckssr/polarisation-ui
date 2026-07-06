@@ -1,8 +1,6 @@
 """Tests for core/auto_calibration_settings.py — no Qt, no hardware."""
 
 import math
-import json
-from pathlib import Path
 
 import pytest
 
@@ -109,10 +107,7 @@ class TestBuildAngleGrid:
     def test_linear_cos2_intensity_steps_equal(self):
         grid = build_angle_grid(_make_params("linear_cos2", start=0.0, end=90.0, n=10))
         intensities = [math.cos(math.radians(a)) ** 2 for a in grid]
-        diffs = [
-            abs(intensities[i + 1] - intensities[i])
-            for i in range(len(intensities) - 1)
-        ]
+        diffs = [abs(intensities[i + 1] - intensities[i]) for i in range(len(intensities) - 1)]
         assert max(diffs) - min(diffs) < 1e-9
 
     def test_min_two_points_clamped(self):

@@ -9,15 +9,19 @@ from polarisation_ui.ui.widgets.plot_tab_base import PlotTabBase
 
 
 class TabRegistry:
+    """Singleton registry of all PlotTabBase subclasses registered at import time."""
+
     _tabs: list[type[PlotTabBase]] = []
 
     @classmethod
     def register(cls, tab_class: type[PlotTabBase]) -> None:
+        """Register *tab_class*, ignoring duplicate registrations."""
         if tab_class not in cls._tabs:
             cls._tabs.append(tab_class)
 
     @classmethod
     def all(cls) -> list[type[PlotTabBase]]:
+        """Return every registered tab class, regardless of module availability."""
         return list(cls._tabs)
 
     @classmethod

@@ -9,7 +9,7 @@ import math
 import pytest
 
 from polarisation_ui.core.models import Frame
-from polarisation_ui.ui.widgets.tabs.malus_tab import MalusTab, _AVERAGE_WINDOW_MS
+from polarisation_ui.ui.widgets.tabs.malus_tab import _AVERAGE_WINDOW_MS, MalusTab
 
 # ---------------------------------------------------------------------------
 # Helpers

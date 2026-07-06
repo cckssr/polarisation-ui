@@ -4,8 +4,10 @@ Run with: .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 """
 
 import sys
-import pytest
 import time
+
+import pytest
+
 from polarisation_ui.infrastructure.devices import (
     DualEncoderArduino,
     EncoderID,
@@ -13,9 +15,7 @@ from polarisation_ui.infrastructure.devices import (
 )
 from polarisation_ui.infrastructure.mocks import MockArduino
 
-pytestmark = pytest.mark.skipif(
-    sys.platform == "win32", reason="PTY not available on Windows"
-)
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
 
 
 def _await_mock_state(mock, predicate, timeout: float = 2.0) -> bool:
@@ -184,17 +184,17 @@ class TestContinuousMode:
         mock, _ = mock_arduino
 
         assert encoder_client.start_stream([StreamSource.ENC_A])
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         assert not mock.get_state()["continuous_running"]
 
     def test_start_stop_stream_enc_both(self, encoder_client, mock_arduino):
@@ -203,9 +203,9 @@ class TestContinuousMode:
         assert encoder_client.start_stream(
             [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
         )
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
+        )
         state = mock.get_state()
         assert state["continuous_running"]
         assert "ENC:A" in state["stream_sources"]
@@ -213,14 +213,12 @@ class TestContinuousMode:
         assert "DIAG" in state["stream_sources"]
 
         assert encoder_client.abort()
-        assert _await_mock_state(
-            mock, lambda s: not s["continuous_running"]
-        ), "continuous mode not stopped"
+        assert _await_mock_state(mock, lambda s: not s["continuous_running"]), (
+            "continuous mode not stopped"
+        )
         assert not mock.get_state()["continuous_running"]
 
-    def test_set_stream_sources_does_not_arm_streaming(
-        self, encoder_client, mock_arduino
-    ):
+    def test_set_stream_sources_does_not_arm_streaming(self, encoder_client, mock_arduino):
         """set_stream_sources() must configure CONF:SRC without sending INIT:CONT.
 
         Unlike start_stream(), it should be safe to call at any time (e.g. on
@@ -229,18 +227,16 @@ class TestContinuousMode:
         """
         mock, _ = mock_arduino
         assert encoder_client.set_stream_sources({"ADC", "ENC:BOTH"})
-        assert _await_mock_state(
-            mock, lambda s: "ADC" in s["stream_sources"]
-        ), "stream_sources not updated"
+        assert _await_mock_state(mock, lambda s: "ADC" in s["stream_sources"]), (
+            "stream_sources not updated"
+        )
         state = mock.get_state()
         assert "ADC" in state["stream_sources"]
         assert "ENC:A" in state["stream_sources"]
         assert "ENC:B" in state["stream_sources"]
         assert not state["continuous_running"]
 
-    def test_set_stream_sources_empty_clears_sources(
-        self, encoder_client, mock_arduino
-    ):
+    def test_set_stream_sources_empty_clears_sources(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
         assert encoder_client.set_stream_sources({"ADC"})
         assert _await_mock_state(mock, lambda s: "ADC" in s["stream_sources"])
@@ -267,9 +263,7 @@ class TestContinuousMode:
         mock.set_encoder_angle("A", 0.0)
         mock.set_encoder_angle("B", 0.0)
 
-        encoder_client.start_stream(
-            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
-        )
+        encoder_client.start_stream([StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG])
         time.sleep(0.3)
         encoder_client.abort()
 
@@ -363,9 +357,9 @@ class TestMockArduinoState:
     def test_state_after_zero_reset(self, mock_arduino, encoder_client):
         mock, _ = mock_arduino
         encoder_client.zero(EncoderID.A)
-        assert _await_mock_state(
-            mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0
-        ), "zero_offset not updated after zero(A)"
+        assert _await_mock_state(mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0), (
+            "zero_offset not updated after zero(A)"
+        )
         state = mock.get_state()
         assert state["encoder_a"]["zero_offset"] == 10.0
         assert state["encoder_a"]["effective_angle"] == 0.0
@@ -421,9 +415,7 @@ class TestFirmwareVersionCheck:
 
 class TestDataFrameParser:
     def test_parse_full_frame(self):
-        line = (
-            "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
-        )
+        line = "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
         result = DualEncoderArduino._parse_data_frame(line)
         assert result["tsMs"] == "1234"
         assert result["angA"] == "45.50"

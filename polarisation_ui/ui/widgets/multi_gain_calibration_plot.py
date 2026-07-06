@@ -8,8 +8,6 @@ This is a pyqtgraph custom widget — constructing Qt objects in Python is an
 explicit exception per CLAUDE.md for pyqtgraph widgets.
 """
 
-from typing import Optional
-
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
@@ -29,11 +27,10 @@ class MultiGainCalibrationPlot(QWidget):
     calibration point arrives from the worker thread.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the pyqtgraph plot widget with an empty per-gain-stage point buffer."""
         super().__init__(parent)
-        self._data: dict[int, tuple[list[float], list[float]]] = {
-            g: ([], []) for g in range(1, 5)
-        }
+        self._data: dict[int, tuple[list[float], list[float]]] = {g: ([], []) for g in range(1, 5)}
         self._setup_plot()
 
     def _setup_plot(self) -> None:

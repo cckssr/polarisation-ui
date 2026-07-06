@@ -81,12 +81,8 @@ class Ui_WaveplateTab(object):
         self.pointsTable.setObjectName("pointsTable")
         self.pointsTable.setMinimumSize(QSize(0, 120))
         self.pointsTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.pointsTable.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
-        self.pointsTable.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.pointsTable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.pointsTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.pointsTable.verticalHeader().setVisible(False)
 
         self.gridLayout.addWidget(self.pointsTable, 1, 0, 1, 1)
@@ -104,23 +100,17 @@ class Ui_WaveplateTab(object):
         self.lblLiveIntensityLabel = QLabel(self.gbLive)
         self.lblLiveIntensityLabel.setObjectName("lblLiveIntensityLabel")
 
-        self.formLive.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblLiveIntensityLabel
-        )
+        self.formLive.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblLiveIntensityLabel)
 
         self.lblLiveIntensity = QLabel(self.gbLive)
         self.lblLiveIntensity.setObjectName("lblLiveIntensity")
 
-        self.formLive.setWidget(
-            0, QFormLayout.ItemRole.FieldRole, self.lblLiveIntensity
-        )
+        self.formLive.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblLiveIntensity)
 
         self.lblKDCPositionLabel = QLabel(self.gbLive)
         self.lblKDCPositionLabel.setObjectName("lblKDCPositionLabel")
 
-        self.formLive.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblKDCPositionLabel
-        )
+        self.formLive.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblKDCPositionLabel)
 
         self.lblKDCPosition = QLabel(self.gbLive)
         self.lblKDCPosition.setObjectName("lblKDCPosition")
@@ -139,18 +129,14 @@ class Ui_WaveplateTab(object):
         self.lblWaveplateType = QLabel(self.gbSweep)
         self.lblWaveplateType.setObjectName("lblWaveplateType")
 
-        self.formWaveplateType.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblWaveplateType
-        )
+        self.formWaveplateType.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblWaveplateType)
 
         self.cmbWaveplateType = QComboBox(self.gbSweep)
         self.cmbWaveplateType.addItem("")
         self.cmbWaveplateType.addItem("")
         self.cmbWaveplateType.setObjectName("cmbWaveplateType")
 
-        self.formWaveplateType.setWidget(
-            0, QFormLayout.ItemRole.FieldRole, self.cmbWaveplateType
-        )
+        self.formWaveplateType.setWidget(0, QFormLayout.ItemRole.FieldRole, self.cmbWaveplateType)
 
         self.vboxSweep.addLayout(self.formWaveplateType)
 
@@ -165,9 +151,7 @@ class Ui_WaveplateTab(object):
         self.lblSweepStart = QLabel(self.gbSweep)
         self.lblSweepStart.setObjectName("lblSweepStart")
 
-        self.formSweepParams.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblSweepStart
-        )
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblSweepStart)
 
         self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStart.setObjectName("spinSweepStart")
@@ -176,16 +160,12 @@ class Ui_WaveplateTab(object):
         self.spinSweepStart.setMaximum(360.000000000000000)
         self.spinSweepStart.setValue(0.000000000000000)
 
-        self.formSweepParams.setWidget(
-            0, QFormLayout.ItemRole.FieldRole, self.spinSweepStart
-        )
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinSweepStart)
 
         self.lblSweepEnd = QLabel(self.gbSweep)
         self.lblSweepEnd.setObjectName("lblSweepEnd")
 
-        self.formSweepParams.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd
-        )
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd)
 
         self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
         self.spinSweepEnd.setObjectName("spinSweepEnd")
@@ -194,16 +174,12 @@ class Ui_WaveplateTab(object):
         self.spinSweepEnd.setMaximum(360.000000000000000)
         self.spinSweepEnd.setValue(360.000000000000000)
 
-        self.formSweepParams.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd
-        )
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd)
 
         self.lblSweepStep = QLabel(self.gbSweep)
         self.lblSweepStep.setObjectName("lblSweepStep")
 
-        self.formSweepParams.setWidget(
-            2, QFormLayout.ItemRole.LabelRole, self.lblSweepStep
-        )
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblSweepStep)
 
         self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStep.setObjectName("spinSweepStep")
@@ -213,9 +189,7 @@ class Ui_WaveplateTab(object):
         self.spinSweepStep.setSingleStep(0.500000000000000)
         self.spinSweepStep.setValue(10.000000000000000)
 
-        self.formSweepParams.setWidget(
-            2, QFormLayout.ItemRole.FieldRole, self.spinSweepStep
-        )
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinSweepStep)
 
         self.vboxSweep.addLayout(self.formSweepParams)
 
@@ -280,30 +254,16 @@ class Ui_WaveplateTab(object):
             QCoreApplication.translate("WaveplateTab", "\u03b8 (\u00b0)", None)
         )
         ___qtablewidgetitem1 = self.pointsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(
-            QCoreApplication.translate("WaveplateTab", "I (V)", None)
-        )
-        self.gbLive.setTitle(
-            QCoreApplication.translate("WaveplateTab", "Aktuell", None)
-        )
-        self.lblLiveIntensityLabel.setText(
-            QCoreApplication.translate("WaveplateTab", "I:", None)
-        )
-        self.lblLiveIntensity.setText(
-            QCoreApplication.translate("WaveplateTab", "\u2014", None)
-        )
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("WaveplateTab", "I (V)", None))
+        self.gbLive.setTitle(QCoreApplication.translate("WaveplateTab", "Aktuell", None))
+        self.lblLiveIntensityLabel.setText(QCoreApplication.translate("WaveplateTab", "I:", None))
+        self.lblLiveIntensity.setText(QCoreApplication.translate("WaveplateTab", "\u2014", None))
         self.lblKDCPositionLabel.setText(
             QCoreApplication.translate("WaveplateTab", "Position:", None)
         )
-        self.lblKDCPosition.setText(
-            QCoreApplication.translate("WaveplateTab", "\u2014", None)
-        )
-        self.gbSweep.setTitle(
-            QCoreApplication.translate("WaveplateTab", "Scan (KDC101)", None)
-        )
-        self.lblWaveplateType.setText(
-            QCoreApplication.translate("WaveplateTab", "Typ:", None)
-        )
+        self.lblKDCPosition.setText(QCoreApplication.translate("WaveplateTab", "\u2014", None))
+        self.gbSweep.setTitle(QCoreApplication.translate("WaveplateTab", "Scan (KDC101)", None))
+        self.lblWaveplateType.setText(QCoreApplication.translate("WaveplateTab", "Typ:", None))
         self.cmbWaveplateType.setItemText(
             0, QCoreApplication.translate("WaveplateTab", "\u03bb/4 (QWP)", None)
         )
@@ -321,41 +281,25 @@ class Ui_WaveplateTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.cbWaveplatePlaced.setText(
-            QCoreApplication.translate(
-                "WaveplateTab", "Verz\u00f6gerungsplatte eingesetzt", None
-            )
+            QCoreApplication.translate("WaveplateTab", "Verz\u00f6gerungsplatte eingesetzt", None)
         )
         self.lblSweepStart.setText(
             QCoreApplication.translate("WaveplateTab", "Von (\u00b0):", None)
         )
-        self.spinSweepStart.setSuffix(
-            QCoreApplication.translate("WaveplateTab", " \u00b0", None)
-        )
-        self.lblSweepEnd.setText(
-            QCoreApplication.translate("WaveplateTab", "Bis (\u00b0):", None)
-        )
-        self.spinSweepEnd.setSuffix(
-            QCoreApplication.translate("WaveplateTab", " \u00b0", None)
-        )
+        self.spinSweepStart.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
+        self.lblSweepEnd.setText(QCoreApplication.translate("WaveplateTab", "Bis (\u00b0):", None))
+        self.spinSweepEnd.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
         self.lblSweepStep.setText(
             QCoreApplication.translate("WaveplateTab", "Schritt (\u00b0):", None)
         )
-        self.spinSweepStep.setSuffix(
-            QCoreApplication.translate("WaveplateTab", " \u00b0", None)
-        )
+        self.spinSweepStep.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
         # if QT_CONFIG(tooltip)
         self.btnStartSweep.setToolTip(
-            QCoreApplication.translate(
-                "WaveplateTab", "Home und automatischen Scan starten", None
-            )
+            QCoreApplication.translate("WaveplateTab", "Home und automatischen Scan starten", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnStartSweep.setText(
-            QCoreApplication.translate("WaveplateTab", "Scan starten", None)
-        )
-        self.btnAbortSweep.setText(
-            QCoreApplication.translate("WaveplateTab", "Abbrechen", None)
-        )
+        self.btnStartSweep.setText(QCoreApplication.translate("WaveplateTab", "Scan starten", None))
+        self.btnAbortSweep.setText(QCoreApplication.translate("WaveplateTab", "Abbrechen", None))
         # if QT_CONFIG(tooltip)
         self.btnDeleteSelected.setToolTip(
             QCoreApplication.translate(
@@ -364,18 +308,12 @@ class Ui_WaveplateTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnDeleteSelected.setText(
-            QCoreApplication.translate(
-                "WaveplateTab", "Ausgew\u00e4hlten l\u00f6schen", None
-            )
+            QCoreApplication.translate("WaveplateTab", "Ausgew\u00e4hlten l\u00f6schen", None)
         )
         self.btnDeleteLast.setText(
-            QCoreApplication.translate(
-                "WaveplateTab", "Letzten Punkt l\u00f6schen", None
-            )
+            QCoreApplication.translate("WaveplateTab", "Letzten Punkt l\u00f6schen", None)
         )
-        self.btnClear.setText(
-            QCoreApplication.translate("WaveplateTab", "Alle l\u00f6schen", None)
-        )
+        self.btnClear.setText(QCoreApplication.translate("WaveplateTab", "Alle l\u00f6schen", None))
         pass
 
     # retranslateUi

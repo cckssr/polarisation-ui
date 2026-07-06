@@ -10,22 +10,17 @@ Run with: .venv/bin/pytest tests/infrastructure/test_reconnect.py
 
 import sys
 import time
-from collections import deque
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from polarisation_ui.infrastructure.devices.dual_encoder import DesiredState
-from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.core.models import Frame
+from polarisation_ui.infrastructure.devices.dual_encoder import DesiredState
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
-def _make_device_manager(
-    connected: bool = True, reconnect_result: bool = True
-) -> MagicMock:
+def _make_device_manager(connected: bool = True, reconnect_result: bool = True) -> MagicMock:
     dm = MagicMock()
     dm.is_encoder_connected.return_value = connected
     dm.reconnect_encoders.return_value = reconnect_result
@@ -141,7 +136,7 @@ class TestDeviceManagerReconnect:
 
         with (
             patch.object(dm, "disconnect_encoders"),
-            patch.object(dm, "connect_encoders", return_value=True) as mock_connect,
+            patch.object(dm, "connect_encoders", return_value=True),
         ):
             dm._encoder_device = mock_device
             result = dm.reconnect_encoders()
@@ -201,10 +196,11 @@ class TestBackoffDelays:
 
     def test_backoff_attempt_advances(self):
         """Each failed reconnect uses a longer delay."""
-        from PySide6.QtWidgets import QApplication
         import sys
 
-        app = QApplication.instance() or QApplication(sys.argv)
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.instance() or QApplication(sys.argv)
 
         dm = _make_device_manager(connected=True)
         dm.read_angles.return_value = None  # trigger errors
@@ -240,8 +236,9 @@ class TestBackoffDelays:
 class TestBufferPreservation:
     def test_buffers_preserved_after_reconnect(self):
         """Ring buffers must NOT be cleared when a reconnect succeeds."""
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance() or QApplication(sys.argv)
 
@@ -275,8 +272,9 @@ class TestBufferPreservation:
 class TestJournalGapMarker:
     def test_gap_written_on_reconnect(self, tmp_path):
         """A gap row must appear in the journal after a successful reconnect."""
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance() or QApplication(sys.argv)
 
@@ -297,9 +295,7 @@ class TestJournalGapMarker:
             dc._start_journal()
             assert dc._journal is not None
 
-            frame = Frame(
-                ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0
-            )
+            frame = Frame(ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0)
             dc._journal.append_frame(frame)
 
             # Simulate reconnect (runs on a QThread worker)
@@ -311,7 +307,7 @@ class TestJournalGapMarker:
             # Journal should have a gap row
             dc._journal.close()
             content = dc._journal.journal_path.read_text()
-            lines = [l for l in content.splitlines() if not l.startswith("#")]
+            lines = [line for line in content.splitlines() if not line.startswith("#")]
             # header + 1 data row + 1 gap row
             assert len(lines) >= 3
             # Last data line (gap) should have "1" in column 5
@@ -339,8 +335,8 @@ class TestPtyDisconnection:
 
     def test_kill_pty_causes_read_failure(self):
         """kill_pty() must make subsequent MEAS:ENC:ANGL? return None."""
-        from polarisation_ui.infrastructure.mocks import MockArduino
         from polarisation_ui.infrastructure.devices import DualEncoderArduino, EncoderID
+        from polarisation_ui.infrastructure.mocks import MockArduino
 
         mock = MockArduino(start_angle_a=45.0, start_angle_b=90.0)
         pty_path = mock.start()

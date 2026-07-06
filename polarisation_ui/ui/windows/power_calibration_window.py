@@ -18,10 +18,9 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Optional
 
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -35,9 +34,9 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -57,7 +56,7 @@ class _GainCalTab(QWidget):
 
     points_changed = Signal()
 
-    def __init__(self, gain_stage: int, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, gain_stage: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._gain_stage = gain_stage
         self._cal = GainCalibration(gain_stage=gain_stage)
@@ -110,9 +109,7 @@ class _GainCalTab(QWidget):
         # Point table
         self._table = QTableWidget(0, 3)
         self._table.setHorizontalHeaderLabels(["Spannung (V)", "Leistung (W)", "W/V"])
-        self._table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -159,14 +156,10 @@ class _GainCalTab(QWidget):
         v = self._spin_voltage.value()
         p = self._spin_power.value()
         if v <= 0.0:
-            QMessageBox.warning(
-                self, "Ungültige Eingabe", "Spannung muss größer als 0 sein."
-            )
+            QMessageBox.warning(self, "Ungültige Eingabe", "Spannung muss größer als 0 sein.")
             return
         if p <= 0.0:
-            QMessageBox.warning(
-                self, "Ungültige Eingabe", "Leistung muss größer als 0 sein."
-            )
+            QMessageBox.warning(self, "Ungültige Eingabe", "Leistung muss größer als 0 sein.")
             return
         self._cal.add_point(v, p)
         self._refresh()
@@ -235,8 +228,9 @@ class PowerCalibrationWindow(QDialog):
     def __init__(
         self,
         data_controller=None,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
+        """Build the dialog's widgets in Python (no .ui counterpart by design)."""
         super().__init__(parent)
         self.setWindowTitle("Leistungskalibrierung — PD-TIA Detektor")
         self.resize(700, 620)
@@ -357,11 +351,10 @@ class PowerCalibrationWindow(QDialog):
             QMessageBox.critical(self, "Fehler", f"Laden fehlgeschlagen:\n{exc}")
 
     def closeEvent(self, event) -> None:
+        """Detach from the shared DataController's live-voltage signal before closing."""
         if self._data_controller is not None:
             try:
-                self._data_controller.intensity_updated.disconnect(
-                    self._on_live_voltage
-                )
+                self._data_controller.intensity_updated.disconnect(self._on_live_voltage)
             except RuntimeError:
                 pass
         super().closeEvent(event)

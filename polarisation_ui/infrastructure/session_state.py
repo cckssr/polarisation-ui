@@ -17,7 +17,6 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
 SESSION_STATE_PATH = Path.home() / ".polarisation-ui" / "last_session.json"
 
@@ -49,12 +48,12 @@ def save_session_state(state: SessionState, path: Path = SESSION_STATE_PATH) -> 
 
 def load_session_state(
     path: Path = SESSION_STATE_PATH,
-) -> Optional[SessionState]:
+) -> SessionState | None:
     """Return the persisted SessionState, or None if missing / corrupt."""
     if not path.exists():
         return None
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         # Filter to known fields so old JSON files with missing new keys still load.
         known = {f.name for f in SessionState.__dataclass_fields__.values()}  # type: ignore[attr-defined]

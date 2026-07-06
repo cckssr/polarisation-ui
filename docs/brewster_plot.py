@@ -1,3 +1,5 @@
+"""Plot a captured Brewster-angle measurement (p/s intensity vs. sample angle)."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 

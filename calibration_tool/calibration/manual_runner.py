@@ -1,5 +1,4 @@
-"""
-Manual calibration controller.
+"""Manual calibration controller.
 
 Step-through calibration without a motorized reference stage: the user
 physically sets each target angle and clicks Accept to record the encoder
@@ -9,12 +8,12 @@ unchanged.
 """
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+
+from devices.arduino_encoder import ArduinoEncoder
 
 from calibration.measurement import CalibrationRun, MeasurementPoint
-from devices.arduino_encoder import ArduinoEncoder
 
 
 @dataclass
@@ -36,6 +35,7 @@ class ManualCalibrationController:
     encoder_id: str = "A"
 
     def __post_init__(self) -> None:
+        """Validate parameters and build the target-angle sequence."""
         if self.encoder_id not in ("A", "B"):
             raise ValueError("encoder_id must be 'A' or 'B'")
         if not (0.1 <= self.step_size_deg <= 90.0):
@@ -44,7 +44,7 @@ class ManualCalibrationController:
             self.run_name = datetime.now().strftime("manual_cal_%Y%m%d_%H%M%S")
 
         angle = 0.0
-        targets: List[float] = []
+        targets: list[float] = []
         while angle < 360.0 - 1e-9:
             targets.append(round(angle, 6))
             angle += self.step_size_deg
@@ -56,7 +56,7 @@ class ManualCalibrationController:
     # Read-only state
 
     @property
-    def current_target(self) -> Optional[float]:
+    def current_target(self) -> float | None:
         """Target angle the user should set, or None when complete."""
         if self._current_index >= len(self._targets):
             return None
@@ -69,18 +69,19 @@ class ManualCalibrationController:
 
     @property
     def total_steps(self) -> int:
+        """Total number of target angles in this run."""
         return len(self._targets)
 
     @property
     def is_complete(self) -> bool:
+        """Whether every target angle has been accepted or skipped."""
         return self._current_index >= len(self._targets)
 
     # ------------------------------------------------------------------
     # Actions
 
     def accept_current(self) -> MeasurementPoint:
-        """
-        Read the encoder and record a point for the current target angle.
+        """Read the encoder and record a point for the current target angle.
 
         Raises RuntimeError if the encoder read fails or the run is already
         complete.

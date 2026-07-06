@@ -1,5 +1,4 @@
-"""
-Calibration Analysis Module.
+"""Calibration Analysis Module.
 
 Analyzes calibration data to determine:
 - Error magnitude and direction
@@ -9,10 +8,10 @@ Analyzes calibration data to determine:
 
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+
 import numpy as np
 
-from .measurement import CalibrationRun, MeasurementPoint
+from .measurement import CalibrationRun
 
 
 @dataclass
@@ -80,18 +79,16 @@ class CalibrationAnalysis:
     """
 
     def __init__(self, run: CalibrationRun):
-        """
-        Initialize analysis with calibration run.
+        """Initialize analysis with calibration run.
 
         Args:
             run: CalibrationRun with measurement data
         """
         self.run = run
-        self._result: Optional[CalibrationResult] = None
+        self._result: CalibrationResult | None = None
 
     def analyze(self) -> CalibrationResult:
-        """
-        Perform full analysis on the calibration data.
+        """Perform full analysis on the calibration data.
 
         Returns:
             CalibrationResult with analysis findings
@@ -152,9 +149,8 @@ class CalibrationAnalysis:
 
     def _fit_sinusoid(
         self, angles_rad: np.ndarray, errors: np.ndarray, harmonic: int = 1
-    ) -> Tuple[float, float]:
-        """
-        Fit a sinusoidal component to the error data.
+    ) -> tuple[float, float]:
+        """Fit a sinusoidal component to the error data.
 
         Uses least-squares fit: error = A*sin(n*theta + phi) + offset
         Which can be rewritten as: error = a*sin(n*theta) + b*cos(n*theta) + c
@@ -193,8 +189,7 @@ class CalibrationAnalysis:
         return amplitude, phase_deg
 
     def get_error_at_angle(self, angle_deg: float) -> float:
-        """
-        Predict error at a given angle using the fitted model.
+        """Predict error at a given angle using the fitted model.
 
         Args:
             angle_deg: Reference angle in degrees
@@ -215,9 +210,8 @@ class CalibrationAnalysis:
 
         return error
 
-    def get_polar_data(self) -> Tuple[List[float], List[float]]:
-        """
-        Get data formatted for polar plot.
+    def get_polar_data(self) -> tuple[list[float], list[float]]:
+        """Get data formatted for polar plot.
 
         Returns:
             Tuple of (angles_rad, errors_magnitude)
@@ -228,9 +222,8 @@ class CalibrationAnalysis:
 
         return angles, errors
 
-    def get_error_vs_angle_data(self) -> Tuple[List[float], List[float]]:
-        """
-        Get data for Cartesian error vs angle plot.
+    def get_error_vs_angle_data(self) -> tuple[list[float], list[float]]:
+        """Get data for Cartesian error vs angle plot.
 
         Returns:
             Tuple of (angles_deg, errors_deg)

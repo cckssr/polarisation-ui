@@ -6,17 +6,15 @@ PD-TIA gain control, and Malus-law simulation in the mock.
 Run with: .venv/bin/pytest tests/infrastructure/test_adc_client.py
 """
 
-import math
 import sys
-import pytest
 import time
+
+import pytest
 
 from polarisation_ui.infrastructure.devices import DualEncoderArduino, StreamSource
 from polarisation_ui.infrastructure.mocks import MockArduino
 
-pytestmark = pytest.mark.skipif(
-    sys.platform == "win32", reason="PTY not available on Windows"
-)
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
 
 
 def _await_mock_state(mock, predicate, timeout: float = 2.0) -> bool:
@@ -127,9 +125,7 @@ class TestADCConfiguration:
     def test_set_gain(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
         assert encoder_client.adc.set_gain(8)
-        assert _await_mock_state(
-            mock, lambda s: s["adc_gain"] == 8
-        ), "adc_gain not updated"
+        assert _await_mock_state(mock, lambda s: s["adc_gain"] == 8), "adc_gain not updated"
         state = mock.get_state()
         assert state["adc_gain"] == 8
 
@@ -137,18 +133,16 @@ class TestADCConfiguration:
         mock, _ = mock_arduino
         result = encoder_client.adc.configure(gain=4, mux="DIFF01", rate=90)
         assert result
-        assert _await_mock_state(
-            mock, lambda s: s["adc_gain"] == 4
-        ), "adc_gain not updated after configure()"
+        assert _await_mock_state(mock, lambda s: s["adc_gain"] == 4), (
+            "adc_gain not updated after configure()"
+        )
         state = mock.get_state()
         assert state["adc_gain"] == 4
 
     def test_set_gain_reflected_in_mock(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
         encoder_client.adc.set_gain(128)
-        assert _await_mock_state(
-            mock, lambda s: s["adc_gain"] == 128
-        ), "adc_gain not updated"
+        assert _await_mock_state(mock, lambda s: s["adc_gain"] == 128), "adc_gain not updated"
         assert mock.get_state()["adc_gain"] == 128
 
 
@@ -159,9 +153,7 @@ class TestPdTiaGain:
     def test_set_pdtia_gain(self, encoder_client, mock_arduino):
         mock, _ = mock_arduino
         assert encoder_client.adc.set_pdtia_gain(2)
-        assert _await_mock_state(
-            mock, lambda s: s["pdtia_gain"] == 2
-        ), "pdtia_gain not updated"
+        assert _await_mock_state(mock, lambda s: s["pdtia_gain"] == 2), "pdtia_gain not updated"
         assert mock.get_state()["pdtia_gain"] == 2
 
     def test_get_pdtia_gain_format(self, encoder_client, mock_arduino):
@@ -190,12 +182,10 @@ class TestStreamConfiguration:
         mock, _ = mock_arduino
         # start_stream([ENC_BOTH, ADC, DIAG]) sends CONF:SRC ENC:BOTH,ADC,DIAG + INIT:CONT ON.
         # The mock expands ENC:BOTH → ENC:A + ENC:B internally.
-        encoder_client.start_stream(
-            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
+        encoder_client.start_stream([StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG])
+        assert _await_mock_state(mock, lambda s: s["continuous_running"]), (
+            "continuous mode not started"
         )
-        assert _await_mock_state(
-            mock, lambda s: s["continuous_running"]
-        ), "continuous mode not started"
         state = mock.get_state()
         assert "ENC:A" in state["stream_sources"]
         assert "ENC:B" in state["stream_sources"]
@@ -207,9 +197,9 @@ class TestStreamConfiguration:
         mock, _ = mock_arduino
         # set_poll_interval(100 ms) → CONF:RATE 10 Hz → poll_interval_ms = 100
         assert encoder_client.set_poll_interval(100)
-        assert _await_mock_state(
-            mock, lambda s: s["stream_rate_hz"] == 10
-        ), "stream_rate_hz not updated"
+        assert _await_mock_state(mock, lambda s: s["stream_rate_hz"] == 10), (
+            "stream_rate_hz not updated"
+        )
         state = mock.get_state()
         assert state["stream_rate_hz"] == 10
         assert state["poll_interval_ms"] == 100

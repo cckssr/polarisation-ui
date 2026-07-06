@@ -5,15 +5,12 @@ Run with: .venv/bin/pytest tests/infrastructure/test_session_journal.py
 
 import csv
 import os
-from pathlib import Path
 
 import pytest
 
 from polarisation_ui.core.models import Frame
 from polarisation_ui.infrastructure.session_journal import (
-    JOURNAL_BASE,
     SessionJournal,
-    _copy_data_rows,
 )
 
 
@@ -85,16 +82,12 @@ class TestDataRows:
     def test_frame_values_written(self, tmp_journal_base):
         j = SessionJournal()
         j.start()
-        j.append_frame(
-            Frame(ts_ms=12345, sample_angle=45.0, detector_angle=90.0, intensity=800.0)
-        )
+        j.append_frame(Frame(ts_ms=12345, sample_angle=45.0, detector_angle=90.0, intensity=800.0))
         j.close()
 
         rows = list(
             csv.reader(
-                line
-                for line in j.journal_path.read_text().splitlines()
-                if not line.startswith("#")
+                line for line in j.journal_path.read_text().splitlines() if not line.startswith("#")
             )
         )
         # rows[0] = header, rows[1] = data
@@ -115,9 +108,7 @@ class TestDataRows:
 
         rows = list(
             csv.reader(
-                line
-                for line in j.journal_path.read_text().splitlines()
-                if not line.startswith("#")
+                line for line in j.journal_path.read_text().splitlines() if not line.startswith("#")
             )
         )
         data_rows = rows[1:]  # skip header
@@ -143,9 +134,7 @@ class TestDataRows:
 
         rows = list(
             csv.reader(
-                line
-                for line in j.journal_path.read_text().splitlines()
-                if not line.startswith("#")
+                line for line in j.journal_path.read_text().splitlines() if not line.startswith("#")
             )
         )
         gap_row = rows[1]  # header, then the single gap row
@@ -211,9 +200,7 @@ class TestExport:
         j.export_to_csv(out, finalize=False)
         assert not (j.session_dir / "finalized").exists()
 
-    def test_export_while_still_active_closes_write_handle_first(
-        self, tmp_journal_base, tmp_path
-    ):
+    def test_export_while_still_active_closes_write_handle_first(self, tmp_journal_base, tmp_path):
         """Regression test: export_to_csv() used to open a second read handle
         via _copy_data_rows() while the write handle was still open, risking
         a sharing violation on Windows.  Calling export without a prior

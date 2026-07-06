@@ -81,10 +81,11 @@ class EncoderDebugDialog(QDialog):
         self,
         device_manager: GoniometerDeviceManager,
         sample_inverted: bool = False,
-        data_controller: "DataController | None" = None,
+        data_controller: DataController | None = None,
         parent=None,
         standalone: bool = False,
     ) -> None:
+        """Build the dialog UI and wire up polling against the shared device manager."""
         super().__init__(parent)
         self.ui = Ui_EncoderDebugDialog()
         self.ui.setupUi(self)
@@ -293,7 +294,7 @@ class EncoderDebugDialog(QDialog):
 
     # ==================== Device Access ====================
 
-    def _device(self) -> "DualEncoderArduino | None":
+    def _device(self) -> DualEncoderArduino | None:
         return self._dm.get_encoder_device()
 
     def _selected_encoder_id(self) -> str:
@@ -320,7 +321,7 @@ class EncoderDebugDialog(QDialog):
             # interleaving on the serial port.
             self._update_debug_reads(device)
 
-    def _update_debug_reads(self, device: "DualEncoderArduino") -> None:
+    def _update_debug_reads(self, device: DualEncoderArduino) -> None:
         """Magnitude, encoder diagnostics, ADC registers, PDTIA — pause poll timer."""
         poll_timer = self._data_controller.poll_timer
         was_active = poll_timer.isActive()
@@ -352,12 +353,8 @@ class EncoderDebugDialog(QDialog):
                     drdy = bool(adc_diag.get("drdy", False))
                     self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
                     for i in range(4):
-                        self._le_adc_reg[i].setText(
-                            f"0x{adc_diag.get(f'reg{i}', 0):02X}"
-                        )
-                    self._le_adc_last_raw.setText(
-                        f"0x{adc_diag.get('last_raw', 0):06X}"
-                    )
+                        self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
+                    self._le_adc_last_raw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
 
             pdtia = device.query_pdtia_diagnostics()
             if pdtia is not None:
@@ -379,7 +376,7 @@ class EncoderDebugDialog(QDialog):
 
     # ──── Measurements (Angle + Magnitude) ──────────────────────────────────
 
-    def _update_measurements(self, device: "DualEncoderArduino") -> None:
+    def _update_measurements(self, device: DualEncoderArduino) -> None:
         # Encoder A — angle
         val_a = device.read_angle(EncoderID.A)
         if val_a is not None:
@@ -410,7 +407,7 @@ class EncoderDebugDialog(QDialog):
 
     # ──── Diagnostics ────────────────────────────────────────────────────────
 
-    def _update_diagnostics(self, device: "DualEncoderArduino") -> None:
+    def _update_diagnostics(self, device: DualEncoderArduino) -> None:
         diag_a, diag_b = device.query_diagnostics("BOTH")
         if diag_a:
             self._apply_diagnostics(diag_a, "A")
@@ -420,15 +417,11 @@ class EncoderDebugDialog(QDialog):
     def _apply_diagnostics(self, diag: dict, suffix: str) -> None:
         # COMP_H: weak-field warning
         comp_h = bool(diag.get("compHigh"))
-        getattr(self.ui, f"ledCompH{suffix}").setStyleSheet(
-            LED_YELLOW if comp_h else LED_GREEN
-        )
+        getattr(self.ui, f"ledCompH{suffix}").setStyleSheet(LED_YELLOW if comp_h else LED_GREEN)
 
         # COMP_L: strong-field warning
         comp_l = bool(diag.get("compLow"))
-        getattr(self.ui, f"ledCompL{suffix}").setStyleSheet(
-            LED_YELLOW if comp_l else LED_GREEN
-        )
+        getattr(self.ui, f"ledCompL{suffix}").setStyleSheet(LED_YELLOW if comp_l else LED_GREEN)
 
         # COF: CORDIC overflow — critical error
         cof = bool(diag.get("cof"))
@@ -436,9 +429,7 @@ class EncoderDebugDialog(QDialog):
 
         # OCF: offset compensation finished — must be True for valid readings
         ocf = bool(diag.get("ocf"))
-        getattr(self.ui, f"ledOcf{suffix}").setStyleSheet(
-            LED_GREEN if ocf else LED_YELLOW
-        )
+        getattr(self.ui, f"ledOcf{suffix}").setStyleSheet(LED_GREEN if ocf else LED_YELLOW)
 
         # Note: ledError{suffix} is driven from Frame.stat bits 2/3 via
         # _on_frame_ready; DIAG:ENC? does not expose the error flag.
@@ -549,15 +540,11 @@ class EncoderDebugDialog(QDialog):
         if cmd.endswith("?"):
             # Query command — expect a response line
             response = device.send_query(cmd)
-            self._log(
-                f"            <<< {response if response is not None else '[Timeout]'}"
-            )
+            self._log(f"            <<< {response if response is not None else '[Timeout]'}")
         else:
             # Control command — no response from firmware
             ok = device.send_control_command(cmd)
-            self._log(
-                "            <<< OK" if ok else "            <<< [Fehler beim Senden]"
-            )
+            self._log("            <<< OK" if ok else "            <<< [Fehler beim Senden]")
 
         self.ui.leCommandInput.clear()
 
@@ -619,9 +606,7 @@ class EncoderDebugDialog(QDialog):
         self._led_adc_drdy.setMaximumSize(20, 20)
         self._led_adc_drdy.setFrameShape(QFrame.Shape.Box)
         self._led_adc_drdy.setStyleSheet(LED_GRAY)
-        self._led_adc_drdy.setToolTip(
-            "Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)"
-        )
+        self._led_adc_drdy.setToolTip("Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)")
         form_live.addRow("Bereit (zeitbasiert):", self._led_adc_drdy)
 
         vl.addWidget(gb_live)
@@ -690,15 +675,11 @@ class EncoderDebugDialog(QDialog):
         form_pdtia.addRow("GPIO Muster:", self._le_pdtia_pattern)
         vl.addWidget(gb_pdtia)
 
-        vl.addItem(
-            QSpacerItem(
-                20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-            )
-        )
+        vl.addItem(QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         self.ui.tabWidget.addTab(tab, "ADS1220")
 
-    def _update_adc_tab(self, device: "DualEncoderArduino") -> None:
+    def _update_adc_tab(self, device: DualEncoderArduino) -> None:
         # Live voltage
         voltage = device.adc.read_voltage()
         if voltage is not None:
@@ -772,11 +753,7 @@ class EncoderDebugDialog(QDialog):
         btn_clear = QPushButton("Löschen")
         btn_clear.clicked.connect(self._te_raw_stream.clear)
         hl.addWidget(btn_clear)
-        hl.addItem(
-            QSpacerItem(
-                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-            )
-        )
+        hl.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         vl.addLayout(hl)
 
         self.ui.tabWidget.addTab(tab, "Raw Stream")
@@ -839,11 +816,7 @@ class EncoderDebugDialog(QDialog):
             return
 
         for line in lines:
-            status = (
-                "✓"
-                if "PASS" in line.upper()
-                else ("✗" if "FAIL" in line.upper() else " ")
-            )
+            status = "✓" if "PASS" in line.upper() else ("✗" if "FAIL" in line.upper() else " ")
             self._te_self_test.appendPlainText(f"  {status} {line}")
 
         Debug.info(f"DIAG:SELF? response: {lines!r}")
@@ -851,12 +824,11 @@ class EncoderDebugDialog(QDialog):
     # ==================== Lifecycle ====================
 
     def closeEvent(self, event) -> None:  # type: ignore[override]
+        """Stop polling and detach from the shared DataController before closing."""
         self._refresh_timer.stop()
         if self._data_controller is not None:
             self._data_controller.angles_updated.disconnect(self._on_angles_updated)
-            self._data_controller.intensity_updated.disconnect(
-                self._on_intensity_updated
-            )
+            self._data_controller.intensity_updated.disconnect(self._on_intensity_updated)
             self._data_controller.enable_raw_frame_signal(False)
             # Restore diagnostic polling to the background rate.
             self._data_controller.set_diag_interval(5000)

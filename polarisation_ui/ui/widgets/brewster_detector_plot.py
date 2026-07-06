@@ -7,7 +7,6 @@ is highlighted with a red marker to assist in finding the optimal position.
 """
 
 from collections import deque
-from typing import Optional
 
 import numpy as np
 import pyqtgraph as pg
@@ -31,11 +30,12 @@ class BrewsterDetectorPlot(QWidget):
     # the buffer is empty.
     peak_changed = Signal(float, float)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the pyqtgraph plot widget with empty rolling buffers."""
         super().__init__(parent)
         self._angles: deque[float] = deque(maxlen=self.MAX_POINTS)
         self._intensities: deque[float] = deque(maxlen=self.MAX_POINTS)
-        self._last_angle: Optional[float] = None
+        self._last_angle: float | None = None
         self._setup_plot()
 
     def _setup_plot(self) -> None:

@@ -1,6 +1,4 @@
-"""
-Pytest configuration for calibration_tool tests.
-"""
+"""Pytest configuration for calibration_tool tests."""
 
 import pytest
 

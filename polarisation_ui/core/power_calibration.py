@@ -27,7 +27,6 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 PROFILES_DIR: Path = Path.home() / ".config" / "polarisation-ui" / "detector_profiles"
 
@@ -65,7 +64,7 @@ class GainCalibration:
             return True
         return False
 
-    def conversion_factor_W_per_V(self) -> Optional[float]:
+    def conversion_factor_W_per_V(self) -> float | None:
         """Mean W/V ratio across all calibration points.
 
         Returns:
@@ -78,7 +77,7 @@ class GainCalibration:
             return None
         return sum(valid) / len(valid)
 
-    def watts_from_voltage(self, voltage_V: float) -> Optional[float]:
+    def watts_from_voltage(self, voltage_V: float) -> float | None:
         """Convert a voltage reading to power using the calibration points.
 
         Args:
@@ -101,29 +100,33 @@ class PowerCalibrationProfile:
     # Full ISO-8601 datetime string, e.g. "2025-06-01T14:30:00.123456"
     calibrated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     # Instrument / beam metadata — populated by the auto-calibration worker
-    wavelength_nm: Optional[float] = None
-    beamsplitter_attenuation_dB: Optional[float] = None
-    adc_saturation_threshold_V: Optional[float] = None
+    wavelength_nm: float | None = None
+    beamsplitter_attenuation_dB: float | None = None
+    adc_saturation_threshold_V: float | None = None
     # PM400 sensor identification (name, serial, calibration_message, type, subtype, flags)
     sensor: dict = field(default_factory=dict)
     units: dict = field(default_factory=lambda: {"voltage": "V", "power": "W"})
     gains: dict[int, GainCalibration] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        """Ensure every valid gain stage has a (possibly empty) GainCalibration."""
         for stage in VALID_GAIN_STAGES:
             if stage not in self.gains:
                 self.gains[stage] = GainCalibration(gain_stage=stage)
 
     def gain_cal(self, stage: int) -> GainCalibration:
+        """Return the GainCalibration for *stage*, creating an empty one if absent."""
         return self.gains.setdefault(stage, GainCalibration(gain_stage=stage))
 
-    def watts_from_voltage(self, voltage_V: float, gain_stage: int) -> Optional[float]:
+    def watts_from_voltage(self, voltage_V: float, gain_stage: int) -> float | None:
+        """Convert a voltage reading to power using the calibration for *gain_stage*."""
         cal = self.gains.get(gain_stage)
         if cal is None:
             return None
         return cal.watts_from_voltage(voltage_V)
 
-    def conversion_factor(self, gain_stage: int) -> Optional[float]:
+    def conversion_factor(self, gain_stage: int) -> float | None:
+        """Return the W/V conversion factor for *gain_stage*, or None if uncalibrated."""
         cal = self.gains.get(gain_stage)
         if cal is None:
             return None
@@ -132,6 +135,7 @@ class PowerCalibrationProfile:
     # ── Persistence ──────────────────────────────────────────────────────────
 
     def save(self, path: Path) -> None:
+        """Write this profile to *path* as JSON, creating parent directories as needed."""
         path.parent.mkdir(parents=True, exist_ok=True)
         data: dict = {
             "name": self.name,
@@ -155,7 +159,8 @@ class PowerCalibrationProfile:
             json.dump(data, fh, indent=2)
 
     @classmethod
-    def load(cls, path: Path) -> "PowerCalibrationProfile":
+    def load(cls, path: Path) -> PowerCalibrationProfile:
+        """Load a profile previously written by save() from *path*."""
         with path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
         profile = cls(
@@ -200,13 +205,12 @@ class PowerCalibrationProfile:
 
     @staticmethod
     def default_path(name: str, directory: Path = PROFILES_DIR) -> Path:
+        """Return the default .json path for a profile named *name* in *directory*."""
         safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
         return directory / f"{safe}.json"
 
 
-def select_best_profile_for_device_id(
-    profiles: list[Path], device_id: str
-) -> Optional[Path]:
+def select_best_profile_for_device_id(profiles: list[Path], device_id: str) -> Path | None:
     """Pick the newest calibration profile whose filename contains *device_id*.
 
     Filenames that start with an 8-digit date (yyyymmdd) are considered newer

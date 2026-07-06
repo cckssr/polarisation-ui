@@ -9,8 +9,8 @@ nothing is written back to config.json.
 
 from PySide6.QtWidgets import QDialog
 
-from polarisation_ui.pyqt.ui_acq_settings import Ui_Dialog
 from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.pyqt.ui_acq_settings import Ui_Dialog
 
 
 class AcquisitionSettingsDialog(QDialog):

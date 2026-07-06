@@ -8,13 +8,11 @@ from unittest.mock import patch
 
 import pytest
 
+import polarisation_ui.infrastructure.mocks.mock_arduino as mock_arduino_module
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.mocks.mock_arduino import MockArduino
-import polarisation_ui.infrastructure.mocks.mock_arduino as mock_arduino_module
 
-pytestmark = pytest.mark.skipif(
-    sys.platform == "win32", reason="PTY not available on Windows"
-)
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
 
 
 class TestMockPortRegistry:
@@ -36,9 +34,7 @@ class TestMockPortRegistry:
         files_after_stop = list(tmp_path.glob("mock_arduino_*.port"))
         assert files_after_stop == []
 
-    def test_device_manager_includes_registered_mock_port(
-        self, tmp_path, monkeypatch
-    ) -> None:
+    def test_device_manager_includes_registered_mock_port(self, tmp_path, monkeypatch) -> None:
         """list_available_ports should merge serial ports and mock-port files."""
         monkeypatch.setenv("POLARISATION_UI_MOCK_PORT_DIR", str(tmp_path))
         mock_file = tmp_path / "mock_arduino_1_123.port"
