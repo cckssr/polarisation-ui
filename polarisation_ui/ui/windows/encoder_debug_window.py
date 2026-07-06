@@ -833,18 +833,11 @@ class EncoderDebugDialog(QDialog):
         ts = datetime.now().strftime("%H:%M:%S")
         self._te_self_test.appendPlainText(f"\n[{ts}] DIAG:SELF? …")
 
-        response = device.send_query("DIAG:SELF?")
-        if response is None:
+        lines = device.query_self_test()
+        if not lines:
             self._te_self_test.appendPlainText("  [Timeout — keine Antwort]")
             return
 
-        # Firmware may return a single comma-separated line or multiple lines.
-        # Normalise to one result per display line.
-        lines = [
-            part.strip()
-            for part in response.replace(";", "\n").splitlines()
-            if part.strip()
-        ]
         for line in lines:
             status = (
                 "✓"
@@ -853,7 +846,7 @@ class EncoderDebugDialog(QDialog):
             )
             self._te_self_test.appendPlainText(f"  {status} {line}")
 
-        Debug.info(f"DIAG:SELF? response: {response!r}")
+        Debug.info(f"DIAG:SELF? response: {lines!r}")
 
     # ==================== Lifecycle ====================
 

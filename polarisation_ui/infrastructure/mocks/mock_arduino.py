@@ -35,6 +35,10 @@ _V_REF_EXT = 2.5  # External reference on this board (V)
 _V_REF_AVDD = 3.3  # AVDD reference (V)
 _TEMP_NOMINAL = 25.0  # °C — approximate room temperature
 
+# CONF:SRC token vocabulary — matches handleConfSrc()'s accepted tokens in
+# scpi.cpp (ENC:BOTH is expanded to ENC:A + ENC:B before storage, same as firmware).
+_VALID_SRC_TOKENS = {"ENC:A", "ENC:B", "ENC:BOTH", "ADC", "ADC:T", "PDTIA", "DIAG"}
+
 
 @dataclass
 class MockEncoderState:
@@ -73,10 +77,14 @@ class MockArduino:
         poll_interval_ms: int = DEFAULT_POLL_INTERVAL_MS,
         start_angle_a: float = 0.0,
         start_angle_b: float = 0.0,
+        encoder_b_present: bool = True,
     ):
         self.encoder_a_speed = encoder_a_speed
         self.encoder_b_speed = encoder_b_speed
         self.poll_interval_ms = poll_interval_ms
+        # Mirrors firmware's appState.encBPresent — gates CONF:SRC ENC:B/BOTH
+        # and DIAG:SELF? the same way the real dispatcher does.
+        self.encoder_b_present = encoder_b_present
 
         self.encoder_a = MockEncoderState(
             current_angle=start_angle_a, base_angle=start_angle_a
@@ -93,6 +101,7 @@ class MockArduino:
         self.adc_fir: str = "OFF"
         self.adc_vref: str = "EXT"
         self.adc_temp_enabled: bool = False
+        self.adc_powered_down: bool = False
 
         # PD-TIA discrete gain stage (0 = lowest gain)
         self.pdtia_gain: int = 0
@@ -104,7 +113,7 @@ class MockArduino:
         self.continuous_running: bool = False
 
         # Firmware version string — override in tests to check incompatibility
-        self._firmware_version: str = "2.0.0"
+        self._firmware_version: str = "2.1.0"
 
         # Debug mode
         self._debug_mode: bool = False
@@ -348,13 +357,7 @@ class MockArduino:
             return f"{self._compute_adc_temperature():.2f}"
 
         if header == "MEAS:ALL" and is_query:
-            ts = int((time.time() - self._start_time) * 1000)
-            a = self.encoder_a.get_effective_angle()
-            b = self.encoder_b.get_effective_angle()
-            ma = self.encoder_a.get_raw_value()
-            mb = self.encoder_b.get_raw_value()
-            v = self._compute_adc_voltage()
-            return f"{ts},{a:.2f},{b:.2f},{ma},{mb},{v:.6f}"
+            return self._cmd_meas_all()
 
         # ── CONF subsystem ────────────────────────────────────────────────────
         if header == "CONF:ADC:MUX":
@@ -405,6 +408,15 @@ class MockArduino:
                 return None
             return "ON" if self.adc_temp_enabled else "OFF"
 
+        if header == "CONF:ADC:PWR":
+            if is_query:
+                return "OFF" if self.adc_powered_down else "ON"
+            if param == "ON":
+                self.adc_powered_down = False
+            elif param == "OFF":
+                self.adc_powered_down = True
+            return None
+
         if header == "CONF:PDTIA:GAIN":
             if not is_query:
                 try:
@@ -430,14 +442,30 @@ class MockArduino:
 
         if header == "CONF:SRC":
             if not is_query:
-                # Expand ENC:BOTH shorthand to both tokens for internal tracking
+                # Mirrors firmware's handleConfSrc(): validate every token and
+                # reject ENC:B/ENC:BOTH when encoder B is absent, leaving
+                # _stream_sources untouched on the first invalid token
+                # (real hardware aborts the whole command and pushes -113/-241
+                # rather than partially applying it).
                 tokens: set[str] = set()
                 for s in param.split(","):
                     t = s.strip()
+                    if not t:
+                        continue
+                    if t not in _VALID_SRC_TOKENS:
+                        Debug.debug(
+                            f"MockArduino: CONF:SRC rejected unknown token '{t}'"
+                        )
+                        return None
+                    if t in ("ENC:B", "ENC:BOTH") and not self.encoder_b_present:
+                        Debug.debug(
+                            f"MockArduino: CONF:SRC rejected '{t}' (encoder B absent)"
+                        )
+                        return None
                     if t == "ENC:BOTH":
                         tokens.add("ENC:A")
                         tokens.add("ENC:B")
-                    elif t:
+                    else:
                         tokens.add(t)
                 self._stream_sources = tokens
                 return None
@@ -512,11 +540,16 @@ class MockArduino:
             return f"{self._compute_adc_voltage():.6f}"
 
         if header == "FETC:ALL" and is_query:
-            ts = int((time.time() - self._start_time) * 1000)
-            a = self.encoder_a.get_effective_angle()
-            b = self.encoder_b.get_effective_angle()
-            v = self._compute_adc_voltage()
-            return f"{ts},{a:.2f},{b:.2f},{v:.6f}"
+            # Alias of MEAS:ALL? in the firmware (handleFetcAll == handleMeasAll).
+            return self._cmd_meas_all()
+
+        # ── READ? — arm + fetch ───────────────────────────────────────────────
+        if header == "READ" and is_query:
+            if param in ("ADC", "ADC:VOLT"):
+                return f"{self._compute_adc_voltage():.6f}"
+            if param in ("ADC:T", "ADC:TEMP"):
+                return f"{self._compute_adc_temperature():.2f}"
+            return self._cmd_meas_all()
 
         # ── DIAG subsystem ───────────────────────────────────────────────────
         if header == "DIAG:ENC" and is_query:
@@ -536,7 +569,21 @@ class MockArduino:
             return f"stage={self.pdtia_gain},pattern=0b{bits}"
 
         if header == "DIAG:SELF" and is_query:
-            return "ENC_A=PASS,ENC_B=PASS,ADC=PASS,PDTIA=PASS"
+            # Matches firmware's handleDiagSelf(): one "DIAG:SELF <what>,<result>"
+            # line per subsystem, not a single comma-joined line.
+            enc_b_line = (
+                "DIAG:SELF ENC:B,PASS"
+                if self.encoder_b_present
+                else "DIAG:SELF ENC:B,ABSENT"
+            )
+            return "\n".join(
+                [
+                    "DIAG:SELF ENC:A,PASS",
+                    enc_b_line,
+                    "DIAG:SELF ADC,PASS",
+                    "DIAG:SELF PDTIA,PASS",
+                ]
+            )
 
         # ── SYST subsystem ───────────────────────────────────────────────────
         if header == "SYST:ERR" and is_query:
@@ -565,6 +612,16 @@ class MockArduino:
         return None
 
     # ── Helper commands ───────────────────────────────────────────────────────
+
+    def _cmd_meas_all(self) -> str:
+        """MEAS:ALL? / FETC:ALL? / bare READ? — tsMs,angA,angB,magA,magB,volt."""
+        ts = int((time.time() - self._start_time) * 1000)
+        a = self.encoder_a.get_effective_angle()
+        b = self.encoder_b.get_effective_angle()
+        ma = self.encoder_a.get_raw_value()
+        mb = self.encoder_b.get_raw_value()
+        v = self._compute_adc_voltage()
+        return f"{ts},{a:.2f},{b:.2f},{ma},{mb},{v:.6f}"
 
     def _cmd_meas_enc_angl(self, param: str) -> str:
         if param in ("A", ""):

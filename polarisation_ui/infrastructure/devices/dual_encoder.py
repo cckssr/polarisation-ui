@@ -521,6 +521,31 @@ class DualEncoderArduino:
             Debug.error(f"Failed to parse DIAG:PDTIA? response: '{response}' ({e})")
             return None
 
+    def query_self_test(self) -> Optional[list[str]]:
+        """DIAG:SELF? — runs the firmware self-test; one result line per subsystem.
+
+        Unlike every other query in this client, the firmware answers with
+        several ``DIAG:SELF <subsystem>,<result>`` lines instead of one —
+        (ENC:A, ENC:B or ENC:B,ABSENT, ADC, PDTIA). The exact line count
+        depends on whether encoder B is present, so this keeps reading with a
+        short timeout after the first line until the stream goes quiet
+        instead of assuming a fixed count.
+        """
+        if not self._device.send_command("DIAG:SELF?", add_newline=True):
+            Debug.error("Failed to send: DIAG:SELF?")
+            return None
+        first = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not first:
+            Debug.error("No response for DIAG:SELF?")
+            return None
+        lines = [first]
+        while True:
+            nxt = self._device.read_value(timeout=0.1, return_type="str")
+            if not nxt:
+                break
+            lines.append(nxt)
+        return lines
+
     def query_adc_config(self) -> dict[str, str]:
         """Query all current ADC config settings via CONF:ADC:*? commands."""
         config: dict[str, str] = {}
