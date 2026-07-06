@@ -126,7 +126,10 @@ class SessionJournal:
             return
         self._writer.writerow(
             [
-                int(time.monotonic() * 1000),
+                # Wall-clock ms, not device uptime: frame.ts_ms comes from the
+                # firmware's free-running counter, which resets across the very
+                # reconnect this gap marker records, so it can't be reused here.
+                int(time.time() * 1000),
                 "",
                 "",
                 "",
@@ -163,9 +166,13 @@ class SessionJournal:
     def export_to_csv(self, output_path: Path, finalize: bool = True) -> int:
         """Export data rows (no gaps, no header comments) to *output_path*.
 
-        Returns the number of rows written.  Calls finalize() afterwards
-        unless *finalize* is False.
+        Closes the write handle first if still open, so the read pass here
+        never races a still-open write handle (avoids a sharing violation on
+        Windows).  Returns the number of rows written.  Calls finalize()
+        afterwards unless *finalize* is False.
         """
+        if self.is_active:
+            self.close()
         rows_written = _copy_data_rows(self._journal_path, output_path)
         if finalize:
             self.finalize()

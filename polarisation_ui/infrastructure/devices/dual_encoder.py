@@ -32,6 +32,8 @@ Firmware < 2.0.0 is rejected with IncompatibleFirmwareError.
 Architecture: pure Python — no PySide6, no serial imports beyond pyserial.
 """
 
+from __future__ import annotations
+
 from typing import Any, Literal, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -272,9 +274,13 @@ class DualEncoderArduino:
             if not self._device.connected:
                 return False
             idn = self.query_idn()
-            if idn:
-                self._check_firmware_version(idn)
-                self._firmware_version = self._parse_version(idn)
+            if not idn:
+                raise IncompatibleFirmwareError(
+                    "No response to *IDN? — cannot verify firmware version. "
+                    "Please flash firmware >= 2.0.0."
+                )
+            self._check_firmware_version(idn)
+            self._firmware_version = self._parse_version(idn)
             # Apply required ADC configuration: gain=1, external vref (2.5 V), temp off.
             self.adc.configure(gain=1, vref="EXT", temp=False)
             Debug.info(f"DualEncoderArduino connected to {self.port}")

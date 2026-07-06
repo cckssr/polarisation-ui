@@ -101,6 +101,9 @@ class MeasurementWorker(QThread):
                 time.sleep(self.interval)
             except Exception as e:
                 self.error_occurred.emit(str(e))
+                # Without this, a persistent exception (e.g. device unplugged)
+                # spins the loop as fast as possible, flooding error_occurred.
+                time.sleep(self.interval)
 
     def stop(self):
         """Stop the measurement loop."""

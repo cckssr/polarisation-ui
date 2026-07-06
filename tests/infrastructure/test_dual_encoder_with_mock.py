@@ -370,6 +370,21 @@ class TestFirmwareVersionCheck:
         with pytest.raises(IncompatibleFirmwareError):
             encoder.connect()
 
+    def test_empty_idn_response_raises(self, mock_arduino):
+        """An empty/garbled *IDN? response must not silently skip the version check.
+
+        Regression test: connect() used to do ``if idn: _check_firmware_version(...)``,
+        so a falsy response from query_idn() (no reply, garbled line) bypassed the
+        check entirely and connect() returned True.
+        """
+        from polarisation_ui.core.exceptions import IncompatibleFirmwareError
+
+        mock, pty_path = mock_arduino
+        encoder = DualEncoderArduino(port=pty_path)
+        encoder.query_idn = lambda: ""
+        with pytest.raises(IncompatibleFirmwareError):
+            encoder.connect()
+
 
 # ── DATA:FRAME parser ─────────────────────────────────────────────────────────
 

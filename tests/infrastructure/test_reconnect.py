@@ -311,3 +311,47 @@ class TestPtyDisconnection:
                 encoder.disconnect()
             except Exception:
                 pass
+
+    def test_kill_pty_during_streaming_raises_no_thread_exception(self):
+        """Regression test for a race between kill_pty() and the run loop.
+
+        kill_pty() runs on the test thread and used to set
+        ``self.pty_master = None`` with no synchronization while the
+        background run loop concurrently read ``self.pty_master`` to build
+        the ``select()`` fd list.  If the null-write landed between reads,
+        ``select.select([None], ...)`` (or ``os.read(None, ...)``) raised an
+        uncaught ``TypeError`` — not caught by the loop's
+        ``except (OSError, ValueError)`` — which killed the daemon thread via
+        ``threading.excepthook``.  Repeats several times with active
+        streaming (so the loop is busy in select/emit) to exercise the
+        narrow race window.
+        """
+        import threading
+
+        from polarisation_ui.infrastructure.devices import (
+            DualEncoderArduino,
+            StreamSource,
+        )
+        from polarisation_ui.infrastructure.mocks import MockArduino
+
+        thread_exceptions = []
+        original_hook = threading.excepthook
+        threading.excepthook = thread_exceptions.append
+        try:
+            for _ in range(20):
+                mock = MockArduino(poll_interval_ms=5)
+                pty_path = mock.start()
+                encoder = DualEncoderArduino(port=pty_path)
+                assert encoder.connect()
+                encoder.start_stream([StreamSource.ENC_A])
+                time.sleep(0.02)  # let the loop get busy selecting/emitting
+                mock.kill_pty()
+                mock.stop()
+                encoder.disconnect()
+        finally:
+            threading.excepthook = original_hook
+
+        assert thread_exceptions == [], (
+            "MockArduino run loop raised an uncaught exception during "
+            f"kill_pty(): {[e.exc_value for e in thread_exceptions]}"
+        )

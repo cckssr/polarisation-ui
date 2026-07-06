@@ -6,7 +6,7 @@ free of PySide6 imports.
 
 import dataclasses
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Optional
 
 from PySide6.QtCore import QThread, Signal
 
@@ -23,6 +23,7 @@ from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManage
 from polarisation_ui.infrastructure.logging import Debug
 
 if TYPE_CHECKING:
+    from polarisation_ui.core.models import Frame
     from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
@@ -420,7 +421,7 @@ class MalusSweepWorker(QThread):
     def __init__(
         self,
         kdc: "KDC101Polariser",
-        read_average,  # Callable[[], tuple[float, Optional[Frame]]]
+        read_average: Callable[[], "tuple[float, Optional[Frame]]"],
         start_deg: float,
         end_deg: float,
         step_deg: float,

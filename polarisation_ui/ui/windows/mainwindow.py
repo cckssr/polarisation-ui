@@ -223,9 +223,13 @@ class MainWindow(QMainWindow):
             tab.points_changed.connect(self._on_tab_points_changed)
             tab.points_changed.connect(self._schedule_state_save)
         self.data_controller.frame_ready.connect(tab.on_frame)
-        self.ui.tabWidget.addTab(tab, tab.tab_title)
+        index = self.ui.tabWidget.addTab(tab, tab.tab_title)
         self._tab_instances.append(tab)
         tab.inject_modules(modules)
+        # Tabs added after startup (e.g. WaveplateTab once kdc101 connects) must
+        # respect the current group-selection gate instead of defaulting to
+        # Qt's enabled-by-default state.
+        self._apply_group_gating(index)
         return tab
 
     def _setup_tabs(self) -> None:
@@ -430,15 +434,28 @@ class MainWindow(QMainWindow):
     def _on_group_changed(self, index: int) -> None:
         """Enable or disable experiment tabs depending on whether a group is selected."""
         group_selected = index >= 0
-        tooltip = "" if group_selected else "Bitte zuerst eine Gruppe auswählen"
         # Tab 0 is "Konfiguration" — always accessible.
-        # Tabs 1+ are experiment tabs added by _setup_tabs.
+        # Tabs 1+ are experiment tabs added by _setup_tabs / _add_tab.
         for i in range(1, self.ui.tabWidget.count()):
-            self.ui.tabWidget.setTabEnabled(i, group_selected)
-            self.ui.tabWidget.setTabToolTip(i, tooltip)
+            self._apply_group_gating(i)
         if not group_selected and self.ui.tabWidget.currentIndex() > 0:
             self.ui.tabWidget.setCurrentIndex(0)
         self._update_filename_display()
+
+    def _apply_group_gating(self, tab_index: int) -> None:
+        """Enable/disable one experiment tab per the current group selection.
+
+        Shared by ``_on_group_changed`` (re-evaluates all tabs) and
+        ``_add_tab`` (applies current state to a single newly-added tab, e.g.
+        WaveplateTab once kdc101 connects mid-session) so neither path can
+        drift from the other.
+        """
+        if tab_index == 0:
+            return  # "Konfiguration" tab is always accessible
+        group_selected = self.ui.cbGroupLetter.currentIndex() >= 0
+        tooltip = "" if group_selected else "Bitte zuerst eine Gruppe auswählen"
+        self.ui.tabWidget.setTabEnabled(tab_index, group_selected)
+        self.ui.tabWidget.setTabToolTip(tab_index, tooltip)
 
     def _update_filename_display(self) -> None:
         """Refresh pteCurrentFilename with the expected save path for the active tab."""
@@ -814,6 +831,10 @@ class MainWindow(QMainWindow):
     def _open_acq_settings(self) -> None:
         """Open the acquisition settings dialog (spike filter + inversion settings)."""
         dialog = AcquisitionSettingsDialog(self._acq_settings, parent=self)
+        # Without this, the dialog's C++ object stays parented to the main
+        # window forever (Qt only auto-deletes it on close, not on Python GC),
+        # so re-opening the settings dialog repeatedly leaks one QDialog per open.
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         # exec() makes the dialog application-modal: the main window cannot
         # receive input while the dialog is open. setEnabled(False) is NOT
         # used because it propagates to child QObjects and would disable the

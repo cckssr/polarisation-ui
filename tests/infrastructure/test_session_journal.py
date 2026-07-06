@@ -124,6 +124,34 @@ class TestDataRows:
         gap_rows = [r for r in data_rows if len(r) >= 5 and r[4] == "1"]
         assert len(gap_rows) == 1
 
+    def test_gap_marker_uses_wall_clock_not_monotonic(self, tmp_journal_base):
+        """Regression test: append_gap() used to write time.monotonic()*1000
+        into the same ts_ms column that append_frame() fills with the
+        firmware's device-uptime clock.  monotonic()'s epoch is arbitrary
+        (often since boot) so the two clock domains were not comparable.
+        The fixed version uses wall-clock ms, which must land within a wide
+        tolerance of time.time()*1000 sampled around the call.
+        """
+        import time
+
+        j = SessionJournal()
+        j.start()
+        before_ms = time.time() * 1000
+        j.append_gap()
+        after_ms = time.time() * 1000
+        j.close()
+
+        rows = list(
+            csv.reader(
+                line
+                for line in j.journal_path.read_text().splitlines()
+                if not line.startswith("#")
+            )
+        )
+        gap_row = rows[1]  # header, then the single gap row
+        gap_ts_ms = int(gap_row[0])
+        assert before_ms - 1000 <= gap_ts_ms <= after_ms + 1000
+
 
 # ── Finalized marker ──────────────────────────────────────────────────────────
 
@@ -182,6 +210,27 @@ class TestExport:
         out = tmp_path / "out.csv"
         j.export_to_csv(out, finalize=False)
         assert not (j.session_dir / "finalized").exists()
+
+    def test_export_while_still_active_closes_write_handle_first(
+        self, tmp_journal_base, tmp_path
+    ):
+        """Regression test: export_to_csv() used to open a second read handle
+        via _copy_data_rows() while the write handle was still open, risking
+        a sharing violation on Windows.  Calling export without a prior
+        close() must still succeed and must leave the journal inactive
+        afterwards (proving the write handle was closed before the read pass).
+        """
+        j = SessionJournal()
+        j.start()
+        j.append_frame(_make_frame(ts_ms=1))
+        j.append_frame(_make_frame(ts_ms=2))
+        assert j.is_active
+
+        out = tmp_path / "out.csv"
+        rows = j.export_to_csv(out, finalize=False)
+
+        assert rows == 2
+        assert not j.is_active
 
 
 # ── Orphan detection ──────────────────────────────────────────────────────────

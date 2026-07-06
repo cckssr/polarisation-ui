@@ -122,6 +122,10 @@ class MockArduino:
         self._thread: Optional[threading.Thread] = None
         self._start_time = time.time()
         self._port_file: Optional[Path] = None
+        # Guards close-then-null of pty_master so kill_pty() (called from a test
+        # thread) can never race the run loop into passing a stale/None fd to
+        # select()/os.read()/os.write().
+        self._pty_lock = threading.Lock()
 
     # ── Public control ────────────────────────────────────────────────────────
 
@@ -181,12 +185,13 @@ class MockArduino:
         """
         self._stop_flag = True
         self._running = False
-        if self.pty_master is not None:
+        with self._pty_lock:
+            fd, self.pty_master = self.pty_master, None
+        if fd is not None:
             try:
-                os.close(self.pty_master)
+                os.close(fd)
             except OSError:
                 pass
-            self.pty_master = None
 
     def set_encoder_angle(self, target: str, angle: float) -> None:
         """Set encoder angle. target: 'A' or 'B'."""
@@ -229,42 +234,48 @@ class MockArduino:
     def _cleanup(self) -> None:
         unregister_mock_port(self._port_file)
         self._port_file = None
-        for fd in (self.pty_master, self.pty_slave):
+        with self._pty_lock:
+            master_fd, self.pty_master = self.pty_master, None
+        for fd in (master_fd, self.pty_slave):
             if fd is not None:
                 try:
                     os.close(fd)
                 except OSError:
                     pass
-        self.pty_master = self.pty_slave = None
+        self.pty_slave = None
 
     def _run_loop(self) -> None:
         try:
             last_poll = time.time()
 
             while not self._stop_flag:
+                with self._pty_lock:
+                    master_fd = self.pty_master
+                if master_fd is None:
+                    break
                 try:
-                    readable, _, _ = select.select([self.pty_master], [], [], 0.01)
-                except (OSError, ValueError):
+                    readable, _, _ = select.select([master_fd], [], [], 0.01)
+                except (OSError, ValueError, TypeError):
                     break
 
                 if readable:
-                    self._process_incoming()
+                    self._process_incoming(master_fd)
 
                 now = time.time()
                 interval_s = self.poll_interval_ms / 1000.0
                 if now - last_poll >= interval_s:
                     if self.continuous_running:
-                        self._emit_frame()
+                        self._emit_frame(master_fd)
                     last_poll = now
 
-        except (OSError, RuntimeError) as e:
+        except (OSError, RuntimeError, TypeError) as e:
             Debug.error(f"MockArduino loop error: {e}", exc_info=True)
         finally:
             self._cleanup()
 
-    def _process_incoming(self) -> None:
+    def _process_incoming(self, fd: int) -> None:
         try:
-            data = os.read(self.pty_master, 1024)  # type: ignore[arg-type]
+            data = os.read(fd, 1024)
         except OSError:
             return
         if not data:
@@ -275,20 +286,20 @@ class MockArduino:
             if not cmd:
                 continue
             Debug.debug(f"MockArduino ← {cmd}")
-            response = self._handle_command(cmd)
+            response = self._handle_command(cmd, fd)
             if response is not None:
                 Debug.debug(f"MockArduino → {response}")
-                self._write_response(response + "\n")
+                self._write_response(fd, response + "\n")
 
-    def _write_response(self, text: str) -> None:
+    def _write_response(self, fd: int, text: str) -> None:
         try:
-            os.write(self.pty_master, text.encode("utf-8"))  # type: ignore[arg-type]
+            os.write(fd, text.encode("utf-8"))
         except OSError as e:
             Debug.debug(f"PTY write error: {e}")
 
     # ── SCPI command dispatcher ───────────────────────────────────────────────
 
-    def _handle_command(self, raw_cmd: str) -> Optional[str]:
+    def _handle_command(self, raw_cmd: str, fd: int) -> Optional[str]:
         cmd = raw_cmd.upper().strip()
 
         # '?' may appear inside the command before a parameter
@@ -487,7 +498,7 @@ class MockArduino:
 
         if header == "INIT":
             # Single-shot arm: emit one frame immediately
-            self._emit_frame()
+            self._emit_frame(fd)
             return None
 
         if header == "ABOR":
@@ -614,7 +625,7 @@ class MockArduino:
 
     # ── Streaming ─────────────────────────────────────────────────────────────
 
-    def _emit_frame(self) -> None:
+    def _emit_frame(self, fd: int) -> None:
         """Build and send a DATA:FRAME line based on configured sources."""
         # Advance encoder angles for simulation
         self.encoder_a.poll_count += 1
@@ -655,7 +666,7 @@ class MockArduino:
             parts.append(f"pdGain={self.pdtia_gain}")
         parts.append("stat=0")
 
-        self._write_response(",".join(parts) + "\n")
+        self._write_response(fd, ",".join(parts) + "\n")
 
 
 def main() -> int:
