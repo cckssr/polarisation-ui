@@ -12,7 +12,7 @@ reads and PDTIA gain switching during the sweep.
 
 from typing import Optional
 
-from PySide6.QtCore import QThread, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QDialog, QMessageBox
 
 from polarisation_ui.core.auto_calibration_settings import (
@@ -31,26 +31,9 @@ from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.qt_threads import (
     AlignPolariserWorker,
     AutoPowerCalibrationWorker,
+    KDC101HomeWorker,
 )
 from polarisation_ui.pyqt.ui_auto_power_calibration import Ui_AutoPowerCalibrationDialog
-
-
-class _HomeThread(QThread):
-    """Runs KDC101 homing off the main thread."""
-
-    done = Signal()
-    error = Signal(str)
-
-    def __init__(self, kdc: KDC101Polariser, parent=None) -> None:
-        super().__init__(parent)
-        self._kdc = kdc
-
-    def run(self) -> None:
-        try:
-            self._kdc.home()
-            self.done.emit()
-        except KDC101Error as exc:
-            self.error.emit(str(exc))
 
 
 class AutoPowerCalibrationWindow(QDialog):
@@ -80,7 +63,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self._pm = PM400PowerMeter()
         self._worker: Optional[AutoPowerCalibrationWorker] = None
         self._align_worker: Optional[AlignPolariserWorker] = None
-        self._home_thread: Optional[_HomeThread] = None
+        self._home_thread: Optional[KDC101HomeWorker] = None
         self._profile: Optional[PowerCalibrationProfile] = None
         self._angle_offset_deg: float = 0.0
         self._settings = AutoCalibrationConnectionSettings.load()
@@ -216,7 +199,7 @@ class AutoPowerCalibrationWindow(QDialog):
             return
         self.ui.btnHomeKDC.setEnabled(False)
         self.ui.lblPhase.setText("Referenzfahrt läuft…")
-        self._home_thread = _HomeThread(self._kdc, parent=self)
+        self._home_thread = KDC101HomeWorker(self._kdc, parent=self)
         self._home_thread.done.connect(self._on_home_done)
         self._home_thread.error.connect(self._on_home_error)
         self._home_thread.start()

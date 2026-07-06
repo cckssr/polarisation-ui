@@ -202,3 +202,28 @@ class PowerCalibrationProfile:
     def default_path(name: str, directory: Path = PROFILES_DIR) -> Path:
         safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
         return directory / f"{safe}.json"
+
+
+def select_best_profile_for_device_id(
+    profiles: list[Path], device_id: str
+) -> Optional[Path]:
+    """Pick the newest calibration profile whose filename contains *device_id*.
+
+    Filenames that start with an 8-digit date (yyyymmdd) are considered newer
+    than undated ones; among dated files the lexicographically greatest date
+    wins. Returns None if *device_id* is empty or no profile matches.
+    """
+    if not device_id:
+        return None
+
+    matching = [p for p in profiles if device_id in p.stem]
+    if not matching:
+        return None
+
+    def _sort_key(path: Path) -> tuple:
+        stem = path.stem
+        if len(stem) >= 8 and stem[:8].isdigit():
+            return (1, stem[:8])
+        return (0, "")
+
+    return sorted(matching, key=_sort_key, reverse=True)[0]

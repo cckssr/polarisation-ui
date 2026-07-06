@@ -218,6 +218,36 @@ class TestContinuousMode:
         ), "continuous mode not stopped"
         assert not mock.get_state()["continuous_running"]
 
+    def test_set_stream_sources_does_not_arm_streaming(
+        self, encoder_client, mock_arduino
+    ):
+        """set_stream_sources() must configure CONF:SRC without sending INIT:CONT.
+
+        Unlike start_stream(), it should be safe to call at any time (e.g. on
+        every tab-visibility change) without ever starting the firmware's
+        continuous DATA:FRAME output.
+        """
+        mock, _ = mock_arduino
+        assert encoder_client.set_stream_sources({"ADC", "ENC:BOTH"})
+        assert _await_mock_state(
+            mock, lambda s: "ADC" in s["stream_sources"]
+        ), "stream_sources not updated"
+        state = mock.get_state()
+        assert "ADC" in state["stream_sources"]
+        assert "ENC:A" in state["stream_sources"]
+        assert "ENC:B" in state["stream_sources"]
+        assert not state["continuous_running"]
+
+    def test_set_stream_sources_empty_clears_sources(
+        self, encoder_client, mock_arduino
+    ):
+        mock, _ = mock_arduino
+        assert encoder_client.set_stream_sources({"ADC"})
+        assert _await_mock_state(mock, lambda s: "ADC" in s["stream_sources"])
+
+        assert encoder_client.set_stream_sources(set())
+        assert _await_mock_state(mock, lambda s: s["stream_sources"] == [])
+
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
         """Verify encoder angle advances while streaming is running."""
         mock, _ = mock_arduino

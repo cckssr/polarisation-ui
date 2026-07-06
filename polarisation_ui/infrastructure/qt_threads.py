@@ -471,12 +471,8 @@ class MalusSweepWorker(QThread):
             self.zero_offset.emit(zero_offset)
 
         # Step 3: user sweep
-        angles = []
-        a = self._start
-        while a <= self._end + 1e-6:
-            angles.append(a)
-            a += self._step
-        n = len(angles)
+        n = max(2, round((self._end - self._start) / self._step) + 1)
+        angles = linear_angle_grid(self._start, self._end, n)
         self.log.emit(
             f"Sweep: {self._start:.1f}° bis {self._end:.1f}°, Schritt {self._step:.1f}°, {n} Punkte"
         )
@@ -521,16 +517,15 @@ class MalusSweepWorker(QThread):
         # Fine pass: ±5° around coarse minimum in 0.5° steps
         fine_start = max(0.0, coarse_min_angle - 5.0)
         fine_end = min(180.0, coarse_min_angle + 5.0)
+        n_fine = max(2, round((fine_end - fine_start) / 0.5) + 1)
         fine_results: list[tuple[float, float]] = []
-        a = fine_start
-        while a <= fine_end + 1e-6:
+        for a in linear_angle_grid(fine_start, fine_end, n_fine):
             if self._abort:
                 return coarse_min_angle
             self._kdc.move_to(a)
             time.sleep(0.15)
             intensity_V, _ = self._read_average()
             fine_results.append((a, intensity_V))
-            a += 0.5
 
         valid_fine = [(a, v) for a, v in fine_results if not (v != v)]
         if not valid_fine:

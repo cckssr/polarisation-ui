@@ -89,6 +89,33 @@ class TestDesiredState:
         DualEncoderArduino.reapply_desired_state(dev, state)
         dev.adc.set_pdtia_gain.assert_not_called()
 
+    def test_reapply_applies_stream_sources_when_set(self):
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
+        dev = MagicMock(spec=DualEncoderArduino)
+        dev.adc = MagicMock()
+        dev.adc.configure.return_value = True
+        dev.set_stream_sources.return_value = True
+
+        state = DesiredState(stream_sources=frozenset({"ADC", "ENC:BOTH"}))
+        DualEncoderArduino.reapply_desired_state(dev, state)
+        dev.set_stream_sources.assert_called_once_with({"ADC", "ENC:BOTH"})
+
+    def test_reapply_skips_stream_sources_when_empty(self):
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
+        dev = MagicMock(spec=DualEncoderArduino)
+        dev.adc = MagicMock()
+        dev.adc.configure.return_value = True
+
+        state = DesiredState()  # stream_sources defaults to an empty frozenset
+        DualEncoderArduino.reapply_desired_state(dev, state)
+        dev.set_stream_sources.assert_not_called()
+
 
 # ── DeviceManager reconnect with DesiredState ─────────────────────────────────
 
@@ -121,6 +148,35 @@ class TestDeviceManagerReconnect:
 
         assert result is True
         mock_device.reapply_desired_state.assert_called_once_with(dm._desired_state)
+
+    def test_set_stream_sources_updates_desired_state_on_success(self):
+        from polarisation_ui.infrastructure.device_manager import (
+            GoniometerDeviceManager,
+        )
+
+        dm = GoniometerDeviceManager.__new__(GoniometerDeviceManager)
+        dm._desired_state = DesiredState()
+        mock_device = MagicMock()
+        mock_device.set_stream_sources.return_value = True
+
+        with patch.object(dm, "get_encoder_device", return_value=mock_device):
+            assert dm.set_stream_sources({"ADC", "ENC:BOTH"}) is True
+
+        mock_device.set_stream_sources.assert_called_once_with({"ADC", "ENC:BOTH"})
+        assert dm._desired_state.stream_sources == frozenset({"ADC", "ENC:BOTH"})
+
+    def test_set_stream_sources_returns_false_when_disconnected(self):
+        from polarisation_ui.infrastructure.device_manager import (
+            GoniometerDeviceManager,
+        )
+
+        dm = GoniometerDeviceManager.__new__(GoniometerDeviceManager)
+        dm._desired_state = DesiredState()
+
+        with patch.object(dm, "get_encoder_device", return_value=None):
+            assert dm.set_stream_sources({"ADC"}) is False
+
+        assert dm._desired_state.stream_sources == frozenset()
 
 
 # ── Backoff delay computation ─────────────────────────────────────────────────

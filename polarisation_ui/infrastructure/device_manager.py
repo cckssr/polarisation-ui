@@ -376,6 +376,26 @@ class GoniometerDeviceManager:
             Debug.error(f"Error setting PDTIA gain: {e}")
             return False
 
+    def set_stream_sources(self, sources: set[str]) -> bool:
+        """Configure CONF:SRC (without arming streaming) to the given source set.
+
+        Called by MainWindow with the union of all currently-visible experiment
+        tabs' ``required_sources``.  Remembered in DesiredState so a later
+        reconnect reapplies it automatically, same as CONF:ADC:*/PDTIA state.
+        """
+        device = self.get_encoder_device()
+        if device is None:
+            return False
+        try:
+            ok = device.set_stream_sources(sources)
+            if ok:
+                self._desired_state.stream_sources = frozenset(sources)
+                Debug.info(f"Stream sources set to {sorted(sources)}")
+            return ok
+        except Exception as e:
+            Debug.error(f"Error setting stream sources: {e}")
+            return False
+
     def get_pdtia_gain(self) -> int:
         """Query current PDTIA gain stage from device; returns 0 if unavailable."""
         device = self.get_encoder_device()

@@ -23,6 +23,7 @@ from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
+from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.qt_threads import MalusSweepWorker
 from polarisation_ui.pyqt.ui_waveplate_tab import Ui_WaveplateTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -198,18 +199,7 @@ class WaveplateTab(PlotTabBase):
 
     def _compute_average_safe(self) -> tuple[float, Optional[Frame]]:
         with QMutexLocker(self._buffer_mutex):
-            if not self._buffer:
-                return float("nan"), None
-            latest = self._buffer[-1]
-            cutoff_ms = latest.ts_ms - _AVERAGE_WINDOW_MS
-            valid = [
-                f.intensity
-                for f in self._buffer
-                if f.ts_ms >= cutoff_ms and not math.isnan(f.intensity)
-            ]
-            if not valid:
-                return float("nan"), latest
-            return sum(valid) / len(valid), latest
+            return windowed_average_intensity(self._buffer, _AVERAGE_WINDOW_MS)
 
     def _update_live_labels(self, frame: Optional[Frame]) -> None:
         if frame is None or math.isnan(frame.intensity):

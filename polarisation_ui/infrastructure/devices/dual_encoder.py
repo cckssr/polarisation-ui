@@ -107,6 +107,10 @@ class DesiredState:
     adc_vref: str = "EXT"
     adc_temp: bool = False
     pdtia_gain: int = 0
+    # Union of all currently-visible tabs' required_sources (see PlotTabBase).
+    # Configures which sources the firmware would include in DATA:FRAME lines
+    # if streaming is later armed via INIT:CONT; never arms streaming itself.
+    stream_sources: frozenset[str] = frozenset()
 
     def as_config_snapshot(self) -> dict:
         """Return a dict suitable for the SessionJournal config header."""
@@ -119,6 +123,7 @@ class DesiredState:
             "adc_vref": self.adc_vref,
             "adc_temp": self.adc_temp,
             "pdtia_gain": self.pdtia_gain,
+            "stream_sources": ",".join(sorted(self.stream_sources)),
         }
 
 
@@ -355,6 +360,18 @@ class DualEncoderArduino:
             f"CONF:SRC {src_str}"
         ) and self._send_command_no_response("INIT:CONT ON")
 
+    def set_stream_sources(self, sources: set[str]) -> bool:
+        """CONF:SRC <sources> — configure without arming streaming.
+
+        Unlike start_stream(), this never sends INIT:CONT, so it is safe to
+        call at any time (e.g. whenever the set of visible experiment tabs
+        changes) without emitting unread DATA:FRAME lines that would corrupt
+        the next one-shot MEAS:*/CONF:*? response.
+        """
+        src_str = ",".join(sorted(sources))
+        cmd = f"CONF:SRC {src_str}" if src_str else "CONF:SRC"
+        return self._send_command_no_response(cmd)
+
     def abort(self) -> bool:
         return self._send_command_no_response("ABOR")
 
@@ -409,11 +426,7 @@ class DualEncoderArduino:
                 return None, None
             # Response: compHA=N,compLA=N,cofA=N,ocfA=N,agcA=N,compHB=N,...,agcB=N
             try:
-                kv: dict[str, str] = {}
-                for token in response.strip().split(","):
-                    if "=" in token:
-                        k, _, v = token.partition("=")
-                        kv[k.strip()] = v.strip()
+                kv = self._parse_kv(response)
                 diag_a: dict[str, Any] = {
                     "compHigh": bool(int(kv.get("compHA", "0"))),
                     "compLow": bool(int(kv.get("compLA", "0"))),
@@ -462,11 +475,7 @@ class DualEncoderArduino:
         if response.strip() == "ABSENT":
             return {"absent": True}
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             return {
                 "absent": False,
                 "reg0": int(kv.get("reg0", "0x0"), 16),
@@ -491,11 +500,7 @@ class DualEncoderArduino:
             Debug.error("No response for DIAG:PDTIA?")
             return None
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             return {
                 "stage": int(kv.get("stage", "0")),
                 "pattern": kv.get("pattern", "0b0000"),
@@ -594,10 +599,28 @@ class DualEncoderArduino:
         )
         if state.pdtia_gain != 0:
             ok = self.adc.set_pdtia_gain(state.pdtia_gain) and ok
+        if state.stream_sources:
+            ok = self.set_stream_sources(set(state.stream_sources)) and ok
         Debug.info(f"DesiredState reapplied (ok={ok}): {state}")
         return ok
 
     # ── Internal helpers ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_kv(response: str) -> dict[str, str]:
+        """Parse a comma-separated ``k=v`` response into a dict.
+
+        Shared by every diagnostics/config query that uses this token format
+        (DIAG:ENC?, DIAG:ADC?, DIAG:PDTIA?, DATA:FRAME). Tokens without ``=``
+        are ignored rather than raising, since some responses append bare
+        flags in that format.
+        """
+        result: dict[str, str] = {}
+        for token in response.strip().split(","):
+            if "=" in token:
+                k, _, v = token.partition("=")
+                result[k.strip()] = v.strip()
+        return result
 
     @staticmethod
     def _parse_version(idn: str) -> str:
@@ -659,13 +682,7 @@ class DualEncoderArduino:
         """
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME ") :]
-        result: dict[str, str] = {}
-        for part in payload.split(","):
-            if "=" in part:
-                k, _, v = part.partition("=")
-                result[k.strip()] = v.strip()
-        return result
+        return DualEncoderArduino._parse_kv(line[len("DATA:FRAME ") :])
 
     def _parse_single_response(
         self, response: str, encoder_id: EncoderID
@@ -697,11 +714,7 @@ class DualEncoderArduino:
     ) -> Optional[dict[str, Any]]:
         """DIAG:ENC? → 'compH=N,compL=N,cof=N,ocf=N,agc=N' → typed dict."""
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             if len(kv) < 5:
                 Debug.error(f"Invalid diagnostics response: '{response}'")
                 return None

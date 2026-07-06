@@ -33,7 +33,10 @@ from PySide6.QtWidgets import (
 
 from polarisation_ui.core.exceptions import KDC101Error
 from polarisation_ui.core.models import AcquisitionSettings
-from polarisation_ui.core.power_calibration import PowerCalibrationProfile
+from polarisation_ui.core.power_calibration import (
+    PowerCalibrationProfile,
+    select_best_profile_for_device_id,
+)
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
@@ -271,6 +274,27 @@ class MainWindow(QMainWindow):
                 idx = self.ui.tabWidget.indexOf(tab)
                 if idx >= 0:
                     self.ui.tabWidget.setTabVisible(idx, True)
+
+        self._apply_required_stream_sources()
+
+    def _apply_required_stream_sources(self) -> None:
+        """Configure CONF:SRC to the union of all visible tabs' required_sources.
+
+        Completes the tab-extensibility design in PlotTabBase: each tab
+        declares the streaming sources it needs, and this keeps the firmware's
+        CONF:SRC set (reapplied automatically on reconnect via DesiredState)
+        in sync whenever the set of visible tabs changes. No-op while
+        disconnected — GoniometerDeviceManager.set_stream_sources() returns
+        False without touching DesiredState in that case.
+        """
+        if not self._is_connected:
+            return
+        sources: set[str] = set()
+        for tab in self._tab_instances:
+            idx = self.ui.tabWidget.indexOf(tab)
+            if idx >= 0 and self.ui.tabWidget.isTabVisible(idx):
+                sources |= tab.required_sources
+        self.device_manager.set_stream_sources(sources)
 
     # ==================== Signal Connections ====================
 
@@ -663,6 +687,7 @@ class MainWindow(QMainWindow):
             self._auto_select_calibration_for_id(device_id)
 
         self._update_detector_calibration_status()
+        self._apply_required_stream_sources()
 
     # ==================== KDC101 Connection ====================
 
@@ -1027,27 +1052,20 @@ class MainWindow(QMainWindow):
     def _auto_select_calibration_for_id(self, device_id: str) -> None:
         """Select the newest calibration profile whose filename contains *device_id*.
 
-        Filenames that start with an 8-digit date (yyyymmdd) are considered newer
-        than undated ones; among dated files the lexicographically greatest date wins.
         Only runs once per device-ID selection; does nothing if already applied.
+        Profile-selection logic itself lives in
+        ``core.power_calibration.select_best_profile_for_device_id``.
         """
         if self._pdtia_auto_cal_done or not device_id:
             return
 
-        matching = [
-            p for p in PowerCalibrationProfile.list_profiles() if device_id in p.stem
-        ]
-        if not matching:
+        best = select_best_profile_for_device_id(
+            PowerCalibrationProfile.list_profiles(), device_id
+        )
+        if best is None:
             Debug.info(f"No calibration profile found for PDTIA ID: {device_id}")
             return
 
-        def _sort_key(path: "Path") -> tuple:
-            stem = path.stem
-            if len(stem) >= 8 and stem[:8].isdigit():
-                return (1, stem[:8])
-            return (0, "")
-
-        best = sorted(matching, key=_sort_key, reverse=True)[0]
         idx = self.ui.cbProfile.findText(best.stem)
         if idx >= 0:
             self.ui.cbProfile.setCurrentIndex(idx)
