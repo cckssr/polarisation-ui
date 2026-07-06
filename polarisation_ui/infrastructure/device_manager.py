@@ -320,17 +320,6 @@ class GoniometerDeviceManager:
             Debug.error(f"Error reading ADC voltage: {e}")
             return None
 
-    def read_adc_temperature(self) -> Optional[float]:
-        """Read internal ADC temperature via MEAS:ADC:TEMP?."""
-        device = self.get_encoder_device()
-        if device is None:
-            return None
-        try:
-            return device.adc.read_temperature()
-        except Exception as e:
-            Debug.error(f"Error reading ADC temperature: {e}")
-            return None
-
     def read_diagnostics_both(
         self,
     ) -> Optional[tuple[Optional[dict], Optional[dict]]]:

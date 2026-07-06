@@ -30,10 +30,3 @@ def create_dropbox_foldername(
     if sanitized_subterm:
         return f"{base}-{sanitized_subterm}"
     return base
-
-
-def create_group_name(group_letter: str) -> str:
-    """Expand a single group letter to a human-readable group name."""
-    if len(str(group_letter)) == 1 and str(group_letter).isalpha():
-        return f"Group {str(group_letter).upper()}"
-    return str(group_letter)

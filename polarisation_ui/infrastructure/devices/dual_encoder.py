@@ -204,23 +204,6 @@ class ADCClient:
             Debug.error(f"Failed to parse ADC voltage: '{response}'")
             return None
 
-    def read_temperature(self) -> Optional[float]:
-        """One-shot internal temperature read via MEAS:ADC:TEMP?; returns °C or None."""
-        if not self._dev._device.send_command("MEAS:ADC:TEMP?", add_newline=True):
-            Debug.error("Failed to send: MEAS:ADC:TEMP?")
-            return None
-        response = self._dev._device.read_value(
-            timeout=self._dev.timeout, return_type="str"
-        )
-        if not response:
-            Debug.error("No response for MEAS:ADC:TEMP?")
-            return None
-        try:
-            return float(response.strip())
-        except ValueError:
-            Debug.error(f"Failed to parse ADC temperature: '{response}'")
-            return None
-
 
 # ── Main device class ─────────────────────────────────────────────────────────
 
@@ -577,9 +560,6 @@ class DualEncoderArduino:
 
     def reset(self) -> bool:
         return self._send_command_no_response("*RST")
-
-    def flush_buffer(self) -> bool:
-        return self._device.flush_input_buffer()
 
     def send_query(self, command: str) -> Optional[str]:
         """Send an arbitrary SCPI command and return the response (debug terminal use)."""
