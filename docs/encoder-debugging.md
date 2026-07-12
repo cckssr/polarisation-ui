@@ -266,12 +266,12 @@ Checklist:
 
 **Oscilloscope probe points (per CS):**
 
-| Signal        | Where             | What to check                                                             |
-| ------------- | ----------------- | ------------------------------------------------------------------------- |
+| Signal         | Where             | What to check                                                             |
+| -------------- | ----------------- | ------------------------------------------------------------------------- |
 | CS_A (pin D10) | Arduino → encoder | Low during transaction, no glitches while CS_B or ADC_CS switches         |
-| SCLK          | Shared bus        | Clean edges, no ringing >10% of amplitude between transitions             |
-| MISO          | Encoder → Arduino | Stable during clock pulses; goes high-Z (or holds last bit) after CS high |
-| MOSI          | Arduino → encoder | Stable during clock pulses                                                |
+| SCLK           | Shared bus        | Clean edges, no ringing >10% of amplitude between transitions             |
+| MISO           | Encoder → Arduino | Stable during clock pulses; goes high-Z (or holds last bit) after CS high |
+| MOSI           | Arduino → encoder | Stable during clock pulses                                                |
 
 **Probing during streaming:** The scope will show rapid CS toggling as ENC_A, ENC_B, and ADC are read in sequence. This is normal. Trigger on CS_A and check only the MISO data for encoder A's transactions.
 

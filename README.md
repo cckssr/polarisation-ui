@@ -27,14 +27,14 @@ Experiments supported out of the box: Malus's Law, Brewster's angle, and wave pl
 
 ## Hardware
 
-| Component                  | Role                                                      | Interface         |
-| -------------------------- | --------------------------------------------------------- | ----------------- |
-| Arduino Nano ESP32         | SCPI 2.1.0 host — runs firmware in `src_arduino/`         | USB serial        |
-| AS5048A (encoder A)        | 14-bit magnetic rotary encoder — sample/polariser stage   | SPI → Arduino     |
-| AS5048A (encoder B)        | 14-bit magnetic rotary encoder — detector/analyser arm    | SPI → Arduino     |
-| ADS1220                    | 24-bit delta-sigma ADC — photodiode transimpedance output | SPI → Arduino     |
-| PD-TIA discrete gain       | 4-bit GPIO-controlled transimpedance gain stage           | 4× GPIO → Arduino |
-| Thorlabs KDC101            | Motorised rotation stage for automated angle scanning     | USB (pylablib)    |
+| Component            | Role                                                      | Interface         |
+| -------------------- | --------------------------------------------------------- | ----------------- |
+| Arduino Nano ESP32   | SCPI 2.1.0 host — runs firmware in `src_arduino/`         | USB serial        |
+| AS5048A (encoder A)  | 14-bit magnetic rotary encoder — sample/polariser stage   | SPI → Arduino     |
+| AS5048A (encoder B)  | 14-bit magnetic rotary encoder — detector/analyser arm    | SPI → Arduino     |
+| ADS1220              | 24-bit delta-sigma ADC — photodiode transimpedance output | SPI → Arduino     |
+| PD-TIA discrete gain | 4-bit GPIO-controlled transimpedance gain stage           | 4× GPIO → Arduino |
+| Thorlabs KDC101      | Motorised rotation stage for automated angle scanning     | USB (pylablib)    |
 
 The sample and detector stages are mechanically coupled: the detector arm moves at twice the angular velocity of the sample stage (`θ_detector = 2 × θ_sample`), as required by reflection geometry.
 
@@ -88,7 +88,7 @@ pip install git+https://github.com/cckssr/polarisation-ui.git@v1.0.0
 
 The production wheel does **not** include the mock Arduino simulator or test utilities.
 
-### Development
+### Development Installation
 
 ```bash
 git clone https://github.com/cckssr/polarisation-ui.git
@@ -159,24 +159,24 @@ Override the config at runtime by placing a custom `config.json` in the current 
 The application is organised into three strictly separated layers:
 
 ```ascii
-┌────────────────────────────────────────────────────────────────────┐
-│  polarisation_ui                                                   │
-│                                                                    │
-│  ┌────────────────┐   ┌───────────────────┐   ┌─────────────────┐  │
-│  │ ui/.           │──▶│ infrastructure/   │──▶│ core/           │  │
-│  │                │   │                   │   │                 │  │
-│  │   windows/     │   │   device_manager  │   │   models.py     │  │
-│  │   widgets/     │   │   devices/        │   │   power_calibration.py│
-│  │   controllers/ │   │     dual_encoder  │   │   exceptions.py │  │
-│  │   dialogs/     │   │     kdc101_polariser│  │   utils.py     │  │
-│  └────────────────┘   │     pm400         │   └─────────────────┘  │
-│         │             │   serial_device   │                        │
-│         └────────────▶│   qt_threads      │                        │
-│                       │   config, logging │                        │
-│                       │   save_service    │                        │
-│                       │   session_journal │                        │
-│                       └───────────────────┘                        │
-└────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  polarisation_ui                                                             │
+│                                                                              │
+│  ┌────────────────┐   ┌──────────────────────┐   ┌────────────────────────┐  │
+│  │ ui/.           │──▶│ infrastructure/      │──▶│ core/                  │  │
+│  │                │   │                      │   │                        │  │
+│  │   windows/     │   │   device_manager     │   │   models.py            │  │
+│  │   widgets/     │   │   devices/           │   │   power_calibration.py │  │
+│  │   controllers/ │   │     dual_encoder     │   │   exceptions.py        │  │
+│  │   dialogs/     │   │     kdc101_polariser │   │   utils.py             │  │
+│  └────────────────┘   │     pm400            │   └────────────────────────┘  │
+│         │             │   serial_device      │                               │
+│         └────────────▶│   qt_threads         │                               │
+│                       │   config, logging    │                               │
+│                       │   save_service       │                               │
+│                       │   session_journal    │                               │
+│                       └──────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Allowed dependencies:** `ui → infrastructure → core`, `ui → core` directly when needed.
@@ -298,12 +298,12 @@ below is a still-planned `PlotTabBase` subclass to be registered in
 automated scanning can reuse the KDC101-driven sweep pattern already
 implemented in `WaveplateTab`.
 
-| Experiment                                      | Physics                         | Key Observable                                                         |
-| ----------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| **Optical Rotation (chiral media)**             | Biot: `[α] = α / (l·c)`         | Specific rotation of sugar solutions at varying concentration          |
-| **Fresnel Coefficients**                        | `Rs`, `Rp` vs incidence angle   | Experimental verification with adjustable refractive-index fit overlay |
+| Experiment                                      | Physics                         | Key Observable                                                                       |
+| ----------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------ |
+| **Optical Rotation (chiral media)**             | Biot: `[α] = α / (l·c)`         | Specific rotation of sugar solutions at varying concentration                        |
+| **Fresnel Coefficients**                        | `Rs`, `Rp` vs incidence angle   | Experimental verification with adjustable refractive-index fit overlay               |
 | **Birefringence / wave plate characterisation** | Retardance `Γ` from ellipticity | Characterise unknown wave plates beyond fixed λ/4, λ/2 (full-wave, custom retarders) |
-| **Basic Ellipsometry**                          | `Δ`, `Ψ` → film thickness       | Thin film characterisation via Drude approximation                     |
+| **Basic Ellipsometry**                          | `Δ`, `Ψ` → film thickness       | Thin film characterisation via Drude approximation                                   |
 
 #### Optical Rotation (Detail)
 
@@ -311,9 +311,9 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 
 ### Planned: Infrastructure
 
-| Feature          | Description                                              |
-| ---------------- | -------------------------------------------------------- |
-| HDF5/Zarr export | Optional dense export for large angle-scan datasets      |
+| Feature          | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| HDF5/Zarr export | Optional dense export for large angle-scan datasets |
 
 ---
 
@@ -337,5 +337,3 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 MIT — see [LICENSE](LICENSE).
 
 ---
-
-_Built at TU Berlin — C. Kessler, K. Brandt_

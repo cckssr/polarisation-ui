@@ -1,0 +1,2 @@
+src_arduino/.pio/*
+src_arduino/src/scpi_parse.inc

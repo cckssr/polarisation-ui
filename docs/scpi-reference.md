@@ -65,17 +65,17 @@ All MEAS commands trigger a fresh hardware read.
 
 ### ADC (ADS1220)
 
-| Command                          | Values                                                                                                            | Default  | Notes                                                                                              |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `CONF:ADC:MUX <mux>`             | `DIFF01` `DIFF23` `CH0` `CH1` `CH2` `CH3` `AIN0_AIN2` `AIN0_AIN3` `AIN1_AIN2` `AIN1_AIN3` `AIN1_AIN0` `AIN3_AIN2` | `DIFF01` | ADS1220 input multiplexer                                                                          |
-| `CONF:ADC:GAIN <n>`              | `1 2 4 8 16 32 64 128`                                                                                            | `1`      | ADS1220 internal PGA gain                                                                          |
-| `CONF:ADC:RATE <sps>`            | `20 45 90 175 330 600 1000`                                                                                       | `20`     | Sample rate (SPS)                                                                                  |
-| `CONF:ADC:MODE NORM\|TURBO`      | —                                                                                                                 | `NORM`   | Normal = 256 kHz, Turbo = 512 kHz modulator                                                        |
-| `CONF:ADC:FIR OFF\|50\|60\|BOTH` | —                                                                                                                 | `OFF`    | FIR filter (effective at 20 SPS only)                                                              |
-| `CONF:ADC:VREF INT\|EXT\|AVDD`   | —                                                                                                                 | `EXT`    | `INT`=2.048 V internal; `EXT`=REFP0/REFN0 (2.5 V nominal); `AVDD`=3.3 V nominal                    |
-| `CONF:ADC:TEMP ON\|OFF`          | —                                                                                                                 | `OFF`    | Enable temperature sensor on-demand (OFF by default to prevent interference with voltage readings) |
+| Command                          | Values                                                                                                            | Default  | Notes                                                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `CONF:ADC:MUX <mux>`             | `DIFF01` `DIFF23` `CH0` `CH1` `CH2` `CH3` `AIN0_AIN2` `AIN0_AIN3` `AIN1_AIN2` `AIN1_AIN3` `AIN1_AIN0` `AIN3_AIN2` | `DIFF01` | ADS1220 input multiplexer                                                                                   |
+| `CONF:ADC:GAIN <n>`              | `1 2 4 8 16 32 64 128`                                                                                            | `1`      | ADS1220 internal PGA gain                                                                                   |
+| `CONF:ADC:RATE <sps>`            | `20 45 90 175 330 600 1000`                                                                                       | `20`     | Sample rate (SPS)                                                                                           |
+| `CONF:ADC:MODE NORM\|TURBO`      | —                                                                                                                 | `NORM`   | Normal = 256 kHz, Turbo = 512 kHz modulator                                                                 |
+| `CONF:ADC:FIR OFF\|50\|60\|BOTH` | —                                                                                                                 | `OFF`    | FIR filter (effective at 20 SPS only)                                                                       |
+| `CONF:ADC:VREF INT\|EXT\|AVDD`   | —                                                                                                                 | `EXT`    | `INT`=2.048 V internal; `EXT`=REFP0/REFN0 (2.5 V nominal); `AVDD`=3.3 V nominal                             |
+| `CONF:ADC:TEMP ON\|OFF`          | —                                                                                                                 | `OFF`    | Enable temperature sensor on-demand (OFF by default to prevent interference with voltage readings)          |
 | `CONF:ADC:PWR ON\|OFF`           | —                                                                                                                 | `ON`     | Hardware power-down (`OFF`) / power-up (`ON`); power-down also inhibits auto-recovery until powered back up |
-| `CONF:ADC:PWR?`                  | `ON` or `OFF`                                                                                                     | —        | Query current power state                                                                          |
+| `CONF:ADC:PWR?`                  | `ON` or `OFF`                                                                                                     | —        | Query current power state                                                                                   |
 
 ### PD-TIA Discrete Gain
 
@@ -86,10 +86,10 @@ All MEAS commands trigger a fresh hardware read.
 
 ### Streaming Sources and Rate
 
-| Command                     | Notes                                                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Command                     | Notes                                                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `CONF:SRC <src>[,<src>...]` | Set streaming source set. Valid tokens: `ENC:A` `ENC:B` `ENC:BOTH` `ADC` `ADC:T` `PDTIA` `DIAG`. Default: `ENC:A,ENC:B` |
-| `CONF:RATE <hz>`            | Streaming rate 1–1000 Hz. Default: 20 Hz                                                                                    |
+| `CONF:RATE <hz>`            | Streaming rate 1–1000 Hz. Default: 20 Hz                                                                                |
 
 ---
 
@@ -155,7 +155,7 @@ dispatch entries in `scpiDispatch()` (not just reachable via the equivalent
 
 Emitted each interval when `INIT:CONT ON` is active, or once on `INIT`.
 
-```
+```bash
 DATA:FRAME seq=<n>,tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<stage>,stat=<flags>
 ```
 
@@ -175,7 +175,7 @@ DATA:FRAME seq=<n>,tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<sta
 
 ### Example
 
-```
+```bash
 CONF:SRC ENC:BOTH,ADC
 CONF:RATE 20
 INIT:CONT ON
@@ -226,16 +226,16 @@ DATA:FRAME seq=2,tsMs=1284,angA=90.14,angB=180.28,adcV=1.234231,stat=0
 
 ## Pin Assignments (configurable in `config.h`)
 
-| Function          | Default pin |
-| ----------------- | ----------- |
-| Encoder A CS      | 10          |
-| Encoder B CS      | 9           |
-| ADS1220 CS        | 4           |
+| Function          | Default pin                                     |
+| ----------------- | ----------------------------------------------- |
+| Encoder A CS      | 10                                              |
+| Encoder B CS      | 9                                               |
+| ADS1220 CS        | 4                                               |
 | ADS1220 DRDY      | -1 (not wired; time-based polling used instead) |
-| PD-TIA gain bit 0 | A4          |
-| PD-TIA gain bit 1 | A5          |
-| PD-TIA gain bit 2 | A6          |
-| PD-TIA gain bit 3 | A7          |
+| PD-TIA gain bit 0 | A4                                              |
+| PD-TIA gain bit 1 | A5                                              |
+| PD-TIA gain bit 2 | A6                                              |
+| PD-TIA gain bit 3 | A7                                              |
 
 The two AS5048A encoders share one SPI bus at 1 MHz. The ADS1220 is on a
 **separate** SPI bus (ESP32 HSPI peripheral) at 4 MHz to avoid contention

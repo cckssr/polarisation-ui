@@ -8,13 +8,13 @@ PySide6 desktop app for a **polarisation / Malus-law goniometer bench** built ar
 
 Hardware surface (fixed — no sensors beyond these are planned):
 
-| Role                       | Device                               | Transport          |
-| -------------------------- | ------------------------------------ | ------------------ |
-| Sample angle               | AS5048A #A (14-bit magnetic encoder) | SPI → Arduino      |
-| Detector-arm angle         | AS5048A #B                           | SPI → Arduino      |
-| Intensity (PD-TIA)         | ADS1220 24-bit ADC                   | SPI → Arduino      |
-| PD-TIA discrete gain       | 4 GPIO lines, high/low combinations  | Arduino GPIO       |
-| Polariser rotation         | Thorlabs KDC101 + PRM1-Z8            | USB (pylablib)     |
+| Role                 | Device                               | Transport      |
+| -------------------- | ------------------------------------ | -------------- |
+| Sample angle         | AS5048A #A (14-bit magnetic encoder) | SPI → Arduino  |
+| Detector-arm angle   | AS5048A #B                           | SPI → Arduino  |
+| Intensity (PD-TIA)   | ADS1220 24-bit ADC                   | SPI → Arduino  |
+| PD-TIA discrete gain | 4 GPIO lines, high/low combinations  | Arduino GPIO   |
+| Polariser rotation   | Thorlabs KDC101 + PRM1-Z8            | USB (pylablib) |
 
 `calibration_tool/` is a sibling PySide6 app using a KDC101 reference stage to calibrate AS5048A eccentricity/ellipticity errors.
 
@@ -45,12 +45,13 @@ Rules:
 - `QButtonGroup` may be constructed in Python because it is a non-visual logical helper; its buttons must still be declared in the `.ui` file.
 
 **Exceptions (explicitly permitted to build widgets in Python):**
-| File | Reason |
-|---|---|
-| `power_calibration_window.py` | User-approved exception — no `.ui` counterpart by design |
-| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py`, `multi_gain_calibration_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets |
-| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …) | Tab-extensibility pattern: tabs use `build()` for layout by design |
-| `log_window.py` | Sanctioned exception: imports `QObject, Qt, Signal, QTextCursor` beyond the usual whitelist for a cross-thread logging bridge (log records arrive off the Qt main thread and must be marshalled via a signal) |
+
+| File                                                                                                           | Reason                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `power_calibration_window.py`                                                                                  | User-approved exception — no `.ui` counterpart by design                                                                                                                                                      |
+| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py`, `multi_gain_calibration_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets                                                                                                                                 |
+| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …)                                                | Tab-extensibility pattern: tabs use `build()` for layout by design                                                                                                                                            |
+| `log_window.py`                                                                                                | Sanctioned exception: imports `QObject, Qt, Signal, QTextCursor` beyond the usual whitelist for a cross-thread logging bridge (log records arrive off the Qt main thread and must be marshalled via a signal) |
 
 `auto_power_calibration_window.py` now has a `.ui` counterpart (`ui_auto_power_calibration.py`) and is **not** an exception — it follows the normal Designer-first rule.
 
@@ -149,21 +150,21 @@ The Arduino firmware (v2.1.0) speaks SCPI-style commands over USB serial. **Sour
 
 Top-level subsystems (as implemented in firmware 2.1.0):
 
-| Subsystem                                                   | Purpose                             | Example                           |
-| ----------------------------------------------------------- | ----------------------------------- | --------------------------------- |
-| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI` | IEEE 488.2 common                   | `*IDN?`                           |
-| `MEAS:ENC:ANGL?`, `MEAS:ENC:MAGN?`                         | One-shot encoder reads              | `MEAS:ENC:ANGL? BOTH`             |
-| `MEAS:ADC:VOLT?`, `MEAS:ADC:TEMP?`, `MEAS:ALL?`            | One-shot ADC reads                  | `MEAS:ADC:VOLT?`                  |
-| `CONF:ENC:ZERO`, `CONF:ENC:ERR`                             | Encoder config (zero, error-clear)  | `CONF:ENC:ZERO A`                 |
-| `CONF:ADC:MUX/GAIN/RATE/MODE/FIR/VREF/TEMP/PWR`            | ADS1220 config                      | `CONF:ADC:VREF EXT`               |
-| `CONF:PDTIA:GAIN`                                           | PD-TIA discrete gain stage          | `CONF:PDTIA:GAIN 2`               |
-| `CONF:SRC`, `CONF:RATE`                                     | Streaming sources and rate          | `CONF:SRC ENC:BOTH,ADC`           |
-| `INIT:CONT ON/OFF`, `INIT`, `ABOR`                          | Stream control                      | `INIT:CONT ON`                    |
-| `FETC:ENC:ANGL?`, `FETC:ADC:VOLT?`, `FETC:ALL?`            | Fetch last frame (aliases MEAS:*)   | `FETC:ALL?`                       |
-| `READ?`, `READ? ADC`, `READ? ADC:T`                         | Arm and fetch                       | `READ?`                           |
-| `SENS:ADC:*?`, `SENS:PDTIA:GAIN?`, `SENS:SRC?`, `SENS:RATE?` | Query current config              | `SENS:ADC:VREF?`                  |
-| `SYST:ERR?`, `SYST:VERS?`, `SYST:UPTIME?`, `SYST:HELP?`, `SYST:DEB` | System/error/version       | `SYST:ERR?`                       |
-| `DIAG:ENC?`, `DIAG:ADC?`, `DIAG:PDTIA?`, `DIAG:SELF?`     | Diagnostics                         | `DIAG:ADC?`                       |
+| Subsystem                                                           | Purpose                            | Example                 |
+| ------------------------------------------------------------------- | ---------------------------------- | ----------------------- |
+| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI`           | IEEE 488.2 common                  | `*IDN?`                 |
+| `MEAS:ENC:ANGL?`, `MEAS:ENC:MAGN?`                                  | One-shot encoder reads             | `MEAS:ENC:ANGL? BOTH`   |
+| `MEAS:ADC:VOLT?`, `MEAS:ADC:TEMP?`, `MEAS:ALL?`                     | One-shot ADC reads                 | `MEAS:ADC:VOLT?`        |
+| `CONF:ENC:ZERO`, `CONF:ENC:ERR`                                     | Encoder config (zero, error-clear) | `CONF:ENC:ZERO A`       |
+| `CONF:ADC:MUX/GAIN/RATE/MODE/FIR/VREF/TEMP/PWR`                     | ADS1220 config                     | `CONF:ADC:VREF EXT`     |
+| `CONF:PDTIA:GAIN`                                                   | PD-TIA discrete gain stage         | `CONF:PDTIA:GAIN 2`     |
+| `CONF:SRC`, `CONF:RATE`                                             | Streaming sources and rate         | `CONF:SRC ENC:BOTH,ADC` |
+| `INIT:CONT ON/OFF`, `INIT`, `ABOR`                                  | Stream control                     | `INIT:CONT ON`          |
+| `FETC:ENC:ANGL?`, `FETC:ADC:VOLT?`, `FETC:ALL?`                     | Fetch last frame (aliases MEAS:*)  | `FETC:ALL?`             |
+| `READ?`, `READ? ADC`, `READ? ADC:T`                                 | Arm and fetch                      | `READ?`                 |
+| `SENS:ADC:*?`, `SENS:PDTIA:GAIN?`, `SENS:SRC?`, `SENS:RATE?`        | Query current config               | `SENS:ADC:VREF?`        |
+| `SYST:ERR?`, `SYST:VERS?`, `SYST:UPTIME?`, `SYST:HELP?`, `SYST:DEB` | System/error/version               | `SYST:ERR?`             |
+| `DIAG:ENC?`, `DIAG:ADC?`, `DIAG:PDTIA?`, `DIAG:SELF?`               | Diagnostics                        | `DIAG:ADC?`             |
 
 Streaming frame format: `DATA:FRAME seq=<n>,tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<n>,stat=<flags>` (only sources enabled by `CONF:SRC` are included; `seq`, `tsMs`, and `stat` are always present).
 
