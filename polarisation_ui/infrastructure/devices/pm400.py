@@ -37,6 +37,7 @@ except ImportError as _local_exc:
     except ImportError as _pkg_exc:
         _PYMEASURE_IMPORT_ERROR = f"Local driver: {_local_exc} | pymeasure package: {_pkg_exc}"
 
+_pyvisa = None
 _PYVISA_AVAILABLE = False
 _PYVISA_IMPORT_ERROR: str = ""
 

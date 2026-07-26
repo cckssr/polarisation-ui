@@ -106,3 +106,10 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["polarisation_ui"]
+omit = ["polarisation_ui/pyqt/ui_*.py"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
