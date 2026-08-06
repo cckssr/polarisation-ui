@@ -1,12 +1,12 @@
 """Device adapter implementations."""
 
 from .dual_encoder import (
-    DualEncoderArduino,
     ADCClient,
-    EncoderID,
-    StreamSource,
-    EncoderValue,
+    DualEncoderArduino,
     DualEncoderValue,
+    EncoderID,
+    EncoderValue,
+    StreamSource,
 )
 
 __all__ = [

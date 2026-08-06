@@ -1,6 +1,6 @@
 """Acquisition Settings Dialog.
 
-Wraps the Qt Designer UI (acq_settings_ui.py) and provides
+Wraps the Qt Designer UI (ui_acq_settings.py) and provides
 a clean interface to read/write AcquisitionSettings values.
 
 Settings changed here apply only to the current session;
@@ -9,8 +9,8 @@ nothing is written back to config.json.
 
 from PySide6.QtWidgets import QDialog
 
-from polarisation_ui.pyqt.ui_acq_settings import Ui_Dialog
 from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.pyqt.ui_acq_settings import Ui_Dialog
 
 
 class AcquisitionSettingsDialog(QDialog):
@@ -47,6 +47,8 @@ class AcquisitionSettingsDialog(QDialog):
             det_averages=self.ui.det_averages.value(),
             samp_average_on=self.ui.samp_averageOn.isChecked(),
             samp_averages=self.ui.samp_averages.value(),
+            pdtia_average_on=self._original_settings.pdtia_average_on,
+            pdtia_averages=self._original_settings.pdtia_averages,
             sample_stage_inverted=self._original_settings.sample_stage_inverted,
             spike_filter_enabled=self.ui.spikeEnabled.isChecked(),
             spike_max_delta_deg=self.ui.spikeMaxDelta.value(),

@@ -5,8 +5,6 @@ plot.  Points are added via add_point() (Save button) and removed via
 remove_last_point() or remove_point_at().
 """
 
-from typing import Optional
-
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
@@ -23,7 +21,8 @@ class BrewsterCurvePlot(QWidget):
     is additionally outlined with a red ring so the user can see the last entry.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the pyqtgraph plot widget with an empty point buffer."""
         super().__init__(parent)
         self._points: list[BrewsterPoint] = []
         self._setup_plot()
@@ -67,8 +66,8 @@ class BrewsterCurvePlot(QWidget):
         detector_angle: float,
         intensity_V: float,
         pdtia_gain: int = 0,
-        power_W: Optional[float] = None,
-        conv_factor_W_per_V: Optional[float] = None,
+        power_W: float | None = None,
+        conv_factor_W_per_V: float | None = None,
     ) -> None:
         """Append a new measurement point and refresh the plot."""
         self._points.append(

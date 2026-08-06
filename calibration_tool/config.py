@@ -1,5 +1,4 @@
-"""
-Configuration for AS5048A Calibration Tool.
+"""Configuration for AS5048A Calibration Tool.
 
 Edit the serial numbers and ports below to match your setup.
 """

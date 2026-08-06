@@ -32,9 +32,7 @@ class _LogWindowHandler(logging.Handler):
     def __init__(self) -> None:
         super().__init__()
         self._emitter = _SignalEmitter()
-        self.setFormatter(
-            logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s")
-        )
+        self.setFormatter(logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s"))
 
     def connect(self, slot) -> None:
         self._emitter.message.connect(slot, Qt.ConnectionType.QueuedConnection)
@@ -50,6 +48,7 @@ class LogWindow(QDialog):
     """Non-modal dialog that shows the live application log."""
 
     def __init__(self, parent=None) -> None:
+        """Build the dialog UI and start forwarding log records into it."""
         super().__init__(parent)
         self.ui = Ui_LogWindow()
         self.ui.setupUi(self)
@@ -67,5 +66,6 @@ class LogWindow(QDialog):
         self.ui.textLog.setTextCursor(cursor)
 
     def closeEvent(self, event) -> None:
+        """Detach the log handler before closing so it isn't kept alive needlessly."""
         Debug.remove_handler(self._handler)
         event.accept()

@@ -12,6 +12,11 @@ static const uint8_t kPdGainPatterns[PDTIA_NUM_STAGES] = {
     0b1000, // stage 4 — highest gain
 };
 
+// How often pollTemperature() starts a fresh background conversion while
+// ADC:T streaming is active. Independent of _conversionPeriodMs (the voltage
+// data rate) since temperature drifts slowly.
+static const uint32_t kTempRefreshIntervalMs = 500;
+
 // MUX token table — index matches bits 7:4 of ADS1220 config register 0.
 static const char *const kMuxNames[15] = {
     "DIFF01", // AIN0-AIN1  (default)
@@ -107,7 +112,7 @@ bool AdsSession::_verifyConfiguration()
   return true;
 }
 
-bool AdsSession::_attemptRecovery()
+bool AdsSession::_attemptRecovery(bool blockingDiscard)
 {
   // Try to re-initialize the ADS1220 (useful after power/connection loss).
   if (_adc.begin(ADC_SPI_HZ))
@@ -118,9 +123,22 @@ bool AdsSession::_attemptRecovery()
     // Re-apply PD-TIA GPIO stage to ensure detector front-end is known state.
     _applyPdGainGpio(kPdGainPatterns[_pdGainStage]);
 
-    // Discard first conversion and resync timing.
-    _waitForFirstConversion();
-    _nextConversionMs = millis() + _conversionPeriodMs;
+    if (blockingDiscard)
+    {
+      // One-shot synchronous path (takeVoltageReading()): block briefly for
+      // the stale first conversion so the caller gets a settled value back.
+      _waitForFirstConversion();
+      _nextConversionMs = millis() + _conversionPeriodMs;
+    }
+    else
+    {
+      // Streaming path (pollAdc()): never block the main loop. Defer the
+      // discard-read; pollAdc() finishes it once the conversion period has
+      // elapsed (see the _recovering branch there).
+      _recovering = true;
+      _recoveryDiscardDeadlineMs = millis() + _conversionPeriodMs * 2;
+    }
+
     _nextRecoveryAttemptMs = 0;
     _present = true;
     return true;
@@ -165,6 +183,8 @@ void AdsSession::reset()
   _lastRaw = 0;
   setPdGainStage(0);
 
+  _recovering = false;
+  _tempConverting = false;
   _waitForFirstConversion();
   _nextConversionMs = millis() + _conversionPeriodMs;
 }
@@ -175,6 +195,10 @@ void AdsSession::powerDown()
   if (_present)
     _adc.powerDown();
   _present = false;
+  // Clear in-flight non-blocking state so a stale flag can't wedge pollAdc()
+  // into skipping forever once the ADC comes back via powerUp().
+  _recovering = false;
+  _tempConverting = false;
 }
 
 void AdsSession::powerUp()
@@ -197,17 +221,34 @@ bool AdsSession::ready() const
 
 void AdsSession::pollAdc()
 {
+  // The ADS1220 can only digitize one mux input at a time. While a
+  // temperature conversion or a post-recovery discard-read is in flight,
+  // skip normal voltage polling this tick instead of blocking for it.
+  if (_tempConverting)
+    return;
+
+  if (_recovering)
+  {
+    if ((int32_t)(millis() - _recoveryDiscardDeadlineMs) < 0)
+      return; // still waiting for the stale first conversion to settle
+    _adc.readRawWithCommand();
+    _recovering = false;
+    _nextConversionMs = millis() + _conversionPeriodMs;
+    return;
+  }
+
   // If ADC not present, try to recover (power/connection may have returned),
   // unless a deliberate power-down is in effect.
   if (!_present)
   {
     if (_inhibitRecovery || millis() < _nextRecoveryAttemptMs)
       return;
-    if (!_attemptRecovery())
+    if (!_attemptRecovery(/*blockingDiscard=*/false))
     {
       _scheduleRecoveryRetry();
       return;
     }
+    return; // _attemptRecovery() started the non-blocking discard wait above
   }
 
   // Verify the ADC still matches the expected configuration. If not, mark
@@ -224,6 +265,37 @@ void AdsSession::pollAdc()
   _nextConversionMs = millis() + _conversionPeriodMs;
 }
 
+void AdsSession::pollTemperature()
+{
+  if (!_present)
+    return;
+
+  if (_tempConverting)
+  {
+    if ((int32_t)(millis() - _tempConversionDeadlineMs) < 0)
+      return; // still converting
+    float temp = _adc.readTemperature();
+    _lastTemperature = temp;
+    _adc.enableTemperatureSensor(false);
+    _tempConverting = false;
+    _nextTempConversionMs = millis() + kTempRefreshIntervalMs;
+    return;
+  }
+
+  // Only bother refreshing when a consumer actually wants ADC:T — avoids
+  // stealing ADC time from normal voltage polling for nothing.
+  if (!(appState.stream.sources & SRC_ADC_T))
+    return;
+  if (millis() < _nextTempConversionMs)
+    return;
+  if (_recovering)
+    return; // let the recovery discard-read finish first
+
+  _adc.enableTemperatureSensor(true);
+  _tempConversionDeadlineMs = millis() + _conversionPeriodMs + 10;
+  _tempConverting = true;
+}
+
 // ── One-shot reads ────────────────────────────────────────────────────────────
 
 float AdsSession::takeVoltageReading()
@@ -233,8 +305,9 @@ float AdsSession::takeVoltageReading()
     if (_inhibitRecovery || millis() < _nextRecoveryAttemptMs)
       return NAN;
 
-    // Try to recover once for synchronous one-shot reads.
-    if (!_attemptRecovery())
+    // Try to recover once for synchronous one-shot reads. Blocking briefly
+    // here is fine — this is a one-shot query, not the streaming loop.
+    if (!_attemptRecovery(/*blockingDiscard=*/true))
     {
       _scheduleRecoveryRetry();
       return NAN;
@@ -250,6 +323,18 @@ float AdsSession::takeTemperatureReading(uint32_t timeoutMs)
 {
   if (!_present)
     return NAN;
+
+  if (_tempConverting)
+  {
+    // A background conversion (from pollTemperature(), used while streaming
+    // ADC:T) is already in flight — finish that one instead of re-triggering
+    // the sensor mid-conversion, which would desync the state machine.
+    int32_t remainingMs = (int32_t)(_tempConversionDeadlineMs - millis());
+    if (remainingMs > 0)
+      delay(min((uint32_t)remainingMs, timeoutMs));
+    pollTemperature();
+    return _lastTemperature;
+  }
 
   _adc.enableTemperatureSensor(true);
   // DRDY is not connected; wait one conversion period plus a safety margin.

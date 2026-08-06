@@ -6,7 +6,7 @@
 #define SPI_HZ 1000000UL
 
 // ── ADS1220 ADC ───────────────────────────────────────────────────────────────
-// Uses second SPI peripheral (VSPI) on the ESP32, with dedicated GPIO pins.
+// Uses second SPI peripheral (HSPI) on the ESP32, with dedicated GPIO pins.
 #define ADC_MISO_PIN 5
 #define ADC_MOSI_PIN 6
 #define ADC_SCK_PIN 7
@@ -30,7 +30,7 @@
 #define DEVICE_MFR "Custom Arduino Nano ESP32"
 #define DEVICE_MODEL "Dual_AS5048A-ADS1220"
 #define DEVICE_SERIAL "0"
-#define FW_VERSION "2.0.1"
+#define FW_VERSION "2.1.0"
 
 // ── Streaming defaults ────────────────────────────────────────────────────────
 #define DEFAULT_STREAM_RATE_HZ 20   // 50 ms per frame

@@ -5,4 +5,3 @@ pylablib>=1.4.0
 pyserial>=3.5
 numpy>=1.21.0
 matplotlib>=3.5.0
-pymeasure>=0.16.0

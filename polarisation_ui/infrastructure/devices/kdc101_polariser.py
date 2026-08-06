@@ -6,8 +6,6 @@ Positions are always in degrees (PRM1-Z8 scale is applied automatically).
 Do NOT use raw APT messages here — all communication goes through pylablib.
 """
 
-from typing import Optional
-
 from polarisation_ui.core.exceptions import KDC101Error, KDC101TimeoutError
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -17,7 +15,7 @@ from polarisation_ui.infrastructure.logging import Debug
 _Thorlabs = None
 _ThorlabsError: type = Exception  # falls back to bare Exception until loaded
 _ThorlabsTimeoutError: type = Exception
-_PYLABLIB_AVAILABLE: Optional[bool] = None  # None = not yet probed
+_PYLABLIB_AVAILABLE: bool | None = None  # None = not yet probed
 _PYLABLIB_IMPORT_ERROR: str = ""
 
 _PRM1_Z8_SCALE = "PRM1-Z8"  # built-in pylablib scale for the PRM1/MZ8 stage
@@ -33,6 +31,8 @@ def _ensure_pylablib() -> bool:
         from pylablib.devices import Thorlabs as _th
         from pylablib.devices.Thorlabs import (
             ThorlabsError as _te,
+        )
+        from pylablib.devices.Thorlabs import (
             ThorlabsTimeoutError as _tte,
         )
 
@@ -64,7 +64,8 @@ class KDC101Polariser:
     """
 
     def __init__(self) -> None:
-        self._motor: Optional[object] = None
+        """Start disconnected; connect() opens the pylablib KinesisMotor session."""
+        self._motor: object | None = None
 
     # ── Connection ────────────────────────────────────────────────────────────
 
@@ -79,8 +80,7 @@ class KDC101Polariser:
         """
         if not _ensure_pylablib():
             raise KDC101Error(
-                f"pylablib is not installed; cannot connect to KDC101 "
-                f"({_PYLABLIB_IMPORT_ERROR})"
+                f"pylablib is not installed; cannot connect to KDC101 ({_PYLABLIB_IMPORT_ERROR})"
             )
         try:
             motor = _Thorlabs.KinesisMotor(conn_id, scale=_PRM1_Z8_SCALE)
@@ -96,6 +96,7 @@ class KDC101Polariser:
             raise KDC101Error(f"KDC101 connect failed: {exc}") from exc
 
     def disconnect(self) -> None:
+        """Close the motor session, if any, ignoring errors during shutdown."""
         if self._motor is not None:
             try:
                 self._motor.close()
@@ -106,6 +107,7 @@ class KDC101Polariser:
         Debug.info("KDC101Polariser: disconnected")
 
     def is_connected(self) -> bool:
+        """Return whether the motor session is currently open."""
         return self._motor is not None
 
     # ── Motion ────────────────────────────────────────────────────────────────
@@ -125,9 +127,7 @@ class KDC101Polariser:
         except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 home failed: {exc}") from exc
 
-    def move_to(
-        self, angle_deg: float, wait: bool = True, timeout: float = 60.0
-    ) -> None:
+    def move_to(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
         """Move to *angle_deg* (degrees).  Blocks until the move completes when *wait* is True.
 
         Raises ``KDC101TimeoutError`` on timeout, ``KDC101Error`` on other errors.
@@ -138,13 +138,9 @@ class KDC101Polariser:
             if wait:
                 self._motor.wait_move(timeout=timeout)
         except _ThorlabsTimeoutError as exc:
-            raise KDC101TimeoutError(
-                f"KDC101 move_to({angle_deg:.2f}°) timed out: {exc}"
-            ) from exc
+            raise KDC101TimeoutError(f"KDC101 move_to({angle_deg:.2f}°) timed out: {exc}") from exc
         except _ThorlabsError as exc:
-            raise KDC101Error(
-                f"KDC101 move_to({angle_deg:.2f}°) failed: {exc}"
-            ) from exc
+            raise KDC101Error(f"KDC101 move_to({angle_deg:.2f}°) failed: {exc}") from exc
 
     def get_position_deg(self) -> float:
         """Return the current position in degrees."""

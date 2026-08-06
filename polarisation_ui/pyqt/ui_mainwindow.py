@@ -114,14 +114,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setContentsMargins(0, -1, -1, 0)
         self.lblSampleStatus_2 = QLabel(self.centralwidget)
         self.lblSampleStatus_2.setObjectName("lblSampleStatus_2")
-        sizePolicy = QSizePolicy(
-            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
-        )
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus_2.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus_2.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus_2.setSizePolicy(sizePolicy)
         self.lblSampleStatus_2.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -134,14 +130,10 @@ class Ui_MainWindow(object):
         self.lcdSampleAngle = QLCDNumber(self.centralwidget)
         self.lcdSampleAngle.setObjectName("lcdSampleAngle")
         self.lcdSampleAngle.setEnabled(True)
-        sizePolicy1 = QSizePolicy(
-            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
-        )
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(
-            self.lcdSampleAngle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.lcdSampleAngle.sizePolicy().hasHeightForWidth())
         self.lcdSampleAngle.setSizePolicy(sizePolicy1)
         self.lcdSampleAngle.setMinimumSize(QSize(0, 40))
         self.lcdSampleAngle.setLineWidth(2)
@@ -153,9 +145,7 @@ class Ui_MainWindow(object):
 
         self.lblSampleStatus_3 = QLabel(self.centralwidget)
         self.lblSampleStatus_3.setObjectName("lblSampleStatus_3")
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus_3.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus_3.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus_3.setSizePolicy(sizePolicy)
         self.lblSampleStatus_3.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -168,9 +158,7 @@ class Ui_MainWindow(object):
         self.lcdDetectorStageAngle = QLCDNumber(self.centralwidget)
         self.lcdDetectorStageAngle.setObjectName("lcdDetectorStageAngle")
         self.lcdDetectorStageAngle.setEnabled(True)
-        sizePolicy1.setHeightForWidth(
-            self.lcdDetectorStageAngle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.lcdDetectorStageAngle.sizePolicy().hasHeightForWidth())
         self.lcdDetectorStageAngle.setSizePolicy(sizePolicy1)
         self.lcdDetectorStageAngle.setMinimumSize(QSize(0, 40))
         self.lcdDetectorStageAngle.setLineWidth(2)
@@ -188,9 +176,7 @@ class Ui_MainWindow(object):
 
         self.lblSampleStatus_4 = QLabel(self.centralwidget)
         self.lblSampleStatus_4.setObjectName("lblSampleStatus_4")
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus_4.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus_4.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus_4.setSizePolicy(sizePolicy)
         self.lblSampleStatus_4.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -203,9 +189,7 @@ class Ui_MainWindow(object):
         self.lcdDetectorVoltage_mV = QLCDNumber(self.centralwidget)
         self.lcdDetectorVoltage_mV.setObjectName("lcdDetectorVoltage_mV")
         self.lcdDetectorVoltage_mV.setEnabled(True)
-        sizePolicy1.setHeightForWidth(
-            self.lcdDetectorVoltage_mV.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.lcdDetectorVoltage_mV.sizePolicy().hasHeightForWidth())
         self.lcdDetectorVoltage_mV.setSizePolicy(sizePolicy1)
         self.lcdDetectorVoltage_mV.setMinimumSize(QSize(0, 40))
         self.lcdDetectorVoltage_mV.setLineWidth(2)
@@ -216,9 +200,7 @@ class Ui_MainWindow(object):
 
         self.lblSampleStatus_5 = QLabel(self.centralwidget)
         self.lblSampleStatus_5.setObjectName("lblSampleStatus_5")
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus_5.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus_5.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus_5.setSizePolicy(sizePolicy)
         self.lblSampleStatus_5.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -231,9 +213,7 @@ class Ui_MainWindow(object):
         self.lcdDetectorPower = QLCDNumber(self.centralwidget)
         self.lcdDetectorPower.setObjectName("lcdDetectorPower")
         self.lcdDetectorPower.setEnabled(True)
-        sizePolicy1.setHeightForWidth(
-            self.lcdDetectorPower.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.lcdDetectorPower.sizePolicy().hasHeightForWidth())
         self.lcdDetectorPower.setSizePolicy(sizePolicy1)
         self.lcdDetectorPower.setMinimumSize(QSize(0, 40))
         self.lcdDetectorPower.setLineWidth(2)
@@ -244,9 +224,7 @@ class Ui_MainWindow(object):
 
         self.lblSampleStatus_6 = QLabel(self.centralwidget)
         self.lblSampleStatus_6.setObjectName("lblSampleStatus_6")
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus_6.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus_6.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus_6.setSizePolicy(sizePolicy)
         self.lblSampleStatus_6.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -261,9 +239,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setContentsMargins(-1, 0, -1, -1)
         self.btnGain1_2 = QPushButton(self.centralwidget)
         self.btnGain1_2.setObjectName("btnGain1_2")
-        sizePolicy2 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.btnGain1_2.sizePolicy().hasHeightForWidth())
@@ -321,9 +297,7 @@ class Ui_MainWindow(object):
 
         self.leSuffix = QLineEdit(self.groupBox)
         self.leSuffix.setObjectName("leSuffix")
-        sizePolicy3 = QSizePolicy(
-            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed
-        )
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
         sizePolicy3.setHeightForWidth(self.leSuffix.sizePolicy().hasHeightForWidth())
@@ -340,17 +314,11 @@ class Ui_MainWindow(object):
 
         self.pteCurrentFilename = QPlainTextEdit(self.groupBox)
         self.pteCurrentFilename.setObjectName("pteCurrentFilename")
-        sizePolicy3.setHeightForWidth(
-            self.pteCurrentFilename.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.pteCurrentFilename.sizePolicy().hasHeightForWidth())
         self.pteCurrentFilename.setSizePolicy(sizePolicy3)
         self.pteCurrentFilename.setMaximumSize(QSize(200, 45))
-        self.pteCurrentFilename.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.pteCurrentFilename.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        self.pteCurrentFilename.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.pteCurrentFilename.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.pteCurrentFilename.setUndoRedoEnabled(False)
         self.pteCurrentFilename.setReadOnly(True)
 
@@ -361,9 +329,7 @@ class Ui_MainWindow(object):
         font = QFont()
         font.setPointSize(11)
         self.lblDropbox.setFont(font)
-        self.lblDropbox.setAlignment(
-            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
-        )
+        self.lblDropbox.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
 
         self.verticalLayout_3.addWidget(self.lblDropbox)
 
@@ -427,9 +393,7 @@ class Ui_MainWindow(object):
         self.gridLayout.setObjectName("gridLayout")
         self.gbSave = QGroupBox(self.configuration)
         self.gbSave.setObjectName("gbSave")
-        sizePolicy5 = QSizePolicy(
-            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred
-        )
+        sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
         sizePolicy5.setHorizontalStretch(0)
         sizePolicy5.setVerticalStretch(0)
         sizePolicy5.setHeightForWidth(self.gbSave.sizePolicy().hasHeightForWidth())
@@ -476,9 +440,7 @@ class Ui_MainWindow(object):
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.addItem("")
         self.cbGroupLetter.setObjectName("cbGroupLetter")
-        sizePolicy3.setHeightForWidth(
-            self.cbGroupLetter.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.cbGroupLetter.sizePolicy().hasHeightForWidth())
         self.cbGroupLetter.setSizePolicy(sizePolicy3)
         self.cbGroupLetter.setMaxCount(24)
         self.cbGroupLetter.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
@@ -511,9 +473,7 @@ class Ui_MainWindow(object):
         self.gbDetector = QGroupBox(self.configuration)
         self.gbDetector.setObjectName("gbDetector")
         self.gbDetector.setEnabled(False)
-        sizePolicy6 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-        )
+        sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         sizePolicy6.setHorizontalStretch(0)
         sizePolicy6.setVerticalStretch(0)
         sizePolicy6.setHeightForWidth(self.gbDetector.sizePolicy().hasHeightForWidth())
@@ -524,46 +484,32 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.formLayout = QFormLayout()
         self.formLayout.setObjectName("formLayout")
-        self.formLayout.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
-        )
+        self.formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formLayout.setContentsMargins(-1, -1, 0, -1)
         self.lcdDetectorVoltage_2 = QLCDNumber(self.gbDetector)
         self.lcdDetectorVoltage_2.setObjectName("lcdDetectorVoltage_2")
-        sizePolicy3.setHeightForWidth(
-            self.lcdDetectorVoltage_2.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.lcdDetectorVoltage_2.sizePolicy().hasHeightForWidth())
         self.lcdDetectorVoltage_2.setSizePolicy(sizePolicy3)
         self.lcdDetectorVoltage_2.setMinimumSize(QSize(0, 30))
         self.lcdDetectorVoltage_2.setLineWidth(2)
         self.lcdDetectorVoltage_2.setDigitCount(8)
         self.lcdDetectorVoltage_2.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
 
-        self.formLayout.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage_2
-        )
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdDetectorVoltage_2)
 
         self.lblDetectorVoltage = QLabel(self.gbDetector)
         self.lblDetectorVoltage.setObjectName("lblDetectorVoltage")
-        sizePolicy7 = QSizePolicy(
-            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
-        )
+        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy7.setHorizontalStretch(0)
         sizePolicy7.setVerticalStretch(0)
-        sizePolicy7.setHeightForWidth(
-            self.lblDetectorVoltage.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblDetectorVoltage.sizePolicy().hasHeightForWidth())
         self.lblDetectorVoltage.setSizePolicy(sizePolicy7)
 
-        self.formLayout.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblDetectorVoltage
-        )
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblDetectorVoltage)
 
         self.lblDetectorStatus = QLabel(self.gbDetector)
         self.lblDetectorStatus.setObjectName("lblDetectorStatus")
-        sizePolicy.setHeightForWidth(
-            self.lblDetectorStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblDetectorStatus.sizePolicy().hasHeightForWidth())
         self.lblDetectorStatus.setSizePolicy(sizePolicy)
         self.lblDetectorStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -571,17 +517,13 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formLayout.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblDetectorStatus
-        )
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblDetectorStatus)
 
         self.hlDetectorStatus = QHBoxLayout()
         self.hlDetectorStatus.setObjectName("hlDetectorStatus")
         self.lblDetectorStatusValue = QLabel(self.gbDetector)
         self.lblDetectorStatusValue.setObjectName("lblDetectorStatusValue")
-        sizePolicy2.setHeightForWidth(
-            self.lblDetectorStatusValue.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy2.setHeightForWidth(self.lblDetectorStatusValue.sizePolicy().hasHeightForWidth())
         self.lblDetectorStatusValue.setSizePolicy(sizePolicy2)
         self.lblDetectorStatusValue.setMinimumSize(QSize(0, 16))
         font1 = QFont()
@@ -600,9 +542,7 @@ class Ui_MainWindow(object):
         sizePolicy8 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy8.setHorizontalStretch(0)
         sizePolicy8.setVerticalStretch(0)
-        sizePolicy8.setHeightForWidth(
-            self.ledDetectorStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy8.setHeightForWidth(self.ledDetectorStatus.sizePolicy().hasHeightForWidth())
         self.ledDetectorStatus.setSizePolicy(sizePolicy8)
         self.ledDetectorStatus.setMinimumSize(QSize(16, 16))
         self.ledDetectorStatus.setMaximumSize(QSize(16, 16))
@@ -612,9 +552,7 @@ class Ui_MainWindow(object):
 
         self.hlDetectorStatus.addWidget(self.ledDetectorStatus)
 
-        self.formLayout.setLayout(
-            0, QFormLayout.ItemRole.FieldRole, self.hlDetectorStatus
-        )
+        self.formLayout.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlDetectorStatus)
 
         self.btnDarkTare = QPushButton(self.gbDetector)
         self.btnDarkTare.setObjectName("btnDarkTare")
@@ -629,9 +567,7 @@ class Ui_MainWindow(object):
         self.lblDarkOffsetValue = QLabel(self.gbDetector)
         self.lblDarkOffsetValue.setObjectName("lblDarkOffsetValue")
 
-        self.formLayout.setWidget(
-            5, QFormLayout.ItemRole.SpanningRole, self.lblDarkOffsetValue
-        )
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.lblDarkOffsetValue)
 
         self.horizontalLayout_8 = QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
@@ -649,9 +585,7 @@ class Ui_MainWindow(object):
 
         self.lblPdtiaAverages = QLabel(self.gbDetector)
         self.lblPdtiaAverages.setObjectName("lblPdtiaAverages")
-        sizePolicy7.setHeightForWidth(
-            self.lblPdtiaAverages.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblPdtiaAverages.sizePolicy().hasHeightForWidth())
         self.lblPdtiaAverages.setSizePolicy(sizePolicy7)
 
         self.horizontalLayout_8.addWidget(self.lblPdtiaAverages)
@@ -666,9 +600,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_8.setStretch(3, 1)
 
-        self.formLayout.setLayout(
-            3, QFormLayout.ItemRole.SpanningRole, self.horizontalLayout_8
-        )
+        self.formLayout.setLayout(3, QFormLayout.ItemRole.SpanningRole, self.horizontalLayout_8)
 
         self.cbPdtiaID = QComboBox(self.gbDetector)
         self.cbPdtiaID.setObjectName("cbPdtiaID")
@@ -684,9 +616,7 @@ class Ui_MainWindow(object):
         self.gridLayout_4.setContentsMargins(-1, -1, 0, -1)
         self.lcdDetectorPower_2 = QLCDNumber(self.gbDetector)
         self.lcdDetectorPower_2.setObjectName("lcdDetectorPower_2")
-        sizePolicy3.setHeightForWidth(
-            self.lcdDetectorPower_2.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.lcdDetectorPower_2.sizePolicy().hasHeightForWidth())
         self.lcdDetectorPower_2.setSizePolicy(sizePolicy3)
         self.lcdDetectorPower_2.setMinimumSize(QSize(0, 30))
         self.lcdDetectorPower_2.setLineWidth(2)
@@ -720,9 +650,7 @@ class Ui_MainWindow(object):
         self.gainButtonGroup.setObjectName("gainButtonGroup")
         self.gainButtonGroup.addButton(self.btnGain1)
         self.btnGain1.setObjectName("btnGain1")
-        sizePolicy9 = QSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding
-        )
+        sizePolicy9 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
         sizePolicy9.setHorizontalStretch(0)
         sizePolicy9.setVerticalStretch(0)
         sizePolicy9.setHeightForWidth(self.btnGain1.sizePolicy().hasHeightForWidth())
@@ -771,9 +699,7 @@ class Ui_MainWindow(object):
 
         self.lblGainLabel = QLabel(self.gbDetector)
         self.lblGainLabel.setObjectName("lblGainLabel")
-        sizePolicy7.setHeightForWidth(
-            self.lblGainLabel.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblGainLabel.sizePolicy().hasHeightForWidth())
         self.lblGainLabel.setSizePolicy(sizePolicy7)
 
         self.gridLayout_4.addWidget(self.lblGainLabel, 2, 0, 1, 1)
@@ -795,9 +721,7 @@ class Ui_MainWindow(object):
         self.gbDetectorStage = QGroupBox(self.configuration)
         self.gbDetectorStage.setObjectName("gbDetectorStage")
         self.gbDetectorStage.setEnabled(False)
-        sizePolicy6.setHeightForWidth(
-            self.gbDetectorStage.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy6.setHeightForWidth(self.gbDetectorStage.sizePolicy().hasHeightForWidth())
         self.gbDetectorStage.setSizePolicy(sizePolicy6)
         self.gbDetectorStage.setMinimumSize(QSize(0, 0))
         self.gbDetectorStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -817,9 +741,7 @@ class Ui_MainWindow(object):
         self.formDetectorStage.setContentsMargins(-1, 5, -1, 5)
         self.lblDetectorStageStatus = QLabel(self.gbDetectorStage)
         self.lblDetectorStageStatus.setObjectName("lblDetectorStageStatus")
-        sizePolicy6.setHeightForWidth(
-            self.lblDetectorStageStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy6.setHeightForWidth(self.lblDetectorStageStatus.sizePolicy().hasHeightForWidth())
         self.lblDetectorStageStatus.setSizePolicy(sizePolicy6)
         self.lblDetectorStageStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -851,9 +773,7 @@ class Ui_MainWindow(object):
 
         self.ledDetectorStageStatus = QLabel(self.gbDetectorStage)
         self.ledDetectorStageStatus.setObjectName("ledDetectorStageStatus")
-        sizePolicy8.setHeightForWidth(
-            self.ledDetectorStageStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy8.setHeightForWidth(self.ledDetectorStageStatus.sizePolicy().hasHeightForWidth())
         self.ledDetectorStageStatus.setSizePolicy(sizePolicy8)
         self.ledDetectorStageStatus.setMinimumSize(QSize(16, 16))
         self.ledDetectorStageStatus.setMaximumSize(QSize(16, 16))
@@ -869,9 +789,7 @@ class Ui_MainWindow(object):
 
         self.lblDetectorStageAngle = QLabel(self.gbDetectorStage)
         self.lblDetectorStageAngle.setObjectName("lblDetectorStageAngle")
-        sizePolicy7.setHeightForWidth(
-            self.lblDetectorStageAngle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblDetectorStageAngle.sizePolicy().hasHeightForWidth())
         self.lblDetectorStageAngle.setSizePolicy(sizePolicy7)
 
         self.formDetectorStage.setWidget(
@@ -880,9 +798,7 @@ class Ui_MainWindow(object):
 
         self.lcdDetectorStageAngle_2 = QLCDNumber(self.gbDetectorStage)
         self.lcdDetectorStageAngle_2.setObjectName("lcdDetectorStageAngle_2")
-        sizePolicy3.setHeightForWidth(
-            self.lcdDetectorStageAngle_2.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.lcdDetectorStageAngle_2.sizePolicy().hasHeightForWidth())
         self.lcdDetectorStageAngle_2.setSizePolicy(sizePolicy3)
         self.lcdDetectorStageAngle_2.setMinimumSize(QSize(0, 30))
         self.lcdDetectorStageAngle_2.setLineWidth(2)
@@ -909,9 +825,7 @@ class Ui_MainWindow(object):
 
         self.lblDetectorAverages = QLabel(self.gbDetectorStage)
         self.lblDetectorAverages.setObjectName("lblDetectorAverages")
-        sizePolicy7.setHeightForWidth(
-            self.lblDetectorAverages.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblDetectorAverages.sizePolicy().hasHeightForWidth())
         self.lblDetectorAverages.setSizePolicy(sizePolicy7)
 
         self.horizontalLayout_6.addWidget(self.lblDetectorAverages)
@@ -932,9 +846,7 @@ class Ui_MainWindow(object):
 
         self.btnDetectorStageZero = QPushButton(self.gbDetectorStage)
         self.btnDetectorStageZero.setObjectName("btnDetectorStageZero")
-        sizePolicy1.setHeightForWidth(
-            self.btnDetectorStageZero.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.btnDetectorStageZero.sizePolicy().hasHeightForWidth())
         self.btnDetectorStageZero.setSizePolicy(sizePolicy1)
         self.btnDetectorStageZero.setMinimumSize(QSize(0, 0))
 
@@ -944,9 +856,7 @@ class Ui_MainWindow(object):
 
         self.btnDetectorStage180 = QPushButton(self.gbDetectorStage)
         self.btnDetectorStage180.setObjectName("btnDetectorStage180")
-        sizePolicy1.setHeightForWidth(
-            self.btnDetectorStage180.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.btnDetectorStage180.sizePolicy().hasHeightForWidth())
         self.btnDetectorStage180.setSizePolicy(sizePolicy1)
         self.btnDetectorStage180.setMinimumSize(QSize(0, 0))
 
@@ -959,9 +869,7 @@ class Ui_MainWindow(object):
         self.gbSampleStage = QGroupBox(self.configuration)
         self.gbSampleStage.setObjectName("gbSampleStage")
         self.gbSampleStage.setEnabled(False)
-        sizePolicy6.setHeightForWidth(
-            self.gbSampleStage.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy6.setHeightForWidth(self.gbSampleStage.sizePolicy().hasHeightForWidth())
         self.gbSampleStage.setSizePolicy(sizePolicy6)
         self.gbSampleStage.setMinimumSize(QSize(0, 0))
         self.gbSampleStage.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -982,9 +890,7 @@ class Ui_MainWindow(object):
         self.formSampleStage.setContentsMargins(-1, 5, -1, 5)
         self.lblSampleStatus = QLabel(self.gbSampleStage)
         self.lblSampleStatus.setObjectName("lblSampleStatus")
-        sizePolicy.setHeightForWidth(
-            self.lblSampleStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.lblSampleStatus.sizePolicy().hasHeightForWidth())
         self.lblSampleStatus.setSizePolicy(sizePolicy)
         self.lblSampleStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -992,17 +898,13 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formSampleStage.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblSampleStatus
-        )
+        self.formSampleStage.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblSampleStatus)
 
         self.hlSampleStatus = QHBoxLayout()
         self.hlSampleStatus.setObjectName("hlSampleStatus")
         self.lblSampleStatusValue = QLabel(self.gbSampleStage)
         self.lblSampleStatusValue.setObjectName("lblSampleStatusValue")
-        sizePolicy2.setHeightForWidth(
-            self.lblSampleStatusValue.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy2.setHeightForWidth(self.lblSampleStatusValue.sizePolicy().hasHeightForWidth())
         self.lblSampleStatusValue.setSizePolicy(sizePolicy2)
         self.lblSampleStatusValue.setMinimumSize(QSize(0, 16))
         self.lblSampleStatusValue.setFont(font1)
@@ -1016,9 +918,7 @@ class Ui_MainWindow(object):
 
         self.ledSampleStatus = QLabel(self.gbSampleStage)
         self.ledSampleStatus.setObjectName("ledSampleStatus")
-        sizePolicy8.setHeightForWidth(
-            self.ledSampleStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy8.setHeightForWidth(self.ledSampleStatus.sizePolicy().hasHeightForWidth())
         self.ledSampleStatus.setSizePolicy(sizePolicy8)
         self.ledSampleStatus.setMinimumSize(QSize(16, 16))
         self.ledSampleStatus.setMaximumSize(QSize(16, 16))
@@ -1028,35 +928,25 @@ class Ui_MainWindow(object):
 
         self.hlSampleStatus.addWidget(self.ledSampleStatus)
 
-        self.formSampleStage.setLayout(
-            0, QFormLayout.ItemRole.FieldRole, self.hlSampleStatus
-        )
+        self.formSampleStage.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlSampleStatus)
 
         self.lblSampleAngle = QLabel(self.gbSampleStage)
         self.lblSampleAngle.setObjectName("lblSampleAngle")
-        sizePolicy7.setHeightForWidth(
-            self.lblSampleAngle.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblSampleAngle.sizePolicy().hasHeightForWidth())
         self.lblSampleAngle.setSizePolicy(sizePolicy7)
 
-        self.formSampleStage.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblSampleAngle
-        )
+        self.formSampleStage.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSampleAngle)
 
         self.lcdSampleAngle_2 = QLCDNumber(self.gbSampleStage)
         self.lcdSampleAngle_2.setObjectName("lcdSampleAngle_2")
-        sizePolicy3.setHeightForWidth(
-            self.lcdSampleAngle_2.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy3.setHeightForWidth(self.lcdSampleAngle_2.sizePolicy().hasHeightForWidth())
         self.lcdSampleAngle_2.setSizePolicy(sizePolicy3)
         self.lcdSampleAngle_2.setMinimumSize(QSize(0, 30))
         self.lcdSampleAngle_2.setLineWidth(2)
         self.lcdSampleAngle_2.setDigitCount(6)
         self.lcdSampleAngle_2.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
 
-        self.formSampleStage.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.lcdSampleAngle_2
-        )
+        self.formSampleStage.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdSampleAngle_2)
 
         self.horizontalLayout_5 = QHBoxLayout()
         # ifndef Q_OS_MAC
@@ -1077,9 +967,7 @@ class Ui_MainWindow(object):
 
         self.lblSampleAverages = QLabel(self.gbSampleStage)
         self.lblSampleAverages.setObjectName("lblSampleAverages")
-        sizePolicy7.setHeightForWidth(
-            self.lblSampleAverages.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblSampleAverages.sizePolicy().hasHeightForWidth())
         self.lblSampleAverages.setSizePolicy(sizePolicy7)
 
         self.horizontalLayout_5.addWidget(self.lblSampleAverages)
@@ -1098,23 +986,17 @@ class Ui_MainWindow(object):
 
         self.btnSampleZero = QPushButton(self.gbSampleStage)
         self.btnSampleZero.setObjectName("btnSampleZero")
-        sizePolicy1.setHeightForWidth(
-            self.btnSampleZero.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy1.setHeightForWidth(self.btnSampleZero.sizePolicy().hasHeightForWidth())
         self.btnSampleZero.setSizePolicy(sizePolicy1)
         self.btnSampleZero.setMinimumSize(QSize(0, 0))
 
-        self.formSampleStage.setWidget(
-            3, QFormLayout.ItemRole.SpanningRole, self.btnSampleZero
-        )
+        self.formSampleStage.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.btnSampleZero)
 
         self.gridLayout.addWidget(self.gbSampleStage, 1, 0, 1, 1)
 
         self.gbKDCConnection = QGroupBox(self.configuration)
         self.gbKDCConnection.setObjectName("gbKDCConnection")
-        sizePolicy7.setHeightForWidth(
-            self.gbKDCConnection.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.gbKDCConnection.sizePolicy().hasHeightForWidth())
         self.gbKDCConnection.setSizePolicy(sizePolicy7)
         self.gbKDCConnection.setMinimumSize(QSize(0, 0))
         self.gbKDCConnection.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1135,9 +1017,7 @@ class Ui_MainWindow(object):
         self.formKDCConnection.setContentsMargins(-1, 5, -1, 5)
         self.lblKDCDeviceLabel = QLabel(self.gbKDCConnection)
         self.lblKDCDeviceLabel.setObjectName("lblKDCDeviceLabel")
-        sizePolicy7.setHeightForWidth(
-            self.lblKDCDeviceLabel.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblKDCDeviceLabel.sizePolicy().hasHeightForWidth())
         self.lblKDCDeviceLabel.setSizePolicy(sizePolicy7)
         self.lblKDCDeviceLabel.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -1145,9 +1025,7 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formKDCConnection.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblKDCDeviceLabel
-        )
+        self.formKDCConnection.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblKDCDeviceLabel)
 
         self.hlKDCDevice = QHBoxLayout()
         self.hlKDCDevice.setObjectName("hlKDCDevice")
@@ -1168,15 +1046,11 @@ class Ui_MainWindow(object):
 
         self.hlKDCDevice.addWidget(self.btnKDCRefresh)
 
-        self.formKDCConnection.setLayout(
-            0, QFormLayout.ItemRole.FieldRole, self.hlKDCDevice
-        )
+        self.formKDCConnection.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlKDCDevice)
 
         self.lblKDCStatusLabel = QLabel(self.gbKDCConnection)
         self.lblKDCStatusLabel.setObjectName("lblKDCStatusLabel")
-        sizePolicy7.setHeightForWidth(
-            self.lblKDCStatusLabel.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblKDCStatusLabel.sizePolicy().hasHeightForWidth())
         self.lblKDCStatusLabel.setSizePolicy(sizePolicy7)
         self.lblKDCStatusLabel.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -1184,22 +1058,16 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formKDCConnection.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblKDCStatusLabel
-        )
+        self.formKDCConnection.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblKDCStatusLabel)
 
         self.hlKDCStatus = QHBoxLayout()
         self.hlKDCStatus.setObjectName("hlKDCStatus")
         self.lblKDCStatusValue = QLabel(self.gbKDCConnection)
         self.lblKDCStatusValue.setObjectName("lblKDCStatusValue")
-        sizePolicy10 = QSizePolicy(
-            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
-        )
+        sizePolicy10 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy10.setHorizontalStretch(0)
         sizePolicy10.setVerticalStretch(0)
-        sizePolicy10.setHeightForWidth(
-            self.lblKDCStatusValue.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy10.setHeightForWidth(self.lblKDCStatusValue.sizePolicy().hasHeightForWidth())
         self.lblKDCStatusValue.setSizePolicy(sizePolicy10)
         self.lblKDCStatusValue.setMinimumSize(QSize(0, 16))
         self.lblKDCStatusValue.setFont(font1)
@@ -1213,9 +1081,7 @@ class Ui_MainWindow(object):
 
         self.ledKDCStatus = QLabel(self.gbKDCConnection)
         self.ledKDCStatus.setObjectName("ledKDCStatus")
-        sizePolicy8.setHeightForWidth(
-            self.ledKDCStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy8.setHeightForWidth(self.ledKDCStatus.sizePolicy().hasHeightForWidth())
         self.ledKDCStatus.setSizePolicy(sizePolicy8)
         self.ledKDCStatus.setMinimumSize(QSize(16, 16))
         self.ledKDCStatus.setMaximumSize(QSize(16, 16))
@@ -1225,15 +1091,11 @@ class Ui_MainWindow(object):
 
         self.hlKDCStatus.addWidget(self.ledKDCStatus)
 
-        self.formKDCConnection.setLayout(
-            1, QFormLayout.ItemRole.FieldRole, self.hlKDCStatus
-        )
+        self.formKDCConnection.setLayout(1, QFormLayout.ItemRole.FieldRole, self.hlKDCStatus)
 
         self.lblKDCPositionLabel = QLabel(self.gbKDCConnection)
         self.lblKDCPositionLabel.setObjectName("lblKDCPositionLabel")
-        sizePolicy7.setHeightForWidth(
-            self.lblKDCPositionLabel.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblKDCPositionLabel.sizePolicy().hasHeightForWidth())
         self.lblKDCPositionLabel.setSizePolicy(sizePolicy7)
         self.lblKDCPositionLabel.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -1247,9 +1109,7 @@ class Ui_MainWindow(object):
 
         self.lblKDCPositionValue = QLabel(self.gbKDCConnection)
         self.lblKDCPositionValue.setObjectName("lblKDCPositionValue")
-        sizePolicy7.setHeightForWidth(
-            self.lblKDCPositionValue.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblKDCPositionValue.sizePolicy().hasHeightForWidth())
         self.lblKDCPositionValue.setSizePolicy(sizePolicy7)
         self.lblKDCPositionValue.setAlignment(
             Qt.AlignmentFlag.AlignRight
@@ -1266,9 +1126,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.setContentsMargins(-1, -1, 0, 0)
         self.btnKDCConnect = QPushButton(self.gbKDCConnection)
         self.btnKDCConnect.setObjectName("btnKDCConnect")
-        sizePolicy7.setHeightForWidth(
-            self.btnKDCConnect.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.btnKDCConnect.sizePolicy().hasHeightForWidth())
         self.btnKDCConnect.setSizePolicy(sizePolicy7)
 
         self.horizontalLayout_4.addWidget(self.btnKDCConnect)
@@ -1289,18 +1147,14 @@ class Ui_MainWindow(object):
 
         self.gbArduinoConnection = QGroupBox(self.configuration)
         self.gbArduinoConnection.setObjectName("gbArduinoConnection")
-        sizePolicy7.setHeightForWidth(
-            self.gbArduinoConnection.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.gbArduinoConnection.sizePolicy().hasHeightForWidth())
         self.gbArduinoConnection.setSizePolicy(sizePolicy7)
         self.gbArduinoConnection.setMinimumSize(QSize(0, 0))
         self.gbArduinoConnection.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gbArduinoConnection.setCheckable(False)
         self.formArduinoConnection = QFormLayout(self.gbArduinoConnection)
         self.formArduinoConnection.setObjectName("formArduinoConnection")
-        self.formArduinoConnection.setSizeConstraint(
-            QLayout.SizeConstraint.SetNoConstraint
-        )
+        self.formArduinoConnection.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
         self.formArduinoConnection.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
         )
@@ -1314,9 +1168,7 @@ class Ui_MainWindow(object):
         self.formArduinoConnection.setContentsMargins(-1, 5, -1, 5)
         self.lblArduinoPort = QLabel(self.gbArduinoConnection)
         self.lblArduinoPort.setObjectName("lblArduinoPort")
-        sizePolicy7.setHeightForWidth(
-            self.lblArduinoPort.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblArduinoPort.sizePolicy().hasHeightForWidth())
         self.lblArduinoPort.setSizePolicy(sizePolicy7)
         self.lblArduinoPort.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -1324,18 +1176,14 @@ class Ui_MainWindow(object):
             | Qt.AlignmentFlag.AlignVCenter
         )
 
-        self.formArduinoConnection.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblArduinoPort
-        )
+        self.formArduinoConnection.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblArduinoPort)
 
         self.hlArduinoPort = QHBoxLayout()
         self.hlArduinoPort.setObjectName("hlArduinoPort")
         self.hlArduinoPort.setContentsMargins(-1, -1, -1, 0)
         self.cbArduinoPort = QComboBox(self.gbArduinoConnection)
         self.cbArduinoPort.setObjectName("cbArduinoPort")
-        sizePolicy.setHeightForWidth(
-            self.cbArduinoPort.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.cbArduinoPort.sizePolicy().hasHeightForWidth())
         self.cbArduinoPort.setSizePolicy(sizePolicy)
         self.cbArduinoPort.setMaximumSize(QSize(500, 16777215))
 
@@ -1348,15 +1196,11 @@ class Ui_MainWindow(object):
 
         self.hlArduinoPort.addWidget(self.btnRefreshPorts)
 
-        self.formArduinoConnection.setLayout(
-            0, QFormLayout.ItemRole.FieldRole, self.hlArduinoPort
-        )
+        self.formArduinoConnection.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlArduinoPort)
 
         self.lblArduinoStatus = QLabel(self.gbArduinoConnection)
         self.lblArduinoStatus.setObjectName("lblArduinoStatus")
-        sizePolicy7.setHeightForWidth(
-            self.lblArduinoStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.lblArduinoStatus.sizePolicy().hasHeightForWidth())
         self.lblArduinoStatus.setSizePolicy(sizePolicy7)
         self.lblArduinoStatus.setAlignment(
             Qt.AlignmentFlag.AlignLeading
@@ -1372,9 +1216,7 @@ class Ui_MainWindow(object):
         self.hlArduinoStatus.setObjectName("hlArduinoStatus")
         self.lblArduinoStatusValue = QLabel(self.gbArduinoConnection)
         self.lblArduinoStatusValue.setObjectName("lblArduinoStatusValue")
-        sizePolicy10.setHeightForWidth(
-            self.lblArduinoStatusValue.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy10.setHeightForWidth(self.lblArduinoStatusValue.sizePolicy().hasHeightForWidth())
         self.lblArduinoStatusValue.setSizePolicy(sizePolicy10)
         self.lblArduinoStatusValue.setMinimumSize(QSize(0, 16))
         self.lblArduinoStatusValue.setFont(font1)
@@ -1388,9 +1230,7 @@ class Ui_MainWindow(object):
 
         self.ledArduinoStatus = QLabel(self.gbArduinoConnection)
         self.ledArduinoStatus.setObjectName("ledArduinoStatus")
-        sizePolicy8.setHeightForWidth(
-            self.ledArduinoStatus.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy8.setHeightForWidth(self.ledArduinoStatus.sizePolicy().hasHeightForWidth())
         self.ledArduinoStatus.setSizePolicy(sizePolicy8)
         self.ledArduinoStatus.setMinimumSize(QSize(16, 16))
         self.ledArduinoStatus.setMaximumSize(QSize(16, 16))
@@ -1406,9 +1246,7 @@ class Ui_MainWindow(object):
 
         self.btnArduinoConnect = QPushButton(self.gbArduinoConnection)
         self.btnArduinoConnect.setObjectName("btnArduinoConnect")
-        sizePolicy7.setHeightForWidth(
-            self.btnArduinoConnect.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy7.setHeightForWidth(self.btnArduinoConnect.sizePolicy().hasHeightForWidth())
         self.btnArduinoConnect.setSizePolicy(sizePolicy7)
         self.btnArduinoConnect.setMinimumSize(QSize(0, 0))
 
@@ -1436,9 +1274,7 @@ class Ui_MainWindow(object):
         self.eventLogPanel = EventLogPanel()
         self.eventLogPanel.setObjectName("eventLogPanel")
         self.dockEventLog.setWidget(self.eventLogPanel)
-        MainWindow.addDockWidget(
-            Qt.DockWidgetArea.BottomDockWidgetArea, self.dockEventLog
-        )
+        MainWindow.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.dockEventLog)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName("menubar")
         self.menubar.setGeometry(QRect(0, 0, 1316, 39))
@@ -1470,13 +1306,9 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(
-            QCoreApplication.translate("MainWindow", "Polarisation-UI", None)
-        )
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", "Polarisation-UI", None))
         self.actionAutoSaveEnabled.setText(
-            QCoreApplication.translate(
-                "MainWindow", "Automatische Speicherung aktiviert", None
-            )
+            QCoreApplication.translate("MainWindow", "Automatische Speicherung aktiviert", None)
         )
         self.actionAcquisitionSettings.setText(
             QCoreApplication.translate("MainWindow", "Aquisations-Einstellungen", None)
@@ -1488,9 +1320,7 @@ class Ui_MainWindow(object):
             QCoreApplication.translate("MainWindow", "Log-Ausgabe anzeigen", None)
         )
         self.actionPowerCalibration.setText(
-            QCoreApplication.translate(
-                "MainWindow", "Leistungskalibrierung\u2026", None
-            )
+            QCoreApplication.translate("MainWindow", "Leistungskalibrierung\u2026", None)
         )
         self.actionEventLog.setText(
             QCoreApplication.translate("MainWindow", "Ereignisprotokoll anzeigen", None)
@@ -1501,9 +1331,7 @@ class Ui_MainWindow(object):
             )
         )
         self.lblSampleStatus_2.setText(
-            QCoreApplication.translate(
-                "MainWindow", "Proben-Rotationswinkel (\u00b0)", None
-            )
+            QCoreApplication.translate("MainWindow", "Proben-Rotationswinkel (\u00b0)", None)
         )
         # if QT_CONFIG(tooltip)
         self.lcdSampleAngle.setToolTip(
@@ -1515,9 +1343,7 @@ class Ui_MainWindow(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblSampleStatus_3.setText(
-            QCoreApplication.translate(
-                "MainWindow", "Detektor-Rotationswinkel (\u00b0)", None
-            )
+            QCoreApplication.translate("MainWindow", "Detektor-Rotationswinkel (\u00b0)", None)
         )
         # if QT_CONFIG(tooltip)
         self.lcdDetectorStageAngle.setToolTip(
@@ -1533,15 +1359,11 @@ class Ui_MainWindow(object):
         )
         # if QT_CONFIG(tooltip)
         self.lcdDetectorVoltage_mV.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "Detektorspannung in Millivolt (mV)", None
-            )
+            QCoreApplication.translate("MainWindow", "Detektorspannung in Millivolt (mV)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblSampleStatus_5.setText(
-            QCoreApplication.translate(
-                "MainWindow", "Detektor-Leistung (\u00b5W)", None
-            )
+            QCoreApplication.translate("MainWindow", "Detektor-Leistung (\u00b5W)", None)
         )
         # if QT_CONFIG(tooltip)
         self.lcdDetectorPower.setToolTip(
@@ -1567,17 +1389,13 @@ class Ui_MainWindow(object):
         self.btnGain1_2.setText(QCoreApplication.translate("MainWindow", "1", None))
         # if QT_CONFIG(tooltip)
         self.btnGain2_2.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 2", None
-            )
+            QCoreApplication.translate("MainWindow", "PD-TIA Verst\u00e4rkungsstufe 2", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain2_2.setText(QCoreApplication.translate("MainWindow", "2", None))
         # if QT_CONFIG(tooltip)
         self.btnGain3_2.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 3", None
-            )
+            QCoreApplication.translate("MainWindow", "PD-TIA Verst\u00e4rkungsstufe 3", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain3_2.setText(QCoreApplication.translate("MainWindow", "3", None))
@@ -1594,9 +1412,7 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(
             QCoreApplication.translate("MainWindow", "Messungseinstellung", None)
         )
-        self.lblSuffix.setText(
-            QCoreApplication.translate("MainWindow", "Eigenes Suffix", None)
-        )
+        self.lblSuffix.setText(QCoreApplication.translate("MainWindow", "Eigenes Suffix", None))
         # if QT_CONFIG(tooltip)
         self.leSuffix.setToolTip(
             QCoreApplication.translate(
@@ -1631,17 +1447,13 @@ class Ui_MainWindow(object):
             QCoreApplication.translate("MainWindow", "Aktuelle Messung stoppen", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnStopMeasurement.setText(
-            QCoreApplication.translate("MainWindow", "Stop", None)
-        )
+        self.btnStopMeasurement.setText(QCoreApplication.translate("MainWindow", "Stop", None))
         # if QT_CONFIG(tooltip)
         self.btnStartMeasurement.setToolTip(
             QCoreApplication.translate("MainWindow", "Start der Messung", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnStartMeasurement.setText(
-            QCoreApplication.translate("MainWindow", "Start", None)
-        )
+        self.btnStartMeasurement.setText(QCoreApplication.translate("MainWindow", "Start", None))
         # if QT_CONFIG(tooltip)
         self.btnResetMeasurement.setToolTip(
             QCoreApplication.translate(
@@ -1649,22 +1461,14 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnResetMeasurement.setText(
-            QCoreApplication.translate("MainWindow", "Reset", None)
-        )
+        self.btnResetMeasurement.setText(QCoreApplication.translate("MainWindow", "Reset", None))
         # if QT_CONFIG(tooltip)
         self.btnSave.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "Messung speichern (Dateidialog)", None
-            )
+            QCoreApplication.translate("MainWindow", "Messung speichern (Dateidialog)", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnSave.setText(
-            QCoreApplication.translate("MainWindow", "Speichern", None)
-        )
-        self.gbSave.setTitle(
-            QCoreApplication.translate("MainWindow", "Speicherung", None)
-        )
+        self.btnSave.setText(QCoreApplication.translate("MainWindow", "Speichern", None))
+        self.gbSave.setTitle(QCoreApplication.translate("MainWindow", "Speicherung", None))
         self.label.setText(
             QCoreApplication.translate(
                 "MainWindow",
@@ -1672,78 +1476,30 @@ class Ui_MainWindow(object):
                 None,
             )
         )
-        self.cbGroupLetter.setItemText(
-            0, QCoreApplication.translate("MainWindow", "A", None)
-        )
-        self.cbGroupLetter.setItemText(
-            1, QCoreApplication.translate("MainWindow", "B", None)
-        )
-        self.cbGroupLetter.setItemText(
-            2, QCoreApplication.translate("MainWindow", "C", None)
-        )
-        self.cbGroupLetter.setItemText(
-            3, QCoreApplication.translate("MainWindow", "D", None)
-        )
-        self.cbGroupLetter.setItemText(
-            4, QCoreApplication.translate("MainWindow", "E", None)
-        )
-        self.cbGroupLetter.setItemText(
-            5, QCoreApplication.translate("MainWindow", "F", None)
-        )
-        self.cbGroupLetter.setItemText(
-            6, QCoreApplication.translate("MainWindow", "G", None)
-        )
-        self.cbGroupLetter.setItemText(
-            7, QCoreApplication.translate("MainWindow", "H", None)
-        )
-        self.cbGroupLetter.setItemText(
-            8, QCoreApplication.translate("MainWindow", "I", None)
-        )
-        self.cbGroupLetter.setItemText(
-            9, QCoreApplication.translate("MainWindow", "J", None)
-        )
-        self.cbGroupLetter.setItemText(
-            10, QCoreApplication.translate("MainWindow", "K", None)
-        )
-        self.cbGroupLetter.setItemText(
-            11, QCoreApplication.translate("MainWindow", "L", None)
-        )
-        self.cbGroupLetter.setItemText(
-            12, QCoreApplication.translate("MainWindow", "M", None)
-        )
-        self.cbGroupLetter.setItemText(
-            13, QCoreApplication.translate("MainWindow", "N", None)
-        )
-        self.cbGroupLetter.setItemText(
-            14, QCoreApplication.translate("MainWindow", "O", None)
-        )
-        self.cbGroupLetter.setItemText(
-            15, QCoreApplication.translate("MainWindow", "P", None)
-        )
-        self.cbGroupLetter.setItemText(
-            16, QCoreApplication.translate("MainWindow", "Q", None)
-        )
-        self.cbGroupLetter.setItemText(
-            17, QCoreApplication.translate("MainWindow", "R", None)
-        )
-        self.cbGroupLetter.setItemText(
-            18, QCoreApplication.translate("MainWindow", "S", None)
-        )
-        self.cbGroupLetter.setItemText(
-            19, QCoreApplication.translate("MainWindow", "T", None)
-        )
-        self.cbGroupLetter.setItemText(
-            20, QCoreApplication.translate("MainWindow", "U", None)
-        )
-        self.cbGroupLetter.setItemText(
-            21, QCoreApplication.translate("MainWindow", "V", None)
-        )
-        self.cbGroupLetter.setItemText(
-            22, QCoreApplication.translate("MainWindow", "W", None)
-        )
-        self.cbGroupLetter.setItemText(
-            23, QCoreApplication.translate("MainWindow", "Z", None)
-        )
+        self.cbGroupLetter.setItemText(0, QCoreApplication.translate("MainWindow", "A", None))
+        self.cbGroupLetter.setItemText(1, QCoreApplication.translate("MainWindow", "B", None))
+        self.cbGroupLetter.setItemText(2, QCoreApplication.translate("MainWindow", "C", None))
+        self.cbGroupLetter.setItemText(3, QCoreApplication.translate("MainWindow", "D", None))
+        self.cbGroupLetter.setItemText(4, QCoreApplication.translate("MainWindow", "E", None))
+        self.cbGroupLetter.setItemText(5, QCoreApplication.translate("MainWindow", "F", None))
+        self.cbGroupLetter.setItemText(6, QCoreApplication.translate("MainWindow", "G", None))
+        self.cbGroupLetter.setItemText(7, QCoreApplication.translate("MainWindow", "H", None))
+        self.cbGroupLetter.setItemText(8, QCoreApplication.translate("MainWindow", "I", None))
+        self.cbGroupLetter.setItemText(9, QCoreApplication.translate("MainWindow", "J", None))
+        self.cbGroupLetter.setItemText(10, QCoreApplication.translate("MainWindow", "K", None))
+        self.cbGroupLetter.setItemText(11, QCoreApplication.translate("MainWindow", "L", None))
+        self.cbGroupLetter.setItemText(12, QCoreApplication.translate("MainWindow", "M", None))
+        self.cbGroupLetter.setItemText(13, QCoreApplication.translate("MainWindow", "N", None))
+        self.cbGroupLetter.setItemText(14, QCoreApplication.translate("MainWindow", "O", None))
+        self.cbGroupLetter.setItemText(15, QCoreApplication.translate("MainWindow", "P", None))
+        self.cbGroupLetter.setItemText(16, QCoreApplication.translate("MainWindow", "Q", None))
+        self.cbGroupLetter.setItemText(17, QCoreApplication.translate("MainWindow", "R", None))
+        self.cbGroupLetter.setItemText(18, QCoreApplication.translate("MainWindow", "S", None))
+        self.cbGroupLetter.setItemText(19, QCoreApplication.translate("MainWindow", "T", None))
+        self.cbGroupLetter.setItemText(20, QCoreApplication.translate("MainWindow", "U", None))
+        self.cbGroupLetter.setItemText(21, QCoreApplication.translate("MainWindow", "V", None))
+        self.cbGroupLetter.setItemText(22, QCoreApplication.translate("MainWindow", "W", None))
+        self.cbGroupLetter.setItemText(23, QCoreApplication.translate("MainWindow", "Z", None))
 
         # if QT_CONFIG(tooltip)
         self.cbGroupLetter.setToolTip(
@@ -1761,12 +1517,8 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblTeamName.setText(
-            QCoreApplication.translate("MainWindow", "Team-Bezeichnung", None)
-        )
-        self.lblGroupLetter.setText(
-            QCoreApplication.translate("MainWindow", "Buchstabe*", None)
-        )
+        self.lblTeamName.setText(QCoreApplication.translate("MainWindow", "Team-Bezeichnung", None))
+        self.lblGroupLetter.setText(QCoreApplication.translate("MainWindow", "Buchstabe*", None))
         # if QT_CONFIG(tooltip)
         self.leTeamName.setToolTip(
             QCoreApplication.translate(
@@ -1779,15 +1531,11 @@ class Ui_MainWindow(object):
         self.leTeamName.setPlaceholderText(
             QCoreApplication.translate("MainWindow", "Bspw. TimStruppi", None)
         )
-        self.gbDetector.setTitle(
-            QCoreApplication.translate("MainWindow", "Detektor", None)
-        )
+        self.gbDetector.setTitle(QCoreApplication.translate("MainWindow", "Detektor", None))
         self.lblDetectorVoltage.setText(
             QCoreApplication.translate("MainWindow", "Spannung (mV)", None)
         )
-        self.lblDetectorStatus.setText(
-            QCoreApplication.translate("MainWindow", "Status", None)
-        )
+        self.lblDetectorStatus.setText(QCoreApplication.translate("MainWindow", "Status", None))
         self.lblDetectorStatusValue.setText("")
         self.ledDetectorStatus.setText("")
         # if QT_CONFIG(tooltip)
@@ -1877,9 +1625,7 @@ class Ui_MainWindow(object):
         )
         # if QT_CONFIG(tooltip)
         self.btnOpenCalibration.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "Leistungskalibrierungstool \u00f6ffnen", None
-            )
+            QCoreApplication.translate("MainWindow", "Leistungskalibrierungstool \u00f6ffnen", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnOpenCalibration.setText(
@@ -1897,17 +1643,13 @@ class Ui_MainWindow(object):
         self.btnGain1.setText(QCoreApplication.translate("MainWindow", "1", None))
         # if QT_CONFIG(tooltip)
         self.btnGain2.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 2", None
-            )
+            QCoreApplication.translate("MainWindow", "PD-TIA Verst\u00e4rkungsstufe 2", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain2.setText(QCoreApplication.translate("MainWindow", "2", None))
         # if QT_CONFIG(tooltip)
         self.btnGain3.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 3", None
-            )
+            QCoreApplication.translate("MainWindow", "PD-TIA Verst\u00e4rkungsstufe 3", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain3.setText(QCoreApplication.translate("MainWindow", "3", None))
@@ -1921,9 +1663,7 @@ class Ui_MainWindow(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain4.setText(QCoreApplication.translate("MainWindow", "4", None))
-        self.lblGainLabel.setText(
-            QCoreApplication.translate("MainWindow", "PD-TIA Gain", None)
-        )
+        self.lblGainLabel.setText(QCoreApplication.translate("MainWindow", "PD-TIA Gain", None))
         # if QT_CONFIG(tooltip)
         self.cbProfile.setToolTip(
             QCoreApplication.translate(
@@ -1934,9 +1674,7 @@ class Ui_MainWindow(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.cbProfile.setPlaceholderText(
-            QCoreApplication.translate(
-                "MainWindow", "\u2014 Kein Profil geladen \u2014", None
-            )
+            QCoreApplication.translate("MainWindow", "\u2014 Kein Profil geladen \u2014", None)
         )
         self.gbDetectorStage.setTitle(
             QCoreApplication.translate("MainWindow", "Detektor-Rotationsstage", None)
@@ -2000,9 +1738,7 @@ class Ui_MainWindow(object):
         self.gbSampleStage.setTitle(
             QCoreApplication.translate("MainWindow", "Proben-Rotationsstage", None)
         )
-        self.lblSampleStatus.setText(
-            QCoreApplication.translate("MainWindow", "Status", None)
-        )
+        self.lblSampleStatus.setText(QCoreApplication.translate("MainWindow", "Status", None))
         self.lblSampleStatusValue.setText("")
         self.ledSampleStatus.setText("")
         self.lblSampleAngle.setText(
@@ -2047,9 +1783,7 @@ class Ui_MainWindow(object):
         self.gbKDCConnection.setTitle(
             QCoreApplication.translate("MainWindow", "KDC-Verbindung", None)
         )
-        self.lblKDCDeviceLabel.setText(
-            QCoreApplication.translate("MainWindow", "Ger\u00e4t", None)
-        )
+        self.lblKDCDeviceLabel.setText(QCoreApplication.translate("MainWindow", "Ger\u00e4t", None))
         # if QT_CONFIG(tooltip)
         self.cbKDCDevice.setToolTip(
             QCoreApplication.translate(
@@ -2061,27 +1795,17 @@ class Ui_MainWindow(object):
         # endif // QT_CONFIG(tooltip)
         # if QT_CONFIG(tooltip)
         self.btnKDCRefresh.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "KDC101-Ger\u00e4teliste aktualisieren", None
-            )
+            QCoreApplication.translate("MainWindow", "KDC101-Ger\u00e4teliste aktualisieren", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnKDCRefresh.setText(
-            QCoreApplication.translate("MainWindow", "...", None)
-        )
-        self.lblKDCStatusLabel.setText(
-            QCoreApplication.translate("MainWindow", "Status", None)
-        )
+        self.btnKDCRefresh.setText(QCoreApplication.translate("MainWindow", "...", None))
+        self.lblKDCStatusLabel.setText(QCoreApplication.translate("MainWindow", "Status", None))
         self.lblKDCStatusValue.setText(
             QCoreApplication.translate("MainWindow", "Nicht verbunden", None)
         )
         self.ledKDCStatus.setText("")
-        self.lblKDCPositionLabel.setText(
-            QCoreApplication.translate("MainWindow", "Position", None)
-        )
-        self.lblKDCPositionValue.setText(
-            QCoreApplication.translate("MainWindow", "\u2014", None)
-        )
+        self.lblKDCPositionLabel.setText(QCoreApplication.translate("MainWindow", "Position", None))
+        self.lblKDCPositionValue.setText(QCoreApplication.translate("MainWindow", "\u2014", None))
         # if QT_CONFIG(tooltip)
         self.btnKDCConnect.setToolTip(
             QCoreApplication.translate(
@@ -2089,28 +1813,20 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnKDCConnect.setText(
-            QCoreApplication.translate("MainWindow", "Verbinden", None)
-        )
+        self.btnKDCConnect.setText(QCoreApplication.translate("MainWindow", "Verbinden", None))
         # if QT_CONFIG(tooltip)
         self.btnKDCHome.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "KDC101 auf Nullposition fahren (Home)", None
-            )
+            QCoreApplication.translate("MainWindow", "KDC101 auf Nullposition fahren (Home)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnKDCHome.setText(QCoreApplication.translate("MainWindow", "Home", None))
         self.gbArduinoConnection.setTitle(
             QCoreApplication.translate("MainWindow", "Arduino-Verbindung", None)
         )
-        self.lblArduinoPort.setText(
-            QCoreApplication.translate("MainWindow", "Port", None)
-        )
+        self.lblArduinoPort.setText(QCoreApplication.translate("MainWindow", "Port", None))
         # if QT_CONFIG(tooltip)
         self.cbArduinoPort.setToolTip(
-            QCoreApplication.translate(
-                "MainWindow", "Serieller Port des Arduino Nano ESP32", None
-            )
+            QCoreApplication.translate("MainWindow", "Serieller Port des Arduino Nano ESP32", None)
         )
         # endif // QT_CONFIG(tooltip)
         # if QT_CONFIG(tooltip)
@@ -2120,12 +1836,8 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnRefreshPorts.setText(
-            QCoreApplication.translate("MainWindow", "...", None)
-        )
-        self.lblArduinoStatus.setText(
-            QCoreApplication.translate("MainWindow", "Status", None)
-        )
+        self.btnRefreshPorts.setText(QCoreApplication.translate("MainWindow", "...", None))
+        self.lblArduinoStatus.setText(QCoreApplication.translate("MainWindow", "Status", None))
         self.lblArduinoStatusValue.setText(
             QCoreApplication.translate("MainWindow", "Nicht verbunden", None)
         )
@@ -2139,9 +1851,7 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnArduinoConnect.setText(
-            QCoreApplication.translate("MainWindow", "Verbinden", None)
-        )
+        self.btnArduinoConnect.setText(QCoreApplication.translate("MainWindow", "Verbinden", None))
         self.tabWidget.setTabText(
             self.tabWidget.indexOf(self.configuration),
             QCoreApplication.translate("MainWindow", "Konfiguration", None),

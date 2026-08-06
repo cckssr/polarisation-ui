@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -40,12 +40,14 @@ class AutoCalibrationConnectionSettings:
     """
 
     def save(self, path: Path = _SETTINGS_PATH) -> None:
+        """Write these settings to *path* as JSON, creating parent directories as needed."""
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as fh:
             json.dump(asdict(self), fh, indent=2)
 
     @classmethod
-    def load(cls, path: Path = _SETTINGS_PATH) -> "AutoCalibrationConnectionSettings":
+    def load(cls, path: Path = _SETTINGS_PATH) -> AutoCalibrationConnectionSettings:
+        """Load settings from *path*, or return defaults if the file doesn't exist."""
         if not path.exists():
             return cls()
         try:
@@ -54,9 +56,7 @@ class AutoCalibrationConnectionSettings:
             return cls(
                 kdc101_conn_id=str(data.get("kdc101_conn_id", "")),
                 pm400_visa_resource=str(data.get("pm400_visa_resource", "")),
-                beamsplitter_attenuation_dB=float(
-                    data.get("beamsplitter_attenuation_dB", 0.0)
-                ),
+                beamsplitter_attenuation_dB=float(data.get("beamsplitter_attenuation_dB", 0.0)),
                 wavelength_nm=float(data.get("wavelength_nm", 633.0)),
                 angle_offset_deg=float(data.get("angle_offset_deg", 0.0)),
             )

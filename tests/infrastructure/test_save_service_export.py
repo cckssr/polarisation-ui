@@ -27,9 +27,7 @@ def test_compose_filename_with_tokens():
 
 
 def test_compose_filename_with_tokens_and_suffix():
-    assert (
-        compose_filename("brewster", "A", "run1", ["p"]) == "messung_brewster_p_A_run1"
-    )
+    assert compose_filename("brewster", "A", "run1", ["p"]) == "messung_brewster_p_A_run1"
 
 
 def test_compose_filename_multiple_tokens():

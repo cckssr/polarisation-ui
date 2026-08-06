@@ -1,5 +1,4 @@
-"""
-Thorlabs KDC101 via pylablib.
+"""Thorlabs KDC101 via pylablib.
 
 Uses pylablib's KinesisMotor for APT serial communication.
 Works on macOS/Linux/Windows without requiring Kinesis DLLs.
@@ -7,7 +6,6 @@ Works on macOS/Linux/Windows without requiring Kinesis DLLs.
 
 import struct
 import time
-from typing import Optional
 
 from pylablib.devices import Thorlabs
 from pylablib.devices.Thorlabs import ThorlabsError, ThorlabsTimeoutError
@@ -35,7 +33,8 @@ class KDC101Stage:
     ENCODER_COUNTS_PER_DEG = 1919.64186
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
-        """
+        """Store connection parameters; connect() opens the Kinesis session.
+
         Args:
             port: Serial port path or Kinesis device serial number
             baudrate: Kept for API compatibility; pylablib configures this internally.
@@ -52,8 +51,7 @@ class KDC101Stage:
         return self._stage is not None and self._stage.is_opened()
 
     def connect(self) -> bool:
-        """
-        Open serial connection to KDC101.
+        """Open serial connection to KDC101.
 
         Returns:
             True if connection successful, False otherwise
@@ -89,8 +87,7 @@ class KDC101Stage:
         print("[KDC101] Identify LED should flash")
 
     def enable(self, enabled: bool = True) -> None:
-        """
-        Enable or disable the motor channel.
+        """Enable or disable the motor channel.
 
         Args:
             enabled: True to enable, False to disable
@@ -98,15 +95,12 @@ class KDC101Stage:
         if not self.connected:
             return
         state = 0x01 if enabled else 0x02
-        self._stage.send_comm(
-            self._MSG_MOD_SET_CHANENABLESTATE, param1=self.CHANNEL, param2=state
-        )
+        self._stage.send_comm(self._MSG_MOD_SET_CHANENABLESTATE, param1=self.CHANNEL, param2=state)
         time.sleep(0.1)
         print(f"[KDC101] Channel {'enabled' if enabled else 'disabled'}")
 
-    def get_position_counts(self) -> Optional[int]:
-        """
-        Get current position in encoder counts.
+    def get_position_counts(self) -> int | None:
+        """Get current position in encoder counts.
 
         Returns:
             Position in encoder counts or None if error
@@ -123,9 +117,8 @@ class KDC101Stage:
             print(f"[KDC101] Position read failed: {e}")
             return None
 
-    def get_position_degrees(self) -> Optional[float]:
-        """
-        Get current position in degrees.
+    def get_position_degrees(self) -> float | None:
+        """Get current position in degrees.
 
         Returns:
             Position in degrees or None if error
@@ -135,9 +128,8 @@ class KDC101Stage:
             return counts / self.ENCODER_COUNTS_PER_DEG
         return None
 
-    def get_encoder_counts(self) -> Optional[int]:
-        """
-        Get encoder counter value.
+    def get_encoder_counts(self) -> int | None:
+        """Get encoder counter value.
 
         Returns:
             Encoder count or None if error
@@ -160,8 +152,7 @@ class KDC101Stage:
     # ── Motor control ─────────────────────────────────────────────────────────
 
     def move_to_degrees(self, angle_deg: float) -> bool:
-        """
-        Move stage to an absolute position in degrees.
+        """Move stage to an absolute position in degrees.
 
         Args:
             angle_deg: Target angle in degrees
@@ -191,8 +182,7 @@ class KDC101Stage:
             return False
 
     def wait_until_stopped(self, timeout: float = 60.0) -> bool:
-        """
-        Poll position counts until stable for 3 consecutive reads (200 ms apart).
+        """Poll position counts until stable for 3 consecutive reads (200 ms apart).
 
         Avoids is_moving() and wait_move() entirely — both issue APT queries that
         race with the KDC101's unsolicited background frames (0x0412, 0x0612) and
@@ -210,7 +200,7 @@ class KDC101Stage:
         if not self.connected:
             return False
         deadline = time.time() + timeout
-        prev_pos: Optional[int] = None
+        prev_pos: int | None = None
         stable_count = 0
         while True:
             if time.time() > deadline:
@@ -239,8 +229,7 @@ class KDC101Stage:
             pass
 
     def home(self, timeout: float = 120.0) -> bool:
-        """
-        Home the stage (moves to hardware reference position).
+        """Home the stage (moves to hardware reference position).
 
         Args:
             timeout: Maximum time allowed for homing in seconds

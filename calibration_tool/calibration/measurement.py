@@ -1,17 +1,15 @@
-"""
-Calibration Measurement Module.
+"""Calibration Measurement Module.
 
 Handles synchronized data acquisition from both encoders:
 - KDC101 (reference stage via motorized Thorlabs)
 - Arduino AS5048A (encoder under test)
 """
 
-import time
 import csv
-from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
-from datetime import datetime
 import os
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
 
 from devices.arduino_encoder import ArduinoEncoder
 from devices.kdc101_stage import KDC101Stage
@@ -44,7 +42,7 @@ class CalibrationRun:
 
     name: str
     start_time: datetime
-    points: List[MeasurementPoint] = field(default_factory=list)
+    points: list[MeasurementPoint] = field(default_factory=list)
     notes: str = ""
 
     def add_point(self, point: MeasurementPoint) -> None:
@@ -63,15 +61,15 @@ class CalibrationRun:
         """Number of measurement points."""
         return len(self.points)
 
-    def get_errors(self) -> List[float]:
+    def get_errors(self) -> list[float]:
         """Get list of all error values."""
         return [p.error_deg for p in self.points]
 
-    def get_reference_angles(self) -> List[float]:
+    def get_reference_angles(self) -> list[float]:
         """Get list of all reference angles."""
         return [p.reference_deg for p in self.points]
 
-    def get_measured_angles(self) -> List[float]:
+    def get_measured_angles(self) -> list[float]:
         """Get list of all measured angles."""
         return [p.measured_deg for p in self.points]
 
@@ -93,8 +91,7 @@ class CalibrationMeasurement:
         kdc101: KDC101Stage,
         encoder_id: str = "A",
     ):
-        """
-        Initialize measurement session.
+        """Initialize measurement session.
 
         Args:
             arduino: ArduinoEncoder instance
@@ -104,7 +101,7 @@ class CalibrationMeasurement:
         self.arduino = arduino
         self.kdc101 = kdc101
         self.encoder_id = encoder_id
-        self.current_run: Optional[CalibrationRun] = None
+        self.current_run: CalibrationRun | None = None
         self._running = False
 
     @property
@@ -113,8 +110,7 @@ class CalibrationMeasurement:
         return self._running
 
     def start_run(self, name: str = "") -> CalibrationRun:
-        """
-        Start a new calibration run.
+        """Start a new calibration run.
 
         Args:
             name: Optional name for the run
@@ -130,9 +126,8 @@ class CalibrationMeasurement:
         print(f"[Measurement] Started run: {name}")
         return self.current_run
 
-    def stop_run(self) -> Optional[CalibrationRun]:
-        """
-        Stop the current calibration run.
+    def stop_run(self) -> CalibrationRun | None:
+        """Stop the current calibration run.
 
         Returns:
             Completed CalibrationRun or None
@@ -145,9 +140,8 @@ class CalibrationMeasurement:
             print(f"  Duration: {run.duration_sec:.1f}s")
         return run
 
-    def take_single_measurement(self) -> Optional[MeasurementPoint]:
-        """
-        Take a single synchronized measurement from both encoders.
+    def take_single_measurement(self) -> MeasurementPoint | None:
+        """Take a single synchronized measurement from both encoders.
 
         Returns:
             MeasurementPoint or None if error
@@ -155,9 +149,7 @@ class CalibrationMeasurement:
         # Single round-trip: compute degrees from the same counts read
         ref_counts = self.kdc101.get_position_counts()
         ref_deg = (
-            ref_counts / self.kdc101.ENCODER_COUNTS_PER_DEG
-            if ref_counts is not None
-            else None
+            ref_counts / self.kdc101.ENCODER_COUNTS_PER_DEG if ref_counts is not None else None
         )
 
         # Read the chosen AS5048A encoder (no ADC read — intensity is irrelevant here)
@@ -184,8 +176,7 @@ class CalibrationMeasurement:
         return point
 
     def continuous_measurement(self, interval_sec: float = 0.1, callback=None) -> None:
-        """
-        Run continuous measurement until stopped.
+        """Run continuous measurement until stopped.
 
         Args:
             interval_sec: Time between measurements
@@ -211,9 +202,8 @@ class CalibrationMeasurement:
             print("\n[Measurement] Interrupted by user")
             self.stop_run()
 
-    def save_to_csv(self, filepath: Optional[str] = None) -> str:
-        """
-        Save current run to CSV file.
+    def save_to_csv(self, filepath: str | None = None) -> str:
+        """Save current run to CSV file.
 
         Args:
             filepath: Optional file path (auto-generated if None)
@@ -261,8 +251,7 @@ class CalibrationMeasurement:
 
     @staticmethod
     def load_from_csv(filepath: str) -> CalibrationRun:
-        """
-        Load calibration run from CSV file.
+        """Load calibration run from CSV file.
 
         Args:
             filepath: Path to CSV file
@@ -273,7 +262,7 @@ class CalibrationMeasurement:
         name = os.path.splitext(os.path.basename(filepath))[0]
         run = CalibrationRun(name=name, start_time=datetime.now())
 
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 point = MeasurementPoint(

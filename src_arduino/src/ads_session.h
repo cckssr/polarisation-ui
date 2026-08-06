@@ -27,11 +27,21 @@ public:
   void powerUp();
 
   // ── Continuous ADC polling ────────────────────────────────────────────────
-  // Call from loop() when ready() returns true.
+  // Call from loop() when ready() returns true. Never blocks.
   void pollAdc();
 
   // True when DRDY pin is asserted (data ready for a new conversion result).
   bool ready() const;
+
+  // Non-blocking temperature refresh: call unconditionally every loop() tick.
+  // Internally a no-op unless ADC:T is an active stream source and a refresh
+  // is due; maintains lastTemperature() via a start/wait/read state machine
+  // instead of the delay()-based synchronous conversion used by
+  // takeTemperatureReading(). Never blocks. Pauses pollAdc()'s normal voltage
+  // polling while a conversion is in flight, since the ADS1220 can only
+  // digitize one mux input (external channel vs. internal temp sensor) at a
+  // time.
+  void pollTemperature();
 
   // ── One-shot reads (synchronous, used by MEAS: commands) ─────────────────
   // Reads the last completed conversion result via RDATA command (no DRDY wait).
@@ -83,13 +93,29 @@ private:
   uint32_t _nextConversionMs = 0;
   uint32_t _nextRecoveryAttemptMs = 0;
 
+  // Non-blocking recovery state: true between a successful _adc.begin() and
+  // the deferred discard-read of its stale first conversion completing.
+  // While true, pollAdc() skips normal voltage polling.
+  bool _recovering = false;
+  uint32_t _recoveryDiscardDeadlineMs = 0;
+
+  // Non-blocking temperature state: true while a background conversion
+  // (started by pollTemperature()) is in flight. While true, pollAdc() skips
+  // normal voltage polling, since the mux is pointed at the internal sensor.
+  bool _tempConverting = false;
+  uint32_t _tempConversionDeadlineMs = 0;
+  uint32_t _nextTempConversionMs = 0;
+
   // Applies the 4-bit pattern for _pdGainStage to the four GPIO pins.
   void _applyPdGainGpio(uint8_t pattern);
 
   // Convert a raw 24-bit ADC code to voltage using current vref and gain.
   float _computeVoltage(int32_t raw) const;
 
-  // Wait for first DRDY after start and discard stale output buffer data.
+  // Block for one conversion period and discard the stale result. Used at
+  // setup()/reset() time and by the synchronous one-shot recovery path,
+  // where blocking briefly is acceptable. The runtime streaming path
+  // (pollAdc()) uses the non-blocking _recovering state instead.
   void _waitForFirstConversion();
 
   // Apply the desired ADC configuration and remember expected register bytes.
@@ -101,7 +127,11 @@ private:
 
   // Attempt to recover the ADC when it is not present (power or connection
   // loss). Returns true on successful re-init and reconfiguration.
-  bool _attemptRecovery();
+  // blockingDiscard selects between the synchronous one-shot path (blocks
+  // for the stale first conversion, used by takeVoltageReading()) and the
+  // non-blocking streaming path (defers the discard to pollAdc() via
+  // _recovering, used by pollAdc() itself).
+  bool _attemptRecovery(bool blockingDiscard);
 
   // Expected configuration snapshot (copied from ADS1220 shadow registers
   // after applying configuration). Used to detect a hardware reset.

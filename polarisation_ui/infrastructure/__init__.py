@@ -1,7 +1,7 @@
 """Infrastructure layer — external I/O, device adapters, threading."""
 
-from .logging import Debug
 from .config import import_config
+from .logging import Debug
 
 __all__ = [
     "Debug",

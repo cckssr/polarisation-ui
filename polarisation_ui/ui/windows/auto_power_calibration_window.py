@@ -10,9 +10,7 @@ connection and shows the gbArduino section.  The Arduino is needed for ADC
 reads and PDTIA gain switching during the sweep.
 """
 
-from typing import Optional
-
-from PySide6.QtCore import QThread, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QDialog, QMessageBox
 
 from polarisation_ui.core.auto_calibration_settings import (
@@ -22,6 +20,8 @@ from polarisation_ui.core.auto_calibration_settings import (
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
+)
+from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile as _Profile,
 )
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
@@ -31,26 +31,9 @@ from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.qt_threads import (
     AlignPolariserWorker,
     AutoPowerCalibrationWorker,
+    KDC101HomeWorker,
 )
 from polarisation_ui.pyqt.ui_auto_power_calibration import Ui_AutoPowerCalibrationDialog
-
-
-class _HomeThread(QThread):
-    """Runs KDC101 homing off the main thread."""
-
-    done = Signal()
-    error = Signal(str)
-
-    def __init__(self, kdc: KDC101Polariser, parent=None) -> None:
-        super().__init__(parent)
-        self._kdc = kdc
-
-    def run(self) -> None:
-        try:
-            self._kdc.home()
-            self.done.emit()
-        except KDC101Error as exc:
-            self.error.emit(str(exc))
 
 
 class AutoPowerCalibrationWindow(QDialog):
@@ -65,6 +48,7 @@ class AutoPowerCalibrationWindow(QDialog):
     profile_saved = Signal()
 
     def __init__(self, data_controller=None, parent=None) -> None:
+        """Build the dialog UI; standalone mode is enabled when data_controller is None."""
         super().__init__(parent)
         self.ui = Ui_AutoPowerCalibrationDialog()
         self.ui.setupUi(self)
@@ -72,16 +56,16 @@ class AutoPowerCalibrationWindow(QDialog):
         self._data_controller = data_controller
         self._standalone = data_controller is None
         # In standalone mode we own the device manager; otherwise we borrow it.
-        self._device_manager: Optional[GoniometerDeviceManager] = (
+        self._device_manager: GoniometerDeviceManager | None = (
             GoniometerDeviceManager(use_mock=False) if self._standalone else None
         )
 
         self._kdc = KDC101Polariser()
         self._pm = PM400PowerMeter()
-        self._worker: Optional[AutoPowerCalibrationWorker] = None
-        self._align_worker: Optional[AlignPolariserWorker] = None
-        self._home_thread: Optional[_HomeThread] = None
-        self._profile: Optional[PowerCalibrationProfile] = None
+        self._worker: AutoPowerCalibrationWorker | None = None
+        self._align_worker: AlignPolariserWorker | None = None
+        self._home_thread: KDC101HomeWorker | None = None
+        self._profile: PowerCalibrationProfile | None = None
         self._angle_offset_deg: float = 0.0
         self._settings = AutoCalibrationConnectionSettings.load()
 
@@ -216,7 +200,7 @@ class AutoPowerCalibrationWindow(QDialog):
             return
         self.ui.btnHomeKDC.setEnabled(False)
         self.ui.lblPhase.setText("Referenzfahrt läuft…")
-        self._home_thread = _HomeThread(self._kdc, parent=self)
+        self._home_thread = KDC101HomeWorker(self._kdc, parent=self)
         self._home_thread.done.connect(self._on_home_done)
         self._home_thread.error.connect(self._on_home_error)
         self._home_thread.start()
@@ -288,9 +272,7 @@ class AutoPowerCalibrationWindow(QDialog):
     def _start_align(self) -> None:
         """Scan the PM400 while rotating the stage to find the max-transmission angle."""
         if not self._kdc.is_connected() or not self._pm.is_connected():
-            QMessageBox.warning(
-                self, "Ausrichtung", "KDC101 und PM400 müssen verbunden sein."
-            )
+            QMessageBox.warning(self, "Ausrichtung", "KDC101 und PM400 müssen verbunden sein.")
             return
 
         self._align_worker = AlignPolariserWorker(
@@ -374,9 +356,7 @@ class AutoPowerCalibrationWindow(QDialog):
             angle_start_deg=self.ui.spinAngleStart.value(),
             angle_end_deg=self.ui.spinAngleEnd.value(),
             n_points=self.ui.spinNPoints.value(),
-            grid_mode=(
-                "linear_cos2" if self.ui.radioLinearCos2.isChecked() else "linear_angle"
-            ),
+            grid_mode=("linear_cos2" if self.ui.radioLinearCos2.isChecked() else "linear_angle"),
             point_settle_s=self.ui.spinPointSettle.value(),
             gain_settle_s=self.ui.spinGainSettle.value(),
             detector_samples=self.ui.spinDetectorSamples.value(),
@@ -392,9 +372,7 @@ class AutoPowerCalibrationWindow(QDialog):
             self._data_controller.stop_continuous_reading()
 
         device_manager = (
-            self._device_manager
-            if self._standalone
-            else self._data_controller.device_manager
+            self._device_manager if self._standalone else self._data_controller.device_manager
         )
         self._worker = AutoPowerCalibrationWorker(
             device_manager=device_manager,
@@ -474,9 +452,7 @@ class AutoPowerCalibrationWindow(QDialog):
         except Exception as exc:
             QMessageBox.critical(self, "Speichern fehlgeschlagen", str(exc))
             return
-        QMessageBox.information(
-            self, "Profil gespeichert", f"Gespeichert unter:\n{path}"
-        )
+        QMessageBox.information(self, "Profil gespeichert", f"Gespeichert unter:\n{path}")
         self.profile_saved.emit()
 
     # ── Helpers ───────────────────────────────────────────────────────────────
@@ -496,18 +472,13 @@ class AutoPowerCalibrationWindow(QDialog):
 
     def _update_start_button_state(self) -> None:
         arduino_ok = (
-            (
-                self._device_manager is not None
-                and self._device_manager.is_encoder_connected()
-            )
+            (self._device_manager is not None and self._device_manager.is_encoder_connected())
             if self._standalone
             else True
         )
         hw_ready = self._kdc.is_connected() and self._pm.is_connected() and arduino_ok
         self.ui.btnAlignPolariser.setEnabled(hw_ready)
-        self.ui.btnStart.setEnabled(
-            hw_ready and bool(self.ui.lineProfileName.text().strip())
-        )
+        self.ui.btnStart.setEnabled(hw_ready and bool(self.ui.lineProfileName.text().strip()))
 
     def _set_running(self, running: bool) -> None:
         for w in (
@@ -540,6 +511,7 @@ class AutoPowerCalibrationWindow(QDialog):
     # ── Qt lifecycle ──────────────────────────────────────────────────────────
 
     def closeEvent(self, event) -> None:
+        """Abort any running workers and wait for them before allowing the window to close."""
         if self._align_worker is not None and self._align_worker.isRunning():
             self._align_worker.abort()
             self._align_worker.wait(5000)

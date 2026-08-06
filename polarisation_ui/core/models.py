@@ -5,7 +5,6 @@ goniometer state without any Qt or UI dependencies.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -31,6 +30,7 @@ class AcquisitionSettings:
 
     @classmethod
     def from_config(cls, acq: dict) -> "AcquisitionSettings":
+        """Build settings from a config.json ``acquisition`` dict, defaulting missing keys."""
         return cls(
             det_average_on=acq.get("det_average_on", True),
             det_averages=acq.get("det_averages", 5),
@@ -73,8 +73,8 @@ class Frame:
     detector_angle: float
     intensity: float
     pdtia_gain: int = 0
-    power_W: Optional[float] = None
-    conv_factor_W_per_V: Optional[float] = None
+    power_W: float | None = None
+    conv_factor_W_per_V: float | None = None
     stat: int = 0  # streaming stat bitmask (see docstring)
 
 
@@ -86,8 +86,8 @@ class BrewsterPoint:
     detector_angle: float
     intensity_V: float
     pdtia_gain: int = 0
-    power_W: Optional[float] = None
-    conv_factor_W_per_V: Optional[float] = None
+    power_W: float | None = None
+    conv_factor_W_per_V: float | None = None
 
 
 @dataclass
@@ -98,8 +98,8 @@ class MalusPoint:
     polariser_angle: float
     intensity_V: float
     pdtia_gain: int = 0
-    power_W: Optional[float] = None
-    conv_factor_W_per_V: Optional[float] = None
+    power_W: float | None = None
+    conv_factor_W_per_V: float | None = None
 
 
 @dataclass

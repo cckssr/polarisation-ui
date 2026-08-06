@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """Polarisation-UI - Main program for Goniometer Control GUI.
 
@@ -12,8 +11,8 @@ Flags:
 """
 
 import argparse
-import sys
 import os
+import sys
 
 # If executed as a script (package context missing), ensure the repo root is on
 # sys.path and set __package__ so relative imports below work correctly.
@@ -29,14 +28,14 @@ if __package__ is None:
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.config import import_config
-from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
-from polarisation_ui.ui.windows.mainwindow import MainWindow
+from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.ui.windows.auto_power_calibration_window import (
     AutoPowerCalibrationWindow,
 )
+from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
+from polarisation_ui.ui.windows.mainwindow import MainWindow
 
 
 def main():
@@ -48,9 +47,7 @@ def main():
         - Main window (or debug-only window when --debug-only is passed)
     """
     # Parse CLI flags before handing remaining args to Qt
-    parser = argparse.ArgumentParser(
-        description="Polarisation-UI — Goniometer control interface"
-    )
+    parser = argparse.ArgumentParser(description="Polarisation-UI — Goniometer control interface")
     parser.add_argument(
         "--debug-only",
         action="store_true",
@@ -132,9 +129,7 @@ def _run_power_cal(app: "QApplication") -> None:
     sys.exit(app.exec())
 
 
-def _run_debug_only(
-    app: "QApplication", device_manager: GoniometerDeviceManager
-) -> None:
+def _run_debug_only(app: "QApplication", device_manager: GoniometerDeviceManager) -> None:
     """Launch only the encoder debug window (standalone mode)."""
     Debug.info("Launching debug-only mode")
     dialog = EncoderDebugDialog(device_manager, standalone=True)

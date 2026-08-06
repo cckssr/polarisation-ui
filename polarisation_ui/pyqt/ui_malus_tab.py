@@ -85,12 +85,8 @@ class Ui_MalusTab(object):
         self.pointsTable.setObjectName("pointsTable")
         self.pointsTable.setMinimumSize(QSize(0, 120))
         self.pointsTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.pointsTable.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
-        self.pointsTable.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.pointsTable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.pointsTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.pointsTable.verticalHeader().setVisible(False)
 
         self.gridLayout.addWidget(self.pointsTable, 1, 0, 1, 1)
@@ -108,23 +104,17 @@ class Ui_MalusTab(object):
         self.lblLiveIntensityLabel = QLabel(self.gbLive)
         self.lblLiveIntensityLabel.setObjectName("lblLiveIntensityLabel")
 
-        self.formLive.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblLiveIntensityLabel
-        )
+        self.formLive.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblLiveIntensityLabel)
 
         self.lblLiveIntensity = QLabel(self.gbLive)
         self.lblLiveIntensity.setObjectName("lblLiveIntensity")
 
-        self.formLive.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.lblLiveIntensity
-        )
+        self.formLive.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblLiveIntensity)
 
         self.lblLivePowerLabel = QLabel(self.gbLive)
         self.lblLivePowerLabel.setObjectName("lblLivePowerLabel")
 
-        self.formLive.setWidget(
-            3, QFormLayout.ItemRole.LabelRole, self.lblLivePowerLabel
-        )
+        self.formLive.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblLivePowerLabel)
 
         self.lblLivePower = QLabel(self.gbLive)
         self.lblLivePower.setObjectName("lblLivePower")
@@ -134,9 +124,7 @@ class Ui_MalusTab(object):
         self.lblLiveVoltageLabel = QLabel(self.gbLive)
         self.lblLiveVoltageLabel.setObjectName("lblLiveVoltageLabel")
 
-        self.formLive.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblLiveVoltageLabel
-        )
+        self.formLive.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblLiveVoltageLabel)
 
         self.lblLiveVoltage = QLabel(self.gbLive)
         self.lblLiveVoltage.setObjectName("lblLiveVoltage")
@@ -207,23 +195,17 @@ class Ui_MalusTab(object):
         self.lblZeroOffsetLabel = QLabel(self.gbSweep)
         self.lblZeroOffsetLabel.setObjectName("lblZeroOffsetLabel")
 
-        self.formSweepParams.setWidget(
-            0, QFormLayout.ItemRole.LabelRole, self.lblZeroOffsetLabel
-        )
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblZeroOffsetLabel)
 
         self.lblZeroOffset = QLabel(self.gbSweep)
         self.lblZeroOffset.setObjectName("lblZeroOffset")
 
-        self.formSweepParams.setWidget(
-            0, QFormLayout.ItemRole.FieldRole, self.lblZeroOffset
-        )
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblZeroOffset)
 
         self.lblSweepStart = QLabel(self.gbSweep)
         self.lblSweepStart.setObjectName("lblSweepStart")
 
-        self.formSweepParams.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblSweepStart
-        )
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSweepStart)
 
         self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStart.setObjectName("spinSweepStart")
@@ -232,16 +214,12 @@ class Ui_MalusTab(object):
         self.spinSweepStart.setMaximum(360.000000000000000)
         self.spinSweepStart.setValue(0.000000000000000)
 
-        self.formSweepParams.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.spinSweepStart
-        )
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSweepStart)
 
         self.lblSweepEnd = QLabel(self.gbSweep)
         self.lblSweepEnd.setObjectName("lblSweepEnd")
 
-        self.formSweepParams.setWidget(
-            2, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd
-        )
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd)
 
         self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
         self.spinSweepEnd.setObjectName("spinSweepEnd")
@@ -250,16 +228,12 @@ class Ui_MalusTab(object):
         self.spinSweepEnd.setMaximum(360.000000000000000)
         self.spinSweepEnd.setValue(180.000000000000000)
 
-        self.formSweepParams.setWidget(
-            2, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd
-        )
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd)
 
         self.lblSweepStep = QLabel(self.gbSweep)
         self.lblSweepStep.setObjectName("lblSweepStep")
 
-        self.formSweepParams.setWidget(
-            3, QFormLayout.ItemRole.LabelRole, self.lblSweepStep
-        )
+        self.formSweepParams.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblSweepStep)
 
         self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStep.setObjectName("spinSweepStep")
@@ -269,9 +243,7 @@ class Ui_MalusTab(object):
         self.spinSweepStep.setSingleStep(0.500000000000000)
         self.spinSweepStep.setValue(5.000000000000000)
 
-        self.formSweepParams.setWidget(
-            3, QFormLayout.ItemRole.FieldRole, self.spinSweepStep
-        )
+        self.formSweepParams.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinSweepStep)
 
         self.vboxSweep.addLayout(self.formSweepParams)
 
@@ -334,36 +306,18 @@ class Ui_MalusTab(object):
             QCoreApplication.translate("MalusTab", "\u03b8_P (\u00b0)", None)
         )
         ___qtablewidgetitem2 = self.pointsTable.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(
-            QCoreApplication.translate("MalusTab", "I (mV)", None)
-        )
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("MalusTab", "I (mV)", None))
         ___qtablewidgetitem3 = self.pointsTable.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(
-            QCoreApplication.translate("MalusTab", "P (\u00b5W)", None)
-        )
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("MalusTab", "P (\u00b5W)", None))
         ___qtablewidgetitem4 = self.pointsTable.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(
-            QCoreApplication.translate("MalusTab", "Gain", None)
-        )
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("MalusTab", "Gain", None))
         self.gbLive.setTitle(QCoreApplication.translate("MalusTab", "Aktuell", None))
-        self.lblLiveIntensityLabel.setText(
-            QCoreApplication.translate("MalusTab", "I:", None)
-        )
-        self.lblLiveIntensity.setText(
-            QCoreApplication.translate("MalusTab", "\u2014", None)
-        )
-        self.lblLivePowerLabel.setText(
-            QCoreApplication.translate("MalusTab", "P:", None)
-        )
-        self.lblLivePower.setText(
-            QCoreApplication.translate("MalusTab", "\u2014", None)
-        )
-        self.lblLiveVoltageLabel.setText(
-            QCoreApplication.translate("MalusTab", "U:", None)
-        )
-        self.lblLiveVoltage.setText(
-            QCoreApplication.translate("MalusTab", "\u2014", None)
-        )
+        self.lblLiveIntensityLabel.setText(QCoreApplication.translate("MalusTab", "I:", None))
+        self.lblLiveIntensity.setText(QCoreApplication.translate("MalusTab", "\u2014", None))
+        self.lblLivePowerLabel.setText(QCoreApplication.translate("MalusTab", "P:", None))
+        self.lblLivePower.setText(QCoreApplication.translate("MalusTab", "\u2014", None))
+        self.lblLiveVoltageLabel.setText(QCoreApplication.translate("MalusTab", "U:", None))
+        self.lblLiveVoltage.setText(QCoreApplication.translate("MalusTab", "\u2014", None))
         self.gbEntry.setTitle(QCoreApplication.translate("MalusTab", "Messpunkt", None))
         self.lblPolariser.setText(
             QCoreApplication.translate("MalusTab", "Polarisator \u03b8_P:", None)
@@ -377,9 +331,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spinPolariser.setSuffix(
-            QCoreApplication.translate("MalusTab", " \u00b0", None)
-        )
+        self.spinPolariser.setSuffix(QCoreApplication.translate("MalusTab", " \u00b0", None))
         self.lblAnalyser.setText(
             QCoreApplication.translate("MalusTab", "Analysator \u03b8_A:", None)
         )
@@ -390,9 +342,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spinAnalyser.setSuffix(
-            QCoreApplication.translate("MalusTab", " \u00b0", None)
-        )
+        self.spinAnalyser.setSuffix(QCoreApplication.translate("MalusTab", " \u00b0", None))
         # if QT_CONFIG(tooltip)
         self.btnAdd.setToolTip(
             QCoreApplication.translate(
@@ -402,9 +352,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnAdd.setText(
-            QCoreApplication.translate("MalusTab", "Punkt hinzuf\u00fcgen", None)
-        )
+        self.btnAdd.setText(QCoreApplication.translate("MalusTab", "Punkt hinzuf\u00fcgen", None))
         self.gbSweep.setTitle(
             QCoreApplication.translate("MalusTab", "Automatischer Scan (KDC101)", None)
         )
@@ -423,12 +371,8 @@ class Ui_MalusTab(object):
         self.lblZeroOffsetLabel.setText(
             QCoreApplication.translate("MalusTab", "Zero-Offset:", None)
         )
-        self.lblZeroOffset.setText(
-            QCoreApplication.translate("MalusTab", "\u2014", None)
-        )
-        self.lblSweepStart.setText(
-            QCoreApplication.translate("MalusTab", "Von (\u00b0):", None)
-        )
+        self.lblZeroOffset.setText(QCoreApplication.translate("MalusTab", "\u2014", None))
+        self.lblSweepStart.setText(QCoreApplication.translate("MalusTab", "Von (\u00b0):", None))
         # if QT_CONFIG(tooltip)
         self.spinSweepStart.setToolTip(
             QCoreApplication.translate(
@@ -436,12 +380,8 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spinSweepStart.setSuffix(
-            QCoreApplication.translate("MalusTab", " \u00b0", None)
-        )
-        self.lblSweepEnd.setText(
-            QCoreApplication.translate("MalusTab", "Bis (\u00b0):", None)
-        )
+        self.spinSweepStart.setSuffix(QCoreApplication.translate("MalusTab", " \u00b0", None))
+        self.lblSweepEnd.setText(QCoreApplication.translate("MalusTab", "Bis (\u00b0):", None))
         # if QT_CONFIG(tooltip)
         self.spinSweepEnd.setToolTip(
             QCoreApplication.translate(
@@ -449,12 +389,8 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spinSweepEnd.setSuffix(
-            QCoreApplication.translate("MalusTab", " \u00b0", None)
-        )
-        self.lblSweepStep.setText(
-            QCoreApplication.translate("MalusTab", "Schritt (\u00b0):", None)
-        )
+        self.spinSweepEnd.setSuffix(QCoreApplication.translate("MalusTab", " \u00b0", None))
+        self.lblSweepStep.setText(QCoreApplication.translate("MalusTab", "Schritt (\u00b0):", None))
         # if QT_CONFIG(tooltip)
         self.spinSweepStep.setToolTip(
             QCoreApplication.translate(
@@ -462,9 +398,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spinSweepStep.setSuffix(
-            QCoreApplication.translate("MalusTab", " \u00b0", None)
-        )
+        self.spinSweepStep.setSuffix(QCoreApplication.translate("MalusTab", " \u00b0", None))
         # if QT_CONFIG(tooltip)
         self.btnStartSweep.setToolTip(
             QCoreApplication.translate(
@@ -472,9 +406,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnStartSweep.setText(
-            QCoreApplication.translate("MalusTab", "Scan starten", None)
-        )
+        self.btnStartSweep.setText(QCoreApplication.translate("MalusTab", "Scan starten", None))
         # if QT_CONFIG(tooltip)
         self.btnAbortSweep.setToolTip(
             QCoreApplication.translate(
@@ -482,9 +414,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnAbortSweep.setText(
-            QCoreApplication.translate("MalusTab", "Abbrechen", None)
-        )
+        self.btnAbortSweep.setText(QCoreApplication.translate("MalusTab", "Abbrechen", None))
         # if QT_CONFIG(tooltip)
         self.btnDeleteSelected.setToolTip(
             QCoreApplication.translate(
@@ -493,9 +423,7 @@ class Ui_MalusTab(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnDeleteSelected.setText(
-            QCoreApplication.translate(
-                "MalusTab", "Ausgew\u00e4hlten l\u00f6schen", None
-            )
+            QCoreApplication.translate("MalusTab", "Ausgew\u00e4hlten l\u00f6schen", None)
         )
         # if QT_CONFIG(tooltip)
         self.btnDeleteLast.setToolTip(
@@ -514,9 +442,7 @@ class Ui_MalusTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClear.setText(
-            QCoreApplication.translate("MalusTab", "Alle l\u00f6schen", None)
-        )
+        self.btnClear.setText(QCoreApplication.translate("MalusTab", "Alle l\u00f6schen", None))
         pass
 
     # retranslateUi

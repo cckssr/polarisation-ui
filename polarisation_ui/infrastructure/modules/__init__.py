@@ -22,7 +22,7 @@ Usage::
 Thread-safety: all calls are expected from the Qt main thread; no locking.
 """
 
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -79,7 +79,7 @@ class ModuleRegistry:
             Debug.info(f"ModuleRegistry: unregistered '{module_id}'")
 
     @classmethod
-    def get(cls, module_id: str) -> Optional[HostModule]:
+    def get(cls, module_id: str) -> HostModule | None:
         """Return the module for *module_id*, or ``None`` if not registered."""
         return cls._registry.get(module_id)
 

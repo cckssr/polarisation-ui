@@ -1,5 +1,4 @@
-"""
-Tests for KDC101 Stage Communication.
+"""Tests for KDC101 Stage Communication.
 
 Tests the KDC101Stage class backed by pylablib's KinesisMotor.
 
@@ -8,13 +7,12 @@ Usage:
     pytest test_kdc101.py -v --hardware  # requires actual device
 """
 
+import os
 import struct
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-import sys
-import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from devices.kdc101_stage import KDC101Stage

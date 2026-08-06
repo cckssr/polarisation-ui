@@ -94,9 +94,7 @@ def test_attenuation_roundtrip(connected_pm400: PM400PowerMeter) -> None:
     for db in (0.0, 3.01, 6.0):
         connected_pm400.set_attenuation_dB(db)
         got = connected_pm400.get_attenuation_dB()
-        assert abs(got - db) < 0.1, (
-            f"Attenuation roundtrip failed: set {db} dB, got {got} dB"
-        )
+        assert abs(got - db) < 0.1, f"Attenuation roundtrip failed: set {db} dB, got {got} dB"
     # Restore to 0 dB so the instrument is in a known state after the test
     connected_pm400.set_attenuation_dB(0.0)
 

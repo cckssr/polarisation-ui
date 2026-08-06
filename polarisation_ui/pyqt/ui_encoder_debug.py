@@ -143,9 +143,7 @@ class Ui_EncoderDebugDialog(object):
         self.gbMeasA.setObjectName("gbMeasA")
         self.formMeasA = QFormLayout(self.gbMeasA)
         self.formMeasA.setObjectName("formMeasA")
-        self.formMeasA.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
-        )
+        self.formMeasA.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         self.lblConnA = QLabel(self.gbMeasA)
         self.lblConnA.setObjectName("lblConnA")
 
@@ -296,9 +294,7 @@ class Ui_EncoderDebugDialog(object):
 
         self.horizontalLayout.addWidget(self.spbAgcA)
 
-        self.formMeasA.setLayout(
-            10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout
-        )
+        self.formMeasA.setLayout(10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout)
 
         self.hlMeasurements.addWidget(self.gbMeasA)
 
@@ -306,9 +302,7 @@ class Ui_EncoderDebugDialog(object):
         self.gbMeasB.setObjectName("gbMeasB")
         self.formMeasB = QFormLayout(self.gbMeasB)
         self.formMeasB.setObjectName("formMeasB")
-        self.formMeasB.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
-        )
+        self.formMeasB.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         self.lblConnB = QLabel(self.gbMeasB)
         self.lblConnB.setObjectName("lblConnB")
 
@@ -459,9 +453,7 @@ class Ui_EncoderDebugDialog(object):
 
         self.horizontalLayout_2.addWidget(self.spbAgcB)
 
-        self.formMeasB.setLayout(
-            10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout_2
-        )
+        self.formMeasB.setLayout(10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout_2)
 
         self.hlMeasurements.addWidget(self.gbMeasB)
 
@@ -474,9 +466,7 @@ class Ui_EncoderDebugDialog(object):
         self.gbSysInfo.setObjectName("gbSysInfo")
         self.formSysInfo = QFormLayout(self.gbSysInfo)
         self.formSysInfo.setObjectName("formSysInfo")
-        self.formSysInfo.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
-        )
+        self.formSysInfo.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         self.lblIdn_lbl = QLabel(self.gbSysInfo)
         self.lblIdn_lbl.setObjectName("lblIdn_lbl")
 
@@ -491,9 +481,7 @@ class Ui_EncoderDebugDialog(object):
         self.lblPollInt_lbl = QLabel(self.gbSysInfo)
         self.lblPollInt_lbl.setObjectName("lblPollInt_lbl")
 
-        self.formSysInfo.setWidget(
-            1, QFormLayout.ItemRole.LabelRole, self.lblPollInt_lbl
-        )
+        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblPollInt_lbl)
 
         self.spbPollInterval = QSpinBox(self.gbSysInfo)
         self.spbPollInterval.setObjectName("spbPollInterval")
@@ -501,16 +489,12 @@ class Ui_EncoderDebugDialog(object):
         self.spbPollInterval.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.spbPollInterval.setMaximum(9999)
 
-        self.formSysInfo.setWidget(
-            1, QFormLayout.ItemRole.FieldRole, self.spbPollInterval
-        )
+        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spbPollInterval)
 
         self.lblDebugMode_lbl = QLabel(self.gbSysInfo)
         self.lblDebugMode_lbl.setObjectName("lblDebugMode_lbl")
 
-        self.formSysInfo.setWidget(
-            2, QFormLayout.ItemRole.LabelRole, self.lblDebugMode_lbl
-        )
+        self.formSysInfo.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblDebugMode_lbl)
 
         self.cbDebugMode = QCheckBox(self.gbSysInfo)
         self.cbDebugMode.setObjectName("cbDebugMode")
@@ -610,9 +594,7 @@ class Ui_EncoderDebugDialog(object):
         EncoderDebugDialog.setWindowTitle(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder Debug", None)
         )
-        self.gbControl.setTitle(
-            QCoreApplication.translate("EncoderDebugDialog", "Steuerung", None)
-        )
+        self.gbControl.setTitle(QCoreApplication.translate("EncoderDebugDialog", "Steuerung", None))
         self.lblEncoderSel.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder:", None)
         )
@@ -642,9 +624,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.btnRefresh.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Alle Werte einmalig abrufen", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Alle Werte einmalig abrufen", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnRefresh.setText(
@@ -672,23 +652,15 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnClearErrorFlag.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Fehler l\u00f6schen", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Fehler l\u00f6schen", None)
         )
         self.gbMeasA.setTitle(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Encoder A \u2013 Sample", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Encoder A \u2013 Sample", None)
         )
-        self.lblConnA.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None)
-        )
+        self.lblConnA.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
         # if QT_CONFIG(tooltip)
         self.ledConnA.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Verbindungsstatus Encoder A", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Verbindungsstatus Encoder A", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAngleA.setText(
@@ -696,9 +668,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.lcdAngleA.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblMagnitudeA.setText(
@@ -706,9 +676,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.lcdMagnitudeA.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblMagBarA.setText(
@@ -722,9 +690,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCofA.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCofA.setToolTip(
@@ -736,9 +702,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCompHA.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCompHA.setToolTip(
@@ -750,9 +714,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCompLA.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCompLA.setToolTip(
@@ -764,9 +726,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblOcfA.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "OCF \u2013 Sensor bereit", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "OCF \u2013 Sensor bereit", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledOcfA.setToolTip(
@@ -777,9 +737,7 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblErrorA.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None)
-        )
+        self.lblErrorA.setText(QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None))
         # if QT_CONFIG(tooltip)
         self.ledErrorA.setToolTip(
             QCoreApplication.translate(
@@ -790,9 +748,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAgcA_lbl.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "AGC - Automatic Gain Control", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "AGC - Automatic Gain Control", None)
         )
         # if QT_CONFIG(tooltip)
         self.pbarAgcA.setToolTip(
@@ -813,18 +769,12 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.gbMeasB.setTitle(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Encoder B \u2013 Detektor", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Encoder B \u2013 Detektor", None)
         )
-        self.lblConnB.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None)
-        )
+        self.lblConnB.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
         # if QT_CONFIG(tooltip)
         self.ledConnB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Verbindungsstatus Encoder B", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Verbindungsstatus Encoder B", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAngleB.setText(
@@ -832,9 +782,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.lcdAngleB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? B)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? B)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblMagnitudeB.setText(
@@ -842,9 +790,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.lcdMagnitudeB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblMagBarB.setText(
@@ -858,45 +804,31 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCofB.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCofB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COF: CORDIC Overflow", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COF: CORDIC Overflow", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCompHB.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCompHB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_H: Magnetfeld zu schwach", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_H: Magnetfeld zu schwach", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblCompLB.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledCompLB.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "COMP_L: Magnetfeld zu stark", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "COMP_L: Magnetfeld zu stark", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.lblOcfB.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "OCF \u2013 Sensor bereit", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "OCF \u2013 Sensor bereit", None)
         )
         # if QT_CONFIG(tooltip)
         self.ledOcfB.setToolTip(
@@ -905,9 +837,7 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblErrorB.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None)
-        )
+        self.lblErrorB.setText(QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None))
         # if QT_CONFIG(tooltip)
         self.ledErrorB.setToolTip(
             QCoreApplication.translate(
@@ -918,9 +848,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.lblAgcB_lbl.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "AGC - Automatic Gain Control", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "AGC - Automatic Gain Control", None)
         )
         # if QT_CONFIG(tooltip)
         self.pbarAgcB.setToolTip(
@@ -943,9 +871,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "Messwerte", None),
         )
         self.gbSysInfo.setTitle(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Ger\u00e4teinformationen", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Ger\u00e4teinformationen", None)
         )
         self.lblIdn_lbl.setText(
             QCoreApplication.translate("EncoderDebugDialog", "IDN (*IDN?)", None)
@@ -961,9 +887,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
         )
         self.lblPollInt_lbl.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Poll-Intervall (SENS:INT?)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Poll-Intervall (SENS:INT?)", None)
         )
         # if QT_CONFIG(tooltip)
         self.spbPollInterval.setToolTip(
@@ -978,9 +902,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", " ms", None)
         )
         self.lblDebugMode_lbl.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Debug-Modus (SYST:DEB?)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Debug-Modus (SYST:DEB?)", None)
         )
         # if QT_CONFIG(tooltip)
         self.cbDebugMode.setToolTip(
@@ -991,13 +913,9 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.cbDebugMode.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "Aktiv", None)
-        )
+        self.cbDebugMode.setText(QCoreApplication.translate("EncoderDebugDialog", "Aktiv", None))
         self.gbScpiErrors.setTitle(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "SCPI Fehler-Queue (SYST:ERR?)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "SCPI Fehler-Queue (SYST:ERR?)", None)
         )
         # if QT_CONFIG(tooltip)
         self.teScpiErrors.setToolTip(
@@ -1029,9 +947,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.btnClearScpiErrors.setText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Queue l\u00f6schen (*CLS)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Queue l\u00f6schen (*CLS)", None)
         )
         self.tabWidget.setTabText(
             self.tabWidget.indexOf(self.tabSystem),
@@ -1039,9 +955,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.teTerminalLog.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "SCPI Kommunikationslog", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "SCPI Kommunikationslog", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.teTerminalLog.setPlaceholderText(
@@ -1057,15 +971,11 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.leCommandInput.setPlaceholderText(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "SCPI-Befehl, z.B. MEAS:ANGL? A", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "SCPI-Befehl, z.B. MEAS:ANGL? A", None)
         )
         # if QT_CONFIG(tooltip)
         self.btnSendCommand.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Befehl senden (auch Enter)", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Befehl senden (auch Enter)", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnSendCommand.setText(
@@ -1073,9 +983,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # if QT_CONFIG(tooltip)
         self.btnClearLog.setToolTip(
-            QCoreApplication.translate(
-                "EncoderDebugDialog", "Terminal-Log leeren", None
-            )
+            QCoreApplication.translate("EncoderDebugDialog", "Terminal-Log leeren", None)
         )
         # endif // QT_CONFIG(tooltip)
         self.btnClearLog.setText(

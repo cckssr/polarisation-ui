@@ -1,56 +1,12 @@
-#include <iostream>
+#include <unity.h>
 #include <string>
 #include <cctype>
-#include <cassert>
 #include <cstring>
 
-// ─── Simple Test Framework ────────────────────────────────────────────────
-
-int test_count = 0;
-int pass_count = 0;
-int fail_count = 0;
-
-#define TEST_ASSERT_EQUAL_STRING(expected, actual) \
-  do { \
-    test_count++; \
-    if (strcmp(expected, actual) == 0) { \
-      pass_count++; \
-      std::cout << "  ✓ PASS\n"; \
-    } else { \
-      fail_count++; \
-      std::cout << "  ✗ FAIL: expected '" << expected << "', got '" << actual << "'\n"; \
-    } \
-  } while(0)
-
-#define TEST_ASSERT_TRUE(condition) \
-  do { \
-    test_count++; \
-    if (condition) { \
-      pass_count++; \
-      std::cout << "  ✓ PASS\n"; \
-    } else { \
-      fail_count++; \
-      std::cout << "  ✗ FAIL: condition was false\n"; \
-    } \
-  } while(0)
-
-#define TEST_ASSERT_FALSE(condition) \
-  do { \
-    test_count++; \
-    if (!(condition)) { \
-      pass_count++; \
-      std::cout << "  ✓ PASS\n"; \
-    } else { \
-      fail_count++; \
-      std::cout << "  ✗ FAIL: condition was true\n"; \
-    } \
-  } while(0)
-
-#define RUN_TEST(name) \
-  std::cout << "\n" << #name << ":\n"; \
-  name();
-
-// Minimal Arduino String mock für Testing
+// ─── Minimal Arduino String mock for native testing ────────────────────────
+// Provides just the subset of Arduino's String API that scpi_parse.inc uses,
+// so the parser's actual source can be included and tested here unmodified
+// instead of a hand-copied duplicate that could silently drift from it.
 class StringMock
 {
 public:
@@ -115,40 +71,18 @@ public:
     operator std::string() const { return value; }
 };
 
-// Define String as StringMock for tests
+// Define String as StringMock for the parser under test.
 #define String StringMock
 
-// SCPI Parser from actual code (copied for testing)
-bool scpiParse(const String &line, String &header, String &param, bool &isQuery)
-{
-    if (line.length() == 0)
-        return false;
-
-    int sp = line.indexOf(' ');
-    if (sp >= 0)
-    {
-        header = line.substring(0, sp);
-        param = line.substring(sp + 1);
-        param.trim();
-    }
-    else
-    {
-        header = line;
-        param = "";
-    }
-
-    isQuery = header.endsWith("?");
-    if (isQuery)
-        header = header.substring(0, header.length() - 1);
-
-    header.toUpperCase();
-    param.toUpperCase();
-    return true;
-}
+// The real parser — same source scpi.cpp compiles into the firmware.
+#include "../src/scpi_parse.inc"
 
 // ─── Tests ────────────────────────────────────────────────────────────────
 
-void test_parse_simple_query()
+void setUp(void) {}
+void tearDown(void) {}
+
+void test_parse_simple_query(void)
 {
     String header, param;
     bool isQuery;
@@ -160,7 +94,7 @@ void test_parse_simple_query()
     TEST_ASSERT_TRUE(isQuery);
 }
 
-void test_parse_command_with_param()
+void test_parse_command_with_param(void)
 {
     String header, param;
     bool isQuery;
@@ -172,7 +106,7 @@ void test_parse_command_with_param()
     TEST_ASSERT_FALSE(isQuery);
 }
 
-void test_parse_case_insensitive()
+void test_parse_case_insensitive(void)
 {
     String header, param;
     bool isQuery;
@@ -184,7 +118,7 @@ void test_parse_case_insensitive()
     TEST_ASSERT_FALSE(isQuery);
 }
 
-void test_parse_multiple_params()
+void test_parse_multiple_params(void)
 {
     String header, param;
     bool isQuery;
@@ -196,7 +130,7 @@ void test_parse_multiple_params()
     TEST_ASSERT_FALSE(isQuery);
 }
 
-void test_parse_with_whitespace()
+void test_parse_with_whitespace(void)
 {
     String header, param;
     bool isQuery;
@@ -208,7 +142,7 @@ void test_parse_with_whitespace()
     TEST_ASSERT_FALSE(isQuery);
 }
 
-void test_parse_query_with_param()
+void test_parse_query_with_param(void)
 {
     String header, param;
     bool isQuery;
@@ -219,7 +153,7 @@ void test_parse_query_with_param()
     TEST_ASSERT_TRUE(isQuery);
 }
 
-void test_parse_meas_encoder_both()
+void test_parse_meas_encoder_both(void)
 {
     String header, param;
     bool isQuery;
@@ -231,7 +165,7 @@ void test_parse_meas_encoder_both()
     TEST_ASSERT_TRUE(isQuery);
 }
 
-void test_parse_empty_line()
+void test_parse_empty_line(void)
 {
     String header, param;
     bool isQuery;
@@ -241,11 +175,22 @@ void test_parse_empty_line()
     TEST_ASSERT_FALSE(result);
 }
 
+void test_parse_sens_query(void)
+{
+    String header, param;
+    bool isQuery;
+
+    scpiParse("SENS:ADC:VREF?", header, param, isQuery);
+
+    TEST_ASSERT_EQUAL_STRING("SENS:ADC:VREF", header.c_str());
+    TEST_ASSERT_TRUE(isQuery);
+}
+
 // ─── Main Test Runner ─────────────────────────────────────────────────────
 
-int main()
+int main(void)
 {
-    std::cout << "\n========== SCPI Parser Tests ==========\n";
+    UNITY_BEGIN();
 
     RUN_TEST(test_parse_simple_query);
     RUN_TEST(test_parse_command_with_param);
@@ -255,12 +200,7 @@ int main()
     RUN_TEST(test_parse_query_with_param);
     RUN_TEST(test_parse_meas_encoder_both);
     RUN_TEST(test_parse_empty_line);
+    RUN_TEST(test_parse_sens_query);
 
-    std::cout << "\n========== Test Summary ==========\n";
-    std::cout << "Total:  " << test_count << "\n";
-    std::cout << "Passed: " << pass_count << "\n";
-    std::cout << "Failed: " << fail_count << "\n";
-    std::cout << "===================================\n\n";
-
-    return (fail_count == 0) ? 0 : 1;
+    return UNITY_END();
 }

@@ -17,6 +17,7 @@ class EventLogPanel(QWidget):
     """Timestamped event log with fixed scrollback (500 lines)."""
 
     def __init__(self, parent=None) -> None:
+        """Build the panel UI (empty scrollback until append() is called)."""
         super().__init__(parent)
         self.ui = Ui_EventLogPanel()
         self.ui.setupUi(self)

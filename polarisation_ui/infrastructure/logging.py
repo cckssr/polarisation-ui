@@ -36,13 +36,13 @@ Usage:
     >>> sys.excepthook = Debug.exception_hook
 """
 
+import inspect
 import logging
 import os
-import tempfile
-from datetime import datetime
 import sys
+import tempfile
 import traceback
-import inspect
+from datetime import datetime
 
 
 class Debug:
@@ -120,9 +120,7 @@ class Debug:
             else:
                 # Use platform-independent temp directory
                 # Creates: /tmp/app_name_logs (Linux/Mac) or %TEMP%\app_name_logs (Windows)
-                log_directory = os.path.join(
-                    tempfile.gettempdir(), app_name.lower() + "_logs"
-                )
+                log_directory = os.path.join(tempfile.gettempdir(), app_name.lower() + "_logs")
 
             if not os.path.exists(log_directory):
                 try:
@@ -139,9 +137,7 @@ class Debug:
             )
 
             file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8")
-            file_formatter = logging.Formatter(
-                "%(asctime)s - %(levelname)s: %(message)s"
-            )
+            file_formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
             file_handler.setFormatter(file_formatter)
             file_handler.setLevel(logging.DEBUG)  # In Datei immer alles loggen
             cls.logger.addHandler(file_handler)
@@ -260,9 +256,7 @@ class Debug:
             exc_value: The exception value
             exc_traceback: The traceback
         """
-        error_msg = "".join(
-            traceback.format_exception(exc_type, exc_value, exc_traceback)
-        )
+        error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         cls.critical(f"UNEXPECTED: {error_msg}")
 
         # Standardbehandlung von Ausnahmen

@@ -32,10 +32,7 @@ def test_adapter_is_connected_reflects_kdc():
 
 def test_adapter_describe():
     adapter = _make_adapter()
-    assert (
-        "kdc101" in adapter.describe().lower()
-        or "connected" in adapter.describe().lower()
-    )
+    assert "kdc101" in adapter.describe().lower() or "connected" in adapter.describe().lower()
 
 
 def test_adapter_registers_in_module_registry():

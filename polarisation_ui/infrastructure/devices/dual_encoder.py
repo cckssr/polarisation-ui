@@ -32,15 +32,17 @@ Firmware < 2.0.0 is rejected with IncompatibleFirmwareError.
 Architecture: pure Python — no PySide6, no serial imports beyond pyserial.
 """
 
-from typing import Any, Literal, Optional
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Literal
 
 import serial
 
 from polarisation_ui.core.exceptions import IncompatibleFirmwareError
-from polarisation_ui.infrastructure.serial_device import SerialDevice
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.infrastructure.serial_device import SerialDevice
 
 
 class EncoderID(Enum):
@@ -65,9 +67,10 @@ class EncoderValue:
 
     encoder_id: EncoderID
     angle_deg: float
-    angle_raw: Optional[int] = None
+    angle_raw: int | None = None
 
     def __repr__(self) -> str:
+        """Return a compact debug representation, e.g. 'EncoderValue(A, 45.0°)'."""
         raw_str = f", raw={self.angle_raw}" if self.angle_raw is not None else ""
         return f"EncoderValue({self.encoder_id.value}, {self.angle_deg}°{raw_str})"
 
@@ -86,6 +89,7 @@ class DualEncoderValue:
     angle_b: float
 
     def __repr__(self) -> str:
+        """Return a compact debug representation, e.g. 'DualEncoderValue(A=45.0°, B=90.0°)'."""
         return f"DualEncoderValue(A={self.angle_a}°, B={self.angle_b}°)"
 
 
@@ -105,6 +109,10 @@ class DesiredState:
     adc_vref: str = "EXT"
     adc_temp: bool = False
     pdtia_gain: int = 0
+    # Union of all currently-visible tabs' required_sources (see PlotTabBase).
+    # Configures which sources the firmware would include in DATA:FRAME lines
+    # if streaming is later armed via INIT:CONT; never arms streaming itself.
+    stream_sources: frozenset[str] = frozenset()
 
     def as_config_snapshot(self) -> dict:
         """Return a dict suitable for the SessionJournal config header."""
@@ -117,6 +125,7 @@ class DesiredState:
             "adc_vref": self.adc_vref,
             "adc_temp": self.adc_temp,
             "pdtia_gain": self.pdtia_gain,
+            "stream_sources": ",".join(sorted(self.stream_sources)),
         }
 
 
@@ -131,7 +140,8 @@ class ADCClient:
         voltage = dev.adc.read_voltage()
     """
 
-    def __init__(self, parent: "DualEncoderArduino") -> None:
+    def __init__(self, parent: DualEncoderArduino) -> None:
+        """Bind this facet to the owning DualEncoderArduino for command dispatch."""
         self._dev = parent
 
     def configure(
@@ -164,7 +174,7 @@ class ADCClient:
         """Set PD-TIA discrete gain stage (integer; mapped to GPIO pattern in firmware)."""
         return self._dev._send_command_no_response(f"CONF:PDTIA:GAIN {stage}")
 
-    def get_pdtia_gain(self) -> Optional[dict[str, Any]]:
+    def get_pdtia_gain(self) -> dict[str, Any] | None:
         """Query current PD-TIA stage; returns {'stage': int, 'pattern': str} or None."""
         if not self._dev._device.send_command("CONF:PDTIA:GAIN?", add_newline=True):
             return None
@@ -180,7 +190,7 @@ class ADCClient:
             Debug.error(f"Failed to parse CONF:PDTIA:GAIN? response: '{raw}' ({e})")
             return None
 
-    def read_voltage(self) -> Optional[float]:
+    def read_voltage(self) -> float | None:
         """One-shot ADC voltage read via MEAS:ADC:VOLT?; returns volts or None.
 
         The firmware reads from whatever input is currently selected by
@@ -190,9 +200,7 @@ class ADCClient:
         if not self._dev._device.send_command(cmd, add_newline=True):
             Debug.error(f"Failed to send: {cmd}")
             return None
-        response = self._dev._device.read_value(
-            timeout=self._dev.timeout, return_type="str"
-        )
+        response = self._dev._device.read_value(timeout=self._dev.timeout, return_type="str")
         if not response:
             Debug.error("No response for MEAS:ADC:VOLT?")
             return None
@@ -200,23 +208,6 @@ class ADCClient:
             return float(response.strip())
         except ValueError:
             Debug.error(f"Failed to parse ADC voltage: '{response}'")
-            return None
-
-    def read_temperature(self) -> Optional[float]:
-        """One-shot internal temperature read via MEAS:ADC:TEMP?; returns °C or None."""
-        if not self._dev._device.send_command("MEAS:ADC:TEMP?", add_newline=True):
-            Debug.error("Failed to send: MEAS:ADC:TEMP?")
-            return None
-        response = self._dev._device.read_value(
-            timeout=self._dev.timeout, return_type="str"
-        )
-        if not response:
-            Debug.error("No response for MEAS:ADC:TEMP?")
-            return None
-        try:
-            return float(response.strip())
-        except ValueError:
-            Debug.error(f"Failed to parse ADC temperature: '{response}'")
             return None
 
 
@@ -243,6 +234,7 @@ class DualEncoderArduino:
         timeout: float = DEFAULT_TIMEOUT,
         encoder_b_present: bool = True,
     ) -> None:
+        """Configure the serial connection parameters; connect() opens the port."""
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -254,6 +246,7 @@ class DualEncoderArduino:
 
     @property
     def firmware_version(self) -> str:
+        """Firmware version string reported by *IDN? at connect(), or 'unknown'."""
         return self._firmware_version
 
     # ── Connection ────────────────────────────────────────────────────────────
@@ -272,9 +265,13 @@ class DualEncoderArduino:
             if not self._device.connected:
                 return False
             idn = self.query_idn()
-            if idn:
-                self._check_firmware_version(idn)
-                self._firmware_version = self._parse_version(idn)
+            if not idn:
+                raise IncompatibleFirmwareError(
+                    "No response to *IDN? — cannot verify firmware version. "
+                    "Please flash firmware >= 2.0.0."
+                )
+            self._check_firmware_version(idn)
+            self._firmware_version = self._parse_version(idn)
             # Apply required ADC configuration: gain=1, external vref (2.5 V), temp off.
             self.adc.configure(gain=1, vref="EXT", temp=False)
             Debug.info(f"DualEncoderArduino connected to {self.port}")
@@ -287,10 +284,12 @@ class DualEncoderArduino:
             return False
 
     def disconnect(self) -> None:
+        """Close the serial connection."""
         self._device.close()
         Debug.info(f"DualEncoderArduino disconnected from {self.port}")
 
     def is_connected(self) -> bool:
+        """Return whether the serial connection is currently open."""
         return self._device.connected and self._device.serial is not None
 
     # ── Encoder reads ─────────────────────────────────────────────────────────
@@ -328,7 +327,7 @@ class DualEncoderArduino:
                 return None
             return self._parse_single_response(response, target)
 
-    def read_magnitude(self, encoder_id: EncoderID) -> Optional[int]:
+    def read_magnitude(self, encoder_id: EncoderID) -> int | None:
         """MEAS:ENC:MAGN? A|B → raw 14-bit magnitude or None."""
         if encoder_id == EncoderID.B and not self.encoder_b_present:
             Debug.warning("Encoder B not available")
@@ -366,7 +365,20 @@ class DualEncoderArduino:
             f"CONF:SRC {src_str}"
         ) and self._send_command_no_response("INIT:CONT ON")
 
+    def set_stream_sources(self, sources: set[str]) -> bool:
+        """CONF:SRC <sources> — configure without arming streaming.
+
+        Unlike start_stream(), this never sends INIT:CONT, so it is safe to
+        call at any time (e.g. whenever the set of visible experiment tabs
+        changes) without emitting unread DATA:FRAME lines that would corrupt
+        the next one-shot MEAS:*/CONF:*? response.
+        """
+        src_str = ",".join(sorted(sources))
+        cmd = f"CONF:SRC {src_str}" if src_str else "CONF:SRC"
+        return self._send_command_no_response(cmd)
+
     def abort(self) -> bool:
+        """ABOR — stop streaming."""
         return self._send_command_no_response("ABOR")
 
     # ── Zero / error-flag ─────────────────────────────────────────────────────
@@ -420,11 +432,7 @@ class DualEncoderArduino:
                 return None, None
             # Response: compHA=N,compLA=N,cofA=N,ocfA=N,agcA=N,compHB=N,...,agcB=N
             try:
-                kv: dict[str, str] = {}
-                for token in response.strip().split(","):
-                    if "=" in token:
-                        k, _, v = token.partition("=")
-                        kv[k.strip()] = v.strip()
+                kv = self._parse_kv(response)
                 diag_a: dict[str, Any] = {
                     "compHigh": bool(int(kv.get("compHA", "0"))),
                     "compLow": bool(int(kv.get("compLA", "0"))),
@@ -433,7 +441,7 @@ class DualEncoderArduino:
                     "agc": int(kv.get("agcA", "0")),
                 }
                 if "agcB" in kv:
-                    diag_b: Optional[dict[str, Any]] = {
+                    diag_b: dict[str, Any] | None = {
                         "compHigh": bool(int(kv.get("compHB", "0"))),
                         "compLow": bool(int(kv.get("compLB", "0"))),
                         "cof": bool(int(kv.get("cofB", "0"))),
@@ -460,7 +468,7 @@ class DualEncoderArduino:
                 return None
             return self._parse_diagnostics_response(response, target)
 
-    def query_adc_diagnostics(self) -> Optional[dict[str, Any]]:
+    def query_adc_diagnostics(self) -> dict[str, Any] | None:
         """DIAG:ADC? → dict(reg0-reg3: int, drdy: bool, last_raw: int, absent: bool)."""
         cmd = "DIAG:ADC?"
         if not self._device.send_command(cmd, add_newline=True):
@@ -473,11 +481,7 @@ class DualEncoderArduino:
         if response.strip() == "ABSENT":
             return {"absent": True}
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             return {
                 "absent": False,
                 "reg0": int(kv.get("reg0", "0x0"), 16),
@@ -491,7 +495,7 @@ class DualEncoderArduino:
             Debug.error(f"Failed to parse DIAG:ADC? response: '{response}' ({e})")
             return None
 
-    def query_pdtia_diagnostics(self) -> Optional[dict[str, Any]]:
+    def query_pdtia_diagnostics(self) -> dict[str, Any] | None:
         """DIAG:PDTIA? → dict(stage: int, pattern: str like '0b1010')."""
         cmd = "DIAG:PDTIA?"
         if not self._device.send_command(cmd, add_newline=True):
@@ -502,11 +506,7 @@ class DualEncoderArduino:
             Debug.error("No response for DIAG:PDTIA?")
             return None
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             return {
                 "stage": int(kv.get("stage", "0")),
                 "pattern": kv.get("pattern", "0b0000"),
@@ -514,6 +514,31 @@ class DualEncoderArduino:
         except (ValueError, KeyError) as e:
             Debug.error(f"Failed to parse DIAG:PDTIA? response: '{response}' ({e})")
             return None
+
+    def query_self_test(self) -> list[str] | None:
+        """DIAG:SELF? — runs the firmware self-test; one result line per subsystem.
+
+        Unlike every other query in this client, the firmware answers with
+        several ``DIAG:SELF <subsystem>,<result>`` lines instead of one —
+        (ENC:A, ENC:B or ENC:B,ABSENT, ADC, PDTIA). The exact line count
+        depends on whether encoder B is present, so this keeps reading with a
+        short timeout after the first line until the stream goes quiet
+        instead of assuming a fixed count.
+        """
+        if not self._device.send_command("DIAG:SELF?", add_newline=True):
+            Debug.error("Failed to send: DIAG:SELF?")
+            return None
+        first = self._device.read_value(timeout=self.timeout, return_type="str")
+        if not first:
+            Debug.error("No response for DIAG:SELF?")
+            return None
+        lines = [first]
+        while True:
+            nxt = self._device.read_value(timeout=0.1, return_type="str")
+            if not nxt:
+                break
+            lines.append(nxt)
+        return lines
 
     def query_adc_config(self) -> dict[str, str]:
         """Query all current ADC config settings via CONF:ADC:*? commands."""
@@ -532,25 +557,23 @@ class DualEncoderArduino:
 
     # ── Misc ──────────────────────────────────────────────────────────────────
 
-    def query_last_error(self) -> Optional[str]:
+    def query_last_error(self) -> str | None:
         """SYST:ERR? — read one entry from the SCPI error queue."""
         if not self._device.send_command("SYST:ERR?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
-    def query_idn(self) -> Optional[str]:
+    def query_idn(self) -> str | None:
         """*IDN? — identification string."""
         if not self._device.send_command("*IDN?", add_newline=True):
             return None
         return self._device.read_value(timeout=self.timeout, return_type="str")
 
     def reset(self) -> bool:
+        """*RST — reset firmware to defaults."""
         return self._send_command_no_response("*RST")
 
-    def flush_buffer(self) -> bool:
-        return self._device.flush_input_buffer()
-
-    def send_query(self, command: str) -> Optional[str]:
+    def send_query(self, command: str) -> str | None:
         """Send an arbitrary SCPI command and return the response (debug terminal use)."""
         if not self._device.send_command(command, add_newline=True):
             Debug.error(f"Failed to send raw query: {command}")
@@ -565,7 +588,7 @@ class DualEncoderArduino:
         """
         return self._send_command_no_response(command)
 
-    def reapply_desired_state(self, state: "DesiredState") -> bool:
+    def reapply_desired_state(self, state: DesiredState) -> bool:
         """Reapply a DesiredState snapshot after reconnect.
 
         Called by GoniometerDeviceManager immediately after a successful
@@ -583,10 +606,28 @@ class DualEncoderArduino:
         )
         if state.pdtia_gain != 0:
             ok = self.adc.set_pdtia_gain(state.pdtia_gain) and ok
+        if state.stream_sources:
+            ok = self.set_stream_sources(set(state.stream_sources)) and ok
         Debug.info(f"DesiredState reapplied (ok={ok}): {state}")
         return ok
 
     # ── Internal helpers ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_kv(response: str) -> dict[str, str]:
+        """Parse a comma-separated ``k=v`` response into a dict.
+
+        Shared by every diagnostics/config query that uses this token format
+        (DIAG:ENC?, DIAG:ADC?, DIAG:PDTIA?, DATA:FRAME). Tokens without ``=``
+        are ignored rather than raising, since some responses append bare
+        flags in that format.
+        """
+        result: dict[str, str] = {}
+        for token in response.strip().split(","):
+            if "=" in token:
+                k, _, v = token.partition("=")
+                result[k.strip()] = v.strip()
+        return result
 
     @staticmethod
     def _parse_version(idn: str) -> str:
@@ -648,17 +689,9 @@ class DualEncoderArduino:
         """
         if not line.startswith("DATA:FRAME "):
             return {}
-        payload = line[len("DATA:FRAME ") :]
-        result: dict[str, str] = {}
-        for part in payload.split(","):
-            if "=" in part:
-                k, _, v = part.partition("=")
-                result[k.strip()] = v.strip()
-        return result
+        return DualEncoderArduino._parse_kv(line[len("DATA:FRAME ") :])
 
-    def _parse_single_response(
-        self, response: str, encoder_id: EncoderID
-    ) -> Optional[EncoderValue]:
+    def _parse_single_response(self, response: str, encoder_id: EncoderID) -> EncoderValue | None:
         try:
             angle_deg = float(response.strip())
             Debug.debug(f"Encoder {encoder_id.value}: {angle_deg}°")
@@ -667,7 +700,7 @@ class DualEncoderArduino:
             Debug.error(f"Failed to parse encoder response: '{response}' ({e})")
             return None
 
-    def _parse_both_response(self, response: str) -> Optional[DualEncoderValue]:
+    def _parse_both_response(self, response: str) -> DualEncoderValue | None:
         try:
             parts = response.strip().split(",")
             if len(parts) < 2:
@@ -683,14 +716,10 @@ class DualEncoderArduino:
 
     def _parse_diagnostics_response(
         self, response: str, encoder_id: EncoderID
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """DIAG:ENC? → 'compH=N,compL=N,cof=N,ocf=N,agc=N' → typed dict."""
         try:
-            kv: dict[str, str] = {}
-            for token in response.strip().split(","):
-                if "=" in token:
-                    k, _, v = token.partition("=")
-                    kv[k.strip()] = v.strip()
+            kv = self._parse_kv(response)
             if len(kv) < 5:
                 Debug.error(f"Invalid diagnostics response: '{response}'")
                 return None

@@ -10,7 +10,6 @@ the corrected value — no extra maths in the Python client.
 """
 
 import sys
-from typing import Optional
 
 from polarisation_ui.core.exceptions import PM400Error
 from polarisation_ui.infrastructure.logging import Debug
@@ -36,10 +35,9 @@ except ImportError as _local_exc:
 
         _PYMEASURE_AVAILABLE = True
     except ImportError as _pkg_exc:
-        _PYMEASURE_IMPORT_ERROR = (
-            f"Local driver: {_local_exc} | pymeasure package: {_pkg_exc}"
-        )
+        _PYMEASURE_IMPORT_ERROR = f"Local driver: {_local_exc} | pymeasure package: {_pkg_exc}"
 
+_pyvisa = None
 _PYVISA_AVAILABLE = False
 _PYVISA_IMPORT_ERROR: str = ""
 
@@ -69,7 +67,8 @@ class PM400PowerMeter:
     """
 
     def __init__(self) -> None:
-        self._inst: Optional[object] = None
+        """Start disconnected; connect() opens the VISA session."""
+        self._inst: object | None = None
 
     # ── Connection ────────────────────────────────────────────────────────────
 
@@ -98,6 +97,7 @@ class PM400PowerMeter:
             raise PM400Error(f"PM400 connect failed ({visa_resource}): {exc}") from exc
 
     def disconnect(self) -> None:
+        """Shut down the VISA session, if any, ignoring errors during shutdown."""
         if self._inst is not None:
             try:
                 self._inst.shutdown()
@@ -108,6 +108,7 @@ class PM400PowerMeter:
         Debug.info("PM400: disconnected")
 
     def is_connected(self) -> bool:
+        """Return whether a VISA session is currently open."""
         return self._inst is not None
 
     # ── Measurement ───────────────────────────────────────────────────────────
@@ -137,6 +138,7 @@ class PM400PowerMeter:
             raise PM400Error(f"PM400 set_wavelength_nm({nm}) failed: {exc}") from exc
 
     def get_wavelength_nm(self) -> float:
+        """Return the currently configured operating wavelength (nm)."""
         self._require_connected()
         try:
             return float(self._inst.wavelength)
@@ -156,6 +158,7 @@ class PM400PowerMeter:
             raise PM400Error(f"PM400 set_attenuation_dB({db}) failed: {exc}") from exc
 
     def get_attenuation_dB(self) -> float:
+        """Return the currently configured attenuation correction (dB)."""
         self._require_connected()
         try:
             return float(self._inst.attenuation)

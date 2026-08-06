@@ -30,9 +30,10 @@ Usage:
     >>> device.reconnect()  # PTY devices don't require baudrate configuration
 """
 
-from typing import Optional, Union
 from time import sleep, time
+
 import serial
+
 from .logging import Debug
 
 
@@ -58,7 +59,7 @@ class SerialDevice:
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
-        self.serial: Optional[serial.Serial] = None
+        self.serial: serial.Serial | None = None
         self.connected = False
 
     def reconnect(self) -> bool:
@@ -84,9 +85,7 @@ class SerialDevice:
 
             # Check if this is a PTY (pseudo-terminal) - used by mock devices
             # PTYs don't support baudrate setting via ioctl
-            is_pty = self.port.startswith("/dev/ttys") or self.port.startswith(
-                "/dev/pts"
-            )
+            is_pty = self.port.startswith("/dev/ttys") or self.port.startswith("/dev/pts")
 
             if is_pty:
                 # For PTYs, open without baudrate configuration
@@ -182,7 +181,7 @@ class SerialDevice:
             sleep(0.01)
         return False
 
-    def _decode_bytes_to_string(self, raw_data: bytes, strip: bool) -> Optional[str]:
+    def _decode_bytes_to_string(self, raw_data: bytes, strip: bool) -> str | None:
         """Decode bytes to UTF-8 string, filtering invalid responses."""
         decoded = raw_data.decode("utf-8")
         if strip:
@@ -203,7 +202,7 @@ class SerialDevice:
         timeout: float = 1.0,
         return_type: str = "auto",
         strip_whitespace: bool = True,
-    ) -> Union[str, bytes, None]:
+    ) -> str | bytes | None:
         """Unified method to read a single value from the Arduino.
 
         This is the standard read method. It automatically handles both text and binary
@@ -250,13 +249,9 @@ class SerialDevice:
 
             except UnicodeDecodeError:
                 if return_type == "auto":
-                    Debug.debug(
-                        f"Could not decode as UTF-8, returning {len(raw_data)} raw bytes"
-                    )
+                    Debug.debug(f"Could not decode as UTF-8, returning {len(raw_data)} raw bytes")
                     return raw_data
-                Debug.info(
-                    "Could not decode as UTF-8 (return_type='str'), returning None"
-                )
+                Debug.info("Could not decode as UTF-8 (return_type='str'), returning None")
                 return None
 
         except serial.SerialException as e:

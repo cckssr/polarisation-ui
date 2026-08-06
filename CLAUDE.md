@@ -8,19 +8,19 @@ PySide6 desktop app for a **polarisation / Malus-law goniometer bench** built ar
 
 Hardware surface (fixed — no sensors beyond these are planned):
 
-| Role                       | Device                               | Transport          |
-| -------------------------- | ------------------------------------ | ------------------ |
-| Sample angle               | AS5048A #A (14-bit magnetic encoder) | SPI → Arduino      |
-| Detector-arm angle         | AS5048A #B                           | SPI → Arduino      |
-| Intensity (PD-TIA)         | ADS1220 24-bit ADC                   | SPI → Arduino      |
-| PD-TIA discrete gain       | 4 GPIO lines, high/low combinations  | Arduino GPIO       |
-| Polariser rotation         | Thorlabs KDC101 + PRM1-Z8            | USB (pylablib)     |
+| Role                 | Device                               | Transport      |
+| -------------------- | ------------------------------------ | -------------- |
+| Sample angle         | AS5048A #A (14-bit magnetic encoder) | SPI → Arduino  |
+| Detector-arm angle   | AS5048A #B                           | SPI → Arduino  |
+| Intensity (PD-TIA)   | ADS1220 24-bit ADC                   | SPI → Arduino  |
+| PD-TIA discrete gain | 4 GPIO lines, high/low combinations  | Arduino GPIO   |
+| Polariser rotation   | Thorlabs KDC101 + PRM1-Z8            | USB (pylablib) |
 
 `calibration_tool/` is a sibling PySide6 app using a KDC101 reference stage to calibrate AS5048A eccentricity/ellipticity errors.
 
 ## Phased overhaul in progress
 
-A broad SCPI redesign + UI abstraction is rolling out in phases. Plan lives at `~/.claude/plans/analyse-the-current-state-swift-cocoa.md` and is tracked in `ARCHITECTURE.md`. Items marked **(planned Phase N)** below do not yet exist — do not reference them as implemented code.
+A broad SCPI redesign + UI abstraction is rolling out in phases. Phase tracking lives in the plan file at `~/.claude/plans/analyse-the-current-state-swift-cocoa.md` — `ARCHITECTURE.md` is a project-agnostic architectural blueprint (deliberately reusable elsewhere) and does not track phase status. Items marked **(planned Phase N)** below do not yet exist — do not reference them as implemented code.
 
 ## Architecture
 
@@ -45,11 +45,15 @@ Rules:
 - `QButtonGroup` may be constructed in Python because it is a non-visual logical helper; its buttons must still be declared in the `.ui` file.
 
 **Exceptions (explicitly permitted to build widgets in Python):**
-| File | Reason |
-|---|---|
-| `power_calibration_window.py`, `auto_power_calibration_window.py` | User-approved exception — no `.ui` counterpart by design |
-| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets |
-| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …) | Tab-extensibility pattern: tabs use `build()` for layout by design |
+
+| File                                                                                                           | Reason                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `power_calibration_window.py`                                                                                  | User-approved exception — no `.ui` counterpart by design                                                                                                                                                      |
+| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py`, `multi_gain_calibration_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets                                                                                                                                 |
+| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …)                                                | Tab-extensibility pattern: tabs use `build()` for layout by design                                                                                                                                            |
+| `log_window.py`                                                                                                | Sanctioned exception: imports `QObject, Qt, Signal, QTextCursor` beyond the usual whitelist for a cross-thread logging bridge (log records arrive off the Qt main thread and must be marshalled via a signal) |
+
+`auto_power_calibration_window.py` now has a `.ui` counterpart (`ui_auto_power_calibration.py`) and is **not** an exception — it follows the normal Designer-first rule.
 
 **Known pre-existing violation** (to be migrated, do not extend further):
 
@@ -61,7 +65,7 @@ Pure Python — **no PySide6, no Qt, no hardware I/O, no serial imports**.
 
 - `models.py` — dataclasses: `AcquisitionSettings`, `DualEncoderReading`, `Frame`, `BrewsterPoint`, `MalusPoint`, `TabExport`.
 - `exceptions.py` — `GoniometerError`, `AngleLimitError`, `AngleMismatchError`, `InvalidEncoderReading`, `IncompatibleFirmwareError`, `KDC101Error`, `KDC101TimeoutError`, `PM400Error`.
-- `utils.py` — `circular_mean_deg`.
+- `utils.py` — `circular_mean_deg`, `linear_angle_grid`, `windowed_average_intensity`.
 - `auto_calibration_settings.py`, `power_calibration.py` — auto-calibration settings and power-calibration logic.
 
 ### `polarisation_ui/infrastructure/`
@@ -142,27 +146,27 @@ pio device monitor         # serial monitor (for manual SCPI)
 
 ## SCPI Reference
 
-The Arduino firmware (v2.0.1) speaks SCPI-style commands over USB serial. **Source of truth: `src_arduino/src/scpi.cpp`** — do not duplicate the full tree here; full documentation is in `docs/scpi-reference.md`. Clients must check `SYST:VERS?` on connect and reject firmware `< 2.0.0` with `IncompatibleFirmwareError`.
+The Arduino firmware (v2.1.0) speaks SCPI-style commands over USB serial. **Source of truth: `src_arduino/src/scpi.cpp`** — do not duplicate the full tree here; full documentation is in `docs/scpi-reference.md`. Clients must check `SYST:VERS?` on connect and reject firmware `< 2.0.0` with `IncompatibleFirmwareError`.
 
-Top-level subsystems (as implemented in firmware 2.0.1):
+Top-level subsystems (as implemented in firmware 2.1.0):
 
-| Subsystem                                                   | Purpose                             | Example                           |
-| ----------------------------------------------------------- | ----------------------------------- | --------------------------------- |
-| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI` | IEEE 488.2 common                   | `*IDN?`                           |
-| `MEAS:ENC:ANGL?`, `MEAS:ENC:MAGN?`                         | One-shot encoder reads              | `MEAS:ENC:ANGL? BOTH`             |
-| `MEAS:ADC:VOLT?`, `MEAS:ADC:TEMP?`, `MEAS:ALL?`            | One-shot ADC reads                  | `MEAS:ADC:VOLT?`                  |
-| `CONF:ENC:ZERO`, `CONF:ENC:ERR`                             | Encoder config (zero, error-clear)  | `CONF:ENC:ZERO A`                 |
-| `CONF:ADC:MUX/GAIN/RATE/MODE/FIR/VREF/TEMP/PWR`            | ADS1220 config                      | `CONF:ADC:VREF EXT`               |
-| `CONF:PDTIA:GAIN`                                           | PD-TIA discrete gain stage          | `CONF:PDTIA:GAIN 2`               |
-| `CONF:SRC`, `CONF:RATE`                                     | Streaming sources and rate          | `CONF:SRC ENC:BOTH,ADC`           |
-| `INIT:CONT ON/OFF`, `INIT`, `ABOR`                          | Stream control                      | `INIT:CONT ON`                    |
-| `FETC:ENC:ANGL?`, `FETC:ADC:VOLT?`, `FETC:ALL?`            | Fetch last frame (aliases MEAS:*)   | `FETC:ALL?`                       |
-| `READ?`, `READ? ADC`, `READ? ADC:T`                         | Arm and fetch                       | `READ?`                           |
-| `SENS:ADC:*?`, `SENS:PDTIA:GAIN?`, `SENS:SRC?`, `SENS:RATE?` | Query current config              | `SENS:ADC:VREF?`                  |
-| `SYST:ERR?`, `SYST:VERS?`, `SYST:UPTIME?`, `SYST:HELP?`, `SYST:DEB` | System/error/version       | `SYST:ERR?`                       |
-| `DIAG:ENC?`, `DIAG:ADC?`, `DIAG:PDTIA?`, `DIAG:SELF?`     | Diagnostics                         | `DIAG:ADC?`                       |
+| Subsystem                                                           | Purpose                            | Example                 |
+| ------------------------------------------------------------------- | ---------------------------------- | ----------------------- |
+| `*IDN?`, `*RST`, `*CLS`, `*TST?`, `*OPC`, `*OPC?`, `*WAI`           | IEEE 488.2 common                  | `*IDN?`                 |
+| `MEAS:ENC:ANGL?`, `MEAS:ENC:MAGN?`                                  | One-shot encoder reads             | `MEAS:ENC:ANGL? BOTH`   |
+| `MEAS:ADC:VOLT?`, `MEAS:ADC:TEMP?`, `MEAS:ALL?`                     | One-shot ADC reads                 | `MEAS:ADC:VOLT?`        |
+| `CONF:ENC:ZERO`, `CONF:ENC:ERR`                                     | Encoder config (zero, error-clear) | `CONF:ENC:ZERO A`       |
+| `CONF:ADC:MUX/GAIN/RATE/MODE/FIR/VREF/TEMP/PWR`                     | ADS1220 config                     | `CONF:ADC:VREF EXT`     |
+| `CONF:PDTIA:GAIN`                                                   | PD-TIA discrete gain stage         | `CONF:PDTIA:GAIN 2`     |
+| `CONF:SRC`, `CONF:RATE`                                             | Streaming sources and rate         | `CONF:SRC ENC:BOTH,ADC` |
+| `INIT:CONT ON/OFF`, `INIT`, `ABOR`                                  | Stream control                     | `INIT:CONT ON`          |
+| `FETC:ENC:ANGL?`, `FETC:ADC:VOLT?`, `FETC:ALL?`                     | Fetch last frame (aliases MEAS:*)  | `FETC:ALL?`             |
+| `READ?`, `READ? ADC`, `READ? ADC:T`                                 | Arm and fetch                      | `READ?`                 |
+| `SENS:ADC:*?`, `SENS:PDTIA:GAIN?`, `SENS:SRC?`, `SENS:RATE?`        | Query current config               | `SENS:ADC:VREF?`        |
+| `SYST:ERR?`, `SYST:VERS?`, `SYST:UPTIME?`, `SYST:HELP?`, `SYST:DEB` | System/error/version               | `SYST:ERR?`             |
+| `DIAG:ENC?`, `DIAG:ADC?`, `DIAG:PDTIA?`, `DIAG:SELF?`               | Diagnostics                        | `DIAG:ADC?`             |
 
-Streaming frame format: `DATA:FRAME tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<n>,stat=<flags>` (only sources enabled by `CONF:SRC` are included; `tsMs` and `stat` are always present).
+Streaming frame format: `DATA:FRAME seq=<n>,tsMs=<ms>,angA=<deg>,angB=<deg>,adcV=<V>,adcT=<C>,pdGain=<n>,stat=<flags>` (only sources enabled by `CONF:SRC` are included; `seq`, `tsMs`, and `stat` are always present).
 
 ## Plot-Tab Extensibility
 
@@ -276,7 +280,7 @@ Key files:
 - `src/main.cpp` — setup/loop dispatcher.
 - `src/scpi.cpp` / `scpi.h` — SCPI parser and command dispatcher (source of truth for the protocol).
 - `src/encoder.cpp` / `encoder.h` — AS5048A handlers.
-- `src/state.cpp` / `state.h` — `ErrorQueue`, `AcqStats`, `AcqMode`, `AppState`.
+- `src/state.cpp` / `state.h` — `ErrorQueue`, `AcqStats`, `StreamConfig`, `AppState`.
 - `src/config.h` — pins, firmware identity, baud rate, `FW_VERSION`.
 - `lib/AS5048A/` — SPI encoder driver.
 - `lib/ADS1220/` — ADS1220 driver (wired into SCPI; all `CONF:ADC:*` / `MEAS:ADC:*` / `DIAG:ADC?` commands are implemented).

@@ -3,6 +3,8 @@
 import math
 from collections.abc import Sequence
 
+from polarisation_ui.core.models import Frame
+
 
 def linear_angle_grid(start: float, end: float, n: int) -> list[float]:
     """Return *n* evenly-spaced angles from *start* to *end* (inclusive).
@@ -45,3 +47,32 @@ def circular_mean_deg(angles: Sequence[float]) -> float:
     sin_sum = sum(math.sin(math.radians(a)) for a in angles)
     cos_sum = sum(math.cos(math.radians(a)) for a in angles)
     return math.degrees(math.atan2(sin_sum / n, cos_sum / n)) % 360
+
+
+def windowed_average_intensity(
+    frames: Sequence[Frame], window_ms: int
+) -> tuple[float, Frame | None]:
+    """Average ``Frame.intensity`` over the trailing *window_ms* ending at the latest frame.
+
+    Shared by tabs that support a manual "confirm point" workflow (Malus,
+    Waveplate): a point's intensity is the mean of recent non-NaN readings
+    rather than a single noisy sample. Frames are assumed to be already
+    time-ordered (oldest first), as they are in each tab's ring buffer.
+
+    Args:
+        frames: Time-ordered frames (typically a small ring buffer); may be empty.
+        window_ms: Trailing window width in milliseconds, measured back from
+            the latest frame's ``ts_ms``.
+
+    Returns:
+        ``(nan, None)`` if *frames* is empty; ``(nan, latest)`` if every frame
+        in the window has a NaN intensity; otherwise ``(mean, latest)``.
+    """
+    if not frames:
+        return float("nan"), None
+    latest = frames[-1]
+    cutoff_ms = latest.ts_ms - window_ms
+    valid = [f.intensity for f in frames if f.ts_ms >= cutoff_ms and not math.isnan(f.intensity)]
+    if not valid:
+        return float("nan"), latest
+    return sum(valid) / len(valid), latest

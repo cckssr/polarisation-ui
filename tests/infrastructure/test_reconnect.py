@@ -10,22 +10,17 @@ Run with: .venv/bin/pytest tests/infrastructure/test_reconnect.py
 
 import sys
 import time
-from collections import deque
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from polarisation_ui.infrastructure.devices.dual_encoder import DesiredState
-from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.core.models import Frame
+from polarisation_ui.infrastructure.devices.dual_encoder import DesiredState
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
-def _make_device_manager(
-    connected: bool = True, reconnect_result: bool = True
-) -> MagicMock:
+def _make_device_manager(connected: bool = True, reconnect_result: bool = True) -> MagicMock:
     dm = MagicMock()
     dm.is_encoder_connected.return_value = connected
     dm.reconnect_encoders.return_value = reconnect_result
@@ -89,6 +84,33 @@ class TestDesiredState:
         DualEncoderArduino.reapply_desired_state(dev, state)
         dev.adc.set_pdtia_gain.assert_not_called()
 
+    def test_reapply_applies_stream_sources_when_set(self):
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
+        dev = MagicMock(spec=DualEncoderArduino)
+        dev.adc = MagicMock()
+        dev.adc.configure.return_value = True
+        dev.set_stream_sources.return_value = True
+
+        state = DesiredState(stream_sources=frozenset({"ADC", "ENC:BOTH"}))
+        DualEncoderArduino.reapply_desired_state(dev, state)
+        dev.set_stream_sources.assert_called_once_with({"ADC", "ENC:BOTH"})
+
+    def test_reapply_skips_stream_sources_when_empty(self):
+        from polarisation_ui.infrastructure.devices.dual_encoder import (
+            DualEncoderArduino,
+        )
+
+        dev = MagicMock(spec=DualEncoderArduino)
+        dev.adc = MagicMock()
+        dev.adc.configure.return_value = True
+
+        state = DesiredState()  # stream_sources defaults to an empty frozenset
+        DualEncoderArduino.reapply_desired_state(dev, state)
+        dev.set_stream_sources.assert_not_called()
+
 
 # ── DeviceManager reconnect with DesiredState ─────────────────────────────────
 
@@ -114,13 +136,42 @@ class TestDeviceManagerReconnect:
 
         with (
             patch.object(dm, "disconnect_encoders"),
-            patch.object(dm, "connect_encoders", return_value=True) as mock_connect,
+            patch.object(dm, "connect_encoders", return_value=True),
         ):
             dm._encoder_device = mock_device
             result = dm.reconnect_encoders()
 
         assert result is True
         mock_device.reapply_desired_state.assert_called_once_with(dm._desired_state)
+
+    def test_set_stream_sources_updates_desired_state_on_success(self):
+        from polarisation_ui.infrastructure.device_manager import (
+            GoniometerDeviceManager,
+        )
+
+        dm = GoniometerDeviceManager.__new__(GoniometerDeviceManager)
+        dm._desired_state = DesiredState()
+        mock_device = MagicMock()
+        mock_device.set_stream_sources.return_value = True
+
+        with patch.object(dm, "get_encoder_device", return_value=mock_device):
+            assert dm.set_stream_sources({"ADC", "ENC:BOTH"}) is True
+
+        mock_device.set_stream_sources.assert_called_once_with({"ADC", "ENC:BOTH"})
+        assert dm._desired_state.stream_sources == frozenset({"ADC", "ENC:BOTH"})
+
+    def test_set_stream_sources_returns_false_when_disconnected(self):
+        from polarisation_ui.infrastructure.device_manager import (
+            GoniometerDeviceManager,
+        )
+
+        dm = GoniometerDeviceManager.__new__(GoniometerDeviceManager)
+        dm._desired_state = DesiredState()
+
+        with patch.object(dm, "get_encoder_device", return_value=None):
+            assert dm.set_stream_sources({"ADC"}) is False
+
+        assert dm._desired_state.stream_sources == frozenset()
 
 
 # ── Backoff delay computation ─────────────────────────────────────────────────
@@ -145,10 +196,11 @@ class TestBackoffDelays:
 
     def test_backoff_attempt_advances(self):
         """Each failed reconnect uses a longer delay."""
-        from PySide6.QtWidgets import QApplication
         import sys
 
-        app = QApplication.instance() or QApplication(sys.argv)
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.instance() or QApplication(sys.argv)
 
         dm = _make_device_manager(connected=True)
         dm.read_angles.return_value = None  # trigger errors
@@ -184,8 +236,9 @@ class TestBackoffDelays:
 class TestBufferPreservation:
     def test_buffers_preserved_after_reconnect(self):
         """Ring buffers must NOT be cleared when a reconnect succeeds."""
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance() or QApplication(sys.argv)
 
@@ -219,8 +272,9 @@ class TestBufferPreservation:
 class TestJournalGapMarker:
     def test_gap_written_on_reconnect(self, tmp_path):
         """A gap row must appear in the journal after a successful reconnect."""
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance() or QApplication(sys.argv)
 
@@ -241,9 +295,7 @@ class TestJournalGapMarker:
             dc._start_journal()
             assert dc._journal is not None
 
-            frame = Frame(
-                ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0
-            )
+            frame = Frame(ts_ms=100, sample_angle=10.0, detector_angle=20.0, intensity=500.0)
             dc._journal.append_frame(frame)
 
             # Simulate reconnect (runs on a QThread worker)
@@ -255,7 +307,7 @@ class TestJournalGapMarker:
             # Journal should have a gap row
             dc._journal.close()
             content = dc._journal.journal_path.read_text()
-            lines = [l for l in content.splitlines() if not l.startswith("#")]
+            lines = [line for line in content.splitlines() if not line.startswith("#")]
             # header + 1 data row + 1 gap row
             assert len(lines) >= 3
             # Last data line (gap) should have "1" in column 5
@@ -283,8 +335,8 @@ class TestPtyDisconnection:
 
     def test_kill_pty_causes_read_failure(self):
         """kill_pty() must make subsequent MEAS:ENC:ANGL? return None."""
-        from polarisation_ui.infrastructure.mocks import MockArduino
         from polarisation_ui.infrastructure.devices import DualEncoderArduino, EncoderID
+        from polarisation_ui.infrastructure.mocks import MockArduino
 
         mock = MockArduino(start_angle_a=45.0, start_angle_b=90.0)
         pty_path = mock.start()
@@ -311,3 +363,47 @@ class TestPtyDisconnection:
                 encoder.disconnect()
             except Exception:
                 pass
+
+    def test_kill_pty_during_streaming_raises_no_thread_exception(self):
+        """Regression test for a race between kill_pty() and the run loop.
+
+        kill_pty() runs on the test thread and used to set
+        ``self.pty_master = None`` with no synchronization while the
+        background run loop concurrently read ``self.pty_master`` to build
+        the ``select()`` fd list.  If the null-write landed between reads,
+        ``select.select([None], ...)`` (or ``os.read(None, ...)``) raised an
+        uncaught ``TypeError`` — not caught by the loop's
+        ``except (OSError, ValueError)`` — which killed the daemon thread via
+        ``threading.excepthook``.  Repeats several times with active
+        streaming (so the loop is busy in select/emit) to exercise the
+        narrow race window.
+        """
+        import threading
+
+        from polarisation_ui.infrastructure.devices import (
+            DualEncoderArduino,
+            StreamSource,
+        )
+        from polarisation_ui.infrastructure.mocks import MockArduino
+
+        thread_exceptions = []
+        original_hook = threading.excepthook
+        threading.excepthook = thread_exceptions.append
+        try:
+            for _ in range(20):
+                mock = MockArduino(poll_interval_ms=5)
+                pty_path = mock.start()
+                encoder = DualEncoderArduino(port=pty_path)
+                assert encoder.connect()
+                encoder.start_stream([StreamSource.ENC_A])
+                time.sleep(0.02)  # let the loop get busy selecting/emitting
+                mock.kill_pty()
+                mock.stop()
+                encoder.disconnect()
+        finally:
+            threading.excepthook = original_hook
+
+        assert thread_exceptions == [], (
+            "MockArduino run loop raised an uncaught exception during "
+            f"kill_pty(): {[e.exc_value for e in thread_exceptions]}"
+        )

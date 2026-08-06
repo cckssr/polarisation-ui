@@ -1,5 +1,4 @@
-"""
-Manual Calibration Dialog.
+"""Manual Calibration Dialog.
 
 Two-phase dialog:
   1. Setup  — user picks step size and run name.
@@ -14,8 +13,9 @@ one produced by the KDC101 path and can be fed straight into CalibrationAnalysis
 
 from __future__ import annotations
 
-from typing import Optional
-
+from calibration.manual_runner import ManualCalibrationController
+from calibration.measurement import CalibrationRun
+from devices.arduino_encoder import ArduinoEncoder
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -36,14 +36,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from calibration.manual_runner import ManualCalibrationController
-from calibration.measurement import CalibrationRun
-from devices.arduino_encoder import ArduinoEncoder
-
 
 class ManualCalibrationDialog(QDialog):
-    """Modal dialog that walks the user through a manual angle-by-angle
-    calibration run.
+    """Modal dialog that walks the user through a manual angle-by-angle calibration run.
 
     Args:
         arduino:  Connected ArduinoEncoder instance.  May be None — the
@@ -54,16 +49,17 @@ class ManualCalibrationDialog(QDialog):
 
     def __init__(
         self,
-        arduino: Optional[ArduinoEncoder],
-        parent: Optional[QWidget] = None,
+        arduino: ArduinoEncoder | None,
+        parent: QWidget | None = None,
     ) -> None:
+        """Build the dialog UI and reset controller state (arduino may be None)."""
         super().__init__(parent)
         self.setWindowTitle("Manual Calibration")
         self.setMinimumWidth(420)
 
         self._arduino = arduino
-        self._controller: Optional[ManualCalibrationController] = None
-        self._completed_run: Optional[CalibrationRun] = None
+        self._controller: ManualCalibrationController | None = None
+        self._completed_run: CalibrationRun | None = None
         self._active_encoder_id: str = "A"
 
         self._live_timer = QTimer(self)
@@ -120,9 +116,7 @@ class ManualCalibrationDialog(QDialog):
         enc_box = QGroupBox("Encoder")
         enc_layout = QVBoxLayout(enc_box)
         self._encoder_btn_group = QButtonGroup(self)
-        self._encoder_a_radio = QRadioButton(
-            "A — Sample encoder  (reading is reversed)"
-        )
+        self._encoder_a_radio = QRadioButton("A — Sample encoder  (reading is reversed)")
         self._encoder_b_radio = QRadioButton("B — Detector encoder")
         self._encoder_a_radio.setChecked(True)
         self._encoder_btn_group.addButton(self._encoder_a_radio, 0)
@@ -136,9 +130,7 @@ class ManualCalibrationDialog(QDialog):
         name_row.addWidget(QLabel("Run name:"))
         from datetime import datetime
 
-        self._run_name_edit = QLineEdit(
-            datetime.now().strftime("manual_cal_%Y%m%d_%H%M")
-        )
+        self._run_name_edit = QLineEdit(datetime.now().strftime("manual_cal_%Y%m%d_%H%M"))
         name_row.addWidget(self._run_name_edit)
         layout.addLayout(name_row)
 
@@ -361,18 +353,18 @@ class ManualCalibrationDialog(QDialog):
         QMessageBox.information(
             self,
             "Calibration complete",
-            f"Recorded {n} of {total} steps.\n"
-            "Click OK to load the results into the analysis view.",
+            f"Recorded {n} of {total} steps.\nClick OK to load the results into the analysis view.",
         )
         self.accept()
 
     # ------------------------------------------------------------------
     # Result accessor
 
-    def get_run(self) -> Optional[CalibrationRun]:
+    def get_run(self) -> CalibrationRun | None:
         """Return the completed CalibrationRun, or None if aborted."""
         return self._completed_run
 
     def closeEvent(self, event) -> None:
+        """Stop the live-read timer before the dialog closes."""
         self._live_timer.stop()
         super().closeEvent(event)

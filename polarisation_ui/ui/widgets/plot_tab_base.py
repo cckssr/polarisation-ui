@@ -8,7 +8,6 @@ TabRegistry gates tabs whose required_modules are not currently injected.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget
@@ -17,6 +16,8 @@ from polarisation_ui.core.models import Frame
 
 
 class ConnState(Enum):
+    """Device connection state as surfaced to experiment tabs."""
+
     CONNECTED = "connected"
     RECONNECTING = "reconnecting"
     LOST = "lost"
@@ -38,7 +39,8 @@ class PlotTabBase(QWidget):
     status_message = Signal(str, str)  # (level, message) — "info"/"warning"/"error"
     filename_hint_changed = Signal()  # emitted when filename_hint or tokens change
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Construct the bare QWidget; subclasses build their layout in build()."""
         super().__init__(parent)
 
     # --- lifecycle hooks (override in subclass) ------------------------------

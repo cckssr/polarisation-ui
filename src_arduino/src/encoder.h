@@ -15,5 +15,4 @@ AS5048A_SPI::FrameResult encReadAngle(AS5048A_SPI &enc);
 AS5048A_SPI::FrameResult encReadMagn(AS5048A_SPI &enc);
 
 // Utility
-float rawToDeg(uint16_t raw14);
 bool frameOk(const AS5048A_SPI::FrameResult &r);

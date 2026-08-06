@@ -1,5 +1,4 @@
-"""
-Arduino Encoder Communication for AS5048A (SCPI protocol, firmware 2.0.0).
+"""Arduino Encoder Communication for AS5048A (SCPI protocol, firmware 2.0.0).
 
 Communicates with the Arduino running the AS5048A firmware.
 Uses SCPI commands: MEAS:ENC:ANGL? A to read angle, CONF:ENC:ZERO A to set zero, etc.
@@ -7,7 +6,6 @@ Uses SCPI commands: MEAS:ENC:ANGL? A to read angle, CONF:ENC:ZERO A to set zero,
 
 import re
 import time
-from typing import Optional, Tuple
 
 import serial
 
@@ -28,13 +26,10 @@ class ArduinoEncoder:
     """
 
     # Streaming data pattern: DATA:ANGL A,45.23
-    STREAM_ANGLE_PATTERN = re.compile(
-        r"DATA:ANGL\s+([AB]|BOTH),(-?\d+\.?\d*)(?:,(-?\d+\.?\d*))?"
-    )
+    STREAM_ANGLE_PATTERN = re.compile(r"DATA:ANGL\s+([AB]|BOTH),(-?\d+\.?\d*)(?:,(-?\d+\.?\d*))?")
 
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0):
-        """
-        Initialize encoder connection.
+        """Initialize encoder connection.
 
         Args:
             port: Serial port (e.g., /dev/cu.usbmodem1101)
@@ -44,7 +39,7 @@ class ArduinoEncoder:
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
-        self._serial: Optional[serial.Serial] = None
+        self._serial: serial.Serial | None = None
         self._connected = False
 
     @property
@@ -53,8 +48,7 @@ class ArduinoEncoder:
         return self._connected and self._serial is not None and self._serial.is_open
 
     def connect(self) -> bool:
-        """
-        Open serial connection to Arduino and verify it responds.
+        """Open serial connection to Arduino and verify it responds.
 
         Sends *IDN? after reset; requires a non-empty response to confirm
         the device is alive and speaking SCPI. Does not check firmware version
@@ -105,12 +99,11 @@ class ArduinoEncoder:
         """Send SCPI command to Arduino."""
         if not self.connected:
             raise RuntimeError("Not connected to Arduino")
-        self._serial.write(f"{cmd}\n".encode("utf-8"))
+        self._serial.write(f"{cmd}\n".encode())
         self._serial.flush()
 
-    def _read_line(self, timeout: Optional[float] = None) -> Optional[str]:
-        """
-        Read a line from Arduino.
+    def _read_line(self, timeout: float | None = None) -> str | None:
+        """Read a line from Arduino.
 
         Args:
             timeout: Optional override for read timeout
@@ -131,9 +124,8 @@ class ArduinoEncoder:
         finally:
             self._serial.timeout = old_timeout
 
-    def read_angle(self, encoder_id: str = "A") -> Optional[float]:
-        """
-        Read angle from encoder.
+    def read_angle(self, encoder_id: str = "A") -> float | None:
+        """Read angle from encoder.
 
         Sends MEAS:ENC:ANGL? <id> and parses the bare float response.
 
@@ -147,7 +139,7 @@ class ArduinoEncoder:
             return None
 
         cmd = f"MEAS:ENC:ANGL? {encoder_id}"
-        self._serial.write(f"{cmd}\n".encode("utf-8"))
+        self._serial.write(f"{cmd}\n".encode())
         self._serial.flush()
 
         raw = self._serial.readline()
@@ -179,8 +171,7 @@ class ArduinoEncoder:
             return None
 
     def set_zero(self, encoder_id: str = "A") -> bool:
-        """
-        Set current position as zero for encoder.
+        """Set current position as zero for encoder.
 
         Sends CONF:ENC:ZERO <id> (no response expected).
 
@@ -198,8 +189,7 @@ class ArduinoEncoder:
         return True
 
     def clear_error_flag(self, encoder_id: str = "A") -> bool:
-        """
-        Clear hardware Error Flag on encoder (CONF:ENC:ERR <id>).
+        """Clear hardware Error Flag on encoder (CONF:ENC:ERR <id>).
 
         The AS5048A EF is self-latching. Call this if the sensor keeps
         returning NAN despite no ongoing hardware problem.
@@ -217,9 +207,8 @@ class ArduinoEncoder:
         print(f"[ArduinoEncoder] Error flag cleared for encoder {encoder_id}")
         return True
 
-    def read_both_angles(self) -> Optional[Tuple[float, float]]:
-        """
-        Read angles from both encoders.
+    def read_both_angles(self) -> tuple[float, float] | None:
+        """Read angles from both encoders.
 
         Sends MEAS:ENC:ANGL? BOTH and parses the comma-separated response.
 
@@ -246,7 +235,7 @@ class ArduinoEncoder:
 
 # Simple test
 if __name__ == "__main__":
-    from config import ARDUINO_PORT, ARDUINO_BAUDRATE
+    from config import ARDUINO_BAUDRATE, ARDUINO_PORT
 
     encoder = ArduinoEncoder(ARDUINO_PORT, ARDUINO_BAUDRATE)
 

@@ -4,33 +4,10 @@
 #include <math.h>
 
 // ── Parser ────────────────────────────────────────────────────────────────────
+// Definition lives in scpi_parse.inc so the native unit test compiles the
+// exact same source against a lightweight String mock (see that file).
 
-bool scpiParse(const String &line, String &header, String &param, bool &isQuery)
-{
-  if (line.length() == 0)
-    return false;
-
-  int sp = line.indexOf(' ');
-  if (sp >= 0)
-  {
-    header = line.substring(0, sp);
-    param = line.substring(sp + 1);
-    param.trim();
-  }
-  else
-  {
-    header = line;
-    param = "";
-  }
-
-  isQuery = header.endsWith("?");
-  if (isQuery)
-    header = header.substring(0, header.length() - 1);
-
-  header.toUpperCase();
-  param.toUpperCase();
-  return true;
-}
+#include "scpi_parse.inc"
 
 // ── Error helpers ─────────────────────────────────────────────────────────────
 
@@ -132,8 +109,10 @@ void emitDataFrame()
     Serial.print(",adcT=");
     if (adsSession.adcPresent())
     {
-      // Blocking temperature interleave (adds ~50 ms at 20 SPS default).
-      float t = adsSession.takeTemperatureReading(200);
+      // Non-blocking: adsSession.pollTemperature() (called every loop() tick)
+      // refreshes this in the background, so the frame just reads the
+      // last-known value instead of stalling here for a fresh conversion.
+      float t = adsSession.lastTemperature();
       Serial.print(isnan(t) ? NAN : t, 2);
     }
     else
@@ -620,20 +599,8 @@ static void handleConfAdcPwr(bool isQuery, const String &param)
     errorQueue.push("-113,\"Undefined header; expected ON or OFF\"");
 }
 
-static void handleConfPdtiaGain(bool isQuery, const String &param)
+static void handleConfPdtiaGain(const String &param)
 {
-  if (isQuery)
-  {
-    Serial.print(adsSession.pdGainStage());
-    Serial.print(",0b");
-    uint8_t pat = adsSession.pdGainPattern();
-    // Print 4-bit binary manually for clarity.
-    Serial.print((pat >> 3) & 1);
-    Serial.print((pat >> 2) & 1);
-    Serial.print((pat >> 1) & 1);
-    Serial.println(pat & 1);
-    return;
-  }
   int stage = param.toInt();
   if (stage < 0 || !adsSession.setPdGainStage((uint8_t)stage))
     errorQueue.push("-222,\"Data out of range; stage must be 0.." + String(PDTIA_NUM_STAGES - 1) + "\"");
@@ -887,7 +854,7 @@ static void handleSystDeb(bool isQuery, const String &param)
 
 static void handleSystHelp()
 {
-  Serial.println("=== SCPI 2.0.0 Command Reference ===");
+  Serial.println("=== SCPI " FW_VERSION " Command Reference ===");
   Serial.println("Common: *IDN? *RST *CLS *TST? *OPC? *OPC *WAI");
   Serial.println("");
   Serial.println("MEASure (one-shot):");
@@ -922,6 +889,11 @@ static void handleSystHelp()
   Serial.println("  CONF:SRC?                    query active sources");
   Serial.println("  CONF:RATE <hz>               stream rate 1-1000 Hz");
   Serial.println("  CONF:RATE?                   query current rate");
+  Serial.println("");
+  Serial.println("SENSe (query-only; same as the CONF:*? forms above):");
+  Serial.println("  SENS:ADC:MUX? SENS:ADC:GAIN? SENS:ADC:RATE? SENS:ADC:MODE?");
+  Serial.println("  SENS:ADC:FIR? SENS:ADC:VREF? SENS:ADC:TEMP? SENS:PDTIA:GAIN?");
+  Serial.println("  SENS:SRC? SENS:RATE?");
   Serial.println("");
   Serial.println("INITiate/ABORt:");
   Serial.println("  INIT:CONT ON|OFF  INIT:CONT?  INIT  ABOR");
@@ -1193,7 +1165,7 @@ void scpiDispatch(const String &line)
   }
   else if (header == "CONF:PDTIA:GAIN")
   {
-    isQuery ? handleSensPdtiaGain() : handleConfPdtiaGain(isQuery, param);
+    isQuery ? handleSensPdtiaGain() : handleConfPdtiaGain(param);
   }
   else if (header == "CONF:SRC")
   {
@@ -1203,7 +1175,47 @@ void scpiDispatch(const String &line)
   {
     handleConfRate(isQuery, param);
 
-    // ── INITiate / ABORt – consolidated under CONF:*
+    // ── SENSe — query-only mirror of CONF:*? (also reachable that way) ────────
+  }
+  else if (header == "SENS:ADC:MUX")
+  {
+    isQuery ? handleSensAdcMux() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:GAIN")
+  {
+    isQuery ? handleSensAdcGain() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:RATE")
+  {
+    isQuery ? handleSensAdcRate() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:MODE")
+  {
+    isQuery ? handleSensAdcMode() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:FIR")
+  {
+    isQuery ? handleSensAdcFir() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:VREF")
+  {
+    isQuery ? handleSensAdcVref() : errQueryOnly(header);
+  }
+  else if (header == "SENS:ADC:TEMP")
+  {
+    isQuery ? handleSensAdcTemp() : errQueryOnly(header);
+  }
+  else if (header == "SENS:PDTIA:GAIN")
+  {
+    isQuery ? handleSensPdtiaGain() : errQueryOnly(header);
+  }
+  else if (header == "SENS:SRC")
+  {
+    isQuery ? handleSensSrc() : errQueryOnly(header);
+  }
+  else if (header == "SENS:RATE")
+  {
+    isQuery ? handleSensRate() : errQueryOnly(header);
 
     // ── INITiate / ABORt ───────────────────────────────────────────────────────
   }

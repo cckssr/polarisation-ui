@@ -1,17 +1,15 @@
 """Tests for ManualCalibrationController."""
 
-import math
+import os
+import sys
 import time
 from unittest.mock import MagicMock
 
 import pytest
 
-import sys, os
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from calibration.manual_runner import ManualCalibrationController
-from calibration.measurement import MeasurementPoint
 
 
 def _make_arduino(angle: float = 12.34) -> MagicMock:
@@ -50,9 +48,7 @@ class TestManualCalibrationControllerInit:
         assert "manual_cal_" in ctrl.run_name
 
     def test_custom_run_name(self):
-        ctrl = ManualCalibrationController(
-            _make_arduino(), step_size_deg=10.0, run_name="my_run"
-        )
+        ctrl = ManualCalibrationController(_make_arduino(), step_size_deg=10.0, run_name="my_run")
         assert ctrl.run_name == "my_run"
 
     def test_invalid_step_size_raises(self):
@@ -85,9 +81,7 @@ class TestManualCalibrationControllerFlow:
 
     def test_invalid_encoder_id_raises(self):
         with pytest.raises(ValueError, match="encoder_id"):
-            ManualCalibrationController(
-                _make_arduino(), step_size_deg=10.0, encoder_id="C"
-            )
+            ManualCalibrationController(_make_arduino(), step_size_deg=10.0, encoder_id="C")
 
     def test_accept_advances_step(self):
         ctrl = ManualCalibrationController(_make_arduino(), step_size_deg=10.0)

@@ -1,6 +1,7 @@
 """Tests for AutoPowerCalibrationWorker using mocks — no real hardware."""
 
 import time
+
 import pytest
 from PySide6.QtCore import Qt
 
@@ -58,8 +59,9 @@ def _make_device_manager(mock_arduino: MockArduino):
 )
 class TestAutoPowerCalibrationWorker:
     def setup_method(self):
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         self._app = QApplication.instance() or QApplication(sys.argv)
 
@@ -83,12 +85,8 @@ class TestAutoPowerCalibrationWorker:
         finished_profiles: list[PowerCalibrationProfile] = []
         failed_messages: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(
-            device_manager=dm, kdc=kdc, pm=pm, params=params
-        )
-        worker.point_recorded.connect(
-            lambda *args: received_points.append(args), _DIRECT
-        )
+        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
+        worker.point_recorded.connect(lambda *args: received_points.append(args), _DIRECT)
         worker.finished.connect(lambda p: finished_profiles.append(p), _DIRECT)
         worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
         worker.start()
@@ -131,9 +129,7 @@ class TestAutoPowerCalibrationWorker:
 
         failed_messages: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(
-            device_manager=dm, kdc=kdc, pm=pm, params=params
-        )
+        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
         worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
         worker.start()
         # Give the worker time to start and enter the angle loop, then abort
@@ -157,14 +153,10 @@ class TestAutoPowerCalibrationWorker:
         pm = MockPM400(kdc_mock=kdc)
         pm.connect("mock://pm400")
 
-        params = _make_params(
-            selected_gains=(1,), n_points=3, profile_name="det_b_test"
-        )
+        params = _make_params(selected_gains=(1,), n_points=3, profile_name="det_b_test")
 
         finished: list[PowerCalibrationProfile] = []
-        worker = AutoPowerCalibrationWorker(
-            device_manager=dm, kdc=kdc, pm=pm, params=params
-        )
+        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
         worker.finished.connect(lambda p: finished.append(p), _DIRECT)
         worker.start()
         worker.wait(15_000)
@@ -184,8 +176,9 @@ class TestAutoPowerCalibrationWorker:
 )
 class TestAlignPolariserWorker:
     def setup_method(self):
-        from PySide6.QtWidgets import QApplication
         import sys
+
+        from PySide6.QtWidgets import QApplication
 
         self._app = QApplication.instance() or QApplication(sys.argv)
 
@@ -210,9 +203,7 @@ class TestAlignPolariserWorker:
             n_points=37,  # 5° steps — 0° should yield max cos²
             settle_s=0.0,
         )
-        worker.point_scanned.connect(
-            lambda a, p: scanned_points.append((a, p)), _DIRECT
-        )
+        worker.point_scanned.connect(lambda a, p: scanned_points.append((a, p)), _DIRECT)
         worker.finished.connect(lambda a: finished_angles.append(a), _DIRECT)
         worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
         worker.start()
@@ -226,14 +217,13 @@ class TestAlignPolariserWorker:
         angle = finished_angles[0]
         near_0 = abs(angle) < 6.0
         near_180 = abs(angle - 180.0) < 6.0
-        assert near_0 or near_180, (
-            f"Expected max-power angle near 0° or 180°, got {angle:.1f}°"
-        )
+        assert near_0 or near_180, f"Expected max-power angle near 0° or 180°, got {angle:.1f}°"
         assert len(scanned_points) == 37
 
     def test_abort_stops_cleanly(self):
         """Aborting mid-scan should emit failed with an abort message."""
         import time
+
         from polarisation_ui.infrastructure.qt_threads import AlignPolariserWorker
 
         kdc = MockKDC101Polariser()
@@ -261,7 +251,7 @@ class TestAlignPolariserWorker:
         assert "abgebrochen" in failed_messages[0].lower()
 
     def test_sweep_with_nonzero_offset_shifts_stage_angle(self):
-        """When angle_offset_deg != 0, the calibration worker moves the stage to logical_angle + offset, not to logical_angle alone."""
+        """With an angle_offset_deg set, the worker moves to logical_angle + offset."""
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
         mock_arduino = MockArduino()
@@ -288,9 +278,7 @@ class TestAlignPolariserWorker:
         finished: list = []
         failed: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(
-            device_manager=dm, kdc=kdc, pm=pm, params=params
-        )
+        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
         worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
         worker.finished.connect(lambda p: finished.append(p), _DIRECT)
         worker.failed.connect(lambda m: failed.append(m), _DIRECT)

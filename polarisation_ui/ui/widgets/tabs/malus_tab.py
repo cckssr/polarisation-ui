@@ -17,12 +17,13 @@ from __future__ import annotations
 
 import math
 from collections import deque
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
+from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.qt_threads import MalusSweepWorker
 from polarisation_ui.pyqt.ui_malus_tab import Ui_MalusTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -35,38 +36,36 @@ _AVERAGE_WINDOW_MS = 500
 
 
 class MalusTab(PlotTabBase):
+    """Malus-law experiment tab: manual analyser-angle entry + averaged intensity."""
+
     tab_id = "malus"
     tab_title = "Malus"
     required_sources: set[str] = {"ADC"}
     required_modules: set[str] = set()
 
-    points_changed = Signal(
-        int
-    )  # emits current point count after every add/remove/clear
+    points_changed = Signal(int)  # emits current point count after every add/remove/clear
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialise empty buffers; build() constructs the widgets."""
         super().__init__(parent)
         self._buffer: deque[Frame] = deque(maxlen=_BUFFER_MAXLEN)
         self._buffer_mutex = QMutex()
         self._is_measuring: bool = False
-        self._kdc: Optional["KDC101Polariser"] = None
-        self._sweep_worker: Optional[MalusSweepWorker] = None
+        self._kdc: KDC101Polariser | None = None
+        self._sweep_worker: MalusSweepWorker | None = None
         self._kdc_zero_offset: float = 0.0
 
     def build(self) -> None:
+        """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_MalusTab()
         self._ui.setupUi(self)
-        self._ui.pointsTable.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self._ui.pointsTable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self._ui.spinAnalyser.lineEdit().returnPressed.connect(self._add_point)
         self._ui.btnAdd.clicked.connect(self._add_point)
         self._ui.btnDeleteLast.clicked.connect(self._delete_last_point)
         self._ui.btnDeleteSelected.clicked.connect(self._delete_selected_point)
         self._ui.btnClear.clicked.connect(self._clear_all_points)
-        self._ui.pointsTable.itemSelectionChanged.connect(
-            self._on_table_selection_changed
-        )
+        self._ui.pointsTable.itemSelectionChanged.connect(self._on_table_selection_changed)
         self._ui.cbPolariserPlaced.toggled.connect(self._on_polariser_placed_changed)
         self._ui.btnStartSweep.clicked.connect(self._start_sweep)
         self._ui.btnAbortSweep.clicked.connect(self._abort_sweep)
@@ -74,11 +73,13 @@ class MalusTab(PlotTabBase):
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
     def on_frame(self, frame: Frame) -> None:
+        """Buffer the frame for averaging and refresh the live intensity label."""
         with QMutexLocker(self._buffer_mutex):
             self._buffer.append(frame)
         self._update_live_labels(frame)
 
     def on_reset(self) -> None:
+        """Clear the plot, buffer, saved points, and KDC zero-offset display."""
         self._ui.malusCurvePlot.clear()
         with QMutexLocker(self._buffer_mutex):
             self._buffer.clear()
@@ -89,15 +90,16 @@ class MalusTab(PlotTabBase):
         self._ui.lblZeroOffset.setText("—")
 
     def on_connection_state(self, state: ConnState) -> None:
-        pass
+        """No-op — this tab has no connection-state-dependent UI."""
 
     def on_activated(self) -> None:
-        pass
+        """No-op — this tab has no activation-dependent UI."""
 
     def on_deactivated(self) -> None:
-        pass
+        """No-op — this tab has no deactivation-dependent UI."""
 
     def on_measurement_started(self) -> None:
+        """Enable manual-entry and sweep controls for the new measurement session."""
         self._is_measuring = True
         with QMutexLocker(self._buffer_mutex):
             self._buffer.clear()
@@ -110,6 +112,7 @@ class MalusTab(PlotTabBase):
         self._update_sweep_button_state()
 
     def on_measurement_stopped(self) -> None:
+        """Disable manual-entry and sweep controls until the next session."""
         self._is_measuring = False
         if self._sweep_worker is not None:
             self._sweep_worker.abort()
@@ -122,6 +125,7 @@ class MalusTab(PlotTabBase):
         self._update_sweep_button_state()
 
     def inject_modules(self, modules: dict[str, object]) -> None:
+        """Enable the sweep group when a kdc101 module is available."""
         kdc = modules.get("kdc101")
         if kdc is not None:
             self._kdc = kdc  # type: ignore[assignment]
@@ -134,9 +138,11 @@ class MalusTab(PlotTabBase):
     # ── Export contract ───────────────────────────────────────────────────────
 
     def get_saved_points(self) -> list[MalusPoint]:
+        """Return all points saved to the Malus curve plot."""
         return self._ui.malusCurvePlot.get_points()
 
     def build_export(self) -> TabExport:
+        """Build the CSV-ready export of all saved Malus points."""
         points = self.get_saved_points()
         polariser_angle = self._ui.spinPolariser.value()
         columns = [
@@ -154,11 +160,7 @@ class MalusTab(PlotTabBase):
                 f"{pt.intensity_V:.6f}",
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
-                (
-                    f"{pt.conv_factor_W_per_V:.6e}"
-                    if pt.conv_factor_W_per_V is not None
-                    else ""
-                ),
+                (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
             ]
             for pt in points
         ]
@@ -178,11 +180,10 @@ class MalusTab(PlotTabBase):
             metadata["sweep_start_deg"] = self._ui.spinSweepStart.value()
             metadata["sweep_end_deg"] = self._ui.spinSweepEnd.value()
             metadata["sweep_step_deg"] = self._ui.spinSweepStep.value()
-        return TabExport(
-            filename_hint="malus", columns=columns, rows=rows, metadata=metadata
-        )
+        return TabExport(filename_hint="malus", columns=columns, rows=rows, metadata=metadata)
 
     def restore_points(self, points: list[dict]) -> None:
+        """Reload previously-saved points from a prior session."""
         for p in points:
             try:
                 self._ui.malusCurvePlot.add_point(
@@ -210,8 +211,8 @@ class MalusTab(PlotTabBase):
         analyser_angle = self._ui.spinAnalyser.value()
         polariser_angle = self._ui.spinPolariser.value()
 
-        power_W: Optional[float] = None
-        conv_factor: Optional[float] = None
+        power_W: float | None = None
+        conv_factor: float | None = None
         pdtia_gain = 0
         if latest_frame is not None:
             pdtia_gain = latest_frame.pdtia_gain
@@ -230,7 +231,7 @@ class MalusTab(PlotTabBase):
         self._refresh_table()
         self.points_changed.emit(len(self._ui.malusCurvePlot.get_points()))
 
-    def _compute_average(self) -> tuple[float, Optional[Frame]]:
+    def _compute_average(self) -> tuple[float, Frame | None]:
         """Compute average intensity over last _AVERAGE_WINDOW_MS.
 
         Acquires the buffer mutex — safe to call from both the main thread
@@ -239,20 +240,9 @@ class MalusTab(PlotTabBase):
         with QMutexLocker(self._buffer_mutex):
             return self._compute_average_locked()
 
-    def _compute_average_locked(self) -> tuple[float, Optional[Frame]]:
+    def _compute_average_locked(self) -> tuple[float, Frame | None]:
         """Must be called with _buffer_mutex held."""
-        if not self._buffer:
-            return float("nan"), None
-        latest = self._buffer[-1]
-        cutoff_ms = latest.ts_ms - _AVERAGE_WINDOW_MS
-        valid = [
-            f.intensity
-            for f in self._buffer
-            if f.ts_ms >= cutoff_ms and not math.isnan(f.intensity)
-        ]
-        if not valid:
-            return float("nan"), latest
-        return sum(valid) / len(valid), latest
+        return windowed_average_intensity(self._buffer, _AVERAGE_WINDOW_MS)
 
     @Slot()
     def _delete_last_point(self) -> None:
@@ -280,7 +270,7 @@ class MalusTab(PlotTabBase):
         self._refresh_table()
         self.points_changed.emit(0)
 
-    def _update_live_labels(self, frame: Optional[Frame]) -> None:
+    def _update_live_labels(self, frame: Frame | None) -> None:
         if frame is None or math.isnan(frame.intensity):
             self._ui.lblLiveIntensity.setText("—")
             self._ui.lblLivePower.setText("—")
@@ -295,22 +285,14 @@ class MalusTab(PlotTabBase):
         points = self._ui.malusCurvePlot.get_points()
         self._ui.pointsTable.setRowCount(len(points))
         for row, pt in enumerate(points):
-            self._ui.pointsTable.setItem(
-                row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}")
-            )
-            self._ui.pointsTable.setItem(
-                row, 1, QTableWidgetItem(f"{pt.polariser_angle:.3f}")
-            )
-            self._ui.pointsTable.setItem(
-                row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}")
-            )
+            self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
+            self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(f"{pt.polariser_angle:.3f}"))
+            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}"))
             self._ui.pointsTable.setItem(
                 row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
             )
             if pt.power_W is not None:
-                self._ui.pointsTable.setItem(
-                    row, 4, QTableWidgetItem(f"{pt.power_W:.3e}")
-                )
+                self._ui.pointsTable.setItem(row, 4, QTableWidgetItem(f"{pt.power_W:.3e}"))
             else:
                 self._ui.pointsTable.setItem(row, 4, QTableWidgetItem("—"))
         self._on_table_selection_changed()
@@ -357,9 +339,7 @@ class MalusTab(PlotTabBase):
         self._sweep_worker.progress.connect(self._on_sweep_progress)
         self._sweep_worker.finished.connect(self._on_sweep_finished)
         self._sweep_worker.failed.connect(self._on_sweep_failed)
-        self._sweep_worker.log.connect(
-            lambda msg: self.status_message.emit("info", msg)
-        )
+        self._sweep_worker.log.connect(lambda msg: self.status_message.emit("info", msg))
         self._ui.btnStartSweep.setEnabled(False)
         self._ui.btnAbortSweep.setEnabled(True)
         self._sweep_worker.start()
@@ -375,9 +355,7 @@ class MalusTab(PlotTabBase):
         self._ui.lblZeroOffset.setText(f"{offset:.2f}°")
 
     @Slot(float, float, float)
-    def _on_sweep_point(
-        self, analyser_angle: float, kdc_pos: float, intensity_V: float
-    ) -> None:
+    def _on_sweep_point(self, analyser_angle: float, kdc_pos: float, intensity_V: float) -> None:
         polariser_angle = self._ui.spinPolariser.value()
         point = MalusPoint(
             analyser_angle=analyser_angle,

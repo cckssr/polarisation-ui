@@ -4,8 +4,10 @@ Run with: .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
 """
 
 import sys
-import pytest
 import time
+
+import pytest
+
 from polarisation_ui.infrastructure.devices import (
     DualEncoderArduino,
     EncoderID,
@@ -13,9 +15,7 @@ from polarisation_ui.infrastructure.devices import (
 )
 from polarisation_ui.infrastructure.mocks import MockArduino
 
-pytestmark = pytest.mark.skipif(
-    sys.platform == "win32", reason="PTY not available on Windows"
-)
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="PTY not available on Windows")
 
 
 def _await_mock_state(mock, predicate, timeout: float = 2.0) -> bool:
@@ -218,6 +218,32 @@ class TestContinuousMode:
         )
         assert not mock.get_state()["continuous_running"]
 
+    def test_set_stream_sources_does_not_arm_streaming(self, encoder_client, mock_arduino):
+        """set_stream_sources() must configure CONF:SRC without sending INIT:CONT.
+
+        Unlike start_stream(), it should be safe to call at any time (e.g. on
+        every tab-visibility change) without ever starting the firmware's
+        continuous DATA:FRAME output.
+        """
+        mock, _ = mock_arduino
+        assert encoder_client.set_stream_sources({"ADC", "ENC:BOTH"})
+        assert _await_mock_state(mock, lambda s: "ADC" in s["stream_sources"]), (
+            "stream_sources not updated"
+        )
+        state = mock.get_state()
+        assert "ADC" in state["stream_sources"]
+        assert "ENC:A" in state["stream_sources"]
+        assert "ENC:B" in state["stream_sources"]
+        assert not state["continuous_running"]
+
+    def test_set_stream_sources_empty_clears_sources(self, encoder_client, mock_arduino):
+        mock, _ = mock_arduino
+        assert encoder_client.set_stream_sources({"ADC"})
+        assert _await_mock_state(mock, lambda s: "ADC" in s["stream_sources"])
+
+        assert encoder_client.set_stream_sources(set())
+        assert _await_mock_state(mock, lambda s: s["stream_sources"] == [])
+
     def test_continuous_values_advance(self, encoder_client, mock_arduino):
         """Verify encoder angle advances while streaming is running."""
         mock, _ = mock_arduino
@@ -237,9 +263,7 @@ class TestContinuousMode:
         mock.set_encoder_angle("A", 0.0)
         mock.set_encoder_angle("B", 0.0)
 
-        encoder_client.start_stream(
-            [StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG]
-        )
+        encoder_client.start_stream([StreamSource.ENC_BOTH, StreamSource.ADC, StreamSource.DIAG])
         time.sleep(0.3)
         encoder_client.abort()
 
@@ -333,9 +357,9 @@ class TestMockArduinoState:
     def test_state_after_zero_reset(self, mock_arduino, encoder_client):
         mock, _ = mock_arduino
         encoder_client.zero(EncoderID.A)
-        assert _await_mock_state(
-            mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0
-        ), "zero_offset not updated after zero(A)"
+        assert _await_mock_state(mock, lambda s: s["encoder_a"]["zero_offset"] == 10.0), (
+            "zero_offset not updated after zero(A)"
+        )
         state = mock.get_state()
         assert state["encoder_a"]["zero_offset"] == 10.0
         assert state["encoder_a"]["effective_angle"] == 0.0
@@ -370,15 +394,28 @@ class TestFirmwareVersionCheck:
         with pytest.raises(IncompatibleFirmwareError):
             encoder.connect()
 
+    def test_empty_idn_response_raises(self, mock_arduino):
+        """An empty/garbled *IDN? response must not silently skip the version check.
+
+        Regression test: connect() used to do ``if idn: _check_firmware_version(...)``,
+        so a falsy response from query_idn() (no reply, garbled line) bypassed the
+        check entirely and connect() returned True.
+        """
+        from polarisation_ui.core.exceptions import IncompatibleFirmwareError
+
+        mock, pty_path = mock_arduino
+        encoder = DualEncoderArduino(port=pty_path)
+        encoder.query_idn = lambda: ""
+        with pytest.raises(IncompatibleFirmwareError):
+            encoder.connect()
+
 
 # ── DATA:FRAME parser ─────────────────────────────────────────────────────────
 
 
 class TestDataFrameParser:
     def test_parse_full_frame(self):
-        line = (
-            "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
-        )
+        line = "DATA:FRAME tsMs=1234,angA=45.50,angB=91.00,adcV=1.234567,pdGain=0,stat=0"
         result = DualEncoderArduino._parse_data_frame(line)
         assert result["tsMs"] == "1234"
         assert result["angA"] == "45.50"
@@ -392,6 +429,94 @@ class TestDataFrameParser:
 
     def test_parse_non_frame_returns_empty(self):
         assert DualEncoderArduino._parse_data_frame("0,0,0,1,200") == {}
+
+
+# ── MockArduino ↔ firmware 2.1.0 parity ────────────────────────────────────────
+
+
+class TestFirmwareParity:
+    """Regression tests for MockArduino behaviors added to match firmware 2.1.0."""
+
+    def test_idn_reports_2_1_0_by_default(self, mock_arduino):
+        mock, pty_path = mock_arduino
+        encoder = DualEncoderArduino(port=pty_path)
+        assert encoder.connect()
+        assert encoder.firmware_version == "2.1.0"
+        encoder.disconnect()
+
+    def test_fetc_all_matches_meas_all_six_fields(self, encoder_client):
+        """FETC:ALL? is an alias of MEAS:ALL? in firmware — both are
+        tsMs,angA,angB,magA,magB,volt (6 fields). The mock used to return
+        only 4 fields (tsMs,angA,angB,volt) for FETC:ALL?.
+        """
+        meas = encoder_client.send_query("MEAS:ALL?")
+        fetc = encoder_client.send_query("FETC:ALL?")
+        assert meas is not None and fetc is not None
+        assert len(meas.split(",")) == 6
+        assert len(fetc.split(",")) == 6
+
+    def test_read_bare_matches_meas_all(self, encoder_client):
+        resp = encoder_client.send_query("READ?")
+        assert resp is not None
+        assert len(resp.split(",")) == 6
+
+    def test_read_adc_returns_voltage(self, encoder_client):
+        resp = encoder_client.send_query("READ? ADC")
+        assert resp is not None
+        float(resp)  # must parse as a plain voltage, not a multi-field frame
+
+    def test_read_adc_temp_returns_temperature(self, encoder_client):
+        resp = encoder_client.send_query("READ? ADC:T")
+        assert resp is not None
+        float(resp)
+
+    def test_conf_adc_pwr_round_trips(self, encoder_client):
+        assert encoder_client.send_control_command("CONF:ADC:PWR OFF")
+        assert encoder_client.send_query("CONF:ADC:PWR?") == "OFF"
+        assert encoder_client.send_control_command("CONF:ADC:PWR ON")
+        assert encoder_client.send_query("CONF:ADC:PWR?") == "ON"
+
+    def test_diag_self_returns_one_line_per_subsystem(self, encoder_client):
+        lines = encoder_client.query_self_test()
+        assert lines is not None
+        assert len(lines) == 4
+        assert lines[0] == "DIAG:SELF ENC:A,PASS"
+        assert lines[1] == "DIAG:SELF ENC:B,PASS"
+        assert lines[2] == "DIAG:SELF ADC,PASS"
+        assert lines[3] == "DIAG:SELF PDTIA,PASS"
+
+    def test_conf_src_rejects_unknown_token(self, encoder_client):
+        """Regression test: the mock used to accept any CONF:SRC token
+        verbatim with no validation, unlike firmware's handleConfSrc(),
+        which rejects the whole command on the first unrecognised token.
+        """
+        assert encoder_client.send_control_command("CONF:SRC ADC")
+        before = encoder_client.send_query("CONF:SRC?")
+
+        assert encoder_client.send_control_command("CONF:SRC BOGUS:TOKEN")
+        after = encoder_client.send_query("CONF:SRC?")
+
+        assert after == before  # rejected command must not change state
+
+    def test_conf_src_rejects_enc_b_when_absent(self, mock_arduino):
+        """Regression test: the mock had no concept of "encoder B absent" at
+        all, so it could never exercise the -241 rejection path that
+        firmware's handleConfSrc() enforces for ENC:B/ENC:BOTH.
+        """
+        mock, pty_path = mock_arduino
+        mock.encoder_b_present = False
+        encoder = DualEncoderArduino(port=pty_path)
+        assert encoder.connect()
+        try:
+            assert encoder.send_control_command("CONF:SRC ADC")
+            before = encoder.send_query("CONF:SRC?")
+
+            assert encoder.send_control_command("CONF:SRC ENC:BOTH")
+            after = encoder.send_query("CONF:SRC?")
+
+            assert after == before
+        finally:
+            encoder.disconnect()
 
 
 if __name__ == "__main__":

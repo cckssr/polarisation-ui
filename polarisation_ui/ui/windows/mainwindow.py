@@ -19,7 +19,6 @@ import shutil
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QCloseEvent
@@ -33,7 +32,10 @@ from PySide6.QtWidgets import (
 
 from polarisation_ui.core.exceptions import KDC101Error
 from polarisation_ui.core.models import AcquisitionSettings
-from polarisation_ui.core.power_calibration import PowerCalibrationProfile
+from polarisation_ui.core.power_calibration import (
+    PowerCalibrationProfile,
+    select_best_profile_for_device_id,
+)
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
@@ -45,10 +47,6 @@ from polarisation_ui.infrastructure.save_service import (
     compose_filename,
     save_tab_export,
 )
-from polarisation_ui.infrastructure.utils import (
-    create_dropbox_foldername,
-    sanitize_subterm_for_folder,
-)
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 from polarisation_ui.infrastructure.session_state import (
     SessionState,
@@ -56,8 +54,11 @@ from polarisation_ui.infrastructure.session_state import (
     load_session_state,
     save_session_state,
 )
+from polarisation_ui.infrastructure.utils import (
+    create_dropbox_foldername,
+    sanitize_subterm_for_folder,
+)
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
-from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.common.status_led import (
     LED_GREEN,
@@ -67,6 +68,7 @@ from polarisation_ui.ui.common.status_led import (
 )
 from polarisation_ui.ui.common.statusbar import StatusBarManager
 from polarisation_ui.ui.controllers.data_controller import DataController
+from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 from polarisation_ui.ui.widgets.tab_registry import TabRegistry
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
@@ -131,11 +133,11 @@ class MainWindow(QMainWindow):
         self._log_window = None
 
         # Power calibration — lazily loaded from selected profile
-        self._calibration_profile: Optional[PowerCalibrationProfile] = None
+        self._calibration_profile: PowerCalibrationProfile | None = None
 
         # KDC101 rotation stage
         self._kdc = KDC101Polariser()
-        self._kdc_home_worker: Optional[KDC101HomeWorker] = None
+        self._kdc_home_worker: KDC101HomeWorker | None = None
         # 250 ms timer that polls get_position_deg() while the KDC is connected
         self._kdc_position_timer = QTimer(self)
         self._kdc_position_timer.setInterval(250)
@@ -179,9 +181,7 @@ class MainWindow(QMainWindow):
 
         # Arduino connection group: start disconnected
         self.ui.ledArduinoStatus.setStyleSheet(LED_RED)
-        self.ui.lblArduinoStatusValue.setText(
-            CONFIG["messages"]["device_not_connected"]
-        )
+        self.ui.lblArduinoStatusValue.setText(CONFIG["messages"]["device_not_connected"])
 
         # Encoder/detector groups disabled until connected
         self.ui.gbSampleStage.setEnabled(False)
@@ -223,9 +223,13 @@ class MainWindow(QMainWindow):
             tab.points_changed.connect(self._on_tab_points_changed)
             tab.points_changed.connect(self._schedule_state_save)
         self.data_controller.frame_ready.connect(tab.on_frame)
-        self.ui.tabWidget.addTab(tab, tab.tab_title)
+        index = self.ui.tabWidget.addTab(tab, tab.tab_title)
         self._tab_instances.append(tab)
         tab.inject_modules(modules)
+        # Tabs added after startup (e.g. WaveplateTab once kdc101 connects) must
+        # respect the current group-selection gate instead of defaulting to
+        # Qt's enabled-by-default state.
+        self._apply_group_gating(index)
         return tab
 
     def _setup_tabs(self) -> None:
@@ -268,6 +272,27 @@ class MainWindow(QMainWindow):
                 if idx >= 0:
                     self.ui.tabWidget.setTabVisible(idx, True)
 
+        self._apply_required_stream_sources()
+
+    def _apply_required_stream_sources(self) -> None:
+        """Configure CONF:SRC to the union of all visible tabs' required_sources.
+
+        Completes the tab-extensibility design in PlotTabBase: each tab
+        declares the streaming sources it needs, and this keeps the firmware's
+        CONF:SRC set (reapplied automatically on reconnect via DesiredState)
+        in sync whenever the set of visible tabs changes. No-op while
+        disconnected — GoniometerDeviceManager.set_stream_sources() returns
+        False without touching DesiredState in that case.
+        """
+        if not self._is_connected:
+            return
+        sources: set[str] = set()
+        for tab in self._tab_instances:
+            idx = self.ui.tabWidget.indexOf(tab)
+            if idx >= 0 and self.ui.tabWidget.isTabVisible(idx):
+                sources |= tab.required_sources
+        self.device_manager.set_stream_sources(sources)
+
     # ==================== Signal Connections ====================
 
     def _connect_signals(self) -> None:
@@ -277,13 +302,9 @@ class MainWindow(QMainWindow):
         self.ui.actionEncoderDebug.triggered.connect(self._open_encoder_debug)
         self.ui.actionLogWindow.triggered.connect(self._open_log_window)
         self.ui.actionEventLog.toggled.connect(self.ui.dockEventLog.setVisible)
-        self.ui.dockEventLog.visibilityChanged.connect(
-            self.ui.actionEventLog.setChecked
-        )
+        self.ui.dockEventLog.visibilityChanged.connect(self.ui.actionEventLog.setChecked)
         self.ui.actionPowerCalibration.triggered.connect(self._open_power_calibration)
-        self.ui.actionAutoPowerCalibration.triggered.connect(
-            self._open_auto_power_calibration
-        )
+        self.ui.actionAutoPowerCalibration.triggered.connect(self._open_auto_power_calibration)
 
         # PDTIA gain button group — assign IDs 1–4 to match stage numbers
         for stage in (1, 2, 3, 4):
@@ -309,9 +330,7 @@ class MainWindow(QMainWindow):
 
         # Inline acquisition settings (averaging)
         self.ui.cbSampleAverageOn.toggled.connect(self.ui.spbSampleAverages.setEnabled)
-        self.ui.cbDetectorAverageOn.toggled.connect(
-            self.ui.spbDetectorAverages.setEnabled
-        )
+        self.ui.cbDetectorAverageOn.toggled.connect(self.ui.spbDetectorAverages.setEnabled)
         self.ui.cbPdtiaAveragesOn.toggled.connect(self.ui.spbPdtiaAverages.setEnabled)
         self.ui.cbSampleAverageOn.toggled.connect(self._on_acq_inline_changed)
         self.ui.spbSampleAverages.valueChanged.connect(self._on_acq_inline_changed)
@@ -369,9 +388,7 @@ class MainWindow(QMainWindow):
         self.data_controller.intensity_updated.connect(self._update_intensity_display)
         self.data_controller.power_updated.connect(self._update_wattage_display)
         self.data_controller.poll_rate_updated.connect(self._update_poll_rate)
-        self.data_controller.diagnostics_updated.connect(
-            self._handle_diagnostics_update
-        )
+        self.data_controller.diagnostics_updated.connect(self._handle_diagnostics_update)
         self.data_controller.error_occurred.connect(self._handle_data_error)
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
         self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
@@ -386,9 +403,7 @@ class MainWindow(QMainWindow):
             lambda: self._notify_tabs_connection_state(ConnState.CONNECTED)
         )
         self.data_controller.retry_connecting.connect(
-            lambda _attempt, _delay: self._notify_tabs_connection_state(
-                ConnState.RECONNECTING
-            )
+            lambda _attempt, _delay: self._notify_tabs_connection_state(ConnState.RECONNECTING)
         )
         self.data_controller.connection_lost.connect(
             lambda: self._notify_tabs_connection_state(ConnState.LOST)
@@ -430,15 +445,28 @@ class MainWindow(QMainWindow):
     def _on_group_changed(self, index: int) -> None:
         """Enable or disable experiment tabs depending on whether a group is selected."""
         group_selected = index >= 0
-        tooltip = "" if group_selected else "Bitte zuerst eine Gruppe auswählen"
         # Tab 0 is "Konfiguration" — always accessible.
-        # Tabs 1+ are experiment tabs added by _setup_tabs.
+        # Tabs 1+ are experiment tabs added by _setup_tabs / _add_tab.
         for i in range(1, self.ui.tabWidget.count()):
-            self.ui.tabWidget.setTabEnabled(i, group_selected)
-            self.ui.tabWidget.setTabToolTip(i, tooltip)
+            self._apply_group_gating(i)
         if not group_selected and self.ui.tabWidget.currentIndex() > 0:
             self.ui.tabWidget.setCurrentIndex(0)
         self._update_filename_display()
+
+    def _apply_group_gating(self, tab_index: int) -> None:
+        """Enable/disable one experiment tab per the current group selection.
+
+        Shared by ``_on_group_changed`` (re-evaluates all tabs) and
+        ``_add_tab`` (applies current state to a single newly-added tab, e.g.
+        WaveplateTab once kdc101 connects mid-session) so neither path can
+        drift from the other.
+        """
+        if tab_index == 0:
+            return  # "Konfiguration" tab is always accessible
+        group_selected = self.ui.cbGroupLetter.currentIndex() >= 0
+        tooltip = "" if group_selected else "Bitte zuerst eine Gruppe auswählen"
+        self.ui.tabWidget.setTabEnabled(tab_index, group_selected)
+        self.ui.tabWidget.setTabToolTip(tab_index, tooltip)
 
     def _update_filename_display(self) -> None:
         """Refresh pteCurrentFilename with the expected save path for the active tab."""
@@ -479,9 +507,7 @@ class MainWindow(QMainWindow):
         """Attempt to connect to Arduino on the selected port."""
         port = self.ui.cbArduinoPort.itemText(self.ui.cbArduinoPort.currentIndex())
         if not port or port == CONFIG["messages"]["device_ports_missing"]:
-            self.ui.lblArduinoStatusValue.setText(
-                CONFIG["messages"]["device_not_connected"]
-            )
+            self.ui.lblArduinoStatusValue.setText(CONFIG["messages"]["device_not_connected"])
             return
 
         set_connection_status(
@@ -646,6 +672,7 @@ class MainWindow(QMainWindow):
             self._auto_select_calibration_for_id(device_id)
 
         self._update_detector_calibration_status()
+        self._apply_required_stream_sources()
 
     # ==================== KDC101 Connection ====================
 
@@ -814,6 +841,10 @@ class MainWindow(QMainWindow):
     def _open_acq_settings(self) -> None:
         """Open the acquisition settings dialog (spike filter + inversion settings)."""
         dialog = AcquisitionSettingsDialog(self._acq_settings, parent=self)
+        # Without this, the dialog's C++ object stays parented to the main
+        # window forever (Qt only auto-deletes it on close, not on Python GC),
+        # so re-opening the settings dialog repeatedly leaks one QDialog per open.
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         # exec() makes the dialog application-modal: the main window cannot
         # receive input while the dialog is open. setEnabled(False) is NOT
         # used because it propagates to child QObjects and would disable the
@@ -826,9 +857,7 @@ class MainWindow(QMainWindow):
     # ==================== Data Display Updates ====================
 
     @Slot(float, float)
-    def _update_angle_displays(
-        self, sample_angle: float, detector_angle: float
-    ) -> None:
+    def _update_angle_displays(self, sample_angle: float, detector_angle: float) -> None:
         """Update LCD displays with encoder readings.
 
         Args:
@@ -887,9 +916,7 @@ class MainWindow(QMainWindow):
         ok = self.data_controller.set_pdtia_gain(stage)
         if not ok:
             self._clear_gain_visual()
-            self.statusbar_manager.show_error(
-                f"PDTIA Gain {stage} konnte nicht gesetzt werden"
-            )
+            self.statusbar_manager.show_error(f"PDTIA Gain {stage} konnte nicht gesetzt werden")
         else:
             self._sync_gain_visual(stage)
             self._schedule_state_save()
@@ -1006,27 +1033,18 @@ class MainWindow(QMainWindow):
     def _auto_select_calibration_for_id(self, device_id: str) -> None:
         """Select the newest calibration profile whose filename contains *device_id*.
 
-        Filenames that start with an 8-digit date (yyyymmdd) are considered newer
-        than undated ones; among dated files the lexicographically greatest date wins.
         Only runs once per device-ID selection; does nothing if already applied.
+        Profile-selection logic itself lives in
+        ``core.power_calibration.select_best_profile_for_device_id``.
         """
         if self._pdtia_auto_cal_done or not device_id:
             return
 
-        matching = [
-            p for p in PowerCalibrationProfile.list_profiles() if device_id in p.stem
-        ]
-        if not matching:
+        best = select_best_profile_for_device_id(PowerCalibrationProfile.list_profiles(), device_id)
+        if best is None:
             Debug.info(f"No calibration profile found for PDTIA ID: {device_id}")
             return
 
-        def _sort_key(path: "Path") -> tuple:
-            stem = path.stem
-            if len(stem) >= 8 and stem[:8].isdigit():
-                return (1, stem[:8])
-            return (0, "")
-
-        best = sorted(matching, key=_sort_key, reverse=True)[0]
         idx = self.ui.cbProfile.findText(best.stem)
         if idx >= 0:
             self.ui.cbProfile.setCurrentIndex(idx)
@@ -1096,9 +1114,7 @@ class MainWindow(QMainWindow):
         else:
             offset_mV = offset_V * 1000.0
             self.ui.lblDarkOffsetValue.setText(f"Offset: {offset_mV:.3f} mV")
-            self.statusbar_manager.show_success(
-                f"Dunkelstrom-Offset gesetzt: {offset_mV:.3f} mV"
-            )
+            self.statusbar_manager.show_success(f"Dunkelstrom-Offset gesetzt: {offset_mV:.3f} mV")
 
     @Slot()
     def _on_dark_reset_clicked(self) -> None:
@@ -1115,9 +1131,7 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Probe-Encoder auf Null gesetzt")
             Debug.info("Sample encoder zeroed")
         else:
-            self.statusbar_manager.show_error(
-                "Fehler beim Nullsetzen des Probe-Encoders"
-            )
+            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Probe-Encoders")
             show_error(
                 self,
                 "Nullsetzen fehlgeschlagen",
@@ -1134,9 +1148,7 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Detektor-Encoder auf Null gesetzt")
             Debug.info("Detector encoder zeroed (offset=0°)")
         else:
-            self.statusbar_manager.show_error(
-                "Fehler beim Nullsetzen des Detektor-Encoders"
-            )
+            self.statusbar_manager.show_error("Fehler beim Nullsetzen des Detektor-Encoders")
             show_error(
                 self,
                 "Nullsetzen fehlgeschlagen",
@@ -1158,9 +1170,7 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_success("Detektor-Encoder auf 180° gesetzt")
             Debug.info("Detector encoder zeroed (offset=180°)")
         else:
-            self.statusbar_manager.show_error(
-                "Fehler beim 180°-Nullsetzen des Detektor-Encoders"
-            )
+            self.statusbar_manager.show_error("Fehler beim 180°-Nullsetzen des Detektor-Encoders")
             show_error(
                 self,
                 "Nullsetzen fehlgeschlagen",
@@ -1288,9 +1298,7 @@ class MainWindow(QMainWindow):
         tab = next((t for t in self._tab_instances if t is widget), None)
         return (
             tab
-            if tab is not None
-            and hasattr(tab, "build_export")
-            and hasattr(tab, "get_saved_points")
+            if tab is not None and hasattr(tab, "build_export") and hasattr(tab, "get_saved_points")
             else None
         )
 
@@ -1309,9 +1317,7 @@ class MainWindow(QMainWindow):
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        stem = compose_filename(
-            exp.filename_hint, group_letter, suffix, exp.filename_tokens
-        )
+        stem = compose_filename(exp.filename_hint, group_letter, suffix, exp.filename_tokens)
         tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
         team_raw = self.ui.leTeamName.text().strip()
         subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
@@ -1340,9 +1346,7 @@ class MainWindow(QMainWindow):
             power_cal_meta=cal_meta,
             saved_at=datetime.now(),
         )
-        self.statusbar_manager.show_success(
-            f"{len(exp.rows)} Datenpunkte gespeichert: {path}"
-        )
+        self.statusbar_manager.show_success(f"{len(exp.rows)} Datenpunkte gespeichert: {path}")
 
         if not self._prefix_locked:
             self._prefix_locked = True
@@ -1353,9 +1357,7 @@ class MainWindow(QMainWindow):
     # ==================== Error Handling ====================
 
     @Slot(bool, str, bool, str)
-    def _handle_diagnostics_update(
-        self, a_ok: bool, a_desc: str, b_ok: bool, b_desc: str
-    ) -> None:
+    def _handle_diagnostics_update(self, a_ok: bool, a_desc: str, b_ok: bool, b_desc: str) -> None:
         """React to per-encoder diagnostic results from the data controller.
 
         Each encoder's LED and display gate is updated independently so a
@@ -1478,9 +1480,7 @@ class MainWindow(QMainWindow):
         self._reset_connection_ui()
         self.ui.gbSampleStage.setEnabled(False)
         self.ui.gbDetectorStage.setEnabled(False)
-        self.statusbar_manager.show_error(
-            "Verbindung verloren – bitte Arduino neu verbinden"
-        )
+        self.statusbar_manager.show_error("Verbindung verloren – bitte Arduino neu verbinden")
         Debug.error("Connection permanently lost; user must reconnect manually")
 
         journal = self.data_controller.current_journal
@@ -1512,16 +1512,12 @@ class MainWindow(QMainWindow):
             team_name=self.ui.leTeamName.text().strip(),
             suffix=self.ui.leSuffix.text().strip(),
             profile_name=(
-                self.ui.cbProfile.currentText()
-                if self.ui.cbProfile.currentIndex() >= 0
-                else ""
+                self.ui.cbProfile.currentText() if self.ui.cbProfile.currentIndex() >= 0 else ""
             ),
             gain_stage=self.data_controller.pdtia_gain,
             detector_offset_deg=self.data_controller.detector_offset_deg,
             pdtia_id=(
-                self.ui.cbPdtiaID.currentText()
-                if self.ui.cbPdtiaID.currentIndex() >= 0
-                else ""
+                self.ui.cbPdtiaID.currentText() if self.ui.cbPdtiaID.currentIndex() >= 0 else ""
             ),
             acq_settings={
                 "samp_average_on": self._acq_settings.samp_average_on,
@@ -1604,22 +1600,12 @@ class MainWindow(QMainWindow):
             s = state.acq_settings
             try:
                 self._acq_settings = AcquisitionSettings(
-                    samp_average_on=s.get(
-                        "samp_average_on", self._acq_settings.samp_average_on
-                    ),
-                    samp_averages=s.get(
-                        "samp_averages", self._acq_settings.samp_averages
-                    ),
-                    det_average_on=s.get(
-                        "det_average_on", self._acq_settings.det_average_on
-                    ),
+                    samp_average_on=s.get("samp_average_on", self._acq_settings.samp_average_on),
+                    samp_averages=s.get("samp_averages", self._acq_settings.samp_averages),
+                    det_average_on=s.get("det_average_on", self._acq_settings.det_average_on),
                     det_averages=s.get("det_averages", self._acq_settings.det_averages),
-                    pdtia_average_on=s.get(
-                        "pdtia_average_on", self._acq_settings.pdtia_average_on
-                    ),
-                    pdtia_averages=s.get(
-                        "pdtia_averages", self._acq_settings.pdtia_averages
-                    ),
+                    pdtia_average_on=s.get("pdtia_average_on", self._acq_settings.pdtia_average_on),
+                    pdtia_averages=s.get("pdtia_averages", self._acq_settings.pdtia_averages),
                     sample_stage_inverted=s.get(
                         "sample_stage_inverted",
                         self._acq_settings.sample_stage_inverted,
