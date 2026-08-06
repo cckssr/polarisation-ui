@@ -17,6 +17,8 @@ When the magnet on an AS5048A encoder is not perfectly centered, systematic angu
 pip install pyserial numpy matplotlib PySide6 pylablib
 ```
 
+`analyze_detector.py` (see below) additionally needs `scipy` — included in `requirements.txt`.
+
 ## Hardware Setup
 
 - **Arduino** with AS5048A encoder connected (running the firmware from `src_arduino/`)
@@ -97,6 +99,34 @@ python main.py
 | 1.0° - 2.0°  | Significant (adjustment needed)   |
 | > 2.0°       | Large (major adjustment required) |
 
+## Detector Calibration Analysis
+
+`analyze_detector.py` is a standalone CLI script (no GUI, unrelated to the encoder
+calibration workflow above) that analyzes a saved PD-TIA power-calibration profile —
+the JSON produced by `polarisation_ui.core.power_calibration.PowerCalibrationProfile.save()`
+in the main app's power-calibration tools.
+
+For each PD-TIA gain stage present in the file, it fits a watts-per-volt linear
+regression via `scipy.stats.linregress` and reports:
+
+- Slope (W/V) and intercept (dark/zero-light offset, W)
+- R² and RMSE of the fit, plus max residual
+- Dynamic range in dB
+- Cross-gain sensitivity ratios and voltage-range overlap/gaps between adjacent gain
+  stages
+
+By default it also renders a 6-panel figure (linear- and log-scale linearity, fit
+residuals, and bar charts for dynamic range, R², and slope per gain stage).
+
+### Usage
+
+```bash
+cd calibration_tool
+python analyze_detector.py Det_A.json                     # report + interactive plot
+python analyze_detector.py Det_A.json --no-plot            # report only
+python analyze_detector.py Det_A.json --save-plot Det_A_analysis.png
+```
+
 ## File Structure
 
 ```
@@ -105,6 +135,7 @@ calibration_tool/
 ├── config.py                     # Configuration
 ├── requirements.txt              # Dependencies
 ├── manual_calibration_dialog.py  # Manual (jog-wheel) calibration dialog
+├── analyze_detector.py           # Standalone CLI: PD-TIA power-calibration fit/report
 ├── devices/
 │   ├── arduino_encoder.py        # AS5048A via Arduino
 │   └── kdc101_stage.py           # Thorlabs KDC101 serial
