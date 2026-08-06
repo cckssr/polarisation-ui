@@ -11,6 +11,7 @@ from collections import deque
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 
+from polarisation_ui.core.formatting import export_angle, export_intensity
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.core.utils import circular_mean_deg
@@ -391,6 +392,8 @@ class DataController(QObject):
         """Set the host-side detector angle offset and clear averaging buffers."""
         self._detector_offset_deg = offset_deg % 360.0
         self.clear_det_buffer()
+        # NOTE: 1 dp — no matching DisplayFormat bucket, left hardcoded rather
+        # than changing visible precision (this is a log message, not a UI label).
         Debug.info(f"Detector offset set to {self._detector_offset_deg:.1f}°")
 
     # ==================== PDTIA Gain Control ====================
@@ -516,6 +519,8 @@ class DataController(QObject):
                 )
                 if sample_spike or det_spike:
                     self._spike_reject_streak += 1
+                    # NOTE: 1 dp log messages below — no matching DisplayFormat
+                    # bucket, left hardcoded rather than changing visible precision.
                     if sample_spike:
                         Debug.debug(
                             f"Spike rejected: sample Δ="
@@ -571,6 +576,8 @@ class DataController(QObject):
                     self._tare_active = False
                     self._tare_samples.clear()
                     self.dark_tare_done.emit(self._dark_V)
+                    # NOTE: 3 dp — no matching DisplayFormat bucket, left hardcoded
+                    # rather than changing visible precision (log message).
                     Debug.info(f"Dark tare complete: offset={self._dark_V * 1000:.3f} mV")
 
             intensity = (
@@ -612,9 +619,9 @@ class DataController(QObject):
                 raw = (
                     f"DATA:FRAME seq={self._last_frame_seq},"
                     f"tsMs={frame.ts_ms},"
-                    f"angA={frame.sample_angle:.4f},"
-                    f"angB={frame.detector_angle:.4f},"
-                    f"adcV={frame.intensity:.6f}"
+                    f"angA={export_angle(frame.sample_angle)},"
+                    f"angB={export_angle(frame.detector_angle)},"
+                    f"adcV={export_intensity(frame.intensity)}"
                 )
                 self.raw_frame.emit(raw)
             if self._is_measuring and self._journal is not None:

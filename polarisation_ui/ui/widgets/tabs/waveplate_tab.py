@@ -22,6 +22,12 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.formatting import (
+    export_angle,
+    export_intensity,
+    fmt_angle,
+    fmt_intensity,
+)
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
 from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.qt_threads import MalusSweepWorker
@@ -151,8 +157,8 @@ class WaveplateTab(PlotTabBase):
         ]
         rows = [
             [
-                f"{pt.analyser_angle:.4f}",
-                f"{pt.intensity_V:.6f}",
+                export_angle(pt.analyser_angle),
+                export_intensity(pt.intensity_V),
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
@@ -208,7 +214,7 @@ class WaveplateTab(PlotTabBase):
             self._ui.lblLiveIntensity.setText("—")
             self._ui.lblKDCPosition.setText("—")
             return
-        self._ui.lblLiveIntensity.setText(f"{frame.intensity:.4f} V")
+        self._ui.lblLiveIntensity.setText(f"{fmt_intensity(frame.intensity)} V")
         # Refresh the KDC position at most every _KDC_POLL_INTERVAL_S seconds to avoid
         # a blocking hardware read on every ~10 Hz frame.
         if self._kdc is not None and self._kdc.is_connected():
@@ -223,7 +229,7 @@ class WaveplateTab(PlotTabBase):
 
                     Debug.warning(f"WaveplateTab: KDC position read failed: {exc}")
             if self._kdc_pos_cache is not None:
-                self._ui.lblKDCPosition.setText(f"{self._kdc_pos_cache:.2f}°")
+                self._ui.lblKDCPosition.setText(f"{fmt_angle(self._kdc_pos_cache)}°")
             else:
                 self._ui.lblKDCPosition.setText("—")
 
@@ -327,8 +333,11 @@ class WaveplateTab(PlotTabBase):
         points = self._ui.intensityCurvePlot.get_points()
         self._ui.pointsTable.setRowCount(len(points))
         for row, pt in enumerate(points):
+            # NOTE: analyser angle here uses 3 dp, which matches neither
+            # DisplayFormat.angle_dp (2) nor ExportFormat.angle_dp (4) — left as a
+            # hardcoded outlier rather than silently changing visible precision.
             self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
-            self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(f"{pt.intensity_V:.6f}"))
+            self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(export_intensity(pt.intensity_V)))
         self._on_table_selection_changed()
 
     @Slot()

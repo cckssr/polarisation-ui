@@ -41,6 +41,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from polarisation_ui.core.formatting import export_voltage
 from polarisation_ui.core.power_calibration import (
     PROFILES_DIR,
     GainCalibration,
@@ -179,7 +180,10 @@ class _GainCalTab(QWidget):
         self._table.setRowCount(len(pts))
         for i, (v, p) in enumerate(pts):
             ratio = p / v if v > 0 else float("nan")
-            self._table.setItem(i, 0, QTableWidgetItem(f"{v:.6f}"))
+            self._table.setItem(i, 0, QTableWidgetItem(export_voltage(v)))
+            # NOTE: power (p) here uses 9 dp — no power_dp bucket exists in
+            # DisplayFormat/ExportFormat, so this stays a hardcoded outlier
+            # rather than changing visible precision.
             self._table.setItem(i, 1, QTableWidgetItem(f"{p:.9f}"))
             self._table.setItem(
                 i, 2, QTableWidgetItem(f"{ratio:.4e}" if not math.isnan(ratio) else "—")
@@ -291,7 +295,7 @@ class PowerCalibrationWindow(QDialog):
     @Slot(float)
     def _on_live_voltage(self, voltage: float) -> None:
         self._live_voltage = voltage
-        self._lbl_live.setText(f"Live-Spannung: {voltage:.6f} V")
+        self._lbl_live.setText(f"Live-Spannung: {export_voltage(voltage)} V")
         for tab in self._gain_tabs.values():
             tab.set_live_voltage(voltage)
 

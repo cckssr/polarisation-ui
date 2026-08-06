@@ -28,6 +28,7 @@ if __package__ is None:
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
+from polarisation_ui.core.formatting import init_from_config
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
@@ -73,6 +74,7 @@ def main():
 
     # Load configuration
     config = import_config()
+    init_from_config(config)
 
     # Initialize debug system
     debug_level_map = {

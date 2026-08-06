@@ -22,6 +22,12 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.formatting import (
+    export_angle,
+    export_intensity,
+    fmt_angle,
+    fmt_intensity,
+)
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
 from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.qt_threads import MalusSweepWorker
@@ -155,9 +161,9 @@ class MalusTab(PlotTabBase):
         ]
         rows = [
             [
-                f"{pt.analyser_angle:.4f}",
-                f"{pt.polariser_angle:.4f}",
-                f"{pt.intensity_V:.6f}",
+                export_angle(pt.analyser_angle),
+                export_angle(pt.polariser_angle),
+                export_intensity(pt.intensity_V),
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
@@ -275,8 +281,10 @@ class MalusTab(PlotTabBase):
             self._ui.lblLiveIntensity.setText("—")
             self._ui.lblLivePower.setText("—")
             return
-        self._ui.lblLiveIntensity.setText(f"{frame.intensity:.4f} V")
+        self._ui.lblLiveIntensity.setText(f"{fmt_intensity(frame.intensity)} V")
         if frame.power_W is not None:
+            # NOTE: power (mW) has no formatting bucket (no fmt_power/export_power
+            # helper) and 3 dp doesn't match fmt_stat's 2 dp — left hardcoded.
             self._ui.lblLivePower.setText(f"{frame.power_W * 1e3:.3f} mW")
         else:
             self._ui.lblLivePower.setText("—")
@@ -285,9 +293,12 @@ class MalusTab(PlotTabBase):
         points = self._ui.malusCurvePlot.get_points()
         self._ui.pointsTable.setRowCount(len(points))
         for row, pt in enumerate(points):
+            # NOTE: analyser/polariser angle here use 3 dp, which matches neither
+            # DisplayFormat.angle_dp (2) nor ExportFormat.angle_dp (4) — left as a
+            # hardcoded outlier rather than silently changing visible precision.
             self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
             self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(f"{pt.polariser_angle:.3f}"))
-            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}"))
+            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(export_intensity(pt.intensity_V)))
             self._ui.pointsTable.setItem(
                 row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
             )
@@ -352,7 +363,7 @@ class MalusTab(PlotTabBase):
     @Slot(float)
     def _on_sweep_zero_offset(self, offset: float) -> None:
         self._kdc_zero_offset = offset
-        self._ui.lblZeroOffset.setText(f"{offset:.2f}°")
+        self._ui.lblZeroOffset.setText(f"{fmt_angle(offset)}°")
 
     @Slot(float, float, float)
     def _on_sweep_point(self, analyser_angle: float, kdc_pos: float, intensity_V: float) -> None:

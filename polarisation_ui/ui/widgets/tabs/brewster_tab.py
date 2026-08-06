@@ -20,6 +20,12 @@ from typing import Literal
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QButtonGroup, QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.formatting import (
+    export_angle,
+    export_intensity,
+    fmt_angle,
+    fmt_intensity,
+)
 from polarisation_ui.core.models import BrewsterPoint, Frame, TabExport
 from polarisation_ui.pyqt.ui_brewster_tab import Ui_BrewsterTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -132,9 +138,9 @@ class BrewsterTab(PlotTabBase):
         ]
         rows = [
             [
-                f"{pt.sample_angle:.4f}",
-                f"{pt.detector_angle:.4f}",
-                f"{pt.intensity_V:.6f}",
+                export_angle(pt.sample_angle),
+                export_angle(pt.detector_angle),
+                export_intensity(pt.intensity_V),
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
@@ -253,16 +259,19 @@ class BrewsterTab(PlotTabBase):
             self._ui.lblMaxIntensity.setText("—")
             self._ui.lblMaxAngle.setText("—")
         else:
-            self._ui.lblMaxIntensity.setText(f"{intensity:.4f} V")
-            self._ui.lblMaxAngle.setText(f"{angle:.2f}°")
+            self._ui.lblMaxIntensity.setText(f"{fmt_intensity(intensity)} V")
+            self._ui.lblMaxAngle.setText(f"{fmt_angle(angle)}°")
 
     def _refresh_table(self) -> None:
         points = self._ui.brewsterCurvePlot.get_points()
         self._ui.pointsTable.setRowCount(len(points))
         for row, pt in enumerate(points):
+            # NOTE: sample/detector angle here use 3 dp, which matches neither
+            # DisplayFormat.angle_dp (2) nor ExportFormat.angle_dp (4) — left as a
+            # hardcoded outlier rather than silently changing visible precision.
             self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.sample_angle:.3f}"))
             self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(f"{pt.detector_angle:.3f}"))
-            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(f"{pt.intensity_V:.6f}"))
+            self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(export_intensity(pt.intensity_V)))
             self._ui.pointsTable.setItem(
                 row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
             )
