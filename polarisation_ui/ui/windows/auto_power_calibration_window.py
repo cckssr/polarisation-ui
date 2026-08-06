@@ -18,6 +18,7 @@ from polarisation_ui.core.auto_calibration_settings import (
     AutoCalibrationParams,
 )
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
+from polarisation_ui.core.formatting import fmt_angle
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
 )
@@ -93,7 +94,7 @@ class AutoPowerCalibrationWindow(QDialog):
         if s.angle_offset_deg != 0.0:
             self._angle_offset_deg = s.angle_offset_deg
             self.ui.lblAngleOffset.setText(
-                f"Winkelversatz: {s.angle_offset_deg:.2f}° (aus letzter Sitzung)"
+                f"Winkelversatz: {fmt_angle(s.angle_offset_deg)}° (aus letzter Sitzung)"
             )
 
     def _connect_signals(self) -> None:
@@ -314,7 +315,8 @@ class AutoPowerCalibrationWindow(QDialog):
     def _on_align_finished(self, angle_max_deg: float) -> None:
         self._angle_offset_deg = angle_max_deg
         self.ui.lblAngleOffset.setText(
-            f"Polarisator 0°: {angle_max_deg:.2f}°  |  90°: {angle_max_deg + 90.0:.2f}°"
+            f"Polarisator 0°: {fmt_angle(angle_max_deg)}°  |  "
+            f"90°: {fmt_angle(angle_max_deg + 90.0)}°"
         )
         self.ui.lblPhase.setText("Ausrichtung abgeschlossen")
         self.ui.btnAbortAlign.setEnabled(False)

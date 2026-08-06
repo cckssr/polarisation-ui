@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from polarisation_ui.core.exceptions import KDC101Error
+from polarisation_ui.core.formatting import fmt_angle, fmt_stat
 from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
@@ -782,7 +783,7 @@ class MainWindow(QMainWindow):
         """Poll current KDC101 position and update the live display label."""
         try:
             pos = self._kdc.get_position_deg()
-            self.ui.lblKDCPositionValue.setText(f"{pos:.2f}°")
+            self.ui.lblKDCPositionValue.setText(f"{fmt_angle(pos)}°")
         except KDC101Error:
             pass  # transient read error — label stays at last known value
 
@@ -867,10 +868,10 @@ class MainWindow(QMainWindow):
         # Values received from DataController are already averaged — always display.
         # The LED colour already indicates sensor health; freezing the value on a
         # diagnostic fault is more confusing than showing a potentially noisy reading.
-        self.ui.lcdSampleAngle.display(f"{sample_angle:.2f}")
-        self.ui.lcdDetectorStageAngle.display(f"{detector_angle:.2f}")
-        self.ui.lcdSampleAngle_2.display(f"{sample_angle:.2f}")
-        self.ui.lcdDetectorStageAngle_2.display(f"{detector_angle:.2f}")
+        self.ui.lcdSampleAngle.display(fmt_angle(sample_angle))
+        self.ui.lcdDetectorStageAngle.display(fmt_angle(detector_angle))
+        self.ui.lcdSampleAngle_2.display(fmt_angle(sample_angle))
+        self.ui.lcdDetectorStageAngle_2.display(fmt_angle(detector_angle))
 
     @Slot(float)
     def _update_intensity_display(self, voltage: float) -> None:
@@ -881,8 +882,8 @@ class MainWindow(QMainWindow):
             return
 
         voltage_mv = voltage * 1000.0
-        self.ui.lcdDetectorVoltage_mV.display(f"{voltage_mv:.2f}")
-        self.ui.lcdDetectorVoltage_2.display(f"{voltage_mv:.2f}")
+        self.ui.lcdDetectorVoltage_mV.display(fmt_stat(voltage_mv))
+        self.ui.lcdDetectorVoltage_2.display(fmt_stat(voltage_mv))
 
         saturated = voltage < _ADC_SAT_LOW or voltage > _ADC_SAT_HIGH
         if saturated != self._adc_saturated:
@@ -906,6 +907,8 @@ class MainWindow(QMainWindow):
     def _update_poll_rate(self, hz: float) -> None:
         """Show the measured poll rate in the detector status label when ADC is healthy."""
         if not self._adc_saturated and self._is_connected:
+            # NOTE: 1 dp — no matching DisplayFormat bucket (angle/stats are 2 dp),
+            # left hardcoded rather than changing visible precision.
             self.ui.lblDetectorStatusValue.setText(f"ADC  {hz:.1f} Hz")
 
     # ==================== PDTIA Gain Control ====================
@@ -949,8 +952,8 @@ class MainWindow(QMainWindow):
             self.ui.lcdDetectorPower_2.display("----")
         else:
             power_uw = power_W * 1e6
-            self.ui.lcdDetectorPower.display(f"{power_uw:.2f}")
-            self.ui.lcdDetectorPower_2.display(f"{power_uw:.2f}")
+            self.ui.lcdDetectorPower.display(fmt_stat(power_uw))
+            self.ui.lcdDetectorPower_2.display(fmt_stat(power_uw))
 
     # ==================== Calibration Profile Management ====================
 
@@ -1113,6 +1116,8 @@ class MainWindow(QMainWindow):
             self.statusbar_manager.show_info("Dunkelstrom-Offset zurückgesetzt")
         else:
             offset_mV = offset_V * 1000.0
+            # NOTE: 3 dp — no matching DisplayFormat bucket, left hardcoded rather
+            # than changing visible precision.
             self.ui.lblDarkOffsetValue.setText(f"Offset: {offset_mV:.3f} mV")
             self.statusbar_manager.show_success(f"Dunkelstrom-Offset gesetzt: {offset_mV:.3f} mV")
 

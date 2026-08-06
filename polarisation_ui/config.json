@@ -63,6 +63,20 @@
       "tk_designation": "TK41",
       "base_folder": "Polarisation"
     },
+    "display_format": {
+      "angle_dp": 2,
+      "voltage_dp": 4,
+      "intensity_dp": 4,
+      "stats_dp": 2,
+      "angle_unit": "°",
+      "voltage_unit": "V",
+      "intensity_unit": "a.u."
+    },
+    "export_format": {
+      "angle_dp": 4,
+      "voltage_dp": 6,
+      "intensity_dp": 6
+    },
     "ui": {
       "theme": "dark",
       "status_led": {
