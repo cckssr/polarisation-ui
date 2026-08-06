@@ -50,7 +50,7 @@ Rules:
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `power_calibration_window.py`                                                                                  | User-approved exception — no `.ui` counterpart by design                                                                                                                                                      |
 | `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py`, `multi_gain_calibration_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets                                                                                                                                 |
-| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …)                                                | Tab-extensibility pattern: tabs use `build()` for layout by design                                                                                                                                            |
+| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …)                                                | Not an exception — these load a `Ui_*Tab` from a `.ui` file inside `build()` and promote pyqtgraph plots via `<customwidget>`; `build()` is the wiring hook, not a licence to construct widgets                |
 | `log_window.py`                                                                                                | Sanctioned exception: imports `QObject, Qt, Signal, QTextCursor` beyond the usual whitelist for a cross-thread logging bridge (log records arrive off the Qt main thread and must be marshalled via a signal) |
 
 `auto_power_calibration_window.py` now has a `.ui` counterpart (`ui_auto_power_calibration.py`) and is **not** an exception — it follows the normal Designer-first rule.
@@ -210,7 +210,7 @@ Registry hides tabs whose `required_modules` are not currently injected. Malus a
 
 ## Git Workflow
 
-Branch naming: `feat/…`, `fix/…`, `refactor/…`, `docs/…`. Current work branch: `feat/rework-ux`. Base branch: `main`.
+Branch naming: `feat/…`, `fix/…`, `refactor/…`, `docs/…`. Base branch: `main`.
 
 Commits:
 
