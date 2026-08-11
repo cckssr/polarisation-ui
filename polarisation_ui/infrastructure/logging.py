@@ -24,6 +24,8 @@ Debug methods:
     - Debug.debug(message): Log detailed debug information
     - Debug.warning(message): Log a warning message
     - Debug.critical(message): Log a critical error message
+    - Debug.flush(): Force-flush any buffered log records
+    - Debug.shutdown(): Detach and close all handlers, reset to pre-init state
 
 Usage:
     Import the Debug class and initialize it before use:
@@ -36,7 +38,6 @@ Usage:
     >>> sys.excepthook = Debug.exception_hook
 """
 
-import inspect
 import logging
 import logging.handlers
 import os
@@ -78,18 +79,30 @@ class Debug:
         debug_level: int = DEBUG_LEVEL,
         log_dir: "str | None" = None,
         app_name: str = "Application",
-        supress_logfile: bool = False,
+        suppress_logfile: bool = False,
+        memory_capacity: int = 1000,
+        memory_flush_level: int = logging.ERROR,
     ) -> None:
         """Initialise the logger with the specified debug level and log directory.
 
         If no log directory is specified, a platform-specific temp directory is used.
 
+        Safe to call more than once: any handlers left over from a previous
+        init() call (including ones attached via add_handler()) are detached
+        and closed first, so re-initialising never duplicates log output.
+
         Args:
             debug_level: Debug level (0 (Off) - 3 (Verbose))
             log_dir: Directory where logs should be stored
             app_name: Application name used for the log file
-            supress_logfile: If True, no log file will be created even if debug_level > 0
+            suppress_logfile: If True, no log file will be created even if debug_level > 0
+            memory_capacity: Buffered records held in memory before an automatic
+                flush to the log file (see logging.handlers.MemoryHandler)
+            memory_flush_level: Minimum record level that triggers an immediate
+                flush of the buffered records to the log file
         """
+        cls._detach_handlers()
+        cls.LOG_FILE = None
         cls.DEBUG_LEVEL = debug_level
 
         # Create logger
@@ -114,41 +127,71 @@ class Debug:
         cls.logger.addHandler(console_handler)
 
         # Only set up log file if debugging is enabled
-        if debug_level != cls.DEBUG_OFF and not supress_logfile:
-            # Use provided directory if given, otherwise use platform-specific temp directory
-            if log_dir:
-                log_directory = log_dir
-            else:
-                # Creates: /tmp/app_name_logs (Linux/Mac) or %TEMP%\app_name_logs (Windows)
-                log_directory = os.path.join(tempfile.gettempdir(), app_name.lower() + "_logs")
+        if debug_level == cls.DEBUG_OFF or suppress_logfile:
+            return
 
-            if not os.path.exists(log_directory):
-                try:
-                    os.makedirs(log_directory)
-                    print(f"Log directory created: {log_directory}")
-                except Exception as e:  # pylint: disable=broad-except
-                    print(f"Error creating log directory: {e}")
-                    return
-
-            # Create log file with timestamp and application name
-            cls.LOG_FILE = os.path.join(
-                log_directory,
-                f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{app_name}.txt",
-            )
-
-            file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8", delay=True)
-            file_formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
-            file_handler.setFormatter(file_formatter)
-            file_handler.setLevel(logging.DEBUG)  # Log verbose to file
-            # Wrap handler with MemoryHandler for better performance with fast apps
-            memory_handler = logging.handlers.MemoryHandler(
-                capacity=1000, flushLevel=logging.ERROR, target=file_handler
-            )
-            cls.logger.addHandler(memory_handler)
-
-            cls.info(f"Log file created: {cls.LOG_FILE}")
+        # Use provided directory if given, otherwise use platform-specific temp directory
+        if log_dir:
+            log_directory = log_dir
         else:
-            cls.LOG_FILE = None
+            # Creates: /tmp/app_name_logs (Linux/Mac) or %TEMP%\app_name_logs (Windows)
+            log_directory = os.path.join(tempfile.gettempdir(), app_name.lower() + "_logs")
+
+        if not os.path.exists(log_directory):
+            try:
+                os.makedirs(log_directory)
+                print(f"Log directory created: {log_directory}")
+            except Exception as e:  # pylint: disable=broad-except
+                print(f"Error creating log directory: {e}")
+                return
+
+        # Create log file with timestamp and application name
+        cls.LOG_FILE = os.path.join(
+            log_directory,
+            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{app_name}.txt",
+        )
+
+        file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8", delay=True)
+        file_formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
+        file_handler.setFormatter(file_formatter)
+        file_handler.setLevel(logging.DEBUG)  # Log verbose to file
+        # Wrap handler with MemoryHandler for better performance with fast apps
+        memory_handler = logging.handlers.MemoryHandler(
+            capacity=memory_capacity, flushLevel=memory_flush_level, target=file_handler
+        )
+        cls.logger.addHandler(memory_handler)
+
+        cls.info(f"Log file created: {cls.LOG_FILE}")
+
+    @classmethod
+    def _log(
+        cls,
+        level: int,
+        label: str,
+        message: str,
+        *,
+        exc_info: bool = False,
+        min_print_level: "int | None" = None,
+    ) -> None:
+        """Shared implementation behind error/info/debug/warning/critical.
+
+        Args:
+            level: logging level to emit at (logging.INFO, logging.ERROR, ...)
+            label: prefix used for the console fallback when no logger is configured
+            message: message to log
+            exc_info: if True, attach the current exception traceback
+            min_print_level: minimum DEBUG_LEVEL required for the fallback print
+                to happen when no logger is configured; None means always print
+        """
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            message = f"{cls._get_caller_info()} {message}"
+
+        if cls.logger is None:
+            if min_print_level is None or cls.DEBUG_LEVEL >= min_print_level:
+                print(f"{label}: {message}")
+            return
+
+        cls.logger.log(level, message, exc_info=exc_info)
 
     @classmethod
     def error(cls, message: str, exc_info: bool = False) -> None:
@@ -158,16 +201,7 @@ class Debug:
             message (str): Error message to log
             exc_info (bool): If True, attach current exception traceback (default False)
         """
-        message = cls.get_caller_info(message)
-
-        if not cls.logger:
-            print(f"ERROR: {message}")
-            return
-
-        if exc_info:
-            cls.logger.error(message, exc_info=True)
-        else:
-            cls.logger.error(message)
+        cls._log(logging.ERROR, "ERROR", message, exc_info=exc_info)
 
     @classmethod
     def info(cls, message: str) -> None:
@@ -176,14 +210,7 @@ class Debug:
         Args:
             message (str): Information to log
         """
-        message = cls.get_caller_info(message)
-
-        if not cls.logger:
-            if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
-                print(f"INFO: {message}")
-            return
-
-        cls.logger.info(message)
+        cls._log(logging.INFO, "INFO", message, min_print_level=cls.DEBUG_INFO)
 
     @classmethod
     def debug(cls, message: str) -> None:
@@ -192,14 +219,7 @@ class Debug:
         Args:
             message (str): Debug information to log
         """
-        message = cls.get_caller_info(message)
-
-        if not cls.logger:
-            if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-                print(f"DEBUG: {message}")
-            return
-
-        cls.logger.debug(message)
+        cls._log(logging.DEBUG, "DEBUG", message, min_print_level=cls.DEBUG_VERBOSE)
 
     @classmethod
     def warning(cls, message: str) -> None:
@@ -208,14 +228,7 @@ class Debug:
         Args:
             message (str): Warning information to log
         """
-        message = cls.get_caller_info(message)
-
-        if not cls.logger:
-            if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
-                print(f"WARNING: {message}")
-            return
-
-        cls.logger.warning(message)
+        cls._log(logging.WARNING, "WARNING", message, min_print_level=cls.DEBUG_INFO)
 
     @classmethod
     def critical(cls, message: str) -> None:
@@ -224,28 +237,7 @@ class Debug:
         Args:
             message (str): Critical error message to log
         """
-        message = cls.get_caller_info(message)
-
-        if not cls.logger:
-            print(f"CRITICAL: {message}")
-            return
-
-        cls.logger.critical(message)
-
-    @classmethod
-    def get_caller_info(cls, message: str) -> str:
-        """Get caller information if debug level is verbose.
-
-        Args:
-            message (str): The original message to log
-
-        Returns:
-            The message with caller information prepended
-        """
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
-        return message
+        cls._log(logging.CRITICAL, "CRITICAL", message)
 
     @classmethod
     def exception_hook(
@@ -263,7 +255,7 @@ class Debug:
         error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         cls.critical(f"UNEXPECTED: {error_msg}")
 
-        # Standardbehandlung von Ausnahmen
+        # Preserve the default exception handling (prints traceback, exits non-zero)
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
     @classmethod
@@ -279,35 +271,68 @@ class Debug:
             cls.logger.removeHandler(handler)
 
     @classmethod
-    def _get_caller_info(cls):
-        """Retrieve information about the caller (class and function).
+    def flush(cls) -> None:
+        """Force-flush any buffered log records (e.g. before bundling logs for a report)."""
+        if cls.logger is None:
+            return
+        for handler in cls.logger.handlers:
+            handler.flush()
+
+    @classmethod
+    def shutdown(cls) -> None:
+        """Detach and close all handlers, then reset to the pre-init default state.
+
+        Mainly useful for tests (to avoid state leaking between test cases)
+        and for applications that want to fully re-configure logging from
+        scratch rather than relying on init()'s implicit re-init behaviour.
+        """
+        cls._detach_handlers()
+        cls.logger = None
+        cls.DEBUG_LEVEL = cls.DEBUG_OFF
+        cls.LOG_FILE = None
+
+    @classmethod
+    def _detach_handlers(cls) -> None:
+        """Remove and fully close every handler currently on the logger, if any."""
+        if cls.logger is None:
+            return
+        for handler in list(cls.logger.handlers):
+            # Grab the MemoryHandler's target before close() detaches it,
+            # so it can close the underlying file handle too (it isn't closed for us).
+            target = getattr(handler, "target", None)
+            cls.logger.removeHandler(handler)
+            handler.close()
+            if target is not None:
+                target.close()
+
+    @classmethod
+    def _get_caller_info(cls) -> str:
+        """Identify the class and function that made the original log call.
+
+        Walks the frame chain directly via f_back rather than using
+        inspect.stack(), which reads and caches source context for every
+        frame on the stack (real file I/O) even though only the class/function
+        name of a single frame is needed here.
 
         Returns:
             str: Formatted information about the caller in the format [Class.Function]
         """
-        # Inspiziere den Stack, um Aufruferinformationen zu erhalten
-        stack = inspect.stack()
+        # Skip this frame, _log(), and the public method (error/info/...) that
+        # called _log(), to reach the frame that actually triggered the log call.
+        frame = sys._getframe(0)
+        for _ in range(3):
+            if frame.f_back is None:
+                return ""
+            frame = frame.f_back
 
-        # Position 0 is this method
-        # Position 1 is the calling debug method (debug, info, error, etc.)
-        # Position 2 is the actual caller we want to identify
-        if len(stack) > 2:
-            caller = stack[2]
-            frame = caller.frame
+        class_name = ""
+        instance = frame.f_locals.get("self")
+        if instance is not None:
+            class_name = instance.__class__.__name__
 
-            # Try to determine the class name
-            class_name = ""
-            if "self" in frame.f_locals:
-                instance = frame.f_locals["self"]
-                class_name = instance.__class__.__name__
+        function_name = frame.f_code.co_name
 
-            # Get the function name
-            function_name = caller.function
+        if class_name:
+            return f"[{class_name}.{function_name}]"
 
-            # Create the formatted caller information
-            if class_name:
-                return f"[{class_name}.{function_name}]"
-
-            return f"[{function_name}]"
-
-        return ""  # Fallback if caller information cannot be determined
+        return f"[{function_name}]"
