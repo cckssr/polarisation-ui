@@ -1,4 +1,4 @@
-"""Logging and debugging utility module for the GM Counter application.
+"""Logging and debugging utility module for the applications.
 
 This module provides a centralized Debug class that handles logging to both console
 and file outputs with configurable debug levels. It supports systematic logging of
@@ -38,24 +38,26 @@ Usage:
 
 import inspect
 import logging
+import logging.handlers
 import os
 import sys
 import tempfile
 import traceback
 from datetime import datetime
+from types import TracebackType
 
 
 class Debug:
-    """Debug utility class originally for fringe counter program.
+    """Debug utility class for application-wide logging.
 
-    This class provides central debug and logging functions,
-    to systematically log errors and program flow.
+    This class provides central debug and logging functions, to systematically
+    log errors and program flow.
     The logger will log messages to both the console and a file if debugging is enabled.
     It also provides a method to handle unhandled exceptions globally.
 
     Attribute:
         logger: The logger used for debug output
-        DEBUG_LEVEL: Current debug level (0-3)
+        DEBUG_LEVEL: Current debug level (0 (Off) - 3 (Verbose))
         LOG_FILE: Path to the log file
     """
 
@@ -83,7 +85,7 @@ class Debug:
         If no log directory is specified, a platform-specific temp directory is used.
 
         Args:
-            debug_level: Debug level (0-3)
+            debug_level: Debug level (0 (Off) - 3 (Verbose))
             log_dir: Directory where logs should be stored
             app_name: Application name used for the log file
             supress_logfile: If True, no log file will be created even if debug_level > 0
@@ -113,12 +115,10 @@ class Debug:
 
         # Only set up log file if debugging is enabled
         if debug_level != cls.DEBUG_OFF and not supress_logfile:
-            # Use provided directory if given,
-            # otherwise use platform-specific temp directory
+            # Use provided directory if given, otherwise use platform-specific temp directory
             if log_dir:
                 log_directory = log_dir
             else:
-                # Use platform-independent temp directory
                 # Creates: /tmp/app_name_logs (Linux/Mac) or %TEMP%\app_name_logs (Windows)
                 log_directory = os.path.join(tempfile.gettempdir(), app_name.lower() + "_logs")
 
@@ -130,17 +130,21 @@ class Debug:
                     print(f"Error creating log directory: {e}")
                     return
 
-            # Always create a log.txt in the specified directory
+            # Create log file with timestamp and application name
             cls.LOG_FILE = os.path.join(
                 log_directory,
                 f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{app_name}.txt",
             )
 
-            file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8")
+            file_handler = logging.FileHandler(cls.LOG_FILE, encoding="utf-8", delay=True)
             file_formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
             file_handler.setFormatter(file_formatter)
-            file_handler.setLevel(logging.DEBUG)  # In Datei immer alles loggen
-            cls.logger.addHandler(file_handler)
+            file_handler.setLevel(logging.DEBUG)  # Log verbose to file
+            # Wrap handler with MemoryHandler for better performance with fast apps
+            memory_handler = logging.handlers.MemoryHandler(
+                capacity=1000, flushLevel=logging.ERROR, target=file_handler
+            )
+            cls.logger.addHandler(memory_handler)
 
             cls.info(f"Log file created: {cls.LOG_FILE}")
         else:
@@ -151,13 +155,10 @@ class Debug:
         """Log an error message.
 
         Args:
-            message: Error message to log
-            exc_info: If True, attach current exception traceback (default False)
+            message (str): Error message to log
+            exc_info (bool): If True, attach current exception traceback (default False)
         """
-        # Klassennamen und Funktionsnamen ermitteln
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
+        message = cls.get_caller_info(message)
 
         if not cls.logger:
             print(f"ERROR: {message}")
@@ -173,12 +174,9 @@ class Debug:
         """Log an informational message.
 
         Args:
-            message: Information to log
+            message (str): Information to log
         """
-        # Klassennamen und Funktionsnamen ermitteln
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
+        message = cls.get_caller_info(message)
 
         if not cls.logger:
             if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
@@ -192,12 +190,9 @@ class Debug:
         """Log detailed debug information.
 
         Args:
-            message: Debug information to log
+            message (str): Debug information to log
         """
-        # Klassennamen und Funktionsnamen ermitteln
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
+        message = cls.get_caller_info(message)
 
         if not cls.logger:
             if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
@@ -211,12 +206,9 @@ class Debug:
         """Log information as warning for non critical issues.
 
         Args:
-            message: Warning information to log
+            message (str): Warning information to log
         """
-        # Klassennamen und Funktionsnamen ermitteln
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
+        message = cls.get_caller_info(message)
 
         if not cls.logger:
             if cls.DEBUG_LEVEL >= cls.DEBUG_INFO:
@@ -230,12 +222,9 @@ class Debug:
         """Log a critical error message.
 
         Args:
-            message: Critical error message to log
+            message (str): Critical error message to log
         """
-        # Klassennamen und Funktionsnamen ermitteln
-        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
-            prefix = cls._get_caller_info()
-            message = f"{prefix} {message}"
+        message = cls.get_caller_info(message)
 
         if not cls.logger:
             print(f"CRITICAL: {message}")
@@ -244,17 +233,32 @@ class Debug:
         cls.logger.critical(message)
 
     @classmethod
+    def get_caller_info(cls, message: str) -> str:
+        """Get caller information if debug level is verbose.
+
+        Args:
+            message (str): The original message to log
+
+        Returns:
+            The message with caller information prepended
+        """
+        if cls.DEBUG_LEVEL >= cls.DEBUG_VERBOSE:
+            prefix = cls._get_caller_info()
+            message = f"{prefix} {message}"
+        return message
+
+    @classmethod
     def exception_hook(
-        cls, exc_type: type, exc_value: BaseException, exc_traceback: object
+        cls, exc_type: type, exc_value: BaseException, exc_traceback: TracebackType | None
     ) -> None:
         """Callback function for unhandled exceptions.
 
         Logs the exception and forwards it to sys.__excepthook__.
 
         Args:
-            exc_type: The exception type
-            exc_value: The exception value
-            exc_traceback: The traceback
+            exc_type (type): The exception type
+            exc_value (BaseException): The exception value
+            exc_traceback (TracebackType | None): The traceback
         """
         error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         cls.critical(f"UNEXPECTED: {error_msg}")
@@ -303,7 +307,7 @@ class Debug:
             # Create the formatted caller information
             if class_name:
                 return f"[{class_name}.{function_name}]"
-            else:
-                return f"[{function_name}]"
+
+            return f"[{function_name}]"
 
         return ""  # Fallback if caller information cannot be determined
