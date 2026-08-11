@@ -42,3 +42,13 @@ def test_adapter_registers_in_module_registry():
     retrieved = ModuleRegistry.get("kdc101")
     assert retrieved is adapter
     ModuleRegistry.clear()
+
+
+def test_adapter_forwards_motion_calls_to_wrapped_kdc():
+    """Malus/Waveplate tabs receive the adapter (not the raw KDC101Polariser)
+    from ModuleRegistry via inject_modules(), so home/move_to/get_position_deg
+    must be forwarded — regression guard for the missing pass-throughs."""
+    adapter = _make_adapter()
+    adapter.home()
+    adapter.move_to(45.0)
+    assert adapter.get_position_deg() == 45.0
