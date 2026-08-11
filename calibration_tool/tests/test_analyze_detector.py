@@ -30,7 +30,13 @@ def test_load_points_round_trips_saved_profile(tmp_path):
     gains_points = _load_points(path)
 
     assert set(gains_points) == {"1"}
-    assert gains_points["1"] == [[0.1, 0.25], [0.2, 0.5], [0.3, 0.75], [0.4, 1.0], [0.5, 1.25]]
+    assert gains_points["1"] == [
+        [0.1, 0.25],
+        [0.2, 0.5],
+        [0.3, 0.75],
+        [0.4, 1.0],
+        [0.5, 1.25],
+    ]
 
 
 def test_analyze_gain_recovers_known_slope_and_perfect_fit(tmp_path):

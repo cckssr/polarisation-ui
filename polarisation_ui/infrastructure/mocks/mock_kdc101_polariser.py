@@ -40,6 +40,14 @@ class MockKDC101Polariser:
         self._require_connected()
         return self._position_deg
 
+    def get_position_deg_nowait(self) -> float:
+        """Mirror KDC101Polariser.get_position_deg_nowait().
+
+        The mock has no lock contention to simulate, so it always succeeds
+        like get_position_deg().
+        """
+        return self.get_position_deg()
+
     def enable(self, state: bool) -> None:
         """No-op — the mock has no motor-enable state to simulate."""
         self._require_connected()

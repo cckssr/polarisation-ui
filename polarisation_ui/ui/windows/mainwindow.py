@@ -80,6 +80,10 @@ CONFIG = import_config()
 _ADC_SAT_LOW = 0.02  # V — near GND
 _ADC_SAT_HIGH = 2.0  # V — near rail
 
+# Consecutive failed KDC101 position reads (at 250 ms/poll, ~1s) before the
+# device is treated as unplugged rather than a transient comm glitch.
+_KDC_DISCONNECT_THRESHOLD = 4
+
 
 class MainWindow(QMainWindow):
     """Main window of the Goniometer Polarisation UI.
@@ -139,6 +143,7 @@ class MainWindow(QMainWindow):
         # KDC101 rotation stage
         self._kdc = KDC101Polariser()
         self._kdc_home_worker: KDC101HomeWorker | None = None
+        self._kdc_read_failures: int = 0
         # 250 ms timer that polls get_position_deg() while the KDC is connected
         self._kdc_position_timer = QTimer(self)
         self._kdc_position_timer.setInterval(250)
@@ -735,8 +740,19 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _disconnect_kdc(self) -> None:
-        """Disconnect from the currently connected KDC101 device."""
+        """Disconnect from the currently connected KDC101 device (user-initiated)."""
+        self._teardown_kdc_connection()
+        self.statusbar_manager.show_info("KDC101 getrennt")
+
+    def _teardown_kdc_connection(self) -> None:
+        """Reset KDC101 connection/UI state to disconnected.
+
+        Shared by the user-initiated Trennen button and by
+        ``_handle_kdc_connection_lost`` (auto-detected unplug) so both paths
+        leave the UI in the exact same state.
+        """
         self._kdc_position_timer.stop()
+        self._kdc_read_failures = 0
         self._kdc.disconnect()
         ModuleRegistry.unregister("kdc101")
         self._refresh_tab_visibility()
@@ -751,7 +767,20 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
         self.ui.btnKDCHome.setEnabled(False)
         self.ui.lblKDCPositionValue.setText("—")
-        self.statusbar_manager.show_info("KDC101 getrennt")
+
+    def _handle_kdc_connection_lost(self) -> None:
+        """Tear down the KDC101 connection after repeated position-read failures.
+
+        The 250 ms position poll is the only thing that notices a physical
+        unplug (pylablib raises no unsolicited "device gone" event), so after
+        ``_KDC_DISCONNECT_THRESHOLD`` consecutive failed reads we treat the
+        stage as disconnected and reset the UI exactly like the Trennen button.
+        """
+        Debug.warning(
+            "KDC101: connection lost after repeated read failures — treating as disconnected"
+        )
+        self._teardown_kdc_connection()
+        self.statusbar_manager.show_error("KDC101 Verbindung verloren — Gerät getrennt?")
 
     @Slot()
     def _home_kdc(self) -> None:
@@ -780,12 +809,24 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _refresh_kdc_position(self) -> None:
-        """Poll current KDC101 position and update the live display label."""
+        """Poll current KDC101 position and update the live display label.
+
+        Uses the non-blocking read so this never stalls the GUI thread while a
+        sweep/home worker is mid-move on another thread; ``None`` means the
+        stage was busy servicing that other call, not a failure. Repeated real
+        failures (``KDC101Error``) are treated as the device having been
+        unplugged — see ``_handle_kdc_connection_lost``.
+        """
         try:
-            pos = self._kdc.get_position_deg()
-            self.ui.lblKDCPositionValue.setText(f"{fmt_angle(pos)}°")
+            pos = self._kdc.get_position_deg_nowait()
         except KDC101Error:
-            pass  # transient read error — label stays at last known value
+            self._kdc_read_failures += 1
+            if self._kdc_read_failures >= _KDC_DISCONNECT_THRESHOLD:
+                self._handle_kdc_connection_lost()
+            return
+        self._kdc_read_failures = 0
+        if pos is not None:
+            self.ui.lblKDCPositionValue.setText(f"{fmt_angle(pos)}°")
 
     # ==================== Acquisition Settings ====================
 

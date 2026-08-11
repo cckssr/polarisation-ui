@@ -54,6 +54,7 @@ class TestConnect:
 
         fake_thorlabs.KinesisMotor.assert_called_once_with("27266999", scale=kdc_mod._PRM1_Z8_SCALE)
         mock_motor.open.assert_called_once()
+        mock_motor.flush_comm.assert_called_once()
         assert kdc.is_connected() is True
 
     def test_connect_raises_kdc101error_when_pylablib_unavailable(self, monkeypatch):
@@ -125,23 +126,40 @@ class TestHome:
 
 
 class TestMoveTo:
-    def test_move_to_calls_motor_move_and_wait(self, connected):
-        kdc, mock_motor = connected
-        kdc.move_to(45.0, wait=True, timeout=10.0)
-        mock_motor.move_to.assert_called_once_with(45.0)
-        mock_motor.wait_move.assert_called_once_with(timeout=10.0)
+    """move_to() no longer calls wait_move()/is_moving() — pylablib's APT status
+    queries race with the KDC101's unsolicited background frames and
+    intermittently fail (see calibration_tool/devices/kdc101_stage.py).
+    Completion is detected by polling get_position() until it stabilises, so
+    these tests drive that polling loop via mock_motor.get_position instead.
+    """
 
-    def test_move_to_without_wait_skips_wait_move(self, connected):
+    @pytest.fixture(autouse=True)
+    def _no_real_sleep(self, monkeypatch):
+        """Skip real waits between polls; the wall-clock deadline check in
+        _wait_until_stopped() still applies so timeout tests stay accurate."""
+        monkeypatch.setattr(kdc_mod.time, "sleep", lambda _seconds: None)
+
+    def test_move_to_calls_motor_move_and_waits_for_stable_position(self, connected):
+        kdc, mock_motor = connected
+        mock_motor.get_position.return_value = 45.0
+        kdc.move_to(45.0, wait=True, timeout=5.0)
+        mock_motor.move_to.assert_called_once_with(45.0)
+        mock_motor.wait_move.assert_not_called()
+        mock_motor.get_position.assert_called()
+
+    def test_move_to_without_wait_skips_position_polling(self, connected):
         kdc, mock_motor = connected
         kdc.move_to(45.0, wait=False)
         mock_motor.move_to.assert_called_once_with(45.0)
-        mock_motor.wait_move.assert_not_called()
+        mock_motor.get_position.assert_not_called()
 
-    def test_move_to_wraps_timeout_error(self, connected):
+    def test_move_to_times_out_when_position_never_stabilises(self, connected):
         kdc, mock_motor = connected
-        mock_motor.wait_move.side_effect = _FakeThorlabsTimeoutError("stuck")
+        # Position keeps changing every read, so it never stabilises.
+        counter = iter(range(10_000))
+        mock_motor.get_position.side_effect = lambda: next(counter)
         with pytest.raises(KDC101TimeoutError):
-            kdc.move_to(45.0)
+            kdc.move_to(45.0, timeout=0.05)
 
     def test_move_to_wraps_thorlabs_error(self, connected):
         kdc, mock_motor = connected
@@ -171,6 +189,32 @@ class TestGetPositionDeg:
         kdc = kdc_mod.KDC101Polariser()
         with pytest.raises(KDC101Error):
             kdc.get_position_deg()
+
+
+class TestGetPositionDegNowait:
+    def test_returns_float_position_when_idle(self, connected):
+        kdc, mock_motor = connected
+        mock_motor.get_position.return_value = 12.5
+        assert kdc.get_position_deg_nowait() == 12.5
+
+    def test_returns_none_when_lock_held_by_another_call(self, connected):
+        kdc, _mock_motor = connected
+        assert kdc._lock.acquire(blocking=False)  # simulate a worker thread mid-call
+        try:
+            assert kdc.get_position_deg_nowait() is None
+        finally:
+            kdc._lock.release()
+
+    def test_wraps_thorlabs_error(self, connected):
+        kdc, mock_motor = connected
+        mock_motor.get_position.side_effect = _FakeThorlabsError("comm error")
+        with pytest.raises(KDC101Error):
+            kdc.get_position_deg_nowait()
+
+    def test_raises_when_not_connected(self, fake_thorlabs):
+        kdc = kdc_mod.KDC101Polariser()
+        with pytest.raises(KDC101Error):
+            kdc.get_position_deg_nowait()
 
 
 class TestEnable:

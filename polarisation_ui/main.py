@@ -6,8 +6,9 @@ Entry point for the application. Sets up the Qt application,
 initializes logging, and launches the main window.
 
 Flags:
-  --debug-only   Skip the main window and open only the encoder debug dialog.
-                 Useful for hardware diagnostics without the full measurement UI.
+    --debug-only    Skip the main window and open only the encoder debug dialog.
+                    Useful for hardware diagnostics without the full measurement UI.
+    --power-cal     Launch the automatic power calibration window as a standalone
 """
 
 import argparse
@@ -67,7 +68,6 @@ def main():
     qt_argv = [sys.argv[0]] + qt_argv
 
     # Enable fractional DPI scaling so Windows at 125 %/150 % renders correctly.
-    # Must be called before QApplication is constructed.
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
@@ -75,6 +75,7 @@ def main():
     # Load configuration
     config = import_config()
     init_from_config(config)
+    version = config.get("application", {}).get("version", "unknown")
 
     # Initialize debug system
     debug_level_map = {
@@ -83,7 +84,6 @@ def main():
         "error": Debug.DEBUG_ERROR,
         "off": Debug.DEBUG_OFF,
     }
-
     debug_level_str = config.get("debug", {}).get("level_default", "info")
     debug_level = debug_level_map.get(debug_level_str, Debug.DEBUG_INFO)
 
@@ -93,7 +93,7 @@ def main():
     # Register global exception handler
     sys.excepthook = Debug.exception_hook
 
-    Debug.info("Starting application...")
+    Debug.info(f"Starting application version {version} with debug level {debug_level_str}...")
 
     # Create QApplication
     app = QApplication(qt_argv)

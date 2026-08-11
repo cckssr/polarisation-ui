@@ -1,4 +1,4 @@
-"""Logging and debugging utility module for the applications.
+"""Logging and debugging utility module for applications.
 
 This module provides a centralized Debug class that handles logging to both console
 and file outputs with configurable debug levels. It supports systematic logging of
