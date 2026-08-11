@@ -67,10 +67,10 @@ class Ui_WaveplateTab(object):
     def setupUi(self, WaveplateTab):
         if not WaveplateTab.objectName():
             WaveplateTab.setObjectName("WaveplateTab")
-        WaveplateTab.resize(869, 896)
+        WaveplateTab.resize(1054, 626)
         self.gridLayout = QGridLayout(WaveplateTab)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setContentsMargins(0, 10, 0, 0)
         self.pointsTable = QTableWidget(WaveplateTab)
         if self.pointsTable.columnCount() < 2:
             self.pointsTable.setColumnCount(2)

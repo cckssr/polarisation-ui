@@ -2,12 +2,14 @@
     "files": [
         "../mainwindow.ui",
         "../acq_settings.ui",
-        "../auto_power_calibration.ui",
-        "../connection_banner.ui",
         "../encoder_debug.ui",
         "../log_window.ui",
-        "../brewster_tab.ui",
+        "../auto_power_calibration.ui",
+        "../event_log_panel.ui",
         "../malus_tab.ui",
+        "../brewster_tab.ui",
+        "../waveplate_tab.ui",
+        "../power_drift_tab.ui",
         "../mock_mainwindow.py"
     ]
 }

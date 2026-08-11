@@ -10,12 +10,12 @@
     <height>839</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="rootLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
    <property name="leftMargin">
     <number>0</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>10</number>
    </property>
    <property name="rightMargin">
     <number>0</number>
@@ -24,300 +24,303 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QSplitter" name="splitter">
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
+    <widget class="QWidget" name="plotsContainer" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>50</width>
+       <height>0</height>
+      </size>
      </property>
-     <widget class="QWidget" name="plotsContainer" native="true">
-      <layout class="QVBoxLayout" name="plotsLayout" stretch="3,2">
-       <property name="spacing">
-        <number>4</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="PowerDriftIntensityPlot" name="intensityPlot" native="true"/>
-       </item>
-       <item>
-        <widget class="PowerDriftAnglesPlot" name="anglesPlot" native="true"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="controlsPanel" native="true">
-      <layout class="QVBoxLayout" name="controlsLayout">
-       <property name="spacing">
-        <number>8</number>
-       </property>
-       <property name="leftMargin">
-        <number>4</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QGroupBox" name="gbRuntime">
-         <property name="title">
-          <string>Laufzeit</string>
+     <layout class="QVBoxLayout" name="plotsLayout" stretch="3,2">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="PowerDriftIntensityPlot" name="intensityPlot" native="true"/>
+      </item>
+      <item>
+       <widget class="PowerDriftAnglesPlot" name="anglesPlot" native="true"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="controlsPanel" native="true">
+     <layout class="QVBoxLayout" name="controlsLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QGroupBox" name="gbRuntime">
+        <property name="title">
+         <string>Laufzeit</string>
+        </property>
+        <layout class="QVBoxLayout" name="runtimeLayout">
+         <property name="leftMargin">
+          <number>6</number>
          </property>
-         <layout class="QVBoxLayout" name="runtimeLayout">
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>6</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="lblElapsed">
-            <property name="styleSheet">
-             <string notr="true">font-size: 22px; font-weight: bold;</string>
-            </property>
-            <property name="text">
-             <string>00:00:00</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QProgressBar" name="progressBar">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>8</height>
-             </size>
-            </property>
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>3600</number>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-            <property name="textVisible">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="lblScale">
-            <property name="styleSheet">
-             <string notr="true">font-size: 9px; color: #888;</string>
-            </property>
-            <property name="text">
-             <string>0 min                        60 min</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="gbIntensity">
-         <property name="title">
-          <string>Intensität</string>
+         <property name="topMargin">
+          <number>6</number>
          </property>
-         <layout class="QFormLayout" name="intensityForm">
-          <property name="verticalSpacing">
-           <number>2</number>
-          </property>
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblICurrentLabel">
-            <property name="text">
-             <string>Aktuell:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="lblICurrent">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblIMeanLabel">
-            <property name="text">
-             <string>Mittel:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="lblIMean">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="lblIMinLabel">
-            <property name="text">
-             <string>Min:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLabel" name="lblIMin">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="lblIMaxLabel">
-            <property name="text">
-             <string>Max:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="lblIMax">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="gbAngleStability">
-         <property name="title">
-          <string>Winkelstabilität</string>
+         <property name="rightMargin">
+          <number>6</number>
          </property>
-         <layout class="QFormLayout" name="angleForm">
-          <property name="verticalSpacing">
-           <number>2</number>
-          </property>
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblDeltaSampleLabel">
-            <property name="text">
-             <string>ΔθS:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="lblDeltaSample">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblDeltaDetectorLabel">
-            <property name="text">
-             <string>ΔθD:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="lblDeltaDetector">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="lblHint">
-         <property name="styleSheet">
-          <string notr="true">color: #555; font-size: 10px;</string>
+         <property name="bottomMargin">
+          <number>6</number>
          </property>
-         <property name="text">
-          <string>&lt;i&gt;Laser mindestens&lt;br&gt;&lt;b&gt;30 Minuten&lt;/b&gt; vor der&lt;br&gt;Messung einschalten,&lt;br&gt;damit er thermisch&lt;br&gt;stabil wird.&lt;/i&gt;</string>
+         <item>
+          <widget class="QLabel" name="lblElapsed">
+           <property name="styleSheet">
+            <string notr="true">font-size: 22px; font-weight: bold;</string>
+           </property>
+           <property name="text">
+            <string>00:00:00</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QProgressBar" name="progressBar">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>8</height>
+            </size>
+           </property>
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>3600</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="textVisible">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblScale">
+           <property name="styleSheet">
+            <string notr="true">font-size: 9px; color: #888;</string>
+           </property>
+           <property name="text">
+            <string>0 min                        60 min</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbIntensity">
+        <property name="title">
+         <string>Intensität</string>
+        </property>
+        <layout class="QFormLayout" name="intensityForm">
+         <property name="verticalSpacing">
+          <number>2</number>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignmentFlag::AlignCenter</set>
+         <property name="leftMargin">
+          <number>6</number>
          </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+         <property name="topMargin">
+          <number>4</number>
          </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+         <property name="rightMargin">
+          <number>6</number>
          </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Policy::Expanding</enum>
+         <property name="bottomMargin">
+          <number>6</number>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>10</height>
-          </size>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblICurrentLabel">
+           <property name="text">
+            <string>Aktuell:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="lblICurrent">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblIMeanLabel">
+           <property name="text">
+            <string>Mittel:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="lblIMean">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblIMinLabel">
+           <property name="text">
+            <string>Min:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="lblIMin">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblIMaxLabel">
+           <property name="text">
+            <string>Max:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="lblIMax">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gbAngleStability">
+        <property name="title">
+         <string>Winkelstabilität</string>
+        </property>
+        <layout class="QFormLayout" name="angleForm">
+         <property name="verticalSpacing">
+          <number>2</number>
          </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnClear">
-         <property name="enabled">
-          <bool>false</bool>
+         <property name="leftMargin">
+          <number>6</number>
          </property>
-         <property name="toolTip">
-          <string>Alle gesammelten Drift-Daten löschen und die Zeitmessung neu starten</string>
+         <property name="topMargin">
+          <number>4</number>
          </property>
-         <property name="text">
-          <string>Drift-Daten löschen</string>
+         <property name="rightMargin">
+          <number>6</number>
          </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
+         <property name="bottomMargin">
+          <number>6</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblDeltaSampleLabel">
+           <property name="text">
+            <string>ΔθS:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="lblDeltaSample">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblDeltaDetectorLabel">
+           <property name="text">
+            <string>ΔθD:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="lblDeltaDetector">
+           <property name="text">
+            <string>—</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblHint">
+        <property name="styleSheet">
+         <string notr="true">color: #555; font-size: 10px;</string>
+        </property>
+        <property name="text">
+         <string>&lt;i&gt;Laser mindestens&lt;br&gt;&lt;b&gt;30 Minuten&lt;/b&gt; vor der&lt;br&gt;Messung einschalten,&lt;br&gt;damit er thermisch&lt;br&gt;stabil wird.&lt;/i&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Policy::Expanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>10</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnClear">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Alle gesammelten Drift-Daten löschen und die Zeitmessung neu starten</string>
+        </property>
+        <property name="text">
+         <string>Drift-Daten löschen</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

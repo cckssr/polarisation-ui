@@ -48,8 +48,6 @@ class PowerDriftTab(PlotTabBase):
         """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_PowerDriftTab()
         self._ui.setupUi(self)
-        self._ui.splitter.setStretchFactor(0, 5)
-        self._ui.splitter.setStretchFactor(1, 1)
         self._ui.btnClear.clicked.connect(self._clear_data)
 
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────

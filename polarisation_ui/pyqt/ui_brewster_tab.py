@@ -71,7 +71,7 @@ class Ui_BrewsterTab(object):
         BrewsterTab.resize(959, 839)
         self.gridLayout = QGridLayout(BrewsterTab)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setContentsMargins(0, 10, 0, 0)
         self.detectorPlot = BrewsterDetectorPlot(BrewsterTab)
         self.detectorPlot.setObjectName("detectorPlot")
 

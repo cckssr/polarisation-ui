@@ -63,9 +63,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from polarisation_ui.ui.widgets.multi_gain_calibration_plot import (
-    MultiGainCalibrationPlot,
-)
+from polarisation_ui.ui.widgets.multi_gain_calibration_plot import MultiGainCalibrationPlot
 
 
 class Ui_AutoPowerCalibrationDialog(object):
@@ -705,9 +703,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         self.gbPM400.setTitle(
             QCoreApplication.translate(
-                "AutoPowerCalibrationDialog",
-                "PM400 Leistungsmessger\u00e4t (S120C)",
-                None,
+                "AutoPowerCalibrationDialog", "PM400 Leistungsmessger\u00e4t (S120C)", None
             )
         )
         self.lblPMResource.setText(

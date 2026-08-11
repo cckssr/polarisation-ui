@@ -241,7 +241,10 @@ class Debug:
 
     @classmethod
     def exception_hook(
-        cls, exc_type: type, exc_value: BaseException, exc_traceback: TracebackType | None
+        cls,
+        exc_type: type,
+        exc_value: BaseException,
+        exc_traceback: TracebackType | None,
     ) -> None:
         """Callback function for unhandled exceptions.
 

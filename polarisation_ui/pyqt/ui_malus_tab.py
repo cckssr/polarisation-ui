@@ -68,7 +68,7 @@ class Ui_MalusTab(object):
         MalusTab.resize(963, 896)
         self.gridLayout = QGridLayout(MalusTab)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setContentsMargins(0, 10, 0, 0)
         self.pointsTable = QTableWidget(MalusTab)
         if self.pointsTable.columnCount() < 5:
             self.pointsTable.setColumnCount(5)
@@ -325,9 +325,7 @@ class Ui_MalusTab(object):
         # if QT_CONFIG(tooltip)
         self.spinPolariser.setToolTip(
             QCoreApplication.translate(
-                "MalusTab",
-                "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)",
-                None,
+                "MalusTab", "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)", None
             )
         )
         # endif // QT_CONFIG(tooltip)

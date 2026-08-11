@@ -44,12 +44,12 @@ from PySide6.QtWidgets import (
     QApplication,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QProgressBar,
     QPushButton,
     QSizePolicy,
     QSpacerItem,
-    QSplitter,
     QVBoxLayout,
     QWidget,
 )
@@ -65,14 +65,12 @@ class Ui_PowerDriftTab(object):
         if not PowerDriftTab.objectName():
             PowerDriftTab.setObjectName("PowerDriftTab")
         PowerDriftTab.resize(959, 839)
-        self.rootLayout = QVBoxLayout(PowerDriftTab)
-        self.rootLayout.setObjectName("rootLayout")
-        self.rootLayout.setContentsMargins(0, 0, 0, 0)
-        self.splitter = QSplitter(PowerDriftTab)
-        self.splitter.setObjectName("splitter")
-        self.splitter.setOrientation(Qt.Orientation.Horizontal)
-        self.plotsContainer = QWidget(self.splitter)
+        self.horizontalLayout = QHBoxLayout(PowerDriftTab)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 10, 0, 0)
+        self.plotsContainer = QWidget(PowerDriftTab)
         self.plotsContainer.setObjectName("plotsContainer")
+        self.plotsContainer.setMinimumSize(QSize(50, 0))
         self.plotsLayout = QVBoxLayout(self.plotsContainer)
         self.plotsLayout.setSpacing(4)
         self.plotsLayout.setObjectName("plotsLayout")
@@ -89,8 +87,10 @@ class Ui_PowerDriftTab(object):
 
         self.plotsLayout.setStretch(0, 3)
         self.plotsLayout.setStretch(1, 2)
-        self.splitter.addWidget(self.plotsContainer)
-        self.controlsPanel = QWidget(self.splitter)
+
+        self.horizontalLayout.addWidget(self.plotsContainer)
+
+        self.controlsPanel = QWidget(PowerDriftTab)
         self.controlsPanel.setObjectName("controlsPanel")
         self.controlsLayout = QVBoxLayout(self.controlsPanel)
         self.controlsLayout.setSpacing(8)
@@ -223,9 +223,9 @@ class Ui_PowerDriftTab(object):
 
         self.controlsLayout.addWidget(self.btnClear)
 
-        self.splitter.addWidget(self.controlsPanel)
+        self.horizontalLayout.addWidget(self.controlsPanel)
 
-        self.rootLayout.addWidget(self.splitter)
+        self.horizontalLayout.setStretch(0, 1)
 
         self.retranslateUi(PowerDriftTab)
 

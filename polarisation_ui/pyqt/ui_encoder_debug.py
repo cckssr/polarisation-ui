@@ -602,8 +602,7 @@ class Ui_EncoderDebugDialog(object):
             0, QCoreApplication.translate("EncoderDebugDialog", "A \u2013 Sample", None)
         )
         self.cbEncoderSelect.setItemText(
-            1,
-            QCoreApplication.translate("EncoderDebugDialog", "B \u2013 Detektor", None),
+            1, QCoreApplication.translate("EncoderDebugDialog", "B \u2013 Detektor", None)
         )
         self.cbEncoderSelect.setItemText(
             2, QCoreApplication.translate("EncoderDebugDialog", "Beide", None)
@@ -633,9 +632,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.btnZeroEncoder.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "Aktuelle Position als Nullpunkt setzen (CONF:ZERO)",
-                None,
+                "EncoderDebugDialog", "Aktuelle Position als Nullpunkt setzen (CONF:ZERO)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -645,9 +642,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.btnClearErrorFlag.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "Hardware Error-Flag l\u00f6schen (CONF:ERR)",
-                None,
+                "EncoderDebugDialog", "Hardware Error-Flag l\u00f6schen (CONF:ERR)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -719,9 +714,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.ledCompLA.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "COMP_L: Magnetfeld zu stark (compLow=1 \u2192 Problem)",
-                None,
+                "EncoderDebugDialog", "COMP_L: Magnetfeld zu stark (compLow=1 \u2192 Problem)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -841,9 +834,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.ledErrorB.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "Hardware Error Flag (mit CONF:ERR B l\u00f6schbar)",
-                None,
+                "EncoderDebugDialog", "Hardware Error Flag (mit CONF:ERR B l\u00f6schbar)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -907,9 +898,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.cbDebugMode.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "Arduino Debug-Ausgabe aktiv (SYST:DEB ON/OFF)",
-                None,
+                "EncoderDebugDialog", "Arduino Debug-Ausgabe aktiv (SYST:DEB ON/OFF)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -930,9 +919,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.btnReadScpiErrors.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "Alle Eintr\u00e4ge aus der SCPI Fehler-Queue lesen",
-                None,
+                "EncoderDebugDialog", "Alle Eintr\u00e4ge aus der SCPI Fehler-Queue lesen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -964,9 +951,7 @@ class Ui_EncoderDebugDialog(object):
         # if QT_CONFIG(tooltip)
         self.leCommandInput.setToolTip(
             QCoreApplication.translate(
-                "EncoderDebugDialog",
-                "SCPI-Befehl eingeben, z.B.  MEAS:ANGL? A  oder  *IDN?",
-                None,
+                "EncoderDebugDialog", "SCPI-Befehl eingeben, z.B.  MEAS:ANGL? A  oder  *IDN?", None
             )
         )
         # endif // QT_CONFIG(tooltip)
