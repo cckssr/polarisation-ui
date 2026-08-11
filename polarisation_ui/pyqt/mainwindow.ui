@@ -636,7 +636,7 @@
        <attribute name="title">
         <string>Konfiguration</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout">
+       <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1">
         <property name="spacing">
          <number>20</number>
         </property>
@@ -716,7 +716,7 @@
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>500</width>
+                 <width>800</width>
                  <height>16777215</height>
                 </size>
                </property>
@@ -846,23 +846,13 @@
           </layout>
          </widget>
         </item>
-        <item row="6" column="0" colspan="2">
-         <spacer name="verticalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
+        <item row="3" column="0">
+         <widget class="QGroupBox" name="gbSampleStage">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="1">
-         <widget class="QGroupBox" name="gbKDCConnection">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -874,7 +864,7 @@
            </size>
           </property>
           <property name="title">
-           <string>KDC-Verbindung</string>
+           <string>Proben-Rotationsstage</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -882,7 +872,7 @@
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QFormLayout" name="formKDCConnection">
+          <layout class="QFormLayout" name="formSampleStage">
            <property name="sizeConstraint">
             <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
            </property>
@@ -905,6 +895,301 @@
             <number>5</number>
            </property>
            <item row="0" column="0">
+            <widget class="QLabel" name="lblSampleStatus">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Status</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <layout class="QHBoxLayout" name="hlSampleStatus">
+             <item>
+              <widget class="QLabel" name="lblSampleStatusValue">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="ledSampleStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="lblSampleAngle">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Rotationswinkel (°)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLCDNumber" name="lcdSampleAngle_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="lineWidth">
+              <number>2</number>
+             </property>
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+             <property name="segmentStyle">
+              <enum>QLCDNumber::SegmentStyle::Filled</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="cbSampleAverageOn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Mittelung aktivieren</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0">
+             <property name="spacing">
+              <number>-1</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblSampleAverages">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Anzahl Mittelwerte</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spbSampleAverages">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+               </property>
+               <property name="minimum">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QPushButton" name="btnSampleZero">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Aktuellen Winkel als Nullpunkt (0°) setzen (Encoder A)</string>
+             </property>
+             <property name="text">
+              <string>Nullpunkt-Kalibrierung</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="2">
+         <widget class="QGroupBox" name="gbKDCConnection">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>KDC-Verbindung</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6" columnstretch="1,1,1,1">
+           <property name="sizeConstraint">
+            <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <property name="spacing">
+            <number>15</number>
+           </property>
+           <item row="2" column="2">
+            <widget class="QLabel" name="lblKDCOffsetLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Offset</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="lblKDCPositionValue">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Aktuelle mechanische Position des KDC101 (roher Stage-Winkel, ohne Offset)</string>
+             </property>
+             <property name="text">
+              <string>—</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="lblKDCStatusLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Status</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
             <widget class="QLabel" name="lblKDCDeviceLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -920,7 +1205,23 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
+           <item row="2" column="0">
+            <widget class="QLabel" name="lblKDCPositionLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Position</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" colspan="3">
             <layout class="QHBoxLayout" name="hlKDCDevice">
              <property name="bottomMargin">
               <number>0</number>
@@ -935,7 +1236,7 @@
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>500</width>
+                 <width>800</width>
                  <height>16777215</height>
                 </size>
                </property>
@@ -965,23 +1266,116 @@
              </item>
             </layout>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="lblKDCStatusLabel">
+           <item row="3" column="0" colspan="4">
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="btnKDCConnect">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>KDC101 Polarisationsrotator verbinden oder trennen</string>
+               </property>
+               <property name="text">
+                <string>Verbinden</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnKDCHome">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>KDC101 auf Nullposition fahren (Home)</string>
+               </property>
+               <property name="text">
+                <string>Home</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="line_4">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnKDCZero">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Extinktionswinkel des eingesetzten Polarisators (linear, λ/4 oder λ/2) suchen: Grobsuche bei PDTIA-Gain 1, Feinsuche bei Gain 3. Das Ergebnis wird als Offset gespeichert und von Malus- und Verzögerungsplatten-Scans automatisch verwendet.</string>
+               </property>
+               <property name="text">
+                <string>Polarisator Nullen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnKDCOffsetReset">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Gespeicherten Nullpunkt-Offset auf 0° zurücksetzen</string>
+               </property>
+               <property name="text">
+                <string>Offset zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLabel" name="lblKDCOffsetValue">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Aktueller Nullpunkt-Offset, gesetzt durch "Polarisator Nullen". Wird von Malus- und Verzögerungsplatten-Scans als Referenzwinkel verwendet.</string>
+             </property>
              <property name="text">
-              <string>Status</string>
+              <string>—</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
+           <item row="1" column="1" colspan="3">
             <layout class="QHBoxLayout" name="hlKDCStatus">
              <item>
               <widget class="QLabel" name="lblKDCStatusValue">
@@ -1040,582 +1434,10 @@
              </item>
             </layout>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="lblKDCPositionLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Position</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLabel" name="lblKDCPositionValue">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>—</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0" colspan="2">
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="btnKDCConnect">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>KDC101 Polarisationsrotator verbinden oder trennen</string>
-               </property>
-               <property name="text">
-                <string>Verbinden</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btnKDCHome">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>KDC101 auf Nullposition fahren (Home)</string>
-               </property>
-               <property name="text">
-                <string>Home</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
           </layout>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QGroupBox" name="gbDetectorStage">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>Detektor-Rotationsstage</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-          <layout class="QFormLayout" name="formDetectorStage">
-           <property name="sizeConstraint">
-            <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
-           </property>
-           <property name="fieldGrowthPolicy">
-            <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
-           </property>
-           <property name="labelAlignment">
-            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-           </property>
-           <property name="horizontalSpacing">
-            <number>15</number>
-           </property>
-           <property name="verticalSpacing">
-            <number>15</number>
-           </property>
-           <property name="topMargin">
-            <number>5</number>
-           </property>
-           <property name="bottomMargin">
-            <number>5</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblDetectorStageStatus">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Status</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <layout class="QHBoxLayout" name="hlDetectorStageStatus">
-             <item>
-              <widget class="QLabel" name="lblDetectorStageStatusValue">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>13</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="ledDetectorStageStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>16</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="lblDetectorStageAngle">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Rotationswinkel (°)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLCDNumber" name="lcdDetectorStageAngle_2">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>30</height>
-              </size>
-             </property>
-             <property name="lineWidth">
-              <number>2</number>
-             </property>
-             <property name="digitCount">
-              <number>6</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::SegmentStyle::Filled</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,1">
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QCheckBox" name="cbDetectorAverageOn">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Detektor-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Mittelung aktivieren</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Policy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>10</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="lblDetectorAverages">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Anzahl Mittelwerte</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="spbDetectorAverages">
-               <property name="toolTip">
-                <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
-               </property>
-               <property name="minimum">
-                <number>2</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>5</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="3" column="0">
-            <widget class="QPushButton" name="btnDetectorStageZero">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Aktuellen Winkel als Nullpunkt (0°) setzen (Encoder B)</string>
-             </property>
-             <property name="text">
-              <string>Nullpunkt-Kalibrierung</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QPushButton" name="btnDetectorStage180">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktuellen Winkel als halbe Rotation (180°) setzen (Encoder B)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>180°-Kalibrierung</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="7" column="0" colspan="2">
-         <widget class="QGroupBox" name="gbSave">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>Speicherung</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-          <property name="flat">
-           <bool>false</bool>
-          </property>
-          <property name="checkable">
-           <bool>false</bool>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <property name="spacing">
-            <number>15</number>
-           </property>
-           <property name="sizeConstraint">
-            <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
-           </property>
-           <item>
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>Bitte vor Beginn der Messungen Gruppe auswählen und ggf. individuelle Team Bezeichnung hinzufügen</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="gridLayout_3" columnminimumwidth="0,1,0,1">
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item row="0" column="1">
-              <widget class="QComboBox" name="cbGroupLetter">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Auswahl der GP Praktikumsgruppe (Pflichtfeld)</string>
-               </property>
-               <property name="currentIndex">
-                <number>-1</number>
-               </property>
-               <property name="maxCount">
-                <number>24</number>
-               </property>
-               <property name="insertPolicy">
-                <enum>QComboBox::InsertPolicy::NoInsert</enum>
-               </property>
-               <item>
-                <property name="text">
-                 <string>A</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>B</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>C</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>D</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>E</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>F</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>G</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>H</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>I</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>J</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>K</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>L</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>M</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>N</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>O</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>P</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Q</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>R</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>S</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>T</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>U</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>V</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>W</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Z</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="lblTeamName">
-               <property name="toolTip">
-                <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
-               </property>
-               <property name="text">
-                <string>Team-Bezeichnung</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="lblGroupLetter">
-               <property name="text">
-                <string>Buchstabe*</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLineEdit" name="leTeamName">
-               <property name="toolTip">
-                <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
-               </property>
-               <property name="maxLength">
-                <number>20</number>
-               </property>
-               <property name="placeholderText">
-                <string>Bspw. TimStruppi</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="4" column="0" colspan="2">
+        <item row="5" column="0" colspan="3">
          <widget class="QGroupBox" name="gbDetector">
           <property name="enabled">
            <bool>false</bool>
@@ -2070,8 +1892,8 @@
           </layout>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QGroupBox" name="gbSampleStage">
+        <item row="3" column="1" colspan="2">
+         <widget class="QGroupBox" name="gbDetectorStage">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -2088,15 +1910,12 @@
            </size>
           </property>
           <property name="title">
-           <string>Proben-Rotationsstage</string>
+           <string>Detektor-Rotationsstage</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
-          <property name="checkable">
-           <bool>false</bool>
-          </property>
-          <layout class="QFormLayout" name="formSampleStage">
+          <layout class="QFormLayout" name="formDetectorStage">
            <property name="sizeConstraint">
             <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
            </property>
@@ -2119,9 +1938,9 @@
             <number>5</number>
            </property>
            <item row="0" column="0">
-            <widget class="QLabel" name="lblSampleStatus">
+            <widget class="QLabel" name="lblDetectorStageStatus">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2135,9 +1954,9 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <layout class="QHBoxLayout" name="hlSampleStatus">
+            <layout class="QHBoxLayout" name="hlDetectorStageStatus">
              <item>
-              <widget class="QLabel" name="lblSampleStatusValue">
+              <widget class="QLabel" name="lblDetectorStageStatusValue">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -2164,7 +1983,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="ledSampleStatus">
+              <widget class="QLabel" name="ledDetectorStageStatus">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -2194,7 +2013,7 @@
             </layout>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="lblSampleAngle">
+            <widget class="QLabel" name="lblDetectorStageAngle">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -2207,7 +2026,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLCDNumber" name="lcdSampleAngle_2">
+            <widget class="QLCDNumber" name="lcdDetectorStageAngle_2">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2231,11 +2050,24 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0" colspan="2">
-            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,0">
-             <property name="spacing">
-              <number>-1</number>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="cbDetectorAverageOn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Detektor-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Mittelung aktivieren</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1">
              <property name="rightMargin">
               <number>0</number>
              </property>
@@ -2243,33 +2075,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QCheckBox" name="cbSampleAverageOn">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Mittelung aktivieren</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Policy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>10</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="lblSampleAverages">
+              <widget class="QLabel" name="lblDetectorAverages">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -2282,7 +2088,13 @@
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="spbSampleAverages">
+              <widget class="QSpinBox" name="spbDetectorAverages">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="toolTip">
                 <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
                </property>
@@ -2299,8 +2111,8 @@
              </item>
             </layout>
            </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="QPushButton" name="btnSampleZero">
+           <item row="3" column="0">
+            <widget class="QPushButton" name="btnDetectorStageZero">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -2314,29 +2126,289 @@
               </size>
              </property>
              <property name="toolTip">
-              <string>Aktuellen Winkel als Nullpunkt (0°) setzen (Encoder A)</string>
+              <string>Aktuellen Winkel als Nullpunkt (0°) setzen (Encoder B)</string>
              </property>
              <property name="text">
               <string>Nullpunkt-Kalibrierung</string>
              </property>
             </widget>
            </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="btnDetectorStage180">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktuellen Winkel als halbe Rotation (180°) setzen (Encoder B)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>180°-Kalibrierung</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="0" colspan="2">
+        <item row="8" column="0" colspan="3">
+         <widget class="QGroupBox" name="gbSave">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Speicherung</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <property name="spacing">
+            <number>15</number>
+           </property>
+           <property name="sizeConstraint">
+            <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+           </property>
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Bitte vor Beginn der Messungen Gruppe auswählen und ggf. individuelle Team Bezeichnung hinzufügen</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_3" columnminimumwidth="0,1,0,1">
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="cbGroupLetter">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Auswahl der GP Praktikumsgruppe (Pflichtfeld)</string>
+               </property>
+               <property name="currentIndex">
+                <number>-1</number>
+               </property>
+               <property name="maxCount">
+                <number>24</number>
+               </property>
+               <property name="insertPolicy">
+                <enum>QComboBox::InsertPolicy::NoInsert</enum>
+               </property>
+               <item>
+                <property name="text">
+                 <string>A</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>B</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>C</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>D</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>E</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>F</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>G</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>H</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>I</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>J</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>K</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>L</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>M</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>N</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>O</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>P</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Q</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>R</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>S</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>T</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>U</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>V</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>W</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Z</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lblTeamName">
+               <property name="toolTip">
+                <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
+               </property>
+               <property name="text">
+                <string>Team-Bezeichnung</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblGroupLetter">
+               <property name="text">
+                <string>Buchstabe*</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLineEdit" name="leTeamName">
+               <property name="toolTip">
+                <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
+               </property>
+               <property name="maxLength">
+                <number>20</number>
+               </property>
+               <property name="placeholderText">
+                <string>Bspw. TimStruppi</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="0" colspan="3">
          <widget class="Line" name="line_2">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
          </widget>
         </item>
-        <item row="5" column="0" colspan="2">
+        <item row="6" column="0" colspan="3">
          <widget class="Line" name="line_3">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
          </widget>
+        </item>
+        <item row="7" column="0" colspan="3">
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>

@@ -72,12 +72,16 @@ class Ui_WaveplateTab(object):
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 10, 0, 0)
         self.pointsTable = QTableWidget(WaveplateTab)
-        if self.pointsTable.columnCount() < 2:
-            self.pointsTable.setColumnCount(2)
+        if self.pointsTable.columnCount() < 4:
+            self.pointsTable.setColumnCount(4)
         __qtablewidgetitem = QTableWidgetItem()
         self.pointsTable.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
         self.pointsTable.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.pointsTable.setHorizontalHeaderItem(2, __qtablewidgetitem2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        self.pointsTable.setHorizontalHeaderItem(3, __qtablewidgetitem3)
         self.pointsTable.setObjectName("pointsTable")
         self.pointsTable.setMinimumSize(QSize(0, 120))
         self.pointsTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -255,6 +259,12 @@ class Ui_WaveplateTab(object):
         )
         ___qtablewidgetitem1 = self.pointsTable.horizontalHeaderItem(1)
         ___qtablewidgetitem1.setText(QCoreApplication.translate("WaveplateTab", "I (V)", None))
+        ___qtablewidgetitem2 = self.pointsTable.horizontalHeaderItem(2)
+        ___qtablewidgetitem2.setText(
+            QCoreApplication.translate("WaveplateTab", "P (\u00b5W)", None)
+        )
+        ___qtablewidgetitem3 = self.pointsTable.horizontalHeaderItem(3)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("WaveplateTab", "Gain", None))
         self.gbLive.setTitle(QCoreApplication.translate("WaveplateTab", "Aktuell", None))
         self.lblLiveIntensityLabel.setText(QCoreApplication.translate("WaveplateTab", "I:", None))
         self.lblLiveIntensity.setText(QCoreApplication.translate("WaveplateTab", "\u2014", None))
@@ -272,6 +282,15 @@ class Ui_WaveplateTab(object):
         )
 
         # if QT_CONFIG(tooltip)
+        self.cmbWaveplateType.setToolTip(
+            QCoreApplication.translate(
+                "WaveplateTab",
+                "Typ der eingesetzten Verz\u00f6gerungsplatte \u2014 bestimmt nur den Export-Dateinamen und die Metadaten, nicht den Scanablauf",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.cbWaveplatePlaced.setToolTip(
             QCoreApplication.translate(
                 "WaveplateTab",
@@ -286,16 +305,45 @@ class Ui_WaveplateTab(object):
         self.lblSweepStart.setText(
             QCoreApplication.translate("WaveplateTab", "Von (\u00b0):", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.spinSweepStart.setToolTip(
+            QCoreApplication.translate(
+                "WaveplateTab",
+                "Startwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (\u00b0)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepStart.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
         self.lblSweepEnd.setText(QCoreApplication.translate("WaveplateTab", "Bis (\u00b0):", None))
+        # if QT_CONFIG(tooltip)
+        self.spinSweepEnd.setToolTip(
+            QCoreApplication.translate(
+                "WaveplateTab",
+                "Endwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (\u00b0)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepEnd.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
         self.lblSweepStep.setText(
             QCoreApplication.translate("WaveplateTab", "Schritt (\u00b0):", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.spinSweepStep.setToolTip(
+            QCoreApplication.translate(
+                "WaveplateTab", "Schrittweite des automatischen Scans (\u00b0)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
         self.spinSweepStep.setSuffix(QCoreApplication.translate("WaveplateTab", " \u00b0", None))
         # if QT_CONFIG(tooltip)
         self.btnStartSweep.setToolTip(
-            QCoreApplication.translate("WaveplateTab", "Home und automatischen Scan starten", None)
+            QCoreApplication.translate(
+                "WaveplateTab",
+                "Automatischen Verz\u00f6gerungsplatten-Scan starten (referenziert auf den Polarisator-Nullpunkt aus der Konfiguration; erneutes Homing nur falls n\u00f6tig)",
+                None,
+            )
         )
         # endif // QT_CONFIG(tooltip)
         self.btnStartSweep.setText(QCoreApplication.translate("WaveplateTab", "Scan starten", None))

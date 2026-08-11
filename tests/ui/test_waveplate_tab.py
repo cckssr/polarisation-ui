@@ -84,3 +84,27 @@ def test_inject_modules_with_empty_dict_clears_kdc(tab):
     tab.inject_modules({"kdc101": kdc})
     tab.inject_modules({})
     assert tab._kdc is None
+
+
+def test_sweep_point_carries_gain_and_power(tab):
+    frame = Frame(
+        ts_ms=1000,
+        sample_angle=0.0,
+        detector_angle=0.0,
+        intensity=0.5,
+        pdtia_gain=3,
+        conv_factor_W_per_V=2e-6,
+    )
+    tab._on_sweep_point(10.0, 10.0, 0.5, frame)
+    points = tab.get_saved_points()
+    assert len(points) == 1
+    assert points[0].pdtia_gain == 3
+    assert points[0].power_W == pytest.approx(0.5 * 2e-6)
+
+
+def test_sweep_point_without_frame_leaves_gain_and_power_unset(tab):
+    tab._on_sweep_point(10.0, 10.0, 0.5, None)
+    points = tab.get_saved_points()
+    assert len(points) == 1
+    assert points[0].pdtia_gain == 0
+    assert points[0].power_W is None

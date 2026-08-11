@@ -5,9 +5,11 @@ Requires the KDC101 rotation stage (required_modules = {"kdc101"}).
 Workflow:
   1. User selects waveplate type (λ/4 or λ/2) and checks the
      "Verzögerungsplatte eingesetzt" checkbox.
-  2. On "Scan starten": KDC101 homes (home position == zero for waveplates),
-     then sweeps from start to end in the configured step size.
-  3. Each step records averaged intensity vs. waveplate angle.
+  2. On "Scan starten": KDC101 re-homes only if it isn't already homed, then
+     sweeps from start to end (relative to the polariser zero offset found on
+     the Configuration tab) in the configured step size.
+  3. Each step records averaged intensity vs. waveplate angle, plus the
+     PDTIA gain and power active at that point.
   4. Export: filename contains "qwp" or "hwp"; metadata carries waveplate_type
      and sweep parameters.
 """
@@ -27,10 +29,11 @@ from polarisation_ui.core.formatting import (
     export_intensity,
     fmt_angle,
     fmt_intensity,
+    fmt_stat,
 )
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
 from polarisation_ui.core.utils import windowed_average_intensity
-from polarisation_ui.infrastructure.qt_threads import MalusSweepWorker
+from polarisation_ui.infrastructure.qt_threads import KDCSweepWorker
 from polarisation_ui.pyqt.ui_waveplate_tab import Ui_WaveplateTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 
@@ -63,7 +66,7 @@ class WaveplateTab(PlotTabBase):
         self._buffer_mutex = QMutex()
         self._is_measuring: bool = False
         self._kdc: KDC101Polariser | None = None
-        self._sweep_worker: MalusSweepWorker | None = None
+        self._sweep_worker: KDCSweepWorker | None = None
         self._kdc_pos_cache: float | None = None
         self._kdc_last_poll_ts: float = 0.0
 
@@ -254,13 +257,12 @@ class WaveplateTab(PlotTabBase):
     def _start_sweep(self) -> None:
         if self._kdc is None or not self._kdc.is_connected():
             return
-        self._sweep_worker = MalusSweepWorker(
+        self._sweep_worker = KDCSweepWorker(
             kdc=self._kdc,
             read_average=self._compute_average_safe,
             start_deg=self._ui.spinSweepStart.value(),
             end_deg=self._ui.spinSweepEnd.value(),
             step_deg=self._ui.spinSweepStep.value(),
-            mode="waveplate",  # skips auto-zero search; home == zero
             parent=self,
         )
         self._sweep_worker.point_scanned.connect(self._on_sweep_point)
@@ -277,12 +279,25 @@ class WaveplateTab(PlotTabBase):
         if self._sweep_worker is not None:
             self._sweep_worker.abort()
 
-    @Slot(float, float, float)
-    def _on_sweep_point(self, angle: float, _kdc_pos: float, intensity_V: float) -> None:
+    @Slot(float, float, float, object)
+    def _on_sweep_point(
+        self, angle: float, _kdc_pos: float, intensity_V: float, frame: Frame | None
+    ) -> None:
+        pdtia_gain = 0
+        power_W: float | None = None
+        conv_factor: float | None = None
+        if frame is not None:
+            pdtia_gain = frame.pdtia_gain
+            conv_factor = frame.conv_factor_W_per_V
+            if conv_factor is not None:
+                power_W = intensity_V * conv_factor
         self._ui.intensityCurvePlot.add_point(
             analyser_angle=angle,
             polariser_angle=0.0,
             intensity_V=intensity_V,
+            pdtia_gain=pdtia_gain,
+            power_W=power_W,
+            conv_factor_W_per_V=conv_factor,
         )
         self._refresh_table()
         self.points_changed.emit(len(self._ui.intensityCurvePlot.get_points()))
@@ -338,6 +353,13 @@ class WaveplateTab(PlotTabBase):
             # hardcoded outlier rather than silently changing visible precision.
             self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
             self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(export_intensity(pt.intensity_V)))
+            if pt.power_W is not None:
+                self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(fmt_stat(pt.power_W * 1e6)))
+            else:
+                self._ui.pointsTable.setItem(row, 2, QTableWidgetItem("—"))
+            self._ui.pointsTable.setItem(
+                row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
+            )
         self._on_table_selection_changed()
 
     @Slot()

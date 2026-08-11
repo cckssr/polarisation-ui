@@ -12,6 +12,9 @@ class MockKDC101Polariser:
         """Start disconnected at position 0°."""
         self._position_deg: float = 0.0
         self._connected: bool = False
+        self._zero_offset_deg: float = 0.0
+        self._homed: bool = False
+        self.stop_called: int = 0
 
     def connect(self, conn_id: str) -> None:
         """Mark the mock as connected (conn_id is accepted but ignored)."""
@@ -29,16 +32,38 @@ class MockKDC101Polariser:
         """Reset the simulated position to 0° instantly (wait/timeout are ignored)."""
         self._require_connected()
         self._position_deg = 0.0
+        self._homed = True
 
     def move_to(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
         """Set the simulated position instantly (wait/timeout are ignored)."""
         self._require_connected()
         self._position_deg = angle_deg
 
+    def move_to_logical(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
+        """Move to *angle_deg* relative to the current zero offset, like the real driver."""
+        self.move_to((self._zero_offset_deg + angle_deg) % 360.0, wait=wait, timeout=timeout)
+
     def get_position_deg(self) -> float:
         """Return the current simulated position in degrees."""
         self._require_connected()
         return self._position_deg
+
+    def is_homed(self) -> bool:
+        """Return whether home() has been called since construction."""
+        return self._homed
+
+    def stop(self, immediate: bool = True) -> None:
+        """No-op — the mock has no in-flight move to interrupt."""
+        self.stop_called += 1
+
+    @property
+    def zero_offset_deg(self) -> float:
+        """Host-side logical-zero offset in degrees (0.0 until set)."""
+        return self._zero_offset_deg
+
+    def set_zero_offset_deg(self, offset_deg: float) -> None:
+        """Set the logical-zero offset, normalised to [0, 360)."""
+        self._zero_offset_deg = offset_deg % 360.0
 
     def get_position_deg_nowait(self) -> float:
         """Mirror KDC101Polariser.get_position_deg_nowait().

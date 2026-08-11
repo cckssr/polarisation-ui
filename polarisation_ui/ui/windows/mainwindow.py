@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 
 from polarisation_ui.core.exceptions import KDC101Error
 from polarisation_ui.core.formatting import fmt_angle, fmt_stat
-from polarisation_ui.core.models import AcquisitionSettings
+from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
     select_best_profile_for_device_id,
@@ -43,7 +43,10 @@ from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polari
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.modules import ModuleRegistry
 from polarisation_ui.infrastructure.modules.kdc101_adapter import KDC101ModuleAdapter
-from polarisation_ui.infrastructure.qt_threads import KDC101HomeWorker
+from polarisation_ui.infrastructure.qt_threads import (
+    KDC101HomeWorker,
+    KDCZeroFindWorker,
+)
 from polarisation_ui.infrastructure.save_service import (
     compose_filename,
     save_tab_export,
@@ -149,6 +152,14 @@ class MainWindow(QMainWindow):
         self._kdc_position_timer.setInterval(250)
         self._kdc_position_timer.timeout.connect(self._refresh_kdc_position)
 
+        # Zero-find worker (KDC101 extinction-angle search) and its inputs.
+        self._kdc_zero_worker: KDCZeroFindWorker | None = None
+        # Most recent Frame from DataController — the thread-safe read used by
+        # KDCZeroFindWorker to correlate intensity with KDC position/gain.
+        self._last_frame: Frame | None = None
+        # Gain stage to restore after zero-find if it fails partway through.
+        self._gain_before_zero_find: int = 0
+
         # Gain stage to apply when Arduino next connects (set by session restore).
         self._pending_gain_restore: int = 0
 
@@ -211,7 +222,10 @@ class MainWindow(QMainWindow):
             LED_RED,
         )
         self.ui.btnKDCHome.setEnabled(False)
+        self.ui.btnKDCZero.setEnabled(False)
+        self.ui.btnKDCOffsetReset.setEnabled(False)
         self.ui.lblKDCPositionValue.setText("—")
+        self._sync_kdc_offset_display()
 
         # Populate PDTIA device ID selector from config
         self._populate_pdtia_ids()
@@ -369,6 +383,9 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCRefresh.clicked.connect(self._populate_kdc_devices)
         self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
         self.ui.btnKDCHome.clicked.connect(self._home_kdc)
+        self.ui.btnKDCZero.clicked.connect(self._start_kdc_zero_find)
+        self.ui.btnKDCOffsetReset.clicked.connect(self._reset_kdc_offset)
+        self.data_controller.frame_ready.connect(self._on_frame_ready_for_kdc)
 
         # Zero buttons
         self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
@@ -734,6 +751,9 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCConnect.clicked.disconnect(self._connect_kdc)
         self.ui.btnKDCConnect.clicked.connect(self._disconnect_kdc)
         self.ui.btnKDCHome.setEnabled(True)
+        self.ui.btnKDCZero.setEnabled(True)
+        self.ui.btnKDCOffsetReset.setEnabled(True)
+        self._sync_kdc_offset_display()
         self._kdc_position_timer.start()
         self.statusbar_manager.show_success(f"KDC101 verbunden: {conn_id}")
         Debug.info(f"KDC101 connected: {conn_id}")
@@ -751,6 +771,8 @@ class MainWindow(QMainWindow):
         ``_handle_kdc_connection_lost`` (auto-detected unplug) so both paths
         leave the UI in the exact same state.
         """
+        if self._kdc_zero_worker is not None:
+            self._kdc_zero_worker.abort()
         self._kdc_position_timer.stop()
         self._kdc_read_failures = 0
         self._kdc.disconnect()
@@ -766,6 +788,8 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCConnect.clicked.disconnect(self._disconnect_kdc)
         self.ui.btnKDCConnect.clicked.connect(self._connect_kdc)
         self.ui.btnKDCHome.setEnabled(False)
+        self.ui.btnKDCZero.setEnabled(False)
+        self.ui.btnKDCOffsetReset.setEnabled(False)
         self.ui.lblKDCPositionValue.setText("—")
 
     def _handle_kdc_connection_lost(self) -> None:
@@ -827,6 +851,86 @@ class MainWindow(QMainWindow):
         self._kdc_read_failures = 0
         if pos is not None:
             self.ui.lblKDCPositionValue.setText(f"{fmt_angle(pos)}°")
+
+    # ==================== KDC101 Zero-Find ====================
+
+    @Slot(object)
+    def _on_frame_ready_for_kdc(self, frame: Frame) -> None:
+        """Track the latest Frame for KDCZeroFindWorker's thread-safe read_latest callback."""
+        self._last_frame = frame
+
+    def _sync_kdc_offset_display(self) -> None:
+        """Refresh lblKDCOffsetValue from the KDC's currently stored zero offset."""
+        offset = self._kdc.zero_offset_deg
+        if offset == 0.0:
+            self.ui.lblKDCOffsetValue.setText("—")
+        else:
+            self.ui.lblKDCOffsetValue.setText(f"{fmt_angle(offset)}°")
+
+    def _set_kdc_controls_enabled(self, enabled: bool) -> None:
+        """Enable/disable the KDC connect/home/zero/reset controls together."""
+        self.ui.btnKDCConnect.setEnabled(enabled)
+        self.ui.btnKDCHome.setEnabled(enabled)
+        self.ui.btnKDCZero.setEnabled(enabled)
+        self.ui.btnKDCOffsetReset.setEnabled(enabled)
+
+    @Slot()
+    def _start_kdc_zero_find(self) -> None:
+        """Start the two-stage (coarse gain 1 / fine gain 3) extinction-angle search."""
+        if not self._kdc.is_connected() or self._kdc_zero_worker is not None:
+            return
+        if not self.data_controller.is_reading():
+            self.statusbar_manager.show_error(
+                "Polarisator Nullen: Arduino nicht verbunden — keine Intensitätsdaten"
+            )
+            return
+        self._gain_before_zero_find = self.data_controller.pdtia_gain or 1
+        self._set_kdc_controls_enabled(False)
+        self._kdc_zero_worker = KDCZeroFindWorker(
+            kdc=self._kdc,
+            read_latest=lambda: self._last_frame,
+            parent=self,
+        )
+        self._kdc_zero_worker.gain_requested.connect(self._on_kdc_zero_gain_requested)
+        self._kdc_zero_worker.finished.connect(self._on_kdc_zero_finished)
+        self._kdc_zero_worker.failed.connect(self._on_kdc_zero_failed)
+        self._kdc_zero_worker.log.connect(lambda msg: self.statusbar_manager.show_info(msg))
+        self._kdc_zero_worker.start()
+        self.statusbar_manager.show_info("Polarisator Nullen: Grobsuche läuft…")
+
+    @Slot(int)
+    def _on_kdc_zero_gain_requested(self, stage: int) -> None:
+        """Apply a PDTIA gain change requested by KDCZeroFindWorker (main-thread only)."""
+        ok = self.data_controller.set_pdtia_gain(stage)
+        if ok:
+            self._sync_gain_visual(stage)
+
+    @Slot(float)
+    def _on_kdc_zero_finished(self, offset_deg: float) -> None:
+        self._kdc_zero_worker = None
+        self._kdc.set_zero_offset_deg(offset_deg)
+        self._sync_kdc_offset_display()
+        self._set_kdc_controls_enabled(True)
+        self._schedule_state_save()
+        self.statusbar_manager.show_success(f"Polarisator genullt: Offset={fmt_angle(offset_deg)}°")
+
+    @Slot(str)
+    def _on_kdc_zero_failed(self, msg: str) -> None:
+        self._kdc_zero_worker = None
+        # Best-effort: put the gain back the way the user had it before tuning.
+        ok = self.data_controller.set_pdtia_gain(self._gain_before_zero_find)
+        if ok:
+            self._sync_gain_visual(self._gain_before_zero_find)
+        self._set_kdc_controls_enabled(True)
+        self.statusbar_manager.show_error(f"Polarisator Nullen fehlgeschlagen: {msg}")
+
+    @Slot()
+    def _reset_kdc_offset(self) -> None:
+        """Reset the KDC101 logical-zero offset to 0°."""
+        self._kdc.set_zero_offset_deg(0.0)
+        self._sync_kdc_offset_display()
+        self._schedule_state_save()
+        self.statusbar_manager.show_info("KDC-Offset zurückgesetzt")
 
     # ==================== Acquisition Settings ====================
 
@@ -1562,6 +1666,7 @@ class MainWindow(QMainWindow):
             ),
             gain_stage=self.data_controller.pdtia_gain,
             detector_offset_deg=self.data_controller.detector_offset_deg,
+            kdc_zero_offset_deg=self._kdc.zero_offset_deg,
             pdtia_id=(
                 self.ui.cbPdtiaID.currentText() if self.ui.cbPdtiaID.currentIndex() >= 0 else ""
             ),
@@ -1595,6 +1700,7 @@ class MainWindow(QMainWindow):
             or state.suffix
             or state.profile_name
             or (1 <= state.gain_stage <= 4)
+            or state.kdc_zero_offset_deg
             or any(v for v in state.tab_points.values())
         )
         if not has_data:
@@ -1641,6 +1747,10 @@ class MainWindow(QMainWindow):
 
         if state.detector_offset_deg in (0.0, 180.0):
             self.data_controller.set_detector_offset(state.detector_offset_deg)
+
+        if state.kdc_zero_offset_deg:
+            self._kdc.set_zero_offset_deg(state.kdc_zero_offset_deg)
+            self._sync_kdc_offset_display()
 
         if state.acq_settings:
             s = state.acq_settings

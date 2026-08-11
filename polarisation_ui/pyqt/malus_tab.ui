@@ -294,30 +294,16 @@
            <number>3</number>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblZeroOffsetLabel">
-            <property name="text">
-             <string>Zero-Offset:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="lblZeroOffset">
-            <property name="text">
-             <string>—</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
            <widget class="QLabel" name="lblSweepStart">
             <property name="text">
              <string>Von (°):</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStart">
             <property name="toolTip">
-             <string>Startwinkel des automatischen Scans (°)</string>
+             <string>Startwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (°)</string>
             </property>
             <property name="suffix">
              <string> °</string>
@@ -336,17 +322,17 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="1" column="0">
            <widget class="QLabel" name="lblSweepEnd">
             <property name="text">
              <string>Bis (°):</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepEnd">
             <property name="toolTip">
-             <string>Endwinkel des automatischen Scans (°)</string>
+             <string>Endwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (°)</string>
             </property>
             <property name="suffix">
              <string> °</string>
@@ -365,14 +351,14 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
+          <item row="2" column="0">
            <widget class="QLabel" name="lblSweepStep">
             <property name="text">
              <string>Schritt (°):</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="2" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStep">
             <property name="toolTip">
              <string>Schrittweite des automatischen Scans (°)</string>
@@ -405,7 +391,7 @@
            <bool>false</bool>
           </property>
           <property name="toolTip">
-           <string>Home, Auto-Zero und automatischer Scan starten</string>
+           <string>Automatischen Analysatorwinkel-Scan starten (referenziert auf den Polarisator-Nullpunkt aus der Konfiguration; erneutes Homing nur falls nötig)</string>
           </property>
           <property name="text">
            <string>Scan starten</string>

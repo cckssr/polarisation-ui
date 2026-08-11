@@ -9,8 +9,22 @@ from polarisation_ui.infrastructure.mocks.mock_kdc101_polariser import (
 from polarisation_ui.ui.widgets.tabs.malus_tab import MalusTab
 
 
-def _make_frame(ts_ms: int = 1000, intensity: float = 0.5) -> Frame:
-    return Frame(ts_ms=ts_ms, sample_angle=0.0, detector_angle=0.0, intensity=intensity)
+def _make_frame(
+    ts_ms: int = 1000,
+    intensity: float = 0.5,
+    pdtia_gain: int = 0,
+    power_W: float | None = None,
+    conv_factor_W_per_V: float | None = None,
+) -> Frame:
+    return Frame(
+        ts_ms=ts_ms,
+        sample_angle=0.0,
+        detector_angle=0.0,
+        intensity=intensity,
+        pdtia_gain=pdtia_gain,
+        power_W=power_W,
+        conv_factor_W_per_V=conv_factor_W_per_V,
+    )
 
 
 @pytest.fixture()
@@ -74,11 +88,32 @@ def test_compute_average_thread_safe(tab):
     assert abs(intensity - 0.6) < 0.01
 
 
-def test_malus_export_contains_zero_offset_when_set(tab):
-    tab._kdc_zero_offset = 45.0
+def test_malus_export_contains_zero_offset_when_set(tab_with_kdc):
+    tab, kdc = tab_with_kdc
+    kdc.set_zero_offset_deg(45.0)
     tab._ui.spinSweepStart.setValue(0.0)
     tab._ui.spinSweepEnd.setValue(180.0)
     tab._ui.spinSweepStep.setValue(5.0)
     exp = tab.build_export()
     assert exp.metadata["kdc_zero_offset_deg"] == 45.0
     assert exp.metadata["sweep_step_deg"] == 5.0
+
+
+def test_sweep_point_carries_gain_and_power(tab_with_kdc):
+    tab, _ = tab_with_kdc
+    frame = _make_frame(pdtia_gain=3, conv_factor_W_per_V=2e-6)
+    tab._on_sweep_point(10.0, 10.0, 0.5, frame)
+    points = tab.get_saved_points()
+    assert len(points) == 1
+    assert points[0].pdtia_gain == 3
+    assert points[0].power_W == pytest.approx(0.5 * 2e-6)
+    assert points[0].conv_factor_W_per_V == 2e-6
+
+
+def test_sweep_point_without_frame_leaves_gain_and_power_unset(tab_with_kdc):
+    tab, _ = tab_with_kdc
+    tab._on_sweep_point(10.0, 10.0, 0.5, None)
+    points = tab.get_saved_points()
+    assert len(points) == 1
+    assert points[0].pdtia_gain == 0
+    assert points[0].power_W is None

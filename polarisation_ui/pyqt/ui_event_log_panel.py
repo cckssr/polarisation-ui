@@ -40,7 +40,13 @@ from PySide6.QtGui import (
     QRadialGradient,
     QTransform,
 )
-from PySide6.QtWidgets import QApplication, QPlainTextEdit, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QPlainTextEdit,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class Ui_EventLogPanel(object):

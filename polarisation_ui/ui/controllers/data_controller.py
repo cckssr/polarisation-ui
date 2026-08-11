@@ -415,6 +415,10 @@ class DataController(QObject):
                 self.poll_timer.start(self.poll_interval)
         if ok:
             self._current_pdtia_gain = stage
+            # Drop pre-change samples so the rolling average (and the power
+            # figure derived from it) doesn't blend readings taken at two
+            # different gains for the next few polls.
+            self._intensity_buffer.clear()
             Debug.info(f"DataController: PDTIA gain updated to stage {stage}")
         return ok
 

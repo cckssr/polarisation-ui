@@ -79,6 +79,8 @@ class KDC101Polariser:
         self._motor: KinesisMotor | None = None
         # Serialises every call that touches the stage — see module docstring.
         self._lock = threading.Lock()
+        # Host-side logical-zero offset (degrees)
+        self._zero_offset_deg: float = 0.0
 
     # ── Connection ────────────────────────────────────────────────────────────
 
@@ -145,6 +147,47 @@ class KDC101Polariser:
             raise KDC101TimeoutError(f"KDC101 home timed out: {exc}") from exc
         except _ThorlabsError as exc:
             raise KDC101Error(f"KDC101 home failed: {exc}") from exc
+
+    # ── Logical-zero offset ──────────────────────────────────────────────────
+
+    @property
+    def zero_offset_deg(self) -> float:
+        """Host-side logical-zero offset in degrees (0.0 until a zero-find has run)."""
+        return self._zero_offset_deg
+
+    def set_zero_offset_deg(self, offset_deg: float) -> None:
+        """Set the logical-zero offset, normalised to [0, 360)."""
+        self._zero_offset_deg = offset_deg % 360.0
+
+    def move_to_logical(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
+        """Move to *angle_deg* relative to the current zero offset.
+
+        Equivalent to ``move_to(zero_offset_deg + angle_deg, ...)``.
+        """
+        self.move_to((self._zero_offset_deg + angle_deg) % 360.0, wait=wait, timeout=timeout)
+
+    def is_homed(self) -> bool:
+        """Return whether the stage has completed a homing sequence since power-up.
+
+        Returns False (rather than raising) on a transient read error, so
+        callers can safely use this to decide whether a re-home is needed.
+        """
+        self._require_connected()
+        try:
+            with self._lock:
+                return bool(self._motor.is_homed())
+        except _ThorlabsError as exc:
+            Debug.warning(f"KDC101Polariser: is_homed() failed: {exc}")
+            return False
+
+    def stop(self, immediate: bool = True) -> None:
+        """Stop any in-progress move (e.g. to abort a continuous scan mid-travel)."""
+        self._require_connected()
+        try:
+            with self._lock:
+                self._motor.stop(immediate=immediate, sync=False)
+        except _ThorlabsError as exc:
+            raise KDC101Error(f"KDC101 stop failed: {exc}") from exc
 
     def move_to(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
         """Move to *angle_deg* (degrees).  Blocks until the move completes when *wait* is True.

@@ -4,7 +4,9 @@ Qt is allowed in this module only. All other infrastructure modules must remain
 free of PySide6 imports.
 """
 
+import bisect
 import dataclasses
+import math
 import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
@@ -388,27 +390,32 @@ class AlignPolariserWorker(QThread):
         self.finished.emit(angle_max)
 
 
-class MalusSweepWorker(QThread):
-    """Off-main-thread worker for the automated Malus-law KDC101 sweep.
+class KDCSweepWorker(QThread):
+    """Off-main-thread worker for an automated KDC101 analyser-angle sweep.
 
-    Sequence (``mode="malus"``, the default):
-        1. Home the KDC stage.
-        2. Auto-zero search: coarse sweep 0–180° in ~5° steps, fine pass ±5°
-           in 0.5° steps around the minimum.  Emits ``zero_offset(float)``.
-        3. User sweep: for each angle in [start, end] with the given step,
-           move to ``zero_offset + angle``, wait *settle_ms* ms, call
-           ``read_average()`` to get (intensity_V, Frame|None), emit
-           ``point_scanned(angle, kdc_pos, intensity_V)``.
+    Shared by the Malus and Waveplate tabs. Sequence:
+        1. Home the KDC stage, unless it is already homed (``is_homed()``) —
+           the zero offset was established against the last homing, so a stage
+           that never lost its reference doesn't need to re-home every sweep.
+        2. For each angle in [start, end] with the given step: move to
+           ``kdc.zero_offset_deg + angle`` via ``move_to_logical()``, wait for
+           a frame timestamped after the move completed (not just a fixed
+           settle), call ``read_average()`` to get (intensity_V, Frame|None),
+           emit ``point_scanned(angle, kdc_pos, intensity_V, frame)``.
 
-    ``mode="waveplate"`` skips the auto-zero search (home == zero).
+    The zero offset itself is no longer found here — see
+    ``KDCZeroFindWorker`` — it is set once from the Configuration tab and read
+    from the shared ``KDC101Polariser`` instance.
     """
 
-    zero_offset = Signal(float)
-    point_scanned = Signal(float, float, float)  # (analyser_angle, kdc_pos, intensity_V)
+    point_scanned = Signal(float, float, float, object)  # (angle, kdc_pos, intensity_V, Frame|None)
     progress = Signal(int, int)
     finished = Signal()
     failed = Signal(str)
     log = Signal(str)
+
+    _FRESH_FRAME_MAX_WAIT_S = 1.0
+    _FRESH_FRAME_POLL_S = 0.02
 
     def __init__(
         self,
@@ -417,7 +424,6 @@ class MalusSweepWorker(QThread):
         start_deg: float,
         end_deg: float,
         step_deg: float,
-        mode: str = "malus",
         settle_ms: int = 150,
         parent=None,
     ) -> None:
@@ -428,7 +434,6 @@ class MalusSweepWorker(QThread):
         self._start = start_deg
         self._end = end_deg
         self._step = step_deg
-        self._mode = mode
         self._settle_ms = settle_ms / 1000.0
         self._abort: bool = False
 
@@ -437,35 +442,23 @@ class MalusSweepWorker(QThread):
         self._abort = True
 
     def run(self) -> None:
-        """Run the full home → auto-zero → sweep sequence, reporting errors via failed."""
+        """Run the full home(-if-needed) → sweep sequence, reporting errors via failed."""
         try:
             self._run()
         except KDC101Error as exc:
             self.failed.emit(f"KDC101 Fehler: {exc}")
         except Exception as exc:
-            Debug.error(f"MalusSweepWorker: unexpected error: {exc}", exc_info=True)
+            Debug.error(f"KDCSweepWorker: unexpected error: {exc}", exc_info=True)
             self.failed.emit(str(exc))
 
     def _run(self) -> None:
-        # Step 1: home
-        self.log.emit("Referenzfahrt (Home) läuft…")
-        self._kdc.home()
+        if not self._kdc.is_homed():
+            self.log.emit("Referenzfahrt (Home) läuft…")
+            self._kdc.home()
         if self._abort:
             self.failed.emit("Abgebrochen")
             return
 
-        # Step 2: auto-zero search (malus only)
-        zero_offset = 0.0
-        if self._mode == "malus":
-            self.log.emit("Auto-Zero-Suche (grob)…")
-            zero_offset = self._find_zero_offset()
-            if self._abort:
-                self.failed.emit("Abgebrochen")
-                return
-            self.log.emit(f"Zero-Offset: {zero_offset:.2f}°")
-            self.zero_offset.emit(zero_offset)
-
-        # Step 3: user sweep
         n = max(2, round((self._end - self._start) / self._step) + 1)
         angles = linear_angle_grid(self._start, self._end, n)
         self.log.emit(
@@ -475,55 +468,298 @@ class MalusSweepWorker(QThread):
             if self._abort:
                 self.failed.emit("Abgebrochen")
                 return
-            target = zero_offset + angle_set
-            self._kdc.move_to(target)
+            self._kdc.move_to_logical(angle_set)
             actual_pos = self._kdc.get_position_deg()
-            time.sleep(self._settle_ms)
-            intensity_V, _frame = self._read_average()
+            move_done_ts = time.monotonic()
+            intensity_V, frame = self._read_settled(move_done_ts)
             if self._abort:
                 self.failed.emit("Abgebrochen")
                 return
-            self.point_scanned.emit(angle_set, actual_pos, intensity_V)
+            self.point_scanned.emit(angle_set, actual_pos, intensity_V, frame)
             self.progress.emit(i + 1, n)
             self.log.emit(f"  θ={angle_set:.1f}° | pos={actual_pos:.2f}° | I={intensity_V:.4f} V")
 
         self.finished.emit()
 
-    def _find_zero_offset(self) -> float:
-        """Return the KDC angle at which intensity is minimal."""
-        # Coarse pass: 0–180° in 5° steps
-        coarse_results: list[tuple[float, float]] = []
-        for angle in range(0, 181, 5):
-            if self._abort:
-                return 0.0
-            self._kdc.move_to(float(angle))
-            time.sleep(0.2)
-            intensity_V, _ = self._read_average()
-            coarse_results.append((float(angle), intensity_V))
+    def _read_settled(self, after_ts: float) -> "tuple[float, Frame | None]":
+        """Wait out the settle time, then keep polling ``read_average()`` until it
+        reflects a frame taken after *after_ts* (i.e. after the move completed)
+        or a bounded timeout elapses — avoids recording a point from a
+        pre-move reading still sitting in the tab's averaging buffer.
+        """
+        time.sleep(self._settle_ms)
+        deadline = time.monotonic() + self._FRESH_FRAME_MAX_WAIT_S
+        intensity_V, frame = self._read_average()
+        while (
+            frame is not None
+            and frame.ts_ms / 1000.0 < after_ts
+            and not self._abort
+            and time.monotonic() < deadline
+        ):
+            time.sleep(self._FRESH_FRAME_POLL_S)
+            intensity_V, frame = self._read_average()
+        return intensity_V, frame
 
-        # Find coarse minimum (ignoring NaN)
-        valid = [(a, v) for a, v in coarse_results if not (v != v)]  # filter NaN
-        if not valid:
-            return 0.0
-        coarse_min_angle = min(valid, key=lambda x: x[1])[0]
 
-        # Fine pass: ±5° around coarse minimum in 0.5° steps
-        fine_start = max(0.0, coarse_min_angle - 5.0)
-        fine_end = min(180.0, coarse_min_angle + 5.0)
-        n_fine = max(2, round((fine_end - fine_start) / 0.5) + 1)
-        fine_results: list[tuple[float, float]] = []
-        for a in linear_angle_grid(fine_start, fine_end, n_fine):
-            if self._abort:
-                return coarse_min_angle
-            self._kdc.move_to(a)
-            time.sleep(0.15)
-            intensity_V, _ = self._read_average()
-            fine_results.append((a, intensity_V))
+def _lerp(x: float, xs: "list[float]", ys: "list[float]") -> float:
+    """Linearly interpolate *ys* at *x*, clamping outside the [xs[0], xs[-1]] range."""
+    i = bisect.bisect_left(xs, x)
+    if i <= 0:
+        return ys[0]
+    if i >= len(xs):
+        return ys[-1]
+    x0, x1 = xs[i - 1], xs[i]
+    y0, y1 = ys[i - 1], ys[i]
+    if x1 == x0:
+        return y0
+    t = (x - x0) / (x1 - x0)
+    return y0 + t * (y1 - y0)
 
-        valid_fine = [(a, v) for a, v in fine_results if not (v != v)]
+
+class KDCZeroFindWorker(QThread):
+    """Off-main-thread worker that finds the KDC101 polariser's extinction angle.
+
+    Sequence:
+        1. Home the stage, unless already homed.
+        2. Request PDTIA gain 1 (via ``gain_requested`` — see below), then run
+           a *continuous* coarse pass: move 0°→180° without waiting for each
+           step, sampling stage position and live intensity concurrently while
+           the stage travels, and correlating the two by timestamp afterwards
+           (``Frame.ts_ms`` and the position samples share the same
+           ``time.monotonic()`` clock). This avoids the ~35 s a 37-point
+           stop/settle/read sweep would otherwise cost.
+        3. Request PDTIA gain 3, then a stepped fine pass: ±8° around the
+           coarse minimum in 0.5° steps, waiting at each step for a frame
+           timestamped after the move (not a fixed sleep).
+        4. Request PDTIA gain 1 again (the agreed rest state), move the stage
+           to the fine minimum, and emit ``finished(offset_deg)``.
+
+    Gain changes cannot be applied directly from this thread: setting PDTIA
+    gain pauses/resumes ``DataController``'s poll ``QTimer``, which must only
+    be touched from the thread that owns it. Instead this worker emits
+    ``gain_requested(stage)`` and waits (via the live frame stream itself, not
+    a separate synchronisation primitive) for a frame confirming the new gain
+    is active before proceeding.
+    """
+
+    gain_requested = Signal(int)
+    progress = Signal(int, int)
+    finished = Signal(float)  # offset_deg
+    failed = Signal(str)
+    log = Signal(str)
+
+    _COARSE_START_DEG = 0.0
+    _COARSE_END_DEG = 180.0
+    _COARSE_TIMEOUT_S = 60.0
+    _POSITION_POLL_S = 0.05
+    _POSITION_ARRIVAL_TOL_DEG = 0.3
+    _FINE_HALF_WINDOW_DEG = 8.0
+    _FINE_STEP_DEG = 0.5
+    _FINE_SETTLE_S = 0.1
+    _FRESH_FRAME_TIMEOUT_S = 2.0
+    _GAIN_TIMEOUT_S = 5.0
+    _GAIN_POLL_S = 0.05
+
+    def __init__(
+        self,
+        kdc: "KDC101Polariser",
+        read_latest: Callable[[], "Frame | None"],
+        parent=None,
+    ) -> None:
+        """Store the KDC handle and a callback returning the most recent Frame."""
+        super().__init__(parent)
+        self._kdc = kdc
+        self._read_latest = read_latest
+        self._abort: bool = False
+        self._last_seen_ts_ms: int | None = None
+
+    def abort(self) -> None:
+        """Request a clean stop; checked between steps and inside both scan loops."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Run the full home → coarse → fine sequence, reporting errors via failed."""
+        try:
+            self._run()
+        except KDC101Error as exc:
+            self.failed.emit(f"KDC101 Fehler: {exc}")
+        except Exception as exc:
+            Debug.error(f"KDCZeroFindWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run(self) -> None:
+        if not self._kdc.is_homed():
+            self.log.emit("Referenzfahrt (Home) läuft…")
+            self._kdc.home()
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+
+        self.log.emit("Grobsuche (Gain 1)…")
+        if not self._await_gain(1):
+            self.failed.emit("PDTIA-Gain 1 konnte nicht gesetzt werden")
+            return
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+
+        positions, intensities = self._scan_continuous(
+            self._COARSE_START_DEG, self._COARSE_END_DEG, self._COARSE_TIMEOUT_S
+        )
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+        coarse = self._correlate_minimum(positions, intensities)
+        if coarse is None:
+            self.failed.emit("Grobsuche: keine gültigen Messwerte")
+            return
+        coarse_angle, coarse_intensity = coarse
+        self.log.emit(f"Grobminimum: θ={coarse_angle:.2f}° (I={coarse_intensity:.4f} V)")
+        self.progress.emit(1, 2)
+
+        self.log.emit("Feinsuche (Gain 3)…")
+        if not self._await_gain(3):
+            self.failed.emit("PDTIA-Gain 3 konnte nicht gesetzt werden")
+            return
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+
+        fine_results = self._scan_stepped(coarse_angle)
+        if self._abort:
+            self.failed.emit("Abgebrochen")
+            return
+        valid_fine = [(a, v) for a, v in fine_results if not math.isnan(v)]
         if not valid_fine:
-            return coarse_min_angle
-        return min(valid_fine, key=lambda x: x[1])[0]
+            self.failed.emit("Feinsuche: keine gültigen Messwerte")
+            return
+        fine_angle = min(valid_fine, key=lambda x: x[1])[0]
+        self.log.emit(f"Feinminimum: θ={fine_angle:.2f}°")
+        self.progress.emit(2, 2)
+
+        if not self._await_gain(1):
+            Debug.warning("KDCZeroFindWorker: could not restore gain 1 after tuning")
+        if not self._abort:
+            self._kdc.move_to(fine_angle)
+
+        self.finished.emit(fine_angle)
+
+    # ── Gain synchronisation ─────────────────────────────────────────────────
+
+    def _await_gain(self, stage: int) -> bool:
+        """Ask the main thread to set PDTIA gain *stage*.
+
+        Returns:
+            False on timeout or abort.
+        """
+        self.gain_requested.emit(stage)
+        deadline = time.monotonic() + self._GAIN_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if self._abort:
+                return False
+            frame = self._read_latest()
+            if frame is not None and frame.pdtia_gain == stage:
+                return True
+            time.sleep(self._GAIN_POLL_S)
+        return False
+
+    # ── Coarse pass: continuous move + timestamp correlation ────────────────
+
+    def _sample_frame(self, intensities: "list[tuple[float, float]]") -> None:
+        frame = self._read_latest()
+        if frame is None or math.isnan(frame.intensity):
+            return
+        if self._last_seen_ts_ms is not None and frame.ts_ms <= self._last_seen_ts_ms:
+            return
+        self._last_seen_ts_ms = frame.ts_ms
+        intensities.append((frame.ts_ms / 1000.0, frame.intensity))
+
+    def _scan_continuous(
+        self, start_deg: float, end_deg: float, timeout_s: float
+    ) -> "tuple[list[tuple[float, float]], list[tuple[float, float]]]":
+        """Move *start_deg* → *end_deg* without stopping.
+
+        Sampling (ts, position) and (ts, intensity) concurrently.
+
+        Returns:
+            Tuple: position_samples, intensity_samples.
+        """
+        self._kdc.move_to(start_deg, wait=True)
+        positions: list[tuple[float, float]] = [(time.monotonic(), start_deg)]
+        intensities: list[tuple[float, float]] = []
+        self._sample_frame(intensities)
+        if self._abort:
+            return positions, intensities
+
+        self._kdc.move_to(end_deg, wait=False)
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            if self._abort:
+                self._kdc.stop()
+                break
+            pos = self._kdc.get_position_deg()
+            positions.append((time.monotonic(), pos))
+            self._sample_frame(intensities)
+            if abs(pos - end_deg) <= self._POSITION_ARRIVAL_TOL_DEG:
+                break
+            time.sleep(self._POSITION_POLL_S)
+        return positions, intensities
+
+    def _correlate_minimum(
+        self,
+        positions: "list[tuple[float, float]]",
+        intensities: "list[tuple[float, float]]",
+    ) -> "tuple[float, float] | None":
+        """Interpolate the stage angle at each intensity sample's timestamp and
+        return the (angle, intensity) pair at the minimum, or None if nothing
+        usable was collected."""
+        if len(positions) < 2 or not intensities:
+            return None
+        ts_pos = [p[0] for p in positions]
+        angles = [p[1] for p in positions]
+        best: tuple[float, float] | None = None
+        for ts, intensity in intensities:
+            if ts < ts_pos[0] or ts > ts_pos[-1]:
+                continue
+            angle = _lerp(ts, ts_pos, angles)
+            if best is None or intensity < best[1]:
+                best = (angle, intensity)
+        return best
+
+    # ── Fine pass: stepped, waiting for a fresh frame at each step ──────────
+
+    def _read_fresh(self) -> "Frame | None":
+        """Block until a frame newer than the last one consumed arrives, after
+        the fine-pass settle time, up to a bounded timeout."""
+        time.sleep(self._FINE_SETTLE_S)
+        deadline = time.monotonic() + self._FRESH_FRAME_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if self._abort:
+                return None
+            frame = self._read_latest()
+            if frame is not None and (
+                self._last_seen_ts_ms is None or frame.ts_ms > self._last_seen_ts_ms
+            ):
+                self._last_seen_ts_ms = frame.ts_ms
+                return frame
+            time.sleep(self._GAIN_POLL_S)
+        return None
+
+    def _scan_stepped(self, center_deg: float) -> "list[tuple[float, float]]":
+        """Step ±_FINE_HALF_WINDOW_DEG around *center_deg*, waiting for a fresh
+        frame at each step. Returns (angle, intensity) pairs."""
+        lo = max(0.0, center_deg - self._FINE_HALF_WINDOW_DEG)
+        hi = min(180.0, center_deg + self._FINE_HALF_WINDOW_DEG)
+        n = max(2, round((hi - lo) / self._FINE_STEP_DEG) + 1)
+        results: list[tuple[float, float]] = []
+        for angle in linear_angle_grid(lo, hi, n):
+            if self._abort:
+                break
+            self._kdc.move_to(angle, wait=True)
+            frame = self._read_fresh()
+            if frame is not None and not math.isnan(frame.intensity):
+                results.append((angle, frame.intensity))
+        return results
 
 
 class KDC101HomeWorker(QThread):

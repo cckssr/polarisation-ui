@@ -53,6 +53,16 @@
        <string>I (V)</string>
       </property>
      </column>
+     <column>
+      <property name="text">
+       <string>P (µW)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Gain</string>
+      </property>
+     </column>
     </widget>
    </item>
    <item row="1" column="1">
@@ -153,6 +163,9 @@
           </item>
           <item row="0" column="1">
            <widget class="QComboBox" name="cmbWaveplateType">
+            <property name="toolTip">
+             <string>Typ der eingesetzten Verzögerungsplatte — bestimmt nur den Export-Dateinamen und die Metadaten, nicht den Scanablauf</string>
+            </property>
             <item>
              <property name="text">
               <string>λ/4 (QWP)</string>
@@ -191,6 +204,9 @@
           </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStart">
+            <property name="toolTip">
+             <string>Startwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -217,6 +233,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepEnd">
+            <property name="toolTip">
+             <string>Endwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -243,6 +262,9 @@
           </item>
           <item row="2" column="1">
            <widget class="QDoubleSpinBox" name="spinSweepStep">
+            <property name="toolTip">
+             <string>Schrittweite des automatischen Scans (°)</string>
+            </property>
             <property name="suffix">
              <string> °</string>
             </property>
@@ -271,7 +293,7 @@
            <bool>false</bool>
           </property>
           <property name="toolTip">
-           <string>Home und automatischen Scan starten</string>
+           <string>Automatischen Verzögerungsplatten-Scan starten (referenziert auf den Polarisator-Nullpunkt aus der Konfiguration; erneutes Homing nur falls nötig)</string>
           </property>
           <property name="text">
            <string>Scan starten</string>

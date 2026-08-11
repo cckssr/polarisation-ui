@@ -34,6 +34,7 @@ class SessionState:
     gain_stage: int = 0  # active PDTIA stage (1–4); 0 = not set
     pdtia_id: str = ""  # selected PDTIA device ID from cbPdtiaID
     detector_offset_deg: float = 0.0  # host-side detector angle offset (0.0 or 180.0)
+    kdc_zero_offset_deg: float = 0.0  # KDC101 polariser logical-zero offset, from zero-find
     acq_settings: dict = field(default_factory=dict)
     # keys are tab_id strings; values are lists of serialised point dicts
     tab_points: dict = field(default_factory=dict)

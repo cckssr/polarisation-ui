@@ -192,20 +192,10 @@ class Ui_MalusTab(object):
         self.formSweepParams = QFormLayout()
         self.formSweepParams.setObjectName("formSweepParams")
         self.formSweepParams.setVerticalSpacing(3)
-        self.lblZeroOffsetLabel = QLabel(self.gbSweep)
-        self.lblZeroOffsetLabel.setObjectName("lblZeroOffsetLabel")
-
-        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblZeroOffsetLabel)
-
-        self.lblZeroOffset = QLabel(self.gbSweep)
-        self.lblZeroOffset.setObjectName("lblZeroOffset")
-
-        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblZeroOffset)
-
         self.lblSweepStart = QLabel(self.gbSweep)
         self.lblSweepStart.setObjectName("lblSweepStart")
 
-        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSweepStart)
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblSweepStart)
 
         self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStart.setObjectName("spinSweepStart")
@@ -214,12 +204,12 @@ class Ui_MalusTab(object):
         self.spinSweepStart.setMaximum(360.000000000000000)
         self.spinSweepStart.setValue(0.000000000000000)
 
-        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSweepStart)
+        self.formSweepParams.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinSweepStart)
 
         self.lblSweepEnd = QLabel(self.gbSweep)
         self.lblSweepEnd.setObjectName("lblSweepEnd")
 
-        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd)
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSweepEnd)
 
         self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
         self.spinSweepEnd.setObjectName("spinSweepEnd")
@@ -228,12 +218,12 @@ class Ui_MalusTab(object):
         self.spinSweepEnd.setMaximum(360.000000000000000)
         self.spinSweepEnd.setValue(180.000000000000000)
 
-        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd)
+        self.formSweepParams.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSweepEnd)
 
         self.lblSweepStep = QLabel(self.gbSweep)
         self.lblSweepStep.setObjectName("lblSweepStep")
 
-        self.formSweepParams.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblSweepStep)
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblSweepStep)
 
         self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStep.setObjectName("spinSweepStep")
@@ -243,7 +233,7 @@ class Ui_MalusTab(object):
         self.spinSweepStep.setSingleStep(0.500000000000000)
         self.spinSweepStep.setValue(5.000000000000000)
 
-        self.formSweepParams.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinSweepStep)
+        self.formSweepParams.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinSweepStep)
 
         self.vboxSweep.addLayout(self.formSweepParams)
 
@@ -325,7 +315,9 @@ class Ui_MalusTab(object):
         # if QT_CONFIG(tooltip)
         self.spinPolariser.setToolTip(
             QCoreApplication.translate(
-                "MalusTab", "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)", None
+                "MalusTab",
+                "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)",
+                None,
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -366,15 +358,13 @@ class Ui_MalusTab(object):
         self.cbPolariserPlaced.setText(
             QCoreApplication.translate("MalusTab", "Polarisator eingesetzt", None)
         )
-        self.lblZeroOffsetLabel.setText(
-            QCoreApplication.translate("MalusTab", "Zero-Offset:", None)
-        )
-        self.lblZeroOffset.setText(QCoreApplication.translate("MalusTab", "\u2014", None))
         self.lblSweepStart.setText(QCoreApplication.translate("MalusTab", "Von (\u00b0):", None))
         # if QT_CONFIG(tooltip)
         self.spinSweepStart.setToolTip(
             QCoreApplication.translate(
-                "MalusTab", "Startwinkel des automatischen Scans (\u00b0)", None
+                "MalusTab",
+                "Startwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (\u00b0)",
+                None,
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -383,7 +373,9 @@ class Ui_MalusTab(object):
         # if QT_CONFIG(tooltip)
         self.spinSweepEnd.setToolTip(
             QCoreApplication.translate(
-                "MalusTab", "Endwinkel des automatischen Scans (\u00b0)", None
+                "MalusTab",
+                "Endwinkel des automatischen Scans, relativ zum Polarisator-Nullpunkt aus der Konfiguration (\u00b0)",
+                None,
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -400,7 +392,9 @@ class Ui_MalusTab(object):
         # if QT_CONFIG(tooltip)
         self.btnStartSweep.setToolTip(
             QCoreApplication.translate(
-                "MalusTab", "Home, Auto-Zero und automatischer Scan starten", None
+                "MalusTab",
+                "Automatischen Analysatorwinkel-Scan starten (referenziert auf den Polarisator-Nullpunkt aus der Konfiguration; erneutes Homing nur falls n\u00f6tig)",
+                None,
             )
         )
         # endif // QT_CONFIG(tooltip)
