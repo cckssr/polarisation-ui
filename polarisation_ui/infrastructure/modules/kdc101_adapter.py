@@ -1,10 +1,11 @@
 """HostModule adapter wrapping KDC101Polariser for the ModuleRegistry.
 
-This thin adapter exists solely to satisfy the ``HostModule`` protocol so
+This adapter satisfies the ``HostModule`` protocol so
 ``TabRegistry.available(modules)`` can gate tabs that declare
-``required_modules = {"kdc101"}``.  Motion calls (home, move_to,
-get_position_deg) are made directly on the ``KDC101Polariser`` instance
-injected via ``PlotTabBase.inject_modules()``.
+``required_modules = {"kdc101"}``.  It is also the object tabs receive via
+``PlotTabBase.inject_modules()`` (``ModuleRegistry.all()`` is the only source
+of the ``"kdc101"`` entry), so motion calls (home, move_to, get_position_deg)
+are exposed here as pass-throughs to the wrapped ``KDC101Polariser`` instance.
 """
 
 from __future__ import annotations
@@ -39,3 +40,20 @@ class KDC101ModuleAdapter:
     def describe(self) -> str:
         """Return a human-readable label including current connection state."""
         return f"KDC101 polariser stage (connected={self._kdc.is_connected()})"
+
+    # ── Motion pass-throughs ──────────────────────────────────────────────────
+    # Tabs (malus_tab, waveplate_tab) and their qt_threads workers receive this
+    # adapter as their "kdc" handle via inject_modules() and call these
+    # directly, so they must be forwarded to the wrapped KDC101Polariser.
+
+    def home(self, wait: bool = True, timeout: float = 120.0) -> None:
+        """Home the wrapped stage; see ``KDC101Polariser.home``."""
+        self._kdc.home(wait=wait, timeout=timeout)
+
+    def move_to(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
+        """Move the wrapped stage; see ``KDC101Polariser.move_to``."""
+        self._kdc.move_to(angle_deg, wait=wait, timeout=timeout)
+
+    def get_position_deg(self) -> float:
+        """Return the wrapped stage's current position in degrees."""
+        return self._kdc.get_position_deg()
