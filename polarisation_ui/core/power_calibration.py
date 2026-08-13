@@ -189,6 +189,7 @@ class PowerCalibrationProfile:
         return {
             "profile_name": self.name,
             "calibrated_at": self.calibrated_at,
+            "wavelength_nm": self.wavelength_nm,
             "gain_conversion_factors": {
                 str(stage): cal.conversion_factor_W_per_V()
                 for stage, cal in self.gains.items()

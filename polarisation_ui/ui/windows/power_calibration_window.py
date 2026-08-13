@@ -267,6 +267,16 @@ class PowerCalibrationWindow(QDialog):
         self._le_profile_name.setPlaceholderText("z.B. Det-A")
         profile_form.addRow("Profilname:", self._le_profile_name)
 
+        self._spin_wavelength = QDoubleSpinBox()
+        self._spin_wavelength.setRange(1.0, 10000.0)
+        self._spin_wavelength.setDecimals(1)
+        self._spin_wavelength.setSuffix(" nm")
+        self._spin_wavelength.setValue(633.0)
+        self._spin_wavelength.setToolTip(
+            "Laserwellenlänge — die Responsivität des Detektors ist wellenlängenabhängig."
+        )
+        profile_form.addRow("Wellenlänge:", self._spin_wavelength)
+
         btn_row = QHBoxLayout()
         self._btn_save = QPushButton("Kalibrierung speichern")
         self._btn_save.clicked.connect(self._save_profile)
@@ -306,7 +316,7 @@ class PowerCalibrationWindow(QDialog):
             QMessageBox.warning(self, "Kein Name", "Bitte einen Profilnamen eingeben.")
             return
 
-        profile = PowerCalibrationProfile(name=name)
+        profile = PowerCalibrationProfile(name=name, wavelength_nm=self._spin_wavelength.value())
         for stage, tab in self._gain_tabs.items():
             profile.gains[stage] = tab.get_calibration()
 
@@ -345,6 +355,9 @@ class PowerCalibrationWindow(QDialog):
         try:
             profile = PowerCalibrationProfile.load(Path(path_str))
             self._le_profile_name.setText(profile.name)
+            self._spin_wavelength.setValue(
+                profile.wavelength_nm if profile.wavelength_nm is not None else 633.0
+            )
             for stage in _GAIN_STAGES:
                 cal = profile.gains.get(stage)
                 if cal is not None and stage in self._gain_tabs:

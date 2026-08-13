@@ -18,8 +18,8 @@
           {
             "type": "command",
             "if": "Bash(git commit*)",
-            "command": ".venv/bin/black . 2>&1 | grep -v 'No files checked\\|All done' || true",
-            "statusMessage": "Formatting with Black...",
+            "command": ".venv/bin/ruff format . 2>&1 | grep -v 'files left unchanged\\|file left unchanged\\|file reformatted\\|files reformatted' || true",
+            "statusMessage": "Formatting with ruff...",
             "timeout": 30
           }
         ]
