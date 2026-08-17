@@ -491,6 +491,15 @@ class MainWindow(QMainWindow):
         self.ui.tabWidget.setTabEnabled(tab_index, group_selected)
         self.ui.tabWidget.setTabToolTip(tab_index, tooltip)
 
+    def _filename_tokens_with_wavelength(self, tokens: list[str]) -> list[str]:
+        """Append the active calibration profile's wavelength (if any) as a filename token."""
+        if (
+            self._calibration_profile is not None
+            and self._calibration_profile.wavelength_nm is not None
+        ):
+            return [*tokens, f"{self._calibration_profile.wavelength_nm:g}nm"]
+        return list(tokens)
+
     def _update_filename_display(self) -> None:
         """Refresh pteCurrentFilename with the expected save path for the active tab."""
         group = self.ui.cbGroupLetter.currentText()
@@ -505,7 +514,7 @@ class MainWindow(QMainWindow):
             hint, tokens = exp.filename_hint, exp.filename_tokens
         else:
             hint, tokens = "messung", []
-        stem = compose_filename(hint, group, suffix, tokens)
+        stem = compose_filename(hint, group, suffix, self._filename_tokens_with_wavelength(tokens))
         tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
         team_raw = self.ui.leTeamName.text().strip()
         subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""
@@ -682,7 +691,7 @@ class MainWindow(QMainWindow):
         if 1 <= pending <= 4:
             stage = pending
         else:
-            stage = self.device_manager.get_pdtia_gain()
+            stage = self.device_manager.get_pdtia_gain() + 1  # firmware reports 0-based
             if not (1 <= stage <= 4):
                 stage = 1  # always ensure a gain is active
         ok = self.data_controller.set_pdtia_gain(stage)
@@ -1137,6 +1146,7 @@ class MainWindow(QMainWindow):
             self._calibration_profile = None
         self.data_controller.update_calibration_profile(self._calibration_profile)
         self._update_detector_calibration_status()
+        self._update_filename_display()
 
     def _update_detector_calibration_status(self) -> None:
         """Show calibration hint in the detector status when connected and no profile is loaded."""
@@ -1467,7 +1477,8 @@ class MainWindow(QMainWindow):
 
         group_letter = self.ui.cbGroupLetter.currentText()
         suffix = self.ui.leSuffix.text().strip()
-        stem = compose_filename(exp.filename_hint, group_letter, suffix, exp.filename_tokens)
+        tokens = self._filename_tokens_with_wavelength(exp.filename_tokens)
+        stem = compose_filename(exp.filename_hint, group_letter, suffix, tokens)
         tk = CONFIG.get("save", {}).get("tk_designation", "TKXX")
         team_raw = self.ui.leTeamName.text().strip()
         subterm = sanitize_subterm_for_folder(team_raw) if team_raw else ""

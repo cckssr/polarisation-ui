@@ -409,7 +409,10 @@ class DataController(QObject):
         if was_polling:
             self.poll_timer.stop()
         try:
-            ok = self.device_manager.set_pdtia_gain(stage)
+            # device_manager/firmware indexes gain stages 0-based; _current_pdtia_gain
+            # and everything derived from it (calibration lookup, exported Frame.pdtia_gain,
+            # session restore) stay in the 1-4 UI-facing convention.
+            ok = self.device_manager.set_pdtia_gain(stage - 1)
         finally:
             if was_polling:
                 self.poll_timer.start(self.poll_interval)

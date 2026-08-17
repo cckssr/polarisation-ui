@@ -163,8 +163,14 @@ class KDC101Polariser:
         """Move to *angle_deg* relative to the current zero offset.
 
         Equivalent to ``move_to(zero_offset_deg + angle_deg, ...)``.
+
+        Deliberately not wrapped to [0, 360) — the PRM1-Z8 is a continuous
+        rotation mount, so a target past 360° (or below 0°) is a valid
+        absolute position that keeps the stage turning the same direction.
+        Wrapping here would snap the target back into [0, 360) mid-sweep and
+        send the stage the long way round instead of continuing forward.
         """
-        self.move_to((self._zero_offset_deg + angle_deg) % 360.0, wait=wait, timeout=timeout)
+        self.move_to(self._zero_offset_deg + angle_deg, wait=wait, timeout=timeout)
 
     def is_homed(self) -> bool:
         """Return whether the stage has completed a homing sequence since power-up.

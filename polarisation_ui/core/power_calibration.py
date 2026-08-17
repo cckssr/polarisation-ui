@@ -211,6 +211,42 @@ class PowerCalibrationProfile:
         return directory / f"{safe}.json"
 
 
+def select_gain_for_power(
+    power_W: float,
+    limits: dict[int, tuple[float, float]],
+    current_stage: int | None = None,
+) -> int | None:
+    """Pick the PDTIA gain stage whose configured power window covers *power_W*.
+
+    *limits* maps gain stage to an inclusive ``(min_W, max_W)`` window — see
+    ``pdtia.gain_auto_switch_power_W`` in config.json. Returns None if *limits*
+    is empty.
+
+    *current_stage* is kept whenever its own window still covers *power_W*,
+    so a reading that sits in the overlap of two adjacent windows doesn't
+    flap the gain back and forth. When several other windows match, the
+    lowest gain stage (least amplification, least saturation risk) wins.
+    When no window contains *power_W*, the stage whose window is nearest is
+    chosen.
+    """
+    if not limits:
+        return None
+    if current_stage is not None and current_stage in limits:
+        lo, hi = limits[current_stage]
+        if lo <= power_W <= hi:
+            return current_stage
+
+    matches = [stage for stage, (lo, hi) in limits.items() if lo <= power_W <= hi]
+    if matches:
+        return min(matches)
+
+    def _distance(stage: int) -> float:
+        lo, hi = limits[stage]
+        return lo - power_W if power_W < lo else power_W - hi
+
+    return min(limits, key=_distance)
+
+
 def select_best_profile_for_device_id(profiles: list[Path], device_id: str) -> Path | None:
     """Pick the newest calibration profile whose filename contains *device_id*.
 

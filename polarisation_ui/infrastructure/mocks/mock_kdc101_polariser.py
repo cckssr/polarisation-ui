@@ -40,8 +40,13 @@ class MockKDC101Polariser:
         self._position_deg = angle_deg
 
     def move_to_logical(self, angle_deg: float, wait: bool = True, timeout: float = 60.0) -> None:
-        """Move to *angle_deg* relative to the current zero offset, like the real driver."""
-        self.move_to((self._zero_offset_deg + angle_deg) % 360.0, wait=wait, timeout=timeout)
+        """Move to *angle_deg* relative to the current zero offset, like the real driver.
+
+        Not wrapped to [0, 360) — mirrors the real KDC101Polariser, which
+        leaves multi-turn targets unwrapped since the PRM1-Z8 rotates
+        continuously.
+        """
+        self.move_to(self._zero_offset_deg + angle_deg, wait=wait, timeout=timeout)
 
     def get_position_deg(self) -> float:
         """Return the current simulated position in degrees."""

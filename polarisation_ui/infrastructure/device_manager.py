@@ -358,7 +358,11 @@ class GoniometerDeviceManager:
         return self.zero_encoder(EncoderID.B)
 
     def set_pdtia_gain(self, stage: int) -> bool:
-        """Set PDTIA discrete gain stage (1–4) via CONF:PDTIA:GAIN."""
+        """Set PDTIA discrete gain stage via CONF:PDTIA:GAIN.
+
+        *stage* is the firmware-native 0-based index (0-3), not the UI-facing
+        1-4 gain number — callers must convert before calling this.
+        """
         device = self.get_encoder_device()
         if device is None:
             return False
@@ -393,7 +397,7 @@ class GoniometerDeviceManager:
             return False
 
     def get_pdtia_gain(self) -> int:
-        """Query current PDTIA gain stage from device; returns 0 if unavailable."""
+        """Query current PDTIA gain stage (firmware-native 0-based); 0 if unavailable."""
         device = self.get_encoder_device()
         if device is None:
             return 0

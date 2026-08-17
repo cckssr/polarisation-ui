@@ -198,7 +198,7 @@ class AutoPowerCalibrationWorker(QThread):
             self.gain_started.emit(gain)
             self.log.emit(f"Gain {gain}: starting ({len(angles)} angles)")
 
-            ok = self._device_manager.set_pdtia_gain(gain)
+            ok = self._device_manager.set_pdtia_gain(gain - 1)  # firmware is 0-based
             if not ok:
                 self.failed.emit(f"Could not set PDTIA gain stage {gain}")
                 return
