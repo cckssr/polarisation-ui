@@ -378,6 +378,34 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="btnGainA_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Automatische Wahl der PD-TIA Verstärkungsstufe</string>
+          </property>
+          <property name="text">
+           <string>AUTO</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -1365,7 +1393,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>Aktueller Nullpunkt-Offset, gesetzt durch "Polarisator Nullen". Wird von Malus- und Verzögerungsplatten-Scans als Referenzwinkel verwendet.</string>
+              <string>Aktueller Nullpunkt-Offset, gesetzt durch &quot;Polarisator Nullen&quot;. Wird von Malus- und Verzögerungsplatten-Scans als Referenzwinkel verwendet.</string>
              </property>
              <property name="text">
               <string>—</string>
@@ -1723,7 +1751,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <layout class="QHBoxLayout" name="hlGainButtons" stretch="1,1,1,1">
+              <layout class="QHBoxLayout" name="hlGainButtons" stretch="1,1,1,1,0">
                <property name="spacing">
                 <number>5</number>
                </property>
@@ -1837,6 +1865,31 @@
                  <attribute name="buttonGroup">
                   <string notr="true">gainButtonGroup</string>
                  </attribute>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnGainA">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
+                 </property>
+                 <property name="text">
+                  <string>AUTO</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
               </layout>

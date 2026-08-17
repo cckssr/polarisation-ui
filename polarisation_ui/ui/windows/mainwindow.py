@@ -35,7 +35,9 @@ from polarisation_ui.core.formatting import fmt_angle, fmt_stat
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
+    load_gain_power_limits,
     select_best_profile_for_device_id,
+    select_gain_for_power,
 )
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
@@ -78,6 +80,9 @@ from polarisation_ui.ui.widgets.tab_registry import TabRegistry
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
 
 CONFIG = import_config()
+
+# Per-gain optical-power windows (W) used by the "AUTO" gain-select buttons.
+_GAIN_POWER_LIMITS = load_gain_power_limits(CONFIG)
 
 # ADC saturation thresholds (ADS1220, PGA=1, Vref=2.048V)
 _ADC_SAT_LOW = 0.02  # V — near GND
@@ -162,6 +167,12 @@ class MainWindow(QMainWindow):
 
         # Gain stage to apply when Arduino next connects (set by session restore).
         self._pending_gain_restore: int = 0
+
+        # AUTO gain-select (btnGainA / btnGainA_2): auto-switch PDTIA gain from
+        # live calibrated power. Off by default each session; last power_W seen
+        # is cached so toggling AUTO on reacts immediately without a new frame.
+        self._gain_auto_enabled: bool = False
+        self._last_power_W: float | None = None
 
         # True after the first successful Save — locks group letter and team name.
         self._prefix_locked: bool = False
@@ -337,6 +348,18 @@ class MainWindow(QMainWindow):
             btn = getattr(self.ui, f"btnGain{stage}_2")
             self._gain_button_group_2.addButton(btn, stage)
         self._gain_button_group_2.idClicked.connect(self._on_gain_button_clicked)
+
+        # AUTO gain-select toggle (mirrored between main panel and sidebar)
+        if not _GAIN_POWER_LIMITS:
+            tooltip = (
+                "Keine Grenzwerte konfiguriert (pdtia.gain_auto_switch_power_W in config.json)."
+            )
+            self.ui.btnGainA.setEnabled(False)
+            self.ui.btnGainA.setToolTip(tooltip)
+            self.ui.btnGainA_2.setEnabled(False)
+            self.ui.btnGainA_2.setToolTip(tooltip)
+        self.ui.btnGainA.toggled.connect(self._on_gain_auto_toggled)
+        self.ui.btnGainA_2.toggled.connect(self._on_gain_auto_toggled)
 
         # PDTIA device ID selector
         self.ui.cbPdtiaID.currentIndexChanged.connect(self._on_pdtia_id_changed)
@@ -1069,7 +1092,14 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def _on_gain_button_clicked(self, stage: int) -> None:
-        """Set PDTIA gain stage on the device and visually select both button groups."""
+        """Set PDTIA gain stage on the device and visually select both button groups.
+
+        A manual click always turns AUTO off — an explicit stage choice by the
+        user overrides automatic selection.
+        """
+        if self._gain_auto_enabled:
+            self._gain_auto_enabled = False
+            self._sync_gain_auto_visual(False)
         ok = self.data_controller.set_pdtia_gain(stage)
         if not ok:
             self._clear_gain_visual()
@@ -1097,10 +1127,55 @@ class MainWindow(QMainWindow):
                 checked.setChecked(False)
                 grp.setExclusive(True)
 
+    @Slot(bool)
+    def _on_gain_auto_toggled(self, checked: bool) -> None:
+        """Handle btnGainA/btnGainA_2.
+
+        Manual gain buttons stay enabled and clickable while AUTO is on — a
+        manual click overrides it (see _on_gain_button_clicked). Turning AUTO
+        on applies the auto-selected gain immediately from the last known power.
+        """
+        self._gain_auto_enabled = checked
+        self._sync_gain_auto_visual(checked)
+        if checked:
+            self._maybe_auto_switch_gain()
+
+    def _sync_gain_auto_visual(self, checked: bool) -> None:
+        """Mirror the AUTO checked state between the main panel and sidebar buttons."""
+        for btn in (self.ui.btnGainA, self.ui.btnGainA_2):
+            if btn.isChecked() != checked:
+                btn.blockSignals(True)
+                btn.setChecked(checked)
+                btn.blockSignals(False)
+
+    def _maybe_auto_switch_gain(self, power_W: float | None = None) -> None:
+        """Switch PDTIA gain to match *power_W* (or the last known reading) per config limits.
+
+        No-op while a KDC zero-find is running (it drives gain deliberately for
+        its coarse/fine extinction search) or while no calibrated power is
+        available yet (e.g. no calibration profile loaded).
+        """
+        if self._kdc_zero_worker is not None or not _GAIN_POWER_LIMITS:
+            return
+        if power_W is None:
+            power_W = self._last_power_W
+        if power_W is None or math.isnan(power_W):
+            return
+        current = self.data_controller.pdtia_gain or None
+        target = select_gain_for_power(power_W, _GAIN_POWER_LIMITS, current)
+        if target is None or target == current:
+            return
+        ok = self.data_controller.set_pdtia_gain(target)
+        if ok:
+            self._sync_gain_visual(target)
+            self._schedule_state_save()
+            self.statusbar_manager.show_info(f"PDTIA Gain automatisch auf Stufe {target} gesetzt")
+
     # ==================== Power / Wattage Display ====================
 
     @Slot(float)
     def _update_wattage_display(self, power_W: float) -> None:
+        self._last_power_W = power_W
         if math.isnan(power_W):
             self.ui.lcdDetectorPower.display("----")
             self.ui.lcdDetectorPower_2.display("----")
@@ -1108,6 +1183,8 @@ class MainWindow(QMainWindow):
             power_uw = power_W * 1e6
             self.ui.lcdDetectorPower.display(fmt_stat(power_uw))
             self.ui.lcdDetectorPower_2.display(fmt_stat(power_uw))
+            if self._gain_auto_enabled:
+                self._maybe_auto_switch_gain(power_W)
 
     # ==================== Calibration Profile Management ====================
 

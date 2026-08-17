@@ -315,9 +315,7 @@ class Ui_MalusTab(object):
         # if QT_CONFIG(tooltip)
         self.spinPolariser.setToolTip(
             QCoreApplication.translate(
-                "MalusTab",
-                "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)",
-                None,
+                "MalusTab", "Polarisatorwinkel (fest f\u00fcr die gesamte Messreihe)", None
             )
         )
         # endif // QT_CONFIG(tooltip)

@@ -276,6 +276,16 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.btnGain4_2)
 
+        self.btnGainA_2 = QPushButton(self.centralwidget)
+        self.btnGainA_2.setObjectName("btnGainA_2")
+        sizePolicy2.setHeightForWidth(self.btnGainA_2.sizePolicy().hasHeightForWidth())
+        self.btnGainA_2.setSizePolicy(sizePolicy2)
+        self.btnGainA_2.setMaximumSize(QSize(100, 16777215))
+        self.btnGainA_2.setCheckable(True)
+        self.btnGainA_2.setChecked(False)
+
+        self.horizontalLayout_2.addWidget(self.btnGainA_2)
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
 
         self.verticalSpacer = QSpacerItem(
@@ -1019,6 +1029,15 @@ class Ui_MainWindow(object):
 
         self.hlGainButtons.addWidget(self.btnGain4)
 
+        self.btnGainA = QPushButton(self.gbDetector)
+        self.btnGainA.setObjectName("btnGainA")
+        sizePolicy2.setHeightForWidth(self.btnGainA.sizePolicy().hasHeightForWidth())
+        self.btnGainA.setSizePolicy(sizePolicy2)
+        self.btnGainA.setMaximumSize(QSize(100, 16777215))
+        self.btnGainA.setCheckable(True)
+
+        self.hlGainButtons.addWidget(self.btnGainA)
+
         self.hlGainButtons.setStretch(0, 1)
         self.hlGainButtons.setStretch(1, 1)
         self.hlGainButtons.setStretch(2, 1)
@@ -1379,9 +1398,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.lcdSampleAngle.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Aktueller Winkel der Proben-Rotationsstage (\u00b0)",
-                None,
+                "MainWindow", "Aktueller Winkel der Proben-Rotationsstage (\u00b0)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1391,9 +1408,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.lcdDetectorStageAngle.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Aktueller Winkel der Detektor-Rotationsstage (\u00b0)",
-                None,
+                "MainWindow", "Aktueller Winkel der Detektor-Rotationsstage (\u00b0)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1423,9 +1438,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnGain1_2.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "PD-TIA Verst\u00e4rkungsstufe 1 (niedrigste Empfindlichkeit)",
-                None,
+                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 1 (niedrigste Empfindlichkeit)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1445,13 +1458,19 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnGain4_2.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "PD-TIA Verst\u00e4rkungsstufe 4 (h\u00f6chste Empfindlichkeit)",
-                None,
+                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 4 (h\u00f6chste Empfindlichkeit)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain4_2.setText(QCoreApplication.translate("MainWindow", "4", None))
+        # if QT_CONFIG(tooltip)
+        self.btnGainA_2.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Automatische Wahl der PD-TIA Verst\u00e4rkungsstufe", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnGainA_2.setText(QCoreApplication.translate("MainWindow", "AUTO", None))
         self.groupBox.setTitle(
             QCoreApplication.translate("MainWindow", "Messungseinstellung", None)
         )
@@ -1459,9 +1478,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.leSuffix.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Ein benutzerdefiniertes Suffix mit maximal 20 Zeichen",
-                None,
+                "MainWindow", "Ein benutzerdefiniertes Suffix mit maximal 20 Zeichen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1579,9 +1596,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnSampleZero.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Aktuellen Winkel als Nullpunkt (0\u00b0) setzen (Encoder A)",
-                None,
+                "MainWindow", "Aktuellen Winkel als Nullpunkt (0\u00b0) setzen (Encoder A)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1649,9 +1664,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnKDCOffsetReset.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Gespeicherten Nullpunkt-Offset auf 0\u00b0 zur\u00fccksetzen",
-                None,
+                "MainWindow", "Gespeicherten Nullpunkt-Offset auf 0\u00b0 zur\u00fccksetzen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1750,9 +1763,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.lblDarkOffsetValue.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Aktuell abgezogener Dunkelstrom-Offset in Millivolt",
-                None,
+                "MainWindow", "Aktuell abgezogener Dunkelstrom-Offset in Millivolt", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1762,9 +1773,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnGain1.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "PD-TIA Verst\u00e4rkungsstufe 1 (niedrigste Empfindlichkeit)",
-                None,
+                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 1 (niedrigste Empfindlichkeit)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
@@ -1784,13 +1793,19 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnGain4.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "PD-TIA Verst\u00e4rkungsstufe 4 (h\u00f6chste Empfindlichkeit)",
-                None,
+                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 4 (h\u00f6chste Empfindlichkeit)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
         self.btnGain4.setText(QCoreApplication.translate("MainWindow", "4", None))
+        # if QT_CONFIG(tooltip)
+        self.btnGainA.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "PD-TIA Verst\u00e4rkungsstufe 4 (h\u00f6chste Empfindlichkeit)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnGainA.setText(QCoreApplication.translate("MainWindow", "AUTO", None))
         # if QT_CONFIG(tooltip)
         self.cbPdtiaAveragesOn.setToolTip(
             QCoreApplication.translate(
@@ -1855,9 +1870,7 @@ class Ui_MainWindow(object):
         # if QT_CONFIG(tooltip)
         self.btnDetectorStageZero.setToolTip(
             QCoreApplication.translate(
-                "MainWindow",
-                "Aktuellen Winkel als Nullpunkt (0\u00b0) setzen (Encoder B)",
-                None,
+                "MainWindow", "Aktuellen Winkel als Nullpunkt (0\u00b0) setzen (Encoder B)", None
             )
         )
         # endif // QT_CONFIG(tooltip)

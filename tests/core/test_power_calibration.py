@@ -7,6 +7,7 @@ in-memory as Path objects (the function never touches disk itself).
 from pathlib import Path
 
 from polarisation_ui.core.power_calibration import (
+    load_gain_power_limits,
     select_best_profile_for_device_id,
     select_gain_for_power,
 )
@@ -76,3 +77,24 @@ class TestSelectGainForPower:
         profiles = _paths("20250101_DET-A", "20260101_DET-B")
         best = select_best_profile_for_device_id(profiles, "DET-A")
         assert best.stem == "20250101_DET-A"
+
+
+class TestLoadGainPowerLimits:
+    def test_parses_valid_entries(self):
+        config = {"pdtia": {"gain_auto_switch_power_W": {"1": {"min": 1e-4, "max": 1.0}}}}
+        assert load_gain_power_limits(config) == {1: (1e-4, 1.0)}
+
+    def test_missing_section_returns_empty(self):
+        assert load_gain_power_limits({}) == {}
+
+    def test_skips_malformed_entries(self):
+        config = {
+            "pdtia": {
+                "gain_auto_switch_power_W": {
+                    "1": {"min": 1e-4, "max": 1.0},
+                    "bad": {"min": "x", "max": 1.0},
+                    "2": {"min": 1.0},
+                }
+            }
+        }
+        assert load_gain_power_limits(config) == {1: (1e-4, 1.0)}

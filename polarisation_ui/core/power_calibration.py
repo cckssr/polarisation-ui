@@ -247,6 +247,24 @@ def select_gain_for_power(
     return min(limits, key=_distance)
 
 
+def load_gain_power_limits(config: dict) -> dict[int, tuple[float, float]]:
+    """Parse ``pdtia.gain_auto_switch_power_W`` out of an already-loaded config dict.
+
+    Expected shape: ``{"pdtia": {"gain_auto_switch_power_W": {"1": {"min": .., "max": ..}, ...}}}``.
+    Malformed entries (bad stage key, missing/non-numeric min or max) are skipped.
+    Takes the config dict rather than reading config.json itself, keeping this
+    module free of file I/O.
+    """
+    raw = config.get("pdtia", {}).get("gain_auto_switch_power_W", {})
+    limits: dict[int, tuple[float, float]] = {}
+    for key, bounds in raw.items():
+        try:
+            limits[int(key)] = (float(bounds["min"]), float(bounds["max"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return limits
+
+
 def select_best_profile_for_device_id(profiles: list[Path], device_id: str) -> Path | None:
     """Pick the newest calibration profile whose filename contains *device_id*.
 
