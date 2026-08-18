@@ -70,6 +70,22 @@ Light source → Polariser (Encoder A) → Sample/medium → Analyser (Encoder B
 
 Encoder B is mechanically linked so that a complete detector scan corresponds to a full polarisation state sweep.
 
+### Ellipsometry
+
+The bench doubles as a rotating-analyser ellipsometer (RAE): fixed polariser (azimuth `P`) → sample at angle of incidence `θ` → rotating analyser (KDC101, optionally rotated by hand) → photodetector. The analyser intensity is a two-harmonic function of its azimuth `A`:
+
+```math
+I(A) = I₀ · [1 + α·cos(2A) + β·sin(2A)]
+```
+
+fit exactly (linear least squares, no iterative solver) to recover `α, β`, then converted to the ellipsometric angles:
+
+```math
+tan(Ψ) = √((1+α)/(1-α)) · |tan(P)|,   cos(Δ) = β / √(1-α²)
+```
+
+A rotating-analyser ellipsometer only measures `cos(Δ)`, so the sign of `Δ` is fundamentally undetermined (a compensator would be needed to resolve it) — this is surfaced in the tab and in export metadata, not hidden. `(Ψ, Δ)` at one angle of incidence inverts in closed form to a pseudo refractive index `(n, k)` for a bare sample; a series across several angles of incidence (set by hand, since the sample/detector arm are not motorised) additionally fits a 3-phase ambient/film/substrate model for thickness and film index, reporting alternative thickness solutions where the single-wavelength measurement is periodically ambiguous. See `polarisation_ui/core/ellipsometry.py` for the full derivation and `EllipsometryTab` for the workflow.
+
 ---
 
 ## Installation
@@ -202,7 +218,7 @@ Qt signals: angles_updated, intensity_updated, diagnostics_updated,
             error_occurred, retry_connecting, reconnect_succeeded,
             connection_lost, measurement_started/stopped
   ↓
-MainWindow, PlotTabBase subclasses (MalusTab, BrewsterTab, WaveplateTab)
+MainWindow, PlotTabBase subclasses (MalusTab, BrewsterTab, WaveplateTab, EllipsometryTab)
 ```
 
 ### Testing
@@ -284,6 +300,7 @@ Version is kept in sync across three files automatically:
 - **Malus's Law** — `I = I₀ cos²(θ)`: live cos² fit, peak readout, manual point capture to measurement table, CSV export
 - **Brewster's Angle** tab — sample scan, intensity vs. angle display, p/s polarisation selection
 - **Wave Plate (λ/4, λ/2)** tab — KDC101-driven automated angle sweep; records averaged intensity vs. waveplate angle; exports with `qwp`/`hwp` filename token and sweep metadata
+- **Ellipsometry** tab — rotating-analyser ellipsometry (RAE): manual or KDC101-driven analyser sweep at a hand-set angle of incidence, live `I(A) = I₀(1 + α·cos2A + β·sin2A)` fit → (Ψ, Δ) per AOI, multi-AOI series with pseudo-(n, k), and a bare-substrate / film-on-substrate optical-model fit (see [Ellipsometry](#ellipsometry) below)
 - **KDC101 motorised stage** — pylablib driver (`KDC101Polariser`): connect by serial number, home, move_to, get_position_deg, enable; `KDC101ModuleAdapter` wires it into `ModuleRegistry`; `MockKDC101Polariser` for headless tests
 - **Plot-Tab extensibility** — `PlotTabBase` + `TabRegistry`; new experiments register as subclasses in `ui/widgets/tabs/`
 - **Session journal** — append-only CSV autosave with `fsync` for crash-safe data recovery
@@ -291,19 +308,18 @@ Version is kept in sync across three files automatically:
 
 ### Planned: Additional Polarisation Experiments
 
-Brewster's angle and wave plates (λ/4, λ/2) are already implemented — see
-`BrewsterTab` / `WaveplateTab` in the Implemented list above. Each experiment
-below is a still-planned `PlotTabBase` subclass to be registered in
-`polarisation_ui/ui/widgets/tabs/`. All would work in manual mode immediately;
-automated scanning can reuse the KDC101-driven sweep pattern already
-implemented in `WaveplateTab`.
+Brewster's angle, wave plates (λ/4, λ/2), and ellipsometry are already
+implemented — see `BrewsterTab` / `WaveplateTab` / `EllipsometryTab` in the
+Implemented list above. Each experiment below is a still-planned
+`PlotTabBase` subclass to be registered in `polarisation_ui/ui/widgets/tabs/`.
+All would work in manual mode immediately; automated scanning can reuse the
+KDC101-driven sweep pattern already implemented in `WaveplateTab`.
 
 | Experiment                                      | Physics                         | Key Observable                                                                       |
 | ----------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------ |
 | **Optical Rotation (chiral media)**             | Biot: `[α] = α / (l·c)`         | Specific rotation of sugar solutions at varying concentration                        |
 | **Fresnel Coefficients**                        | `Rs`, `Rp` vs incidence angle   | Experimental verification with adjustable refractive-index fit overlay               |
 | **Birefringence / wave plate characterisation** | Retardance `Γ` from ellipticity | Characterise unknown wave plates beyond fixed λ/4, λ/2 (full-wave, custom retarders) |
-| **Basic Ellipsometry**                          | `Δ`, `Ψ` → film thickness       | Thin film characterisation via Drude approximation                                   |
 
 #### Optical Rotation (Detail)
 

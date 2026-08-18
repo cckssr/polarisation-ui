@@ -10,6 +10,7 @@
         "../brewster_tab.ui",
         "../waveplate_tab.ui",
         "../power_drift_tab.ui",
-        "../mock_mainwindow.py"
+        "../mock_mainwindow.py",
+        "../ellipsometry_tab.ui"
     ]
 }

@@ -11,6 +11,7 @@
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/brewster_tab.ui -o ./polarisation_ui/pyqt/ui_brewster_tab.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/waveplate_tab.ui -o ./polarisation_ui/pyqt/ui_waveplate_tab.py
 .venv/bin/pyside6-uic ./polarisation_ui/pyqt/power_drift_tab.ui -o ./polarisation_ui/pyqt/ui_power_drift_tab.py
+.venv/bin/pyside6-uic ./polarisation_ui/pyqt/ellipsometry_tab.ui -o ./polarisation_ui/pyqt/ui_ellipsometry_tab.py
 
 .venv/bin/ruff format ./polarisation_ui/pyqt/ui_*.py
 

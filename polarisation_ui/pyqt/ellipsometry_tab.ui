@@ -1,0 +1,1243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EllipsometryTab</class>
+ <widget class="QWidget" name="EllipsometryTab">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1218</width>
+    <height>1072</height>
+   </rect>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="2,0" columnstretch="2,0">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QSplitter" name="plotSplitter">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <widget class="EllipsometryFitPlot" name="fitPlot" native="true"/>
+     <widget class="EllipsometryCurvePlot" name="ellipsoCurvePlot" native="true"/>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QTableWidget" name="seriesTable">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>120</height>
+      </size>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>θ (°)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Ψ (°)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Δ (°)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>n</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>k</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>N</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>RMS (µW)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>m</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item row="0" column="1" rowspan="2">
+    <widget class="QScrollArea" name="rightScroll">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::NoFrame</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="rightScrollContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>-275</y>
+        <width>371</width>
+        <height>1320</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="rightLayout">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>4</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>4</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="gbLive">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Aktuell</string>
+         </property>
+         <layout class="QFormLayout" name="formLive">
+          <property name="verticalSpacing">
+           <number>2</number>
+          </property>
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblLiveIntensityLabel">
+            <property name="text">
+             <string>I:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="lblLiveIntensity">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblLivePowerLabel">
+            <property name="text">
+             <string>P:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="lblLivePower">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblLiveAoiLabel">
+            <property name="text">
+             <string>AOI θ:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="lblLiveAoi">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblLiveDetectorLabel">
+            <property name="text">
+             <string>Detektorarm:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="lblLiveDetector">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="lblSpecularErrorLabel">
+            <property name="text">
+             <string>Spiegel-Fehler:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="lblSpecularError">
+            <property name="toolTip">
+             <string>Abweichung des Detektorarms von 2·θ (Spiegelbedingung) — großer Wert deutet auf eine Fehljustage hin</string>
+            </property>
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="lblKDCPositionLabel">
+            <property name="text">
+             <string>Analysator-Position:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="lblKDCPosition">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbSetup">
+         <property name="title">
+          <string>Konfiguration</string>
+         </property>
+         <layout class="QFormLayout" name="formSetup">
+          <property name="verticalSpacing">
+           <number>4</number>
+          </property>
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblWavelength">
+            <property name="text">
+             <string>Wellenlänge λ:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="spinWavelength">
+            <property name="toolTip">
+             <string>Beleuchtungswellenlänge — geht in das Dünnschicht-Modell ein (d/λ)</string>
+            </property>
+            <property name="suffix">
+             <string> nm</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>200.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>2000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>532.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblPolariser">
+            <property name="text">
+             <string>Polarisator P:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="spinPolariser">
+            <property name="toolTip">
+             <string>Polarisatorazimut relativ zur Einfallsebene — 45° maximiert die RAE-Empfindlichkeit; darf nicht 0° oder 90° sein</string>
+            </property>
+            <property name="suffix">
+             <string> °</string>
+            </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>45.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblAnalyserOffset">
+            <property name="text">
+             <string>Analysator-Offset A₀:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QDoubleSpinBox" name="spinAnalyserOffset">
+            <property name="toolTip">
+             <string>Azimut = KDC-Winkel (logisch) + dieser Offset. Der KDC-Nullpunkt referenziert auf den Polarisator, nicht auf die Einfallsebene — Standardwert P+90° (Auslöschung des Geradeausstrahls), bei Bedarf hier korrigieren</string>
+            </property>
+            <property name="suffix">
+             <string> °</string>
+            </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>135.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblAmbientIndex">
+            <property name="text">
+             <string>Umgebung n₀:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="spinAmbientIndex">
+            <property name="toolTip">
+             <string>Brechungsindex des Umgebungsmediums (Luft ≈ 1.0003)</string>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="minimum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>2.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.000100000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000300000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="lblKdcZeroOffsetLabel">
+            <property name="text">
+             <string>KDC-Nullpunkt:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="lblKdcZeroOffset">
+            <property name="toolTip">
+             <string>Aktueller kdc.zero_offset_deg aus der Konfiguration (Referenzierung auf den Polarisator)</string>
+            </property>
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QPushButton" name="btnSetAoiZero">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Aktuelle Proben- und Detektorarm-Winkel als Geradeausstrahl-Referenz (AOI = 0°) übernehmen</string>
+            </property>
+            <property name="text">
+             <string>AOI-Nullpunkt setzen</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbSweep">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="title">
+          <string>Automatischer Scan (KDC101)</string>
+         </property>
+         <layout class="QVBoxLayout" name="vboxSweep">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="cbAnalyserPlaced">
+            <property name="toolTip">
+             <string>Bestätigen, dass der Analysator im Strahlengang eingesetzt ist</string>
+            </property>
+            <property name="text">
+             <string>Analysator eingesetzt</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formSweepParams">
+            <property name="verticalSpacing">
+             <number>3</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblSweepStart">
+              <property name="text">
+               <string>Von (°):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="spinSweepStart">
+              <property name="toolTip">
+               <string>Startwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
+              </property>
+              <property name="suffix">
+               <string> °</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>360.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblSweepEnd">
+              <property name="text">
+               <string>Bis (°):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="spinSweepEnd">
+              <property name="toolTip">
+               <string>Endwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
+              </property>
+              <property name="suffix">
+               <string> °</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>360.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>180.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblSweepStep">
+              <property name="text">
+               <string>Schritt (°):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QDoubleSpinBox" name="spinSweepStep">
+              <property name="toolTip">
+               <string>Schrittweite des Analysator-Scans (°)</string>
+              </property>
+              <property name="suffix">
+               <string> °</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>90.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.500000000000000</double>
+              </property>
+              <property name="value">
+               <double>5.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblSettleMs">
+              <property name="text">
+               <string>Einschwingzeit:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QSpinBox" name="spinSettleMs">
+              <property name="toolTip">
+               <string>Wartezeit nach jedem Analysator-Schritt vor der Mittelung (ms)</string>
+              </property>
+              <property name="suffix">
+               <string> ms</string>
+              </property>
+              <property name="minimum">
+               <number>0</number>
+              </property>
+              <property name="maximum">
+               <number>5000</number>
+              </property>
+              <property name="singleStep">
+               <number>50</number>
+              </property>
+              <property name="value">
+               <number>150</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnStartSweep">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Automatischen Analysator-Scan starten (erneutes Homing nur falls nötig)</string>
+            </property>
+            <property name="text">
+             <string>Scan starten</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAbortSweep">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Laufenden automatischen Scan sofort abbrechen</string>
+            </property>
+            <property name="text">
+             <string>Abbrechen</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbManual">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="title">
+          <string>Manueller Analysatorpunkt</string>
+         </property>
+         <layout class="QVBoxLayout" name="vboxManual">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <layout class="QFormLayout" name="formManual">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblAnalyserManual">
+              <property name="text">
+               <string>Analysator (logisch):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="spinAnalyserManual">
+              <property name="toolTip">
+               <string>Logischer KDC-Winkel für diesen Einzelpunkt (Analysator per Hand gedreht)</string>
+              </property>
+              <property name="suffix">
+               <string> °</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-360.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>360.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAddPoint">
+            <property name="toolTip">
+             <string>Aktuellen Analysatorwinkel mit gemittelter Leistung zum Sweep-Puffer hinzufügen</string>
+            </property>
+            <property name="text">
+             <string>Punkt hinzufügen</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnClearSweep">
+            <property name="toolTip">
+             <string>Sweep-Puffer der aktuellen AOI-Messung leeren (ohne die Serie zu verändern)</string>
+            </property>
+            <property name="text">
+             <string>Sweep-Puffer leeren</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbResult">
+         <property name="title">
+          <string>Fit-Ergebnis (aktuelle AOI)</string>
+         </property>
+         <layout class="QVBoxLayout" name="vboxResult">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <layout class="QFormLayout" name="formResult">
+            <property name="verticalSpacing">
+             <number>2</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblAlphaLabel">
+              <property name="text">
+               <string>α:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="lblAlpha">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblBetaLabel">
+              <property name="text">
+               <string>β:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="lblBeta">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblI0Label">
+              <property name="text">
+               <string>I₀:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLabel" name="lblI0">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblResidualLabel">
+              <property name="text">
+               <string>Residuum:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="lblResidual">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="lblModulationLabel">
+              <property name="text">
+               <string>Modulation m:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="lblModulation">
+              <property name="toolTip">
+               <string>sqrt(α²+β²) — muss &lt; 1 sein, sonst ist der Fit unphysikalisch</string>
+              </property>
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="lblPsiLabel">
+              <property name="text">
+               <string>Ψ:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="lblPsi">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="lblDeltaLabel">
+              <property name="text">
+               <string>Δ:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QLabel" name="lblDelta">
+              <property name="toolTip">
+               <string>Nur cos(Δ) wird gemessen — das Vorzeichen von Δ ist prinzipiell unbestimmt</string>
+              </property>
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QLabel" name="lblNPseudoLabel">
+              <property name="text">
+               <string>n (pseudo):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QLabel" name="lblNPseudo">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="0">
+             <widget class="QLabel" name="lblKPseudoLabel">
+              <property name="text">
+               <string>k (pseudo):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLabel" name="lblKPseudo">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAcceptPoint">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Aktuellen Fit als Messpunkt dieser AOI in die Ψ(θ)/Δ(θ)-Serie übernehmen und den Sweep-Puffer für die nächste AOI leeren</string>
+            </property>
+            <property name="text">
+             <string>In Serie übernehmen</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbModel">
+         <property name="title">
+          <string>Optisches Modell</string>
+         </property>
+         <layout class="QVBoxLayout" name="vboxModel">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item>
+           <layout class="QFormLayout" name="formModel">
+            <property name="verticalSpacing">
+             <number>3</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblModelType">
+              <property name="text">
+               <string>Modell:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="cmbModel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>2-Phasen: Probe als Substrat behandeln (Pseudo-n,k). 3-Phasen: Schichtdicke und -index auf bekanntem Substrat fitten</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>Substrat (2-Phasen)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Schicht auf Substrat (3-Ph.)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblSubstrateN">
+              <property name="text">
+               <string>Substrat n:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="spinSubstrateN">
+              <property name="toolTip">
+               <string>Bekannter Brechungsindex des Substrats bei λ (Standard: Silizium bei 632.8 nm)</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>3.880000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblSubstrateK">
+              <property name="text">
+               <string>Substrat k:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QDoubleSpinBox" name="spinSubstrateK">
+              <property name="toolTip">
+               <string>Bekannter Extinktionskoeffizient des Substrats bei λ</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>0.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.020000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblDMin">
+              <property name="text">
+               <string>d-Suchbereich:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <layout class="QHBoxLayout" name="hboxDRange">
+              <item>
+               <widget class="QDoubleSpinBox" name="spinDMin">
+                <property name="suffix">
+                 <string> nm</string>
+                </property>
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="minimum">
+                 <double>0.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spinDMax">
+                <property name="suffix">
+                 <string> nm</string>
+                </property>
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="minimum">
+                 <double>0.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="lblNfMin">
+              <property name="text">
+               <string>n-Suchbereich:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <layout class="QHBoxLayout" name="hboxNRange">
+              <item>
+               <widget class="QDoubleSpinBox" name="spinNfMin">
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.200000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spinNfMax">
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>3.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="cbFitK">
+            <property name="toolTip">
+             <string>Absorption k der Schicht mitfitten (grobes festes Raster, 0…2) — für transparente Schichten (k=0) deaktiviert lassen, sonst ist das Problem unterbestimmt</string>
+            </property>
+            <property name="text">
+             <string>k der Schicht mitfitten</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnFitModel">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Optisches Modell an die gesamte Ψ(θ)/Δ(θ)-Serie anpassen (mindestens 1 AOI-Punkt erforderlich)</string>
+            </property>
+            <property name="text">
+             <string>Modell fitten</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formModelResult">
+            <property name="verticalSpacing">
+             <number>2</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblThicknessLabel">
+              <property name="text">
+               <string>Dicke d:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="lblThickness">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblNFilmLabel">
+              <property name="text">
+               <string>n (Schicht):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="lblNFilm">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblKFilmLabel">
+              <property name="text">
+               <string>k (Schicht):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLabel" name="lblKFilm">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblMSELabel">
+              <property name="text">
+               <string>MSE:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="lblMSE">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblBranches">
+            <property name="toolTip">
+             <string>Alternative Schichtdicken-Lösungen (Perioden-Mehrdeutigkeit bei einer Wellenlänge) — durch weitere AOI-Punkte auflösbar</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnDeleteSelected">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Markierte AOI-Zeile aus der Serie löschen</string>
+         </property>
+         <property name="text">
+          <string>Ausgewählte AOI löschen</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnDeleteLast">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Letzte AOI-Zeile aus der Serie löschen</string>
+         </property>
+         <property name="text">
+          <string>Letzte AOI löschen</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnClear">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Gesamte Serie löschen</string>
+         </property>
+         <property name="text">
+          <string>Alle löschen</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>EllipsometryFitPlot</class>
+   <extends>QWidget</extends>
+   <header>polarisation_ui.ui.widgets.ellipsometry_fit_plot</header>
+  </customwidget>
+  <customwidget>
+   <class>EllipsometryCurvePlot</class>
+   <extends>QWidget</extends>
+   <header>polarisation_ui.ui.widgets.ellipsometry_curve_plot</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

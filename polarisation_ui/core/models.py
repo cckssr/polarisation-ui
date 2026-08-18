@@ -103,6 +103,39 @@ class MalusPoint:
 
 
 @dataclass
+class EllipsometryPoint:
+    """One raw analyser-sweep sample within a single angle-of-incidence measurement."""
+
+    analyser_angle: float  # logical KDC101 angle (before spinAnalyserOffset correction)
+    azimuth_deg: float  # analyser azimuth relative to the plane of incidence
+    intensity_V: float
+    power_W: float | None = None
+    pdtia_gain: int = 0
+    conv_factor_W_per_V: float | None = None
+    aoi_deg: float = float("nan")
+    detector_angle: float = float("nan")
+
+
+@dataclass
+class EllipsometrySeriesPoint:
+    """One completed angle-of-incidence measurement: an RAE fit plus its raw samples."""
+
+    aoi_deg: float
+    psi_deg: float
+    delta_deg: float
+    i0: float
+    alpha: float
+    beta: float
+    residual_rms: float
+    modulation: float
+    n_pseudo: float
+    k_pseudo: float
+    wavelength_nm: float
+    polariser_azimuth_deg: float
+    samples: list[EllipsometryPoint] = field(default_factory=list)
+
+
+@dataclass
 class TabExport:
     """Bundle returned by a tab's build_export() for schema-agnostic CSV writing."""
 
