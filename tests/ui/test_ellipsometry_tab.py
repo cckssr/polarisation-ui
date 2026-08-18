@@ -465,6 +465,9 @@ def test_fit_model_three_phase_recovers_thickness(tab):
     tab.on_measurement_started()
     tab.on_frame(_make_frame(1000, power_W=1e-6, conv_factor_W_per_V=2e-6))
     tab._ui.spinPolariser.setValue(45.0)
+    # Explicit, independent of whatever default ellipsometry_tab.ui ships --
+    # the tab's own spinWavelength value must match what generated the data.
+    tab._ui.spinWavelength.setValue(632.8)
     for aoi_val in (45.0, 55.0, 65.0, 75.0):
         psi_true, delta_true = psi_delta_three_phase(aoi_val, 632.8, 120.0, 1.46, 0.0, 3.88, 0.02)
         _feed_harmonic_points(

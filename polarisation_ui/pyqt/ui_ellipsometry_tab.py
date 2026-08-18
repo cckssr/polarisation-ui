@@ -124,6 +124,8 @@ class Ui_EllipsometryTab(object):
         sizePolicy.setHeightForWidth(self.rightScroll.sizePolicy().hasHeightForWidth())
         self.rightScroll.setSizePolicy(sizePolicy)
         self.rightScroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.rightScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.rightScroll.setWidgetResizable(True)
         self.rightScrollContents = QWidget()
         self.rightScrollContents.setObjectName("rightScrollContents")
