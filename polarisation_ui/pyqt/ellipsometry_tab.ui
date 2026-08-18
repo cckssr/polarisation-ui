@@ -102,6 +102,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="minimumWidth">
+      <number>340</number>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Shape::NoFrame</enum>
      </property>
@@ -157,6 +160,9 @@
           <string>Aktuell</string>
          </property>
          <layout class="QFormLayout" name="formLive">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
           <property name="verticalSpacing">
            <number>2</number>
           </property>
@@ -268,6 +274,9 @@
           <string>Konfiguration</string>
          </property>
          <layout class="QFormLayout" name="formSetup">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
           <property name="verticalSpacing">
            <number>4</number>
           </property>
@@ -292,6 +301,9 @@
           </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="spinWavelength">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
             <property name="toolTip">
              <string>Beleuchtungswellenlänge — geht in das Dünnschicht-Modell ein (d/λ)</string>
             </property>
@@ -321,6 +333,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="spinPolariser">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
             <property name="toolTip">
              <string>Polarisatorazimut relativ zur Einfallsebene — 45° maximiert die RAE-Empfindlichkeit; darf nicht 0° oder 90° sein</string>
             </property>
@@ -353,6 +368,9 @@
           </item>
           <item row="2" column="1">
            <widget class="QDoubleSpinBox" name="spinAnalyserOffset">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
             <property name="toolTip">
              <string>Azimut = KDC-Winkel (logisch) + dieser Offset. Der KDC-Nullpunkt referenziert auf den Polarisator, nicht auf die Einfallsebene — Standardwert P+90° (Auslöschung des Geradeausstrahls), bei Bedarf hier korrigieren</string>
             </property>
@@ -385,6 +403,9 @@
           </item>
           <item row="3" column="1">
            <widget class="QDoubleSpinBox" name="spinAmbientIndex">
+            <property name="maximumWidth">
+             <number>70</number>
+            </property>
             <property name="toolTip">
              <string>Brechungsindex des Umgebungsmediums (Luft ≈ 1.0003)</string>
             </property>
@@ -474,6 +495,9 @@
           </item>
           <item>
            <layout class="QFormLayout" name="formSweepParams">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
             <property name="verticalSpacing">
              <number>3</number>
             </property>
@@ -486,6 +510,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepStart">
+            <property name="maximumWidth">
+             <number>80</number>
+            </property>
               <property name="toolTip">
                <string>Startwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
               </property>
@@ -515,6 +542,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepEnd">
+            <property name="maximumWidth">
+             <number>80</number>
+            </property>
               <property name="toolTip">
                <string>Endwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
               </property>
@@ -544,6 +574,9 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepStep">
+            <property name="maximumWidth">
+             <number>80</number>
+            </property>
               <property name="toolTip">
                <string>Schrittweite des Analysator-Scans (°)</string>
               </property>
@@ -576,6 +609,9 @@
             </item>
             <item row="3" column="1">
              <widget class="QSpinBox" name="spinSettleMs">
+            <property name="maximumWidth">
+             <number>80</number>
+            </property>
               <property name="toolTip">
                <string>Wartezeit nach jedem Analysator-Schritt vor der Mittelung (ms)</string>
               </property>
@@ -650,6 +686,9 @@
           </property>
           <item>
            <layout class="QFormLayout" name="formManual">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
             <item row="0" column="0">
              <widget class="QLabel" name="lblAnalyserManual">
               <property name="text">
@@ -659,6 +698,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="spinAnalyserManual">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
               <property name="toolTip">
                <string>Logischer KDC-Winkel für diesen Einzelpunkt (Analysator per Hand gedreht)</string>
               </property>
@@ -727,6 +769,9 @@
           </property>
           <item>
            <layout class="QFormLayout" name="formResult">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
             <property name="verticalSpacing">
              <number>2</number>
             </property>
@@ -900,6 +945,9 @@
           </property>
           <item>
            <layout class="QFormLayout" name="formModel">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
             <property name="verticalSpacing">
              <number>3</number>
             </property>
@@ -942,6 +990,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="spinSubstrateN">
+            <property name="maximumWidth">
+             <number>70</number>
+            </property>
               <property name="toolTip">
                <string>Bekannter Brechungsindex des Substrats bei λ (Standard: Silizium bei 632.8 nm)</string>
               </property>
@@ -971,6 +1022,9 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="spinSubstrateK">
+            <property name="maximumWidth">
+             <number>70</number>
+            </property>
               <property name="toolTip">
                <string>Bekannter Extinktionskoeffizient des Substrats bei λ</string>
               </property>
@@ -1002,6 +1056,9 @@
              <layout class="QHBoxLayout" name="hboxDRange">
               <item>
                <widget class="QDoubleSpinBox" name="spinDMin">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
                 <property name="suffix">
                  <string> nm</string>
                 </property>
@@ -1021,6 +1078,9 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spinDMax">
+            <property name="maximumWidth">
+             <number>90</number>
+            </property>
                 <property name="suffix">
                  <string> nm</string>
                 </property>
@@ -1051,6 +1111,9 @@
              <layout class="QHBoxLayout" name="hboxNRange">
               <item>
                <widget class="QDoubleSpinBox" name="spinNfMin">
+            <property name="maximumWidth">
+             <number>70</number>
+            </property>
                 <property name="decimals">
                  <number>3</number>
                 </property>
@@ -1067,6 +1130,9 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spinNfMax">
+            <property name="maximumWidth">
+             <number>70</number>
+            </property>
                 <property name="decimals">
                  <number>3</number>
                 </property>
@@ -1110,6 +1176,9 @@
           </item>
           <item>
            <layout class="QFormLayout" name="formModelResult">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+          </property>
             <property name="verticalSpacing">
              <number>2</number>
             </property>

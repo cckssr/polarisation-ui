@@ -123,6 +123,7 @@ class Ui_EllipsometryTab(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.rightScroll.sizePolicy().hasHeightForWidth())
         self.rightScroll.setSizePolicy(sizePolicy)
+        self.rightScroll.setMinimumWidth(340)
         self.rightScroll.setFrameShape(QFrame.Shape.NoFrame)
         self.rightScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -148,6 +149,7 @@ class Ui_EllipsometryTab(object):
         self.gbLive.setSizePolicy(sizePolicy2)
         self.formLive = QFormLayout(self.gbLive)
         self.formLive.setObjectName("formLive")
+        self.formLive.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.formLive.setVerticalSpacing(2)
         self.formLive.setContentsMargins(6, 4, 6, 4)
         self.lblLiveIntensityLabel = QLabel(self.gbLive)
@@ -216,6 +218,7 @@ class Ui_EllipsometryTab(object):
         self.gbSetup.setObjectName("gbSetup")
         self.formSetup = QFormLayout(self.gbSetup)
         self.formSetup.setObjectName("formSetup")
+        self.formSetup.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.formSetup.setVerticalSpacing(4)
         self.formSetup.setContentsMargins(6, 6, 6, 6)
         self.lblWavelength = QLabel(self.gbSetup)
@@ -225,6 +228,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinWavelength = QDoubleSpinBox(self.gbSetup)
         self.spinWavelength.setObjectName("spinWavelength")
+        self.spinWavelength.setMaximumWidth(90)
         self.spinWavelength.setDecimals(1)
         self.spinWavelength.setMinimum(200.000000000000000)
         self.spinWavelength.setMaximum(2000.000000000000000)
@@ -239,6 +243,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinPolariser = QDoubleSpinBox(self.gbSetup)
         self.spinPolariser.setObjectName("spinPolariser")
+        self.spinPolariser.setMaximumWidth(90)
         self.spinPolariser.setDecimals(2)
         self.spinPolariser.setMinimum(-360.000000000000000)
         self.spinPolariser.setMaximum(360.000000000000000)
@@ -254,6 +259,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinAnalyserOffset = QDoubleSpinBox(self.gbSetup)
         self.spinAnalyserOffset.setObjectName("spinAnalyserOffset")
+        self.spinAnalyserOffset.setMaximumWidth(90)
         self.spinAnalyserOffset.setDecimals(2)
         self.spinAnalyserOffset.setMinimum(-360.000000000000000)
         self.spinAnalyserOffset.setMaximum(360.000000000000000)
@@ -269,6 +275,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinAmbientIndex = QDoubleSpinBox(self.gbSetup)
         self.spinAmbientIndex.setObjectName("spinAmbientIndex")
+        self.spinAmbientIndex.setMaximumWidth(70)
         self.spinAmbientIndex.setDecimals(4)
         self.spinAmbientIndex.setMinimum(1.000000000000000)
         self.spinAmbientIndex.setMaximum(2.000000000000000)
@@ -312,6 +319,9 @@ class Ui_EllipsometryTab(object):
 
         self.formSweepParams = QFormLayout()
         self.formSweepParams.setObjectName("formSweepParams")
+        self.formSweepParams.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint
+        )
         self.formSweepParams.setVerticalSpacing(3)
         self.lblSweepStart = QLabel(self.gbSweep)
         self.lblSweepStart.setObjectName("lblSweepStart")
@@ -320,6 +330,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStart.setObjectName("spinSweepStart")
+        self.spinSweepStart.setMaximumWidth(80)
         self.spinSweepStart.setDecimals(1)
         self.spinSweepStart.setMinimum(0.000000000000000)
         self.spinSweepStart.setMaximum(360.000000000000000)
@@ -334,6 +345,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
         self.spinSweepEnd.setObjectName("spinSweepEnd")
+        self.spinSweepEnd.setMaximumWidth(80)
         self.spinSweepEnd.setDecimals(1)
         self.spinSweepEnd.setMinimum(0.000000000000000)
         self.spinSweepEnd.setMaximum(360.000000000000000)
@@ -348,6 +360,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStep.setObjectName("spinSweepStep")
+        self.spinSweepStep.setMaximumWidth(80)
         self.spinSweepStep.setDecimals(1)
         self.spinSweepStep.setMinimum(0.100000000000000)
         self.spinSweepStep.setMaximum(90.000000000000000)
@@ -363,6 +376,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSettleMs = QSpinBox(self.gbSweep)
         self.spinSettleMs.setObjectName("spinSettleMs")
+        self.spinSettleMs.setMaximumWidth(80)
         self.spinSettleMs.setMinimum(0)
         self.spinSettleMs.setMaximum(5000)
         self.spinSettleMs.setSingleStep(50)
@@ -394,6 +408,7 @@ class Ui_EllipsometryTab(object):
         self.vboxManual.setContentsMargins(6, 6, 6, 6)
         self.formManual = QFormLayout()
         self.formManual.setObjectName("formManual")
+        self.formManual.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.lblAnalyserManual = QLabel(self.gbManual)
         self.lblAnalyserManual.setObjectName("lblAnalyserManual")
 
@@ -401,6 +416,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinAnalyserManual = QDoubleSpinBox(self.gbManual)
         self.spinAnalyserManual.setObjectName("spinAnalyserManual")
+        self.spinAnalyserManual.setMaximumWidth(90)
         self.spinAnalyserManual.setDecimals(2)
         self.spinAnalyserManual.setMinimum(-360.000000000000000)
         self.spinAnalyserManual.setMaximum(360.000000000000000)
@@ -430,6 +446,7 @@ class Ui_EllipsometryTab(object):
         self.vboxResult.setContentsMargins(6, 6, 6, 6)
         self.formResult = QFormLayout()
         self.formResult.setObjectName("formResult")
+        self.formResult.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.formResult.setVerticalSpacing(2)
         self.lblAlphaLabel = QLabel(self.gbResult)
         self.lblAlphaLabel.setObjectName("lblAlphaLabel")
@@ -538,6 +555,7 @@ class Ui_EllipsometryTab(object):
         self.vboxModel.setContentsMargins(6, 6, 6, 6)
         self.formModel = QFormLayout()
         self.formModel.setObjectName("formModel")
+        self.formModel.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.formModel.setVerticalSpacing(3)
         self.lblModelType = QLabel(self.gbModel)
         self.lblModelType.setObjectName("lblModelType")
@@ -563,6 +581,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSubstrateN = QDoubleSpinBox(self.gbModel)
         self.spinSubstrateN.setObjectName("spinSubstrateN")
+        self.spinSubstrateN.setMaximumWidth(70)
         self.spinSubstrateN.setDecimals(3)
         self.spinSubstrateN.setMinimum(0.100000000000000)
         self.spinSubstrateN.setMaximum(10.000000000000000)
@@ -578,6 +597,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinSubstrateK = QDoubleSpinBox(self.gbModel)
         self.spinSubstrateK.setObjectName("spinSubstrateK")
+        self.spinSubstrateK.setMaximumWidth(70)
         self.spinSubstrateK.setDecimals(3)
         self.spinSubstrateK.setMinimum(0.000000000000000)
         self.spinSubstrateK.setMaximum(10.000000000000000)
@@ -595,6 +615,7 @@ class Ui_EllipsometryTab(object):
         self.hboxDRange.setObjectName("hboxDRange")
         self.spinDMin = QDoubleSpinBox(self.gbModel)
         self.spinDMin.setObjectName("spinDMin")
+        self.spinDMin.setMaximumWidth(90)
         self.spinDMin.setDecimals(0)
         self.spinDMin.setMinimum(0.000000000000000)
         self.spinDMin.setMaximum(100000.000000000000000)
@@ -604,6 +625,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinDMax = QDoubleSpinBox(self.gbModel)
         self.spinDMax.setObjectName("spinDMax")
+        self.spinDMax.setMaximumWidth(90)
         self.spinDMax.setDecimals(0)
         self.spinDMax.setMinimum(0.000000000000000)
         self.spinDMax.setMaximum(100000.000000000000000)
@@ -622,6 +644,7 @@ class Ui_EllipsometryTab(object):
         self.hboxNRange.setObjectName("hboxNRange")
         self.spinNfMin = QDoubleSpinBox(self.gbModel)
         self.spinNfMin.setObjectName("spinNfMin")
+        self.spinNfMin.setMaximumWidth(70)
         self.spinNfMin.setDecimals(3)
         self.spinNfMin.setMinimum(1.000000000000000)
         self.spinNfMin.setMaximum(10.000000000000000)
@@ -631,6 +654,7 @@ class Ui_EllipsometryTab(object):
 
         self.spinNfMax = QDoubleSpinBox(self.gbModel)
         self.spinNfMax.setObjectName("spinNfMax")
+        self.spinNfMax.setMaximumWidth(70)
         self.spinNfMax.setDecimals(3)
         self.spinNfMax.setMinimum(1.000000000000000)
         self.spinNfMax.setMaximum(10.000000000000000)
@@ -655,6 +679,9 @@ class Ui_EllipsometryTab(object):
 
         self.formModelResult = QFormLayout()
         self.formModelResult.setObjectName("formModelResult")
+        self.formModelResult.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint
+        )
         self.formModelResult.setVerticalSpacing(2)
         self.lblThicknessLabel = QLabel(self.gbModel)
         self.lblThicknessLabel.setObjectName("lblThicknessLabel")
