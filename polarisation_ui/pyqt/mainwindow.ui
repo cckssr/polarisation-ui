@@ -1465,486 +1465,6 @@
           </layout>
          </widget>
         </item>
-        <item row="5" column="0" colspan="3">
-         <widget class="QGroupBox" name="gbDetector">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>Detektor</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
-           <item>
-            <layout class="QFormLayout" name="formLayout">
-             <property name="fieldGrowthPolicy">
-              <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="lblDetectorStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Status</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <layout class="QHBoxLayout" name="hlDetectorStatus">
-               <item>
-                <widget class="QLabel" name="lblDetectorStatusValue">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>16</height>
-                  </size>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>13</pointsize>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string/>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="ledDetectorStatus">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>16</width>
-                   <height>16</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16</width>
-                   <height>16</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
-                 </property>
-                 <property name="text">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="lblDetectorVoltage">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Spannung (mV)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLCDNumber" name="lcdDetectorVoltage_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="lineWidth">
-                <number>2</number>
-               </property>
-               <property name="digitCount">
-                <number>8</number>
-               </property>
-               <property name="segmentStyle">
-                <enum>QLCDNumber::SegmentStyle::Filled</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QComboBox" name="cbPdtiaID">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
-               </property>
-               <property name="placeholderText">
-                <string>— Kein Photodetektor ausgewählt! —</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QComboBox" name="cbProfile">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
-               </property>
-               <property name="placeholderText">
-                <string>— Kein Profil geladen —</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QPushButton" name="btnReloadProfiles">
-               <property name="toolTip">
-                <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
-               </property>
-               <property name="text">
-                <string>Aktualisieren</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QPushButton" name="btnOpenCalibration">
-               <property name="toolTip">
-                <string>Leistungskalibrierungstool öffnen</string>
-               </property>
-               <property name="text">
-                <string>Kalibrierungstool…</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="gridLayout_4">
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <item row="0" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,1">
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QLabel" name="lblPdtiaAverages">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Anzahl Mittelwerte</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="spbPdtiaAverages">
-                 <property name="toolTip">
-                  <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
-                 </property>
-                 <property name="minimum">
-                  <number>2</number>
-                 </property>
-                 <property name="maximum">
-                  <number>100</number>
-                 </property>
-                 <property name="value">
-                  <number>5</number>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="btnDarkTare">
-               <property name="toolTip">
-                <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
-               </property>
-               <property name="text">
-                <string>Dunkelstrom nullen</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QLCDNumber" name="lcdDetectorPower_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="lineWidth">
-                <number>2</number>
-               </property>
-               <property name="digitCount">
-                <number>10</number>
-               </property>
-               <property name="segmentStyle">
-                <enum>QLCDNumber::SegmentStyle::Filled</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QLabel" name="lblDarkOffsetValue">
-               <property name="toolTip">
-                <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
-               </property>
-               <property name="text">
-                <string>Offset: –</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <layout class="QHBoxLayout" name="hlGainButtons" stretch="1,1,1,1,0">
-               <property name="spacing">
-                <number>5</number>
-               </property>
-               <item>
-                <widget class="QPushButton" name="btnGain1">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>200</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>PD-TIA Verstärkungsstufe 1 (niedrigste Empfindlichkeit)</string>
-                 </property>
-                 <property name="text">
-                  <string>1</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <attribute name="buttonGroup">
-                  <string notr="true">gainButtonGroup</string>
-                 </attribute>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnGain2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>200</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>PD-TIA Verstärkungsstufe 2</string>
-                 </property>
-                 <property name="text">
-                  <string>2</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <attribute name="buttonGroup">
-                  <string notr="true">gainButtonGroup</string>
-                 </attribute>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnGain3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>200</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>PD-TIA Verstärkungsstufe 3</string>
-                 </property>
-                 <property name="text">
-                  <string>3</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <attribute name="buttonGroup">
-                  <string notr="true">gainButtonGroup</string>
-                 </attribute>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnGain4">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>200</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
-                 </property>
-                 <property name="text">
-                  <string>4</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <attribute name="buttonGroup">
-                  <string notr="true">gainButtonGroup</string>
-                 </attribute>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnGainA">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>100</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
-                 </property>
-                 <property name="text">
-                  <string>AUTO</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="0" column="0">
-              <widget class="QCheckBox" name="cbPdtiaAveragesOn">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Mittelung aktivieren</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="lblWattage">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Leistung (µW)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="lblGainLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>PD-TIA Gain</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="btnDarkReset">
-               <property name="toolTip">
-                <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
-               </property>
-               <property name="text">
-                <string>Offset zurücksetzen</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
         <item row="3" column="1" colspan="2">
          <widget class="QGroupBox" name="gbDetectorStage">
           <property name="enabled">
@@ -2463,6 +1983,593 @@
           </property>
          </spacer>
         </item>
+        <item row="5" column="0" colspan="3">
+         <widget class="QTabWidget" name="tabDetector">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="tabPDTIA" native="true">
+           <attribute name="title">
+            <string>PD-TIA Detektor</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblDetectorStatus">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Status</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" name="hlDetectorStatus">
+                <item>
+                 <widget class="QLabel" name="lblDetectorStatusValue">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>13</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="ledDetectorStatus">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>16</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblDetectorVoltage">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Spannung (mV)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLCDNumber" name="lcdDetectorVoltage_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="lineWidth">
+                 <number>2</number>
+                </property>
+                <property name="digitCount">
+                 <number>8</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::SegmentStyle::Filled</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QComboBox" name="cbPdtiaID">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
+                </property>
+                <property name="placeholderText">
+                 <string>— Kein Photodetektor ausgewählt! —</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="2">
+               <widget class="QComboBox" name="cbProfile">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
+                </property>
+                <property name="placeholderText">
+                 <string>— Kein Profil geladen —</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QPushButton" name="btnReloadProfiles">
+                <property name="toolTip">
+                 <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
+                </property>
+                <property name="text">
+                 <string>Aktualisieren</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="btnOpenCalibration">
+                <property name="toolTip">
+                 <string>Leistungskalibrierungstool öffnen</string>
+                </property>
+                <property name="text">
+                 <string>Kalibrierungstool…</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_4">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,1">
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="lblPdtiaAverages">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Anzahl Mittelwerte</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spbPdtiaAverages">
+                  <property name="toolTip">
+                   <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+                  </property>
+                  <property name="minimum">
+                   <number>2</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="btnDarkTare">
+                <property name="toolTip">
+                 <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
+                </property>
+                <property name="text">
+                 <string>Dunkelstrom nullen</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLCDNumber" name="lcdDetectorPower_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="lineWidth">
+                 <number>2</number>
+                </property>
+                <property name="digitCount">
+                 <number>10</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::SegmentStyle::Filled</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QLabel" name="lblDarkOffsetValue">
+                <property name="toolTip">
+                 <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
+                </property>
+                <property name="text">
+                 <string>Offset: –</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <layout class="QHBoxLayout" name="hlGainButtons" stretch="1,1,1,1,0">
+                <property name="spacing">
+                 <number>5</number>
+                </property>
+                <item>
+                 <widget class="QPushButton" name="btnGain1">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>PD-TIA Verstärkungsstufe 1 (niedrigste Empfindlichkeit)</string>
+                  </property>
+                  <property name="text">
+                   <string>1</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">gainButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnGain2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>PD-TIA Verstärkungsstufe 2</string>
+                  </property>
+                  <property name="text">
+                   <string>2</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">gainButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnGain3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>PD-TIA Verstärkungsstufe 3</string>
+                  </property>
+                  <property name="text">
+                   <string>3</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">gainButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnGain4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
+                  </property>
+                  <property name="text">
+                   <string>4</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">gainButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnGainA">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
+                  </property>
+                  <property name="text">
+                   <string>AUTO</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="cbPdtiaAveragesOn">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktiviert die kontinuierliche Mittelung der Proben-Rotationsstage Winkel-Messwerte&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Mittelung aktivieren</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="lblWattage">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Leistung (µW)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lblGainLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>PD-TIA Gain</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="btnDarkReset">
+                <property name="toolTip">
+                 <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
+                </property>
+                <property name="text">
+                 <string>Offset zurücksetzen</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabPM400">
+           <attribute name="title">
+            <string>PM400</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_7" columnstretch="0,1,2,0">
+            <property name="leftMargin">
+             <number>12</number>
+            </property>
+            <property name="rightMargin">
+             <number>12</number>
+            </property>
+            <property name="bottomMargin">
+             <number>12</number>
+            </property>
+            <item row="4" column="3">
+             <widget class="QPushButton" name="btnZeroPM400">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Nullabgleich (Zero)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QComboBox" name="comboPM400">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QPushButton" name="btnConnectPM400">
+              <property name="text">
+               <string>Verbinden</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="btnRefreshPM400">
+              <property name="text">
+               <string>Aktualisieren</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLCDNumber" name="lcdPM400Power">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="lineWidth">
+               <number>2</number>
+              </property>
+              <property name="digitCount">
+               <number>6</number>
+              </property>
+              <property name="segmentStyle">
+               <enum>QLCDNumber::SegmentStyle::Filled</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1" colspan="2">
+             <widget class="QLabel" name="lblPM400Status">
+              <property name="text">
+               <string>Nicht verbunden</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="lblPMResource">
+              <property name="text">
+               <string>VISA-Adresse</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="lblPM400Power">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Leistung (µW)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
        </layout>
       </widget>
      </widget>
@@ -2576,8 +2683,8 @@
      <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>111</x>
-     <y>679</y>
+     <x>130</x>
+     <y>650</y>
     </hint>
    </hints>
   </connection>

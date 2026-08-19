@@ -48,10 +48,12 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QPushButton,
     QSizePolicy,
+    QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -69,7 +71,18 @@ class Ui_MalusTab(object):
         self.gridLayout = QGridLayout(MalusTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 10, 0, 0)
-        self.pointsTable = QTableWidget(MalusTab)
+        self.splitter = QSplitter(MalusTab)
+        self.splitter.setObjectName("splitter")
+        self.splitter.setOrientation(Qt.Orientation.Vertical)
+        self.malusCurvePlot = MalusCurvePlot(self.splitter)
+        self.malusCurvePlot.setObjectName("malusCurvePlot")
+        self.splitter.addWidget(self.malusCurvePlot)
+        self.horizontalLayoutWidget = QWidget(self.splitter)
+        self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
+        self.horizontalLayout_2 = QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.pointsTable = QTableWidget(self.horizontalLayoutWidget)
         if self.pointsTable.columnCount() < 5:
             self.pointsTable.setColumnCount(5)
         __qtablewidgetitem = QTableWidgetItem()
@@ -89,13 +102,13 @@ class Ui_MalusTab(object):
         self.pointsTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.pointsTable.verticalHeader().setVisible(False)
 
-        self.gridLayout.addWidget(self.pointsTable, 1, 0, 1, 1)
+        self.horizontalLayout_2.addWidget(self.pointsTable)
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setSpacing(6)
         self.rightLayout.setObjectName("rightLayout")
         self.rightLayout.setContentsMargins(4, 0, 0, 0)
-        self.gbLive = QGroupBox(MalusTab)
+        self.gbLive = QGroupBox(self.horizontalLayoutWidget)
         self.gbLive.setObjectName("gbLive")
         self.formLive = QFormLayout(self.gbLive)
         self.formLive.setObjectName("formLive")
@@ -133,7 +146,7 @@ class Ui_MalusTab(object):
 
         self.rightLayout.addWidget(self.gbLive)
 
-        self.gbEntry = QGroupBox(MalusTab)
+        self.gbEntry = QGroupBox(self.horizontalLayoutWidget)
         self.gbEntry.setObjectName("gbEntry")
         self.formEntry = QFormLayout(self.gbEntry)
         self.formEntry.setObjectName("formEntry")
@@ -178,7 +191,7 @@ class Ui_MalusTab(object):
 
         self.rightLayout.addWidget(self.gbEntry)
 
-        self.gbSweep = QGroupBox(MalusTab)
+        self.gbSweep = QGroupBox(self.horizontalLayoutWidget)
         self.gbSweep.setObjectName("gbSweep")
         self.gbSweep.setEnabled(False)
         self.vboxSweep = QVBoxLayout(self.gbSweep)
@@ -251,34 +264,30 @@ class Ui_MalusTab(object):
 
         self.rightLayout.addWidget(self.gbSweep)
 
-        self.btnDeleteSelected = QPushButton(MalusTab)
+        self.btnDeleteSelected = QPushButton(self.horizontalLayoutWidget)
         self.btnDeleteSelected.setObjectName("btnDeleteSelected")
         self.btnDeleteSelected.setEnabled(False)
 
         self.rightLayout.addWidget(self.btnDeleteSelected)
 
-        self.btnDeleteLast = QPushButton(MalusTab)
+        self.btnDeleteLast = QPushButton(self.horizontalLayoutWidget)
         self.btnDeleteLast.setObjectName("btnDeleteLast")
         self.btnDeleteLast.setEnabled(False)
 
         self.rightLayout.addWidget(self.btnDeleteLast)
 
-        self.btnClear = QPushButton(MalusTab)
+        self.btnClear = QPushButton(self.horizontalLayoutWidget)
         self.btnClear.setObjectName("btnClear")
         self.btnClear.setEnabled(False)
 
         self.rightLayout.addWidget(self.btnClear)
 
-        self.gridLayout.addLayout(self.rightLayout, 1, 1, 1, 1)
+        self.horizontalLayout_2.addLayout(self.rightLayout)
 
-        self.malusCurvePlot = MalusCurvePlot(MalusTab)
-        self.malusCurvePlot.setObjectName("malusCurvePlot")
+        self.horizontalLayout_2.setStretch(0, 1)
+        self.splitter.addWidget(self.horizontalLayoutWidget)
 
-        self.gridLayout.addWidget(self.malusCurvePlot, 0, 0, 1, 2)
-
-        self.gridLayout.setRowStretch(0, 2)
-        self.gridLayout.setRowStretch(1, 1)
-        self.gridLayout.setColumnStretch(0, 2)
+        self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
 
         self.retranslateUi(MalusTab)
 

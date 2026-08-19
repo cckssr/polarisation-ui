@@ -54,6 +54,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QSizePolicy,
     QSpacerItem,
+    QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -72,17 +73,6 @@ class Ui_BrewsterTab(object):
         self.gridLayout = QGridLayout(BrewsterTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 10, 0, 0)
-        self.detectorPlot = BrewsterDetectorPlot(BrewsterTab)
-        self.detectorPlot.setObjectName("detectorPlot")
-
-        self.gridLayout.addWidget(self.detectorPlot, 0, 0, 1, 2)
-
-        self.brewsterCurvePlot = BrewsterCurvePlot(BrewsterTab)
-        self.brewsterCurvePlot.setObjectName("brewsterCurvePlot")
-        self.brewsterCurvePlot.setMinimumSize(QSize(0, 100))
-
-        self.gridLayout.addWidget(self.brewsterCurvePlot, 1, 0, 1, 2)
-
         self.pointsTable = QTableWidget(BrewsterTab)
         if self.pointsTable.columnCount() < 5:
             self.pointsTable.setColumnCount(5)
@@ -106,7 +96,7 @@ class Ui_BrewsterTab(object):
         self.pointsTable.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
         self.pointsTable.verticalHeader().setVisible(False)
 
-        self.gridLayout.addWidget(self.pointsTable, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.pointsTable, 1, 0, 1, 1)
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setSpacing(10)
@@ -201,11 +191,21 @@ class Ui_BrewsterTab(object):
 
         self.rightLayout.addWidget(self.btnSaveMax)
 
-        self.gridLayout.addLayout(self.rightLayout, 2, 1, 1, 1)
+        self.gridLayout.addLayout(self.rightLayout, 1, 1, 1, 1)
 
-        self.gridLayout.setRowStretch(0, 2)
-        self.gridLayout.setRowStretch(1, 2)
-        self.gridLayout.setRowStretch(2, 1)
+        self.splitter = QSplitter(BrewsterTab)
+        self.splitter.setObjectName("splitter")
+        self.splitter.setOrientation(Qt.Orientation.Vertical)
+        self.detectorPlot = BrewsterDetectorPlot(self.splitter)
+        self.detectorPlot.setObjectName("detectorPlot")
+        self.splitter.addWidget(self.detectorPlot)
+        self.brewsterCurvePlot = BrewsterCurvePlot(self.splitter)
+        self.brewsterCurvePlot.setObjectName("brewsterCurvePlot")
+        self.brewsterCurvePlot.setMinimumSize(QSize(0, 100))
+        self.splitter.addWidget(self.brewsterCurvePlot)
+
+        self.gridLayout.addWidget(self.splitter, 0, 0, 1, 2)
+
         self.gridLayout.setColumnStretch(0, 1)
 
         self.retranslateUi(BrewsterTab)
