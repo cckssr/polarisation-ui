@@ -68,6 +68,7 @@ class BrewsterCurvePlot(QWidget):
         pdtia_gain: int = 0,
         power_W: float | None = None,
         conv_factor_W_per_V: float | None = None,
+        detector: str = "pdtia",
     ) -> None:
         """Append a new measurement point and refresh the plot."""
         self._points.append(
@@ -78,6 +79,7 @@ class BrewsterCurvePlot(QWidget):
                 pdtia_gain=pdtia_gain,
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor_W_per_V,
+                detector=detector,
             )
         )
         self._refresh()
@@ -114,7 +116,15 @@ class BrewsterCurvePlot(QWidget):
             return
 
         xs = [p.sample_angle for p in self._points]
-        ys = [p.intensity_V for p in self._points]
+
+        use_power = all(p.power_W is not None for p in self._points)
+        if use_power:
+            ys = [p.power_W * 1e3 for p in self._points]  # type: ignore[operator]
+            self._plot_widget.setLabel("left", "Leistung", units="mW")
+        else:
+            ys = [p.intensity_V for p in self._points]
+            self._plot_widget.setLabel("left", "Intensität", units="V")
+
         self._scatter.setData(xs, ys)
         self._scatter.setVisible(True)
         self._last_marker.setData([xs[-1]], [ys[-1]])

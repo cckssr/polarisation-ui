@@ -78,6 +78,36 @@ def test_save_tab_export_writes_csv_and_metadata(tmp_path):
     assert meta["saved_at"] == "2025-01-01T12:00:00"
 
 
+def test_save_tab_export_active_detector_defaults_to_pdtia(tmp_path):
+    exp = TabExport(filename_hint="malus", columns=["a"], rows=[["1"]], metadata={})
+    csv_path = tmp_path / "messung_malus_A.csv"
+    save_tab_export(
+        csv_path, exp, group_letter="A", suffix="", power_cal_meta={}, saved_at=datetime.now()
+    )
+    meta = json.loads((tmp_path / "messung_malus_A_metadata.json").read_text(encoding="utf-8"))
+    assert meta["active_detector"] == "pdtia"
+
+
+def test_save_tab_export_records_pm400_as_active_detector(tmp_path):
+    """active_detector must be a top-level key, not nested in power_calibration —
+    power_cal_meta is {} whenever no PD-TIA calibration profile is loaded, which
+    is exactly the case where PM400 is likely to be the active detector."""
+    exp = TabExport(filename_hint="malus", columns=["a"], rows=[["1"]], metadata={})
+    csv_path = tmp_path / "messung_malus_A.csv"
+    save_tab_export(
+        csv_path,
+        exp,
+        group_letter="A",
+        suffix="",
+        power_cal_meta={},
+        saved_at=datetime.now(),
+        active_detector="pm400",
+    )
+    meta = json.loads((tmp_path / "messung_malus_A_metadata.json").read_text(encoding="utf-8"))
+    assert meta["active_detector"] == "pm400"
+    assert meta["power_calibration"] == {}
+
+
 def test_save_tab_export_creates_parent_dirs(tmp_path):
     exp = TabExport(
         filename_hint="malus",

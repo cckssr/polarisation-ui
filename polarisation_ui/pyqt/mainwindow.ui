@@ -2001,7 +2001,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tabPDTIA" native="true">
            <attribute name="title">
@@ -2463,108 +2463,238 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tabPM400">
+          <widget class="QWidget" name="tabPM400" native="true">
            <attribute name="title">
             <string>PM400</string>
            </attribute>
-           <layout class="QGridLayout" name="gridLayout_7" columnstretch="0,1,2,0">
-            <property name="leftMargin">
-             <number>12</number>
-            </property>
-            <property name="rightMargin">
-             <number>12</number>
-            </property>
-            <property name="bottomMargin">
-             <number>12</number>
-            </property>
-            <item row="4" column="3">
-             <widget class="QPushButton" name="btnZeroPM400">
-              <property name="enabled">
-               <bool>false</bool>
+           <layout class="QHBoxLayout" name="hlPM400Tab" stretch="1,1">
+            <item>
+             <layout class="QFormLayout" name="formPM400">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
               </property>
-              <property name="text">
-               <string>Nullabgleich (Zero)</string>
+              <property name="rightMargin">
+               <number>0</number>
               </property>
-             </widget>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblPM400ConnStatus">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Status</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" name="hlPM400Status">
+                <item>
+                 <widget class="QLabel" name="lblPM400Status">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>13</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Nicht verbunden</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="ledPM400Status">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>16</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16</width>
+                    <height>16</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblPMResource">
+                <property name="text">
+                 <string>VISA-Adresse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="comboPM400">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>1</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>VISA-Ressourcenadresse des PM400 (z.B. USB0::0x1313::0x8078::P0000001::INSTR)</string>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="btnRefreshPM400">
+                <property name="toolTip">
+                 <string>VISA-Ressourcenliste neu einlesen</string>
+                </property>
+                <property name="text">
+                 <string>Aktualisieren</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="btnConnectPM400">
+                <property name="text">
+                 <string>Verbinden</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lblPM400WavelengthLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Wellenlänge (nm)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="spbPM400Wavelength">
+                <property name="toolTip">
+                 <string>Betriebswellenlänge für die spektrale Empfindlichkeitskorrektur des PM400</string>
+                </property>
+                <property name="suffix">
+                 <string> nm</string>
+                </property>
+                <property name="minimum">
+                 <double>200.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>2000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>633.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
-            <item row="0" column="2">
-             <widget class="QComboBox" name="comboPM400">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>1</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item>
+             <layout class="QGridLayout" name="gridPM400">
+              <property name="rightMargin">
+               <number>0</number>
               </property>
-              <property name="editable">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QPushButton" name="btnConnectPM400">
-              <property name="text">
-               <string>Verbinden</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QPushButton" name="btnRefreshPM400">
-              <property name="text">
-               <string>Aktualisieren</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QLCDNumber" name="lcdPM400Power">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="lineWidth">
-               <number>2</number>
-              </property>
-              <property name="digitCount">
-               <number>6</number>
-              </property>
-              <property name="segmentStyle">
-               <enum>QLCDNumber::SegmentStyle::Filled</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1" colspan="2">
-             <widget class="QLabel" name="lblPM400Status">
-              <property name="text">
-               <string>Nicht verbunden</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="lblPMResource">
-              <property name="text">
-               <string>VISA-Adresse</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QLabel" name="lblPM400Power">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Leistung (µW)</string>
-              </property>
-             </widget>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblPM400Power">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Leistung (µW)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLCDNumber" name="lcdPM400Power">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="lineWidth">
+                 <number>2</number>
+                </property>
+                <property name="digitCount">
+                 <number>8</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::SegmentStyle::Filled</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="2">
+               <widget class="QPushButton" name="btnZeroPM400">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>Dunkelstrom-Nullabgleich des PM400 starten</string>
+                </property>
+                <property name="text">
+                 <string>Nullabgleich (Zero)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <spacer name="verticalSpacerPM400">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>

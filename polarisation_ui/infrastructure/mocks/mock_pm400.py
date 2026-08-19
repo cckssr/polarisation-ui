@@ -7,6 +7,8 @@ that the full calibration worker can run without any real hardware.
 import math
 import random
 
+from polarisation_ui.core.exceptions import PM400Error
+
 
 class MockPM400:
     """Simulated PM400PowerMeter.
@@ -96,4 +98,4 @@ class MockPM400:
 
     def _require_connected(self) -> None:
         if not self._connected:
-            raise RuntimeError("MockPM400: not connected")
+            raise PM400Error("MockPM400: not connected")

@@ -68,6 +68,7 @@ class MalusCurvePlot(QWidget):
         pdtia_gain: int = 0,
         power_W: float | None = None,
         conv_factor_W_per_V: float | None = None,
+        detector: str = "pdtia",
     ) -> None:
         """Append a new measurement point and refresh the plot."""
         self._points.append(
@@ -78,6 +79,7 @@ class MalusCurvePlot(QWidget):
                 pdtia_gain=pdtia_gain,
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor_W_per_V,
+                detector=detector,
             )
         )
         self._refresh()

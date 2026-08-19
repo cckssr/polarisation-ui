@@ -10,6 +10,7 @@ the corrected value — no extra maths in the Python client.
 """
 
 import sys
+import threading
 
 from polarisation_ui.core.exceptions import PM400Error
 from polarisation_ui.infrastructure.logging import Debug
@@ -69,6 +70,10 @@ class PM400PowerMeter:
     def __init__(self) -> None:
         """Start disconnected; connect() opens the VISA session."""
         self._inst: object | None = None
+        # Serialises every call that touches the instrument — a background
+        # poll worker (read_power_W) and the Qt main thread (zero(),
+        # set_wavelength_nm(), ...) can both call in concurrently.
+        self._lock = threading.Lock()
 
     # ── Connection ────────────────────────────────────────────────────────────
 
@@ -85,11 +90,12 @@ class PM400PowerMeter:
                 f"  {sys.executable} -m pip install pymeasure"
             )
         try:
-            inst = _ThorlabsPM400(visa_resource)
-            inst.configure = "POW"
-            inst.power_unit = "W"
-            inst.power_autorange = True
-            self._inst = inst
+            with self._lock:
+                inst = _ThorlabsPM400(visa_resource)
+                inst.configure = "POW"
+                inst.power_unit = "W"
+                inst.power_autorange = True
+                self._inst = inst
             info = self.sensor_info()
             Debug.info(f"PM400: connected — sensor: {info}")
         except Exception as exc:
@@ -100,7 +106,8 @@ class PM400PowerMeter:
         """Shut down the VISA session, if any, ignoring errors during shutdown."""
         if self._inst is not None:
             try:
-                self._inst.shutdown()
+                with self._lock:
+                    self._inst.shutdown()
             except Exception as exc:
                 Debug.warning(f"PM400: error during disconnect: {exc}")
             finally:
@@ -123,9 +130,28 @@ class PM400PowerMeter:
         """
         self._require_connected()
         try:
+            with self._lock:
+                return float(self._inst.power)
+        except Exception as exc:
+            raise PM400Error(f"PM400 read_power_W failed: {exc}") from exc
+
+    def read_power_W_nowait(self) -> float | None:
+        """Non-blocking power read for a background poll loop.
+
+        Returns ``None`` instead of blocking when the instrument is currently
+        busy servicing another call (e.g. ``zero()`` from the main thread),
+        so a poll loop never stalls waiting on VISA I/O it could just retry
+        next tick. Mirrors ``KDC101Polariser.get_position_deg_nowait``.
+        """
+        self._require_connected()
+        if not self._lock.acquire(blocking=False):
+            return None
+        try:
             return float(self._inst.power)
         except Exception as exc:
             raise PM400Error(f"PM400 read_power_W failed: {exc}") from exc
+        finally:
+            self._lock.release()
 
     # ── Configuration ─────────────────────────────────────────────────────────
 
@@ -133,7 +159,8 @@ class PM400PowerMeter:
         """Set the operating wavelength for spectral responsivity correction."""
         self._require_connected()
         try:
-            self._inst.wavelength = nm
+            with self._lock:
+                self._inst.wavelength = nm
         except Exception as exc:
             raise PM400Error(f"PM400 set_wavelength_nm({nm}) failed: {exc}") from exc
 
@@ -141,7 +168,8 @@ class PM400PowerMeter:
         """Return the currently configured operating wavelength (nm)."""
         self._require_connected()
         try:
-            return float(self._inst.wavelength)
+            with self._lock:
+                return float(self._inst.wavelength)
         except Exception as exc:
             raise PM400Error(f"PM400 get_wavelength_nm failed: {exc}") from exc
 
@@ -153,7 +181,8 @@ class PM400PowerMeter:
         """
         self._require_connected()
         try:
-            self._inst.attenuation = db
+            with self._lock:
+                self._inst.attenuation = db
         except Exception as exc:
             raise PM400Error(f"PM400 set_attenuation_dB({db}) failed: {exc}") from exc
 
@@ -161,7 +190,8 @@ class PM400PowerMeter:
         """Return the currently configured attenuation correction (dB)."""
         self._require_connected()
         try:
-            return float(self._inst.attenuation)
+            with self._lock:
+                return float(self._inst.attenuation)
         except Exception as exc:
             raise PM400Error(f"PM400 get_attenuation_dB failed: {exc}") from exc
 
@@ -169,7 +199,8 @@ class PM400PowerMeter:
         """Set the number of samples the PM400 averages per reading."""
         self._require_connected()
         try:
-            self._inst.averaging_count = n
+            with self._lock:
+                self._inst.averaging_count = n
         except Exception as exc:
             raise PM400Error(f"PM400 set_averaging({n}) failed: {exc}") from exc
 
@@ -177,7 +208,8 @@ class PM400PowerMeter:
         """Start the dark-current zero adjustment routine."""
         self._require_connected()
         try:
-            self._inst.zero()
+            with self._lock:
+                self._inst.zero()
         except Exception as exc:
             raise PM400Error(f"PM400 zero failed: {exc}") from exc
 

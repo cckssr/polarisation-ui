@@ -30,7 +30,9 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
-from polarisation_ui.core.exceptions import KDC101Error
+from polarisation_ui.core.auto_calibration_settings import AutoCalibrationConnectionSettings
+from polarisation_ui.core.detector import DETECTOR_PDTIA, DETECTOR_PM400
+from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.formatting import fmt_angle, fmt_stat
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import (
@@ -42,9 +44,11 @@ from polarisation_ui.core.power_calibration import (
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
+from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.modules import ModuleRegistry
 from polarisation_ui.infrastructure.modules.kdc101_adapter import KDC101ModuleAdapter
+from polarisation_ui.infrastructure.modules.pm400_adapter import PM400ModuleAdapter
 from polarisation_ui.infrastructure.qt_threads import (
     KDC101HomeWorker,
     KDCZeroFindWorker,
@@ -157,6 +161,10 @@ class MainWindow(QMainWindow):
         self._kdc_position_timer.setInterval(250)
         self._kdc_position_timer.timeout.connect(self._refresh_kdc_position)
 
+        # PM400 power meter: when connected it takes precedence over the
+        # PD-TIA as the active detector — see DataController.set_pm400().
+        self._pm400 = PM400PowerMeter()
+
         # Zero-find worker (KDC101 extinction-angle search) and its inputs.
         self._kdc_zero_worker: KDCZeroFindWorker | None = None
         # Most recent Frame from DataController — the thread-safe read used by
@@ -214,7 +222,7 @@ class MainWindow(QMainWindow):
         # Encoder/detector groups disabled until connected
         self.ui.gbSampleStage.setEnabled(False)
         self.ui.gbDetectorStage.setEnabled(False)
-        self.ui.gbDetector.setEnabled(False)
+        self.ui.tabDetector.setEnabled(False)
 
         # Measurement controls disabled until connected
         self.ui.btnStartMeasurement.setEnabled(False)
@@ -240,6 +248,22 @@ class MainWindow(QMainWindow):
 
         # Populate PDTIA device ID selector from config
         self._populate_pdtia_ids()
+
+        # PM400 group: populate resource list and set initial state
+        self._refresh_pm400_list()
+        set_connection_status(
+            self.ui.ledPM400Status,
+            self.ui.lblPM400Status,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        self.ui.btnZeroPM400.setEnabled(False)
+        auto_cal_settings = AutoCalibrationConnectionSettings.load()
+        if auto_cal_settings.pm400_visa_resource:
+            self.ui.comboPM400.setEditText(auto_cal_settings.pm400_visa_resource)
+        if auto_cal_settings.wavelength_nm:
+            self.ui.spbPM400Wavelength.setValue(auto_cal_settings.wavelength_nm)
+        self._set_active_detector(DETECTOR_PDTIA)
 
         # Initialise inline acquisition settings from loaded config
         self._sync_inline_acq_controls()
@@ -410,6 +434,12 @@ class MainWindow(QMainWindow):
         self.ui.btnKDCOffsetReset.clicked.connect(self._reset_kdc_offset)
         self.data_controller.frame_ready.connect(self._on_frame_ready_for_kdc)
 
+        # PM400 connection controls
+        self.ui.btnRefreshPM400.clicked.connect(self._refresh_pm400_list)
+        self.ui.btnConnectPM400.clicked.connect(self._connect_pm400)
+        self.ui.btnZeroPM400.clicked.connect(self._zero_pm400)
+        self.ui.spbPM400Wavelength.valueChanged.connect(self._on_pm400_wavelength_changed)
+
         # Zero buttons
         self.ui.btnSampleZero.clicked.connect(self._zero_sample_encoder)
         self.ui.btnDetectorStageZero.clicked.connect(self._zero_detector_encoder)
@@ -439,6 +469,8 @@ class MainWindow(QMainWindow):
         self.data_controller.retry_connecting.connect(self._handle_reconnect_attempt)
         self.data_controller.reconnect_succeeded.connect(self._handle_reconnect_success)
         self.data_controller.connection_lost.connect(self._handle_connection_lost)
+        self.data_controller.active_detector_changed.connect(self._set_active_detector)
+        self.data_controller.pm400_connection_lost.connect(self._handle_pm400_connection_lost)
 
         # Measurement state changes
         self.data_controller.measurement_started.connect(self._on_measurement_started)
@@ -642,7 +674,7 @@ class MainWindow(QMainWindow):
         # Disable hardware groups
         self.ui.gbSampleStage.setEnabled(False)
         self.ui.gbDetectorStage.setEnabled(False)
-        self.ui.gbDetector.setEnabled(False)
+        self.ui.tabDetector.setEnabled(False)
         self.ui.btnStartMeasurement.setEnabled(False)
 
         set_connection_status(
@@ -674,7 +706,7 @@ class MainWindow(QMainWindow):
         """Enable encoder UI sections and start data acquisition after connection."""
         self.ui.gbSampleStage.setEnabled(True)
         self.ui.gbDetectorStage.setEnabled(True)
-        self.ui.gbDetector.setEnabled(True)
+        self.ui.tabDetector.setEnabled(True)
         set_connection_status(
             self.ui.ledSampleStatus,
             self.ui.lblSampleStatusValue,
@@ -964,6 +996,168 @@ class MainWindow(QMainWindow):
         self._schedule_state_save()
         self.statusbar_manager.show_info("KDC-Offset zurückgesetzt")
 
+    # ==================== PM400 Connection & Active-Detector Precedence ====================
+
+    def _refresh_pm400_list(self) -> None:
+        """Populate comboPM400 with currently discovered Thorlabs VISA resources."""
+        current = self.ui.comboPM400.currentText()
+        resources = PM400PowerMeter.list_resources()
+        self.ui.comboPM400.clear()
+        for r in resources:
+            self.ui.comboPM400.addItem(r)
+        if current and self.ui.comboPM400.findText(current) < 0:
+            self.ui.comboPM400.addItem(current)
+        if current:
+            idx = self.ui.comboPM400.findText(current)
+            if idx >= 0:
+                self.ui.comboPM400.setCurrentIndex(idx)
+        Debug.info(f"PM400 VISA resources found: {resources}")
+
+    @Slot()
+    def _connect_pm400(self) -> None:
+        """Connect to the PM400 at the entered VISA resource and make it the active detector."""
+        resource = self.ui.comboPM400.currentText().strip()
+        if not resource:
+            QMessageBox.warning(self, "PM400", "Keine VISA-Ressource angegeben.")
+            return
+        set_connection_status(
+            self.ui.ledPM400Status,
+            self.ui.lblPM400Status,
+            "Verbinde...",
+            LED_YELLOW,
+        )
+        try:
+            self._pm400.connect(resource)
+            self._pm400.set_wavelength_nm(self.ui.spbPM400Wavelength.value())
+        except PM400Error as exc:
+            set_connection_status(
+                self.ui.ledPM400Status,
+                self.ui.lblPM400Status,
+                f"Fehler: {exc}",
+                LED_RED,
+            )
+            self.statusbar_manager.show_error(f"PM400 Verbindungsfehler: {exc}")
+            return
+        ModuleRegistry.register(PM400ModuleAdapter(self._pm400))
+        self._refresh_tab_visibility()
+        info = self._pm400.sensor_info()
+        sensor_str = " | ".join(str(x) for x in info[:2]) if info else "Verbunden"
+        set_connection_status(
+            self.ui.ledPM400Status,
+            self.ui.lblPM400Status,
+            sensor_str,
+            LED_GREEN,
+        )
+        self.ui.btnConnectPM400.setText("Trennen")
+        self.ui.btnConnectPM400.clicked.disconnect(self._connect_pm400)
+        self.ui.btnConnectPM400.clicked.connect(self._disconnect_pm400)
+        self.ui.btnZeroPM400.setEnabled(True)
+        # Precedence takes effect immediately: from here on every Frame reports
+        # PM400 power — see DataController._poll_sensors / core.detector.
+        self.data_controller.set_pm400(self._pm400)
+        self._schedule_state_save()
+        self.statusbar_manager.show_success(f"PM400 verbunden: {resource}")
+        Debug.info(f"PM400 connected: {resource}")
+
+    @Slot()
+    def _disconnect_pm400(self) -> None:
+        """User-initiated disconnect from the PM400 (falls back to PD-TIA)."""
+        self.data_controller.clear_pm400()
+        self._teardown_pm400_connection()
+        self.statusbar_manager.show_info("PM400 getrennt")
+        Debug.info("PM400 disconnected by user")
+
+    def _teardown_pm400_connection(self) -> None:
+        """Reset PM400 connection/UI state to disconnected.
+
+        Shared by the user-initiated Trennen button and by
+        ``_handle_pm400_connection_lost`` (auto-detected read failure) so both
+        paths leave the UI in the exact same state — mirrors
+        ``_teardown_kdc_connection``. Does NOT touch DataController: the
+        manual path calls ``clear_pm400()`` itself just before this, and the
+        auto-loss path has already had it called internally before its
+        signal arrived.
+        """
+        self._pm400.disconnect()
+        ModuleRegistry.unregister("pm400")
+        self._refresh_tab_visibility()
+        set_connection_status(
+            self.ui.ledPM400Status,
+            self.ui.lblPM400Status,
+            "Nicht verbunden",
+            LED_RED,
+        )
+        try:
+            self.ui.btnConnectPM400.clicked.disconnect(self._disconnect_pm400)
+        except RuntimeError:
+            pass  # not connected — safe to ignore
+        try:
+            self.ui.btnConnectPM400.clicked.disconnect(self._connect_pm400)
+        except RuntimeError:
+            pass
+        self.ui.btnConnectPM400.setText("Verbinden")
+        self.ui.btnConnectPM400.clicked.connect(self._connect_pm400)
+        self.ui.btnZeroPM400.setEnabled(False)
+
+    @Slot(str)
+    def _handle_pm400_connection_lost(self, msg: str) -> None:
+        """PM400 poll worker gave up after repeated read failures — treat as unplugged.
+
+        DataController has already fallen back to PD-TIA and stopped any
+        running measurement before emitting this signal — see
+        ``DataController._on_pm400_connection_lost``.
+        """
+        self._teardown_pm400_connection()
+        self.statusbar_manager.show_error(f"PM400 Verbindung verloren: {msg}")
+        Debug.error(f"PM400 connection lost: {msg}")
+
+    @Slot()
+    def _zero_pm400(self) -> None:
+        """Start the PM400's dark-current zero-adjustment routine."""
+        if not self._pm400.is_connected():
+            return
+        try:
+            self._pm400.zero()
+            self.statusbar_manager.show_info("PM400 Nullabgleich gestartet")
+        except PM400Error as exc:
+            self.statusbar_manager.show_error(f"PM400 Fehler: {exc}")
+
+    @Slot(float)
+    def _on_pm400_wavelength_changed(self, value: float) -> None:
+        """Push the new wavelength to a connected PM400 for spectral correction."""
+        if self._pm400.is_connected():
+            try:
+                self._pm400.set_wavelength_nm(value)
+            except PM400Error as exc:
+                self.statusbar_manager.show_error(
+                    f"PM400 Wellenlänge konnte nicht gesetzt werden: {exc}"
+                )
+        self._schedule_state_save()
+
+    @Slot(str)
+    def _set_active_detector(self, source: str) -> None:
+        """Apply every UI consequence of *source* becoming the active detector.
+
+        Single entry point (mirrors ``_apply_group_gating``) so the PD-TIA-
+        active and PM400-active UI states can never drift apart. The PD-TIA
+        configuration (device ID, calibration profile, averaging, dark tare)
+        stays interactive either way — only the gain buttons and the
+        PD-TIA-tab power readout, which are meaningless once PM400 has
+        physically replaced the photodiode, go inert.
+        """
+        pm400_active = source == DETECTOR_PM400
+        self.ui.lcdDetectorPower_2.setEnabled(not pm400_active)
+        # Referenced directly by widget name (not via the button groups) so
+        # this also works when called from _setup_initial_state(), before
+        # _connect_signals() has built _gain_button_group_2.
+        for stage in (1, 2, 3, 4):
+            getattr(self.ui, f"btnGain{stage}").setEnabled(not pm400_active)
+            getattr(self.ui, f"btnGain{stage}_2").setEnabled(not pm400_active)
+        self.ui.btnGainA.setEnabled(not pm400_active)
+        self.ui.btnGainA_2.setEnabled(not pm400_active)
+        if not pm400_active:
+            self.ui.lcdPM400Power.display("----")
+
     # ==================== Acquisition Settings ====================
 
     def _load_acq_settings_from_config(self) -> AcquisitionSettings:
@@ -1152,10 +1346,16 @@ class MainWindow(QMainWindow):
         """Switch PDTIA gain to match *power_W* (or the last known reading) per config limits.
 
         No-op while a KDC zero-find is running (it drives gain deliberately for
-        its coarse/fine extinction search) or while no calibrated power is
-        available yet (e.g. no calibration profile loaded).
+        its coarse/fine extinction search), while no calibrated power is
+        available yet (e.g. no calibration profile loaded), or while PM400 is
+        the active detector — PDTIA gain is meaningless once its photodiode
+        has been physically replaced on the detector arm.
         """
-        if self._kdc_zero_worker is not None or not _GAIN_POWER_LIMITS:
+        if (
+            self._kdc_zero_worker is not None
+            or not _GAIN_POWER_LIMITS
+            or self.data_controller.is_pm400_active
+        ):
             return
         if power_W is None:
             power_W = self._last_power_W
@@ -1175,16 +1375,31 @@ class MainWindow(QMainWindow):
 
     @Slot(float)
     def _update_wattage_display(self, power_W: float) -> None:
+        """Update the power LCDs from the active detector.
+
+        The sidebar ``lcdDetectorPower`` always tracks whichever detector is
+        currently active. ``lcdDetectorPower_2`` (PD-TIA tab) and
+        ``lcdPM400Power`` (PM400 tab) only receive updates while their own
+        detector is the active one — the other stays frozen at its last
+        value, matching the disabled state applied by _set_active_detector().
+        """
         self._last_power_W = power_W
+        pm400_active = self.data_controller.is_pm400_active
         if math.isnan(power_W):
             self.ui.lcdDetectorPower.display("----")
-            self.ui.lcdDetectorPower_2.display("----")
+            if pm400_active:
+                self.ui.lcdPM400Power.display("----")
+            else:
+                self.ui.lcdDetectorPower_2.display("----")
         else:
             power_uw = power_W * 1e6
             self.ui.lcdDetectorPower.display(fmt_stat(power_uw))
-            self.ui.lcdDetectorPower_2.display(fmt_stat(power_uw))
-            if self._gain_auto_enabled:
-                self._maybe_auto_switch_gain(power_W)
+            if pm400_active:
+                self.ui.lcdPM400Power.display(fmt_stat(power_uw))
+            else:
+                self.ui.lcdDetectorPower_2.display(fmt_stat(power_uw))
+                if self._gain_auto_enabled:
+                    self._maybe_auto_switch_gain(power_W)
 
     # ==================== Calibration Profile Management ====================
 
@@ -1583,6 +1798,9 @@ class MainWindow(QMainWindow):
             suffix=suffix,
             power_cal_meta=cal_meta,
             saved_at=datetime.now(),
+            active_detector=(
+                DETECTOR_PM400 if self.data_controller.is_pm400_active else DETECTOR_PDTIA
+            ),
         )
         self.statusbar_manager.show_success(f"{len(exp.rows)} Datenpunkte gespeichert: {path}")
 
@@ -1755,6 +1973,8 @@ class MainWindow(QMainWindow):
             gain_stage=self.data_controller.pdtia_gain,
             detector_offset_deg=self.data_controller.detector_offset_deg,
             kdc_zero_offset_deg=self._kdc.zero_offset_deg,
+            pm400_visa_resource=self.ui.comboPM400.currentText().strip(),
+            pm400_wavelength_nm=self.ui.spbPM400Wavelength.value(),
             pdtia_id=(
                 self.ui.cbPdtiaID.currentText() if self.ui.cbPdtiaID.currentIndex() >= 0 else ""
             ),
@@ -1839,6 +2059,11 @@ class MainWindow(QMainWindow):
         if state.kdc_zero_offset_deg:
             self._kdc.set_zero_offset_deg(state.kdc_zero_offset_deg)
             self._sync_kdc_offset_display()
+
+        if state.pm400_visa_resource:
+            self.ui.comboPM400.setEditText(state.pm400_visa_resource)
+        if state.pm400_wavelength_nm:
+            self.ui.spbPM400Wavelength.setValue(state.pm400_wavelength_nm)
 
         if state.acq_settings:
             s = state.acq_settings

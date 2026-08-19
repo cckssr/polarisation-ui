@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.detector import point_power
 from polarisation_ui.core.formatting import (
     export_angle,
     export_intensity,
@@ -155,6 +156,7 @@ class MalusTab(PlotTabBase):
             "pdtia_gain",
             "power_W",
             "conv_factor_W_per_V",
+            "detector",
         ]
         rows = [
             [
@@ -164,6 +166,7 @@ class MalusTab(PlotTabBase):
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
+                pt.detector,
             ]
             for pt in points
         ]
@@ -176,6 +179,7 @@ class MalusTab(PlotTabBase):
                 "intensity_V": "volts",
                 "power_W": "watts",
                 "conv_factor_W_per_V": "watts_per_volt",
+                "detector": "pdtia or pm400",
             },
         }
         kdc_offset = self._kdc.zero_offset_deg if self._kdc is not None else 0.0
@@ -197,6 +201,7 @@ class MalusTab(PlotTabBase):
                     pdtia_gain=int(p.get("pdtia_gain") or 0),
                     power_W=p.get("power_W"),
                     conv_factor_W_per_V=p.get("conv_factor_W_per_V"),
+                    detector=p.get("detector") or "pdtia",
                 )
             except (KeyError, TypeError, ValueError):
                 pass
@@ -215,14 +220,9 @@ class MalusTab(PlotTabBase):
         analyser_angle = self._ui.spinAnalyser.value()
         polariser_angle = self._ui.spinPolariser.value()
 
-        power_W: float | None = None
-        conv_factor: float | None = None
-        pdtia_gain = 0
-        if latest_frame is not None:
-            pdtia_gain = latest_frame.pdtia_gain
-            conv_factor = latest_frame.conv_factor_W_per_V
-            if conv_factor is not None:
-                power_W = avg_intensity * conv_factor
+        power_W, conv_factor = point_power(latest_frame, avg_intensity)
+        pdtia_gain = latest_frame.pdtia_gain if latest_frame is not None else 0
+        detector = latest_frame.detector if latest_frame is not None else "pdtia"
 
         self._ui.malusCurvePlot.add_point(
             analyser_angle=analyser_angle,
@@ -231,6 +231,7 @@ class MalusTab(PlotTabBase):
             pdtia_gain=pdtia_gain,
             power_W=power_W,
             conv_factor_W_per_V=conv_factor,
+            detector=detector,
         )
         self._refresh_table()
         self.points_changed.emit(len(self._ui.malusCurvePlot.get_points()))
@@ -367,14 +368,9 @@ class MalusTab(PlotTabBase):
         frame: Frame | None,
     ) -> None:
         polariser_angle = self._ui.spinPolariser.value()
-        pdtia_gain = 0
-        power_W: float | None = None
-        conv_factor: float | None = None
-        if frame is not None:
-            pdtia_gain = frame.pdtia_gain
-            conv_factor = frame.conv_factor_W_per_V
-            if conv_factor is not None:
-                power_W = intensity_V * conv_factor
+        power_W, conv_factor = point_power(frame, intensity_V)
+        pdtia_gain = frame.pdtia_gain if frame is not None else 0
+        detector = frame.detector if frame is not None else "pdtia"
         self._ui.malusCurvePlot.add_point(
             analyser_angle=analyser_angle,
             polariser_angle=polariser_angle,
@@ -382,6 +378,7 @@ class MalusTab(PlotTabBase):
             pdtia_gain=pdtia_gain,
             power_W=power_W,
             conv_factor_W_per_V=conv_factor,
+            detector=detector,
         )
         self._refresh_table()
         self.points_changed.emit(len(self._ui.malusCurvePlot.get_points()))

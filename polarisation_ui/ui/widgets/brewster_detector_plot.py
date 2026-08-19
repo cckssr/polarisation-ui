@@ -36,7 +36,23 @@ class BrewsterDetectorPlot(QWidget):
         self._angles: deque[float] = deque(maxlen=self.MAX_POINTS)
         self._intensities: deque[float] = deque(maxlen=self.MAX_POINTS)
         self._last_angle: float | None = None
+        self._power_mode: bool = False
         self._setup_plot()
+
+    def set_power_mode(self, enabled: bool) -> None:
+        """Switch the Y axis between PD-TIA intensity (V) and PM400 power (W).
+
+        Call whenever the active detector changes (see ``core.detector``);
+        does nothing but relabel the axis — the caller is responsible for
+        feeding the matching quantity to ``update_data()``.
+        """
+        if enabled == self._power_mode:
+            return
+        self._power_mode = enabled
+        if enabled:
+            self._plot_widget.setLabel("left", "Leistung", units="W")
+        else:
+            self._plot_widget.setLabel("left", "Intensität", units="V")
 
     def _setup_plot(self) -> None:
         layout = QVBoxLayout(self)

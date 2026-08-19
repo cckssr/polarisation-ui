@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.detector import point_power
 from polarisation_ui.core.formatting import (
     export_angle,
     export_intensity,
@@ -157,6 +158,7 @@ class WaveplateTab(PlotTabBase):
             "pdtia_gain",
             "power_W",
             "conv_factor_W_per_V",
+            "detector",
         ]
         rows = [
             [
@@ -165,6 +167,7 @@ class WaveplateTab(PlotTabBase):
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
+                pt.detector,
             ]
             for pt in points
         ]
@@ -179,6 +182,7 @@ class WaveplateTab(PlotTabBase):
                 "intensity_V": "volts",
                 "power_W": "watts",
                 "conv_factor_W_per_V": "watts_per_volt",
+                "detector": "pdtia or pm400",
             },
         }
         return TabExport(
@@ -200,6 +204,7 @@ class WaveplateTab(PlotTabBase):
                     pdtia_gain=int(p.get("pdtia_gain") or 0),
                     power_W=p.get("power_W"),
                     conv_factor_W_per_V=p.get("conv_factor_W_per_V"),
+                    detector=p.get("detector") or "pdtia",
                 )
             except (KeyError, TypeError, ValueError):
                 pass
@@ -283,14 +288,9 @@ class WaveplateTab(PlotTabBase):
     def _on_sweep_point(
         self, angle: float, _kdc_pos: float, intensity_V: float, frame: Frame | None
     ) -> None:
-        pdtia_gain = 0
-        power_W: float | None = None
-        conv_factor: float | None = None
-        if frame is not None:
-            pdtia_gain = frame.pdtia_gain
-            conv_factor = frame.conv_factor_W_per_V
-            if conv_factor is not None:
-                power_W = intensity_V * conv_factor
+        power_W, conv_factor = point_power(frame, intensity_V)
+        pdtia_gain = frame.pdtia_gain if frame is not None else 0
+        detector = frame.detector if frame is not None else "pdtia"
         self._ui.intensityCurvePlot.add_point(
             analyser_angle=angle,
             polariser_angle=0.0,
@@ -298,6 +298,7 @@ class WaveplateTab(PlotTabBase):
             pdtia_gain=pdtia_gain,
             power_W=power_W,
             conv_factor_W_per_V=conv_factor,
+            detector=detector,
         )
         self._refresh_table()
         self.points_changed.emit(len(self._ui.intensityCurvePlot.get_points()))

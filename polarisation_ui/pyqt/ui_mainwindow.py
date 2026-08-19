@@ -47,6 +47,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDockWidget,
+    QDoubleSpinBox,
     QFormLayout,
     QFrame,
     QGridLayout,
@@ -1324,14 +1325,58 @@ class Ui_MainWindow(object):
         self.tabDetector.addTab(self.tabPDTIA, "")
         self.tabPM400 = QWidget()
         self.tabPM400.setObjectName("tabPM400")
-        self.gridLayout_7 = QGridLayout(self.tabPM400)
-        self.gridLayout_7.setObjectName("gridLayout_7")
-        self.gridLayout_7.setContentsMargins(12, -1, 12, 12)
-        self.btnZeroPM400 = QPushButton(self.tabPM400)
-        self.btnZeroPM400.setObjectName("btnZeroPM400")
-        self.btnZeroPM400.setEnabled(False)
+        self.hlPM400Tab = QHBoxLayout(self.tabPM400)
+        self.hlPM400Tab.setObjectName("hlPM400Tab")
+        self.formPM400 = QFormLayout()
+        self.formPM400.setObjectName("formPM400")
+        self.formPM400.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.formPM400.setContentsMargins(-1, -1, 0, -1)
+        self.lblPM400ConnStatus = QLabel(self.tabPM400)
+        self.lblPM400ConnStatus.setObjectName("lblPM400ConnStatus")
+        sizePolicy.setHeightForWidth(self.lblPM400ConnStatus.sizePolicy().hasHeightForWidth())
+        self.lblPM400ConnStatus.setSizePolicy(sizePolicy)
+        self.lblPM400ConnStatus.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.gridLayout_7.addWidget(self.btnZeroPM400, 4, 3, 1, 1)
+        self.formPM400.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblPM400ConnStatus)
+
+        self.hlPM400Status = QHBoxLayout()
+        self.hlPM400Status.setObjectName("hlPM400Status")
+        self.lblPM400Status = QLabel(self.tabPM400)
+        self.lblPM400Status.setObjectName("lblPM400Status")
+        sizePolicy2.setHeightForWidth(self.lblPM400Status.sizePolicy().hasHeightForWidth())
+        self.lblPM400Status.setSizePolicy(sizePolicy2)
+        self.lblPM400Status.setMinimumSize(QSize(0, 16))
+        self.lblPM400Status.setFont(font1)
+        self.lblPM400Status.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.hlPM400Status.addWidget(self.lblPM400Status)
+
+        self.ledPM400Status = QLabel(self.tabPM400)
+        self.ledPM400Status.setObjectName("ledPM400Status")
+        sizePolicy7.setHeightForWidth(self.ledPM400Status.sizePolicy().hasHeightForWidth())
+        self.ledPM400Status.setSizePolicy(sizePolicy7)
+        self.ledPM400Status.setMinimumSize(QSize(16, 16))
+        self.ledPM400Status.setMaximumSize(QSize(16, 16))
+        self.ledPM400Status.setStyleSheet(
+            "background-color: rgb(255, 11, 3); border: 0px; padding: 3px; border-radius: 8px"
+        )
+
+        self.hlPM400Status.addWidget(self.ledPM400Status)
+
+        self.formPM400.setLayout(0, QFormLayout.ItemRole.FieldRole, self.hlPM400Status)
+
+        self.lblPMResource = QLabel(self.tabPM400)
+        self.lblPMResource.setObjectName("lblPMResource")
+
+        self.formPM400.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblPMResource)
 
         self.comboPM400 = QComboBox(self.tabPM400)
         self.comboPM400.setObjectName("comboPM400")
@@ -1342,17 +1387,44 @@ class Ui_MainWindow(object):
         self.comboPM400.setSizePolicy(sizePolicy11)
         self.comboPM400.setEditable(True)
 
-        self.gridLayout_7.addWidget(self.comboPM400, 0, 2, 1, 1)
-
-        self.btnConnectPM400 = QPushButton(self.tabPM400)
-        self.btnConnectPM400.setObjectName("btnConnectPM400")
-
-        self.gridLayout_7.addWidget(self.btnConnectPM400, 2, 3, 1, 1)
+        self.formPM400.setWidget(1, QFormLayout.ItemRole.FieldRole, self.comboPM400)
 
         self.btnRefreshPM400 = QPushButton(self.tabPM400)
         self.btnRefreshPM400.setObjectName("btnRefreshPM400")
 
-        self.gridLayout_7.addWidget(self.btnRefreshPM400, 0, 3, 1, 1)
+        self.formPM400.setWidget(2, QFormLayout.ItemRole.LabelRole, self.btnRefreshPM400)
+
+        self.btnConnectPM400 = QPushButton(self.tabPM400)
+        self.btnConnectPM400.setObjectName("btnConnectPM400")
+
+        self.formPM400.setWidget(2, QFormLayout.ItemRole.FieldRole, self.btnConnectPM400)
+
+        self.lblPM400WavelengthLabel = QLabel(self.tabPM400)
+        self.lblPM400WavelengthLabel.setObjectName("lblPM400WavelengthLabel")
+        sizePolicy5.setHeightForWidth(self.lblPM400WavelengthLabel.sizePolicy().hasHeightForWidth())
+        self.lblPM400WavelengthLabel.setSizePolicy(sizePolicy5)
+
+        self.formPM400.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblPM400WavelengthLabel)
+
+        self.spbPM400Wavelength = QDoubleSpinBox(self.tabPM400)
+        self.spbPM400Wavelength.setObjectName("spbPM400Wavelength")
+        self.spbPM400Wavelength.setMinimum(200.000000000000000)
+        self.spbPM400Wavelength.setMaximum(2000.000000000000000)
+        self.spbPM400Wavelength.setValue(633.000000000000000)
+
+        self.formPM400.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spbPM400Wavelength)
+
+        self.hlPM400Tab.addLayout(self.formPM400)
+
+        self.gridPM400 = QGridLayout()
+        self.gridPM400.setObjectName("gridPM400")
+        self.gridPM400.setContentsMargins(-1, -1, 0, -1)
+        self.lblPM400Power = QLabel(self.tabPM400)
+        self.lblPM400Power.setObjectName("lblPM400Power")
+        sizePolicy5.setHeightForWidth(self.lblPM400Power.sizePolicy().hasHeightForWidth())
+        self.lblPM400Power.setSizePolicy(sizePolicy5)
+
+        self.gridPM400.addWidget(self.lblPM400Power, 0, 0, 1, 1)
 
         self.lcdPM400Power = QLCDNumber(self.tabPM400)
         self.lcdPM400Power.setObjectName("lcdPM400Power")
@@ -1360,30 +1432,27 @@ class Ui_MainWindow(object):
         self.lcdPM400Power.setSizePolicy(sizePolicy3)
         self.lcdPM400Power.setMinimumSize(QSize(0, 30))
         self.lcdPM400Power.setLineWidth(2)
-        self.lcdPM400Power.setDigitCount(6)
+        self.lcdPM400Power.setDigitCount(8)
         self.lcdPM400Power.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
 
-        self.gridLayout_7.addWidget(self.lcdPM400Power, 4, 2, 1, 1)
+        self.gridPM400.addWidget(self.lcdPM400Power, 0, 1, 1, 1)
 
-        self.lblPM400Status = QLabel(self.tabPM400)
-        self.lblPM400Status.setObjectName("lblPM400Status")
+        self.btnZeroPM400 = QPushButton(self.tabPM400)
+        self.btnZeroPM400.setObjectName("btnZeroPM400")
+        self.btnZeroPM400.setEnabled(False)
 
-        self.gridLayout_7.addWidget(self.lblPM400Status, 2, 1, 1, 2)
+        self.gridPM400.addWidget(self.btnZeroPM400, 1, 0, 1, 2)
 
-        self.lblPMResource = QLabel(self.tabPM400)
-        self.lblPMResource.setObjectName("lblPMResource")
+        self.verticalSpacerPM400 = QSpacerItem(
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
 
-        self.gridLayout_7.addWidget(self.lblPMResource, 0, 1, 1, 1)
+        self.gridPM400.addItem(self.verticalSpacerPM400, 2, 0, 1, 2)
 
-        self.lblPM400Power = QLabel(self.tabPM400)
-        self.lblPM400Power.setObjectName("lblPM400Power")
-        sizePolicy5.setHeightForWidth(self.lblPM400Power.sizePolicy().hasHeightForWidth())
-        self.lblPM400Power.setSizePolicy(sizePolicy5)
+        self.hlPM400Tab.addLayout(self.gridPM400)
 
-        self.gridLayout_7.addWidget(self.lblPM400Power, 4, 1, 1, 1)
-
-        self.gridLayout_7.setColumnStretch(1, 1)
-        self.gridLayout_7.setColumnStretch(2, 2)
+        self.hlPM400Tab.setStretch(0, 1)
+        self.hlPM400Tab.setStretch(1, 1)
         self.tabDetector.addTab(self.tabPM400, "")
 
         self.gridLayout.addWidget(self.tabDetector, 5, 0, 1, 3)
@@ -1429,7 +1498,7 @@ class Ui_MainWindow(object):
 
         self.tabWidget.setCurrentIndex(0)
         self.cbGroupLetter.setCurrentIndex(-1)
-        self.tabDetector.setCurrentIndex(1)
+        self.tabDetector.setCurrentIndex(0)
 
         QMetaObject.connectSlotsByName(MainWindow)
 
@@ -2023,19 +2092,55 @@ class Ui_MainWindow(object):
             self.tabDetector.indexOf(self.tabPDTIA),
             QCoreApplication.translate("MainWindow", "PD-TIA Detektor", None),
         )
-        self.btnZeroPM400.setText(
-            QCoreApplication.translate("MainWindow", "Nullabgleich (Zero)", None)
-        )
-        self.btnConnectPM400.setText(QCoreApplication.translate("MainWindow", "Verbinden", None))
-        self.btnRefreshPM400.setText(
-            QCoreApplication.translate("MainWindow", "Aktualisieren", None)
-        )
+        self.lblPM400ConnStatus.setText(QCoreApplication.translate("MainWindow", "Status", None))
         self.lblPM400Status.setText(
             QCoreApplication.translate("MainWindow", "Nicht verbunden", None)
         )
+        self.ledPM400Status.setText("")
         self.lblPMResource.setText(QCoreApplication.translate("MainWindow", "VISA-Adresse", None))
+        # if QT_CONFIG(tooltip)
+        self.comboPM400.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                "VISA-Ressourcenadresse des PM400 (z.B. USB0::0x1313::0x8078::P0000001::INSTR)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
+        self.btnRefreshPM400.setToolTip(
+            QCoreApplication.translate("MainWindow", "VISA-Ressourcenliste neu einlesen", None)
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnRefreshPM400.setText(
+            QCoreApplication.translate("MainWindow", "Aktualisieren", None)
+        )
+        self.btnConnectPM400.setText(QCoreApplication.translate("MainWindow", "Verbinden", None))
+        self.lblPM400WavelengthLabel.setText(
+            QCoreApplication.translate("MainWindow", "Wellenl\u00e4nge (nm)", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.spbPM400Wavelength.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow",
+                "Betriebswellenl\u00e4nge f\u00fcr die spektrale Empfindlichkeitskorrektur des PM400",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.spbPM400Wavelength.setSuffix(QCoreApplication.translate("MainWindow", " nm", None))
         self.lblPM400Power.setText(
             QCoreApplication.translate("MainWindow", "Leistung (\u00b5W)", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.btnZeroPM400.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Dunkelstrom-Nullabgleich des PM400 starten", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.btnZeroPM400.setText(
+            QCoreApplication.translate("MainWindow", "Nullabgleich (Zero)", None)
         )
         self.tabDetector.setTabText(
             self.tabDetector.indexOf(self.tabPM400),

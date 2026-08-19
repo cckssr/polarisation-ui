@@ -16,11 +16,12 @@ Workflow, mirroring MalusTab's manual-entry + optional-KDC-sweep pattern:
      pseudo n/k) or film-on-substrate (3-phase, reports thickness/n/k) model
      to the whole series.
 
-Fitting requires calibrated power (frame.conv_factor_W_per_V) on every
+Fitting requires calibrated power (frame.power_W, from either a loaded
+PD-TIA calibration profile or an active PM400 — see core.detector) on every
 sample, so a gain change mid-sweep cannot silently scale part of the curve
 (power is gain-normalised) — see the module/tab docs for why. Both the
 sweep and manual-entry groups are disabled, with an explanatory tooltip,
-until a power calibration is active.
+until a power measurement is active.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ import numpy as np
 from PySide6.QtCore import QMutex, QMutexLocker, Signal, Slot
 from PySide6.QtWidgets import QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.detector import point_power
 from polarisation_ui.core.ellipsometry import (
     FilmFit,
     RaeFit,
@@ -119,12 +121,15 @@ class EllipsometryTab(PlotTabBase):
         with QMutexLocker(self._buffer_mutex):
             self._buffer.append(frame)
         self._latest_frame = frame
-        calibrated = frame.conv_factor_W_per_V is not None
+        # A PM400 frame carries power_W directly (no conv_factor_W_per_V —
+        # see core.detector), so gate on power_W itself rather than on a
+        # PD-TIA-specific calibration profile.
+        calibrated = frame.power_W is not None
         if calibrated != self._power_calibrated:
             self._power_calibrated = calibrated
             if not calibrated:
                 self.status_message.emit(
-                    "warning", "Leistungskalibrierung erforderlich — Ellipsometrie deaktiviert"
+                    "warning", "Leistungsmessung erforderlich — Ellipsometrie deaktiviert"
                 )
             self._update_gates()
         self._update_live_labels(frame)
@@ -196,6 +201,7 @@ class EllipsometryTab(PlotTabBase):
             "power_W",
             "pdtia_gain",
             "conv_factor_W_per_V",
+            "detector",
             "psi_deg",
             "delta_deg",
             "alpha",
@@ -222,6 +228,7 @@ class EllipsometryTab(PlotTabBase):
                             if sample.conv_factor_W_per_V is not None
                             else ""
                         ),
+                        sample.detector,
                         export_angle(sp.psi_deg),
                         export_angle(sp.delta_deg),
                         f"{sp.alpha:.6f}",
@@ -251,6 +258,7 @@ class EllipsometryTab(PlotTabBase):
                 "azimuth_deg": "degrees",
                 "intensity_V": "volts",
                 "power_W": "watts",
+                "detector": "pdtia or pm400",
                 "psi_deg": "degrees",
                 "delta_deg": "degrees",
                 "i0_W": "watts",
@@ -289,6 +297,7 @@ class EllipsometryTab(PlotTabBase):
                         conv_factor_W_per_V=s.get("conv_factor_W_per_V"),
                         aoi_deg=float(s.get("aoi_deg", float("nan"))),
                         detector_angle=float(s.get("detector_angle", float("nan"))),
+                        detector=s.get("detector") or "pdtia",
                     )
                     for s in (p.get("samples") or [])
                 ]
@@ -407,7 +416,7 @@ class EllipsometryTab(PlotTabBase):
 
         reasons: list[str] = []
         if not self._power_calibrated:
-            reasons.append("Leistungskalibrierung erforderlich")
+            reasons.append("Leistungsmessung erforderlich (Kalibrierung oder PM400)")
         if not self._is_measuring:
             reasons.append("Messung nicht gestartet")
         if self._kdc is None or not self._kdc.is_connected():
@@ -446,17 +455,12 @@ class EllipsometryTab(PlotTabBase):
 
     def _add_sample(self, analyser_angle: float, intensity_V: float, frame: Frame | None) -> None:
         azimuth = analyser_angle + self._ui.spinAnalyserOffset.value()
-        pdtia_gain = 0
-        power_W: float | None = None
-        conv_factor: float | None = None
+        power_W, conv_factor = point_power(frame, intensity_V)
+        pdtia_gain = frame.pdtia_gain if frame is not None else 0
+        detector = frame.detector if frame is not None else "pdtia"
         ref_frame = frame if frame is not None else self._latest_frame
         aoi = self._aoi_from_frame(ref_frame)
         detector_angle = ref_frame.detector_angle if ref_frame is not None else float("nan")
-        if frame is not None:
-            pdtia_gain = frame.pdtia_gain
-            conv_factor = frame.conv_factor_W_per_V
-            if conv_factor is not None:
-                power_W = intensity_V * conv_factor
         self._ui.fitPlot.add_point(
             analyser_angle=analyser_angle,
             azimuth_deg=azimuth,
@@ -466,6 +470,7 @@ class EllipsometryTab(PlotTabBase):
             conv_factor_W_per_V=conv_factor,
             aoi_deg=aoi,
             detector_angle=detector_angle,
+            detector=detector,
         )
         self._refit_current()
 

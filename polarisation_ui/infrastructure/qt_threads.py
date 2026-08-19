@@ -784,3 +784,62 @@ class KDC101HomeWorker(QThread):
             self.done.emit()
         except KDC101Error as exc:
             self.error.emit(str(exc))
+
+
+class PM400PollWorker(QThread):
+    """Continuously polls a connected PM400 for power readings off the main thread.
+
+    ``PM400PowerMeter.read_power_W()`` is a blocking VISA call; at the 10 Hz
+    acquisition rate ``DataController`` runs at, doing that on the Qt main
+    thread (as ``PowerCalibrationWindow`` does at its slower 250 ms rate)
+    would stutter the UI. This worker owns the read loop instead and hands
+    readings back via a signal.
+
+    A transient read glitch does not stop the loop — only
+    ``_DISCONNECT_THRESHOLD`` *consecutive* failures are treated as the meter
+    having been unplugged, mirroring ``MainWindow``'s
+    ``_KDC_DISCONNECT_THRESHOLD`` for the same reason: a single dropped VISA
+    transaction is not proof the device is gone.
+
+    Signals are delivered to the main thread via Qt's automatic queued-connection
+    mechanism because the receiver objects live on the main thread.
+    """
+
+    power_read = Signal(float)  # watts
+    connection_lost = Signal(str)  # last error message
+
+    _POLL_INTERVAL_S = 0.1
+    _DISCONNECT_THRESHOLD = 3
+
+    def __init__(self, pm: "PM400PowerMeter", parent=None) -> None:
+        """Store the PM400 handle to poll when run() executes."""
+        super().__init__(parent)
+        self._pm = pm
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop; checked at the top of every poll iteration."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Poll read_power_W() in a loop until aborted or the meter is declared lost."""
+        consecutive_failures = 0
+        last_error = ""
+        while not self._abort:
+            try:
+                power_W = self._pm.read_power_W()
+            except PM400Error as exc:
+                consecutive_failures += 1
+                last_error = str(exc)
+                Debug.warning(f"PM400PollWorker: read failed ({consecutive_failures}): {exc}")
+                if consecutive_failures >= self._DISCONNECT_THRESHOLD:
+                    self.connection_lost.emit(last_error)
+                    return
+            except Exception as exc:
+                Debug.error(f"PM400PollWorker: unexpected error: {exc}", exc_info=True)
+                self.connection_lost.emit(str(exc))
+                return
+            else:
+                consecutive_failures = 0
+                self.power_read.emit(power_W)
+            self.msleep(int(self._POLL_INTERVAL_S * 1000))

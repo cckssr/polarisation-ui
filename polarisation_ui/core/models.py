@@ -66,6 +66,9 @@ class Frame:
       bit 1 — Encoder B parity error (transient)
       bit 2 — Encoder A persistent error flag (self-latching; clear via CONF:ENC:ERR A)
       bit 3 — Encoder B persistent error flag (self-latching; clear via CONF:ENC:ERR B)
+
+    ``detector`` names which detector produced ``power_W``: ``"pdtia"`` (the
+    default) or ``"pm400"`` — see ``core.detector``.
     """
 
     ts_ms: int
@@ -76,6 +79,7 @@ class Frame:
     power_W: float | None = None
     conv_factor_W_per_V: float | None = None
     stat: int = 0  # streaming stat bitmask (see docstring)
+    detector: str = "pdtia"  # "pdtia" or "pm400" — see core.detector
 
 
 @dataclass
@@ -88,6 +92,7 @@ class BrewsterPoint:
     pdtia_gain: int = 0
     power_W: float | None = None
     conv_factor_W_per_V: float | None = None
+    detector: str = "pdtia"  # "pdtia" or "pm400" — see core.detector
 
 
 @dataclass
@@ -100,6 +105,7 @@ class MalusPoint:
     pdtia_gain: int = 0
     power_W: float | None = None
     conv_factor_W_per_V: float | None = None
+    detector: str = "pdtia"  # "pdtia" or "pm400" — see core.detector
 
 
 @dataclass
@@ -114,6 +120,7 @@ class EllipsometryPoint:
     conv_factor_W_per_V: float | None = None
     aoi_deg: float = float("nan")
     detector_angle: float = float("nan")
+    detector: str = "pdtia"  # "pdtia" or "pm400" — see core.detector
 
 
 @dataclass

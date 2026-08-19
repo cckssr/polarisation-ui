@@ -98,6 +98,7 @@ class EllipsometryFitPlot(QWidget):
         conv_factor_W_per_V: float | None = None,
         aoi_deg: float = float("nan"),
         detector_angle: float = float("nan"),
+        detector: str = "pdtia",
     ) -> None:
         """Append a new sweep sample and refresh the plot (fit overlay is unchanged)."""
         self._points.append(
@@ -110,6 +111,7 @@ class EllipsometryFitPlot(QWidget):
                 conv_factor_W_per_V=conv_factor_W_per_V,
                 aoi_deg=aoi_deg,
                 detector_angle=detector_angle,
+                detector=detector,
             )
         )
         self._refresh()

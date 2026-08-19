@@ -20,11 +20,13 @@ from typing import Literal
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QButtonGroup, QHeaderView, QTableWidgetItem, QWidget
 
+from polarisation_ui.core.detector import DETECTOR_PM400
 from polarisation_ui.core.formatting import (
     export_angle,
     export_intensity,
     fmt_angle,
     fmt_intensity,
+    fmt_stat,
 )
 from polarisation_ui.core.models import BrewsterPoint, Frame, TabExport
 from polarisation_ui.pyqt.ui_brewster_tab import Ui_BrewsterTab
@@ -47,6 +49,9 @@ class BrewsterTab(PlotTabBase):
         self._latest_frame: Frame | None = None
         self._peak_intensity: float = float("nan")
         self._peak_angle: float = float("nan")
+        # Tracks which detector fed the live scan plot, so its axis label is
+        # only touched on an actual change — see core.detector.
+        self._detector_source: str = "pdtia"
         self._polarisation: Literal["p", "s"] = "p"
         self._is_measuring: bool = False
 
@@ -72,9 +77,21 @@ class BrewsterTab(PlotTabBase):
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
     def on_frame(self, frame: Frame) -> None:
-        """Cache the latest frame and update the live detector-scan plot."""
+        """Cache the latest frame and update the live detector-scan plot.
+
+        When PM400 is the active detector its power reading — not the
+        (now meaningless) PD-TIA voltage — is what the peak-finding scan
+        must track; see core.detector.
+        """
         self._latest_frame = frame
-        self._ui.detectorPlot.update_data(frame.detector_angle, frame.intensity)
+        if frame.detector != self._detector_source:
+            self._detector_source = frame.detector
+            self._ui.detectorPlot.set_power_mode(frame.detector == DETECTOR_PM400)
+        if frame.detector == DETECTOR_PM400:
+            value = frame.power_W if frame.power_W is not None else float("nan")
+        else:
+            value = frame.intensity
+        self._ui.detectorPlot.update_data(frame.detector_angle, value)
 
     def on_reset(self) -> None:
         """Clear both plots and the saved-points table."""
@@ -135,6 +152,7 @@ class BrewsterTab(PlotTabBase):
             "pdtia_gain",
             "power_W",
             "conv_factor_W_per_V",
+            "detector",
         ]
         rows = [
             [
@@ -144,6 +162,7 @@ class BrewsterTab(PlotTabBase):
                 str(pt.pdtia_gain) if pt.pdtia_gain else "",
                 f"{pt.power_W:.6e}" if pt.power_W is not None else "",
                 (f"{pt.conv_factor_W_per_V:.6e}" if pt.conv_factor_W_per_V is not None else ""),
+                pt.detector,
             ]
             for pt in points
         ]
@@ -155,6 +174,7 @@ class BrewsterTab(PlotTabBase):
                 "intensity_V": "volts",
                 "power_W": "watts",
                 "conv_factor_W_per_V": "watts_per_volt",
+                "detector": "pdtia or pm400",
             },
             "polarisation": self._polarisation,
         }
@@ -177,6 +197,7 @@ class BrewsterTab(PlotTabBase):
                     pdtia_gain=int(p.get("pdtia_gain") or 0),
                     power_W=p.get("power_W"),
                     conv_factor_W_per_V=p.get("conv_factor_W_per_V"),
+                    detector=p.get("detector") or "pdtia",
                 )
             except (KeyError, TypeError, ValueError):
                 pass
@@ -197,6 +218,7 @@ class BrewsterTab(PlotTabBase):
             pdtia_gain=frame.pdtia_gain,
             power_W=frame.power_W,
             conv_factor_W_per_V=frame.conv_factor_W_per_V,
+            detector=frame.detector,
         )
         self._clear_detector_plot()
         self._refresh_table()
@@ -210,18 +232,26 @@ class BrewsterTab(PlotTabBase):
             self.status_message.emit("warning", "Kein Maximum verfügbar")
             return
         frame = self._latest_frame
-        peak_power_W = (
-            self._peak_intensity * frame.conv_factor_W_per_V
-            if frame.conv_factor_W_per_V is not None
-            else None
-        )
+        if frame.detector == DETECTOR_PM400:
+            # The scan already fed PM400 power (not PD-TIA voltage) into the
+            # peak buffer — see on_frame() — so the peak value *is* the power.
+            peak_power_W: float | None = self._peak_intensity
+            intensity_V = frame.intensity
+        else:
+            peak_power_W = (
+                self._peak_intensity * frame.conv_factor_W_per_V
+                if frame.conv_factor_W_per_V is not None
+                else None
+            )
+            intensity_V = self._peak_intensity
         self._ui.brewsterCurvePlot.add_point(
             sample_angle=frame.sample_angle,
             detector_angle=self._peak_angle,
-            intensity_V=self._peak_intensity,
+            intensity_V=intensity_V,
             pdtia_gain=frame.pdtia_gain,
             power_W=peak_power_W,
             conv_factor_W_per_V=frame.conv_factor_W_per_V,
+            detector=frame.detector,
         )
         self._clear_detector_plot()
         self._refresh_table()
@@ -253,11 +283,15 @@ class BrewsterTab(PlotTabBase):
 
     @Slot(float, float)
     def _update_max_labels(self, intensity: float, angle: float) -> None:
+        """Show the scan peak. *intensity* is PM400 power (W) or PD-TIA voltage (V)."""
         self._peak_intensity = intensity
         self._peak_angle = angle
         if math.isnan(intensity):
             self._ui.lblMaxIntensity.setText("—")
             self._ui.lblMaxAngle.setText("—")
+        elif self._detector_source == DETECTOR_PM400:
+            self._ui.lblMaxIntensity.setText(f"{fmt_stat(intensity * 1e6)} µW")
+            self._ui.lblMaxAngle.setText(f"{fmt_angle(angle)}°")
         else:
             self._ui.lblMaxIntensity.setText(f"{fmt_intensity(intensity)} V")
             self._ui.lblMaxAngle.setText(f"{fmt_angle(angle)}°")

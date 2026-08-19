@@ -45,10 +45,15 @@ def save_tab_export(
     suffix: str,
     power_cal_meta: dict,
     saved_at: datetime,
+    active_detector: str = "pdtia",
 ) -> None:
     """Write a TabExport to CSV + sibling metadata JSON.
 
     Does not open any dialogs — the caller must resolve the path first.
+    *active_detector* is the detector ("pdtia" or "pm400") that was live when
+    the export was requested — see ``core.detector``. Kept as a top-level
+    metadata key rather than nested in *power_cal_meta*, which is ``{}``
+    whenever no calibration profile is loaded.
     """
     csv_path = Path(csv_path)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
@@ -64,6 +69,7 @@ def save_tab_export(
         "point_count": len(exp.rows),
         "group": group_letter,
         "suffix": suffix,
+        "active_detector": active_detector,
         "power_calibration": power_cal_meta,
         "sensors": SENSOR_DESCRIPTIONS,
         **exp.metadata,

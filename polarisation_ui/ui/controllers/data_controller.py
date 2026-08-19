@@ -8,9 +8,11 @@ import math
 import random
 import time
 from collections import deque
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 
+from polarisation_ui.core.detector import DETECTOR_PDTIA, DETECTOR_PM400
 from polarisation_ui.core.formatting import export_angle, export_intensity
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
@@ -18,10 +20,19 @@ from polarisation_ui.core.utils import circular_mean_deg
 from polarisation_ui.infrastructure.config import import_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
-from polarisation_ui.infrastructure.qt_threads import ReconnectWorker
+from polarisation_ui.infrastructure.qt_threads import PM400PollWorker, ReconnectWorker
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 
+if TYPE_CHECKING:
+    from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
+
 CONFIG = import_config()
+
+# A cached PM400 reading older than this counts as absent for the current
+# poll — a defensive fallback in case PM400PollWorker stalls or dies without
+# emitting connection_lost (the worker's own 3-consecutive-failure check is
+# the primary detector for a genuine unplug).
+_PM400_STALE_S = 1.0
 
 
 def _evaluate_encoder(diag: dict | None, label: str) -> tuple[bool, str]:
@@ -77,11 +88,20 @@ class DataController(QObject):
     # Enable via enable_raw_frame_signal(True) before opening the Raw Stream tab.
     raw_frame = Signal(str)
     # Emitted every poll with the computed optical power in watts, or NaN when
-    # no calibration profile is loaded or the current gain has no calibration data.
+    # no calibration profile is loaded or the current gain has no calibration data,
+    # or the PM400 is active but has not produced a fresh reading yet.
     power_updated = Signal(float)
     # Measured polling rate in Hz (emitted after each successful frame once
     # enough samples are available for a stable estimate).
     poll_rate_updated = Signal(float)
+    # Emitted whenever the active power detector changes: DETECTOR_PDTIA or
+    # DETECTOR_PM400 (see core.detector) — on set_pm400()/clear_pm400() and on
+    # an automatic fallback after pm400_connection_lost.
+    active_detector_changed = Signal(str)
+    # Emitted when PM400PollWorker gives up after consecutive read failures —
+    # the meter is treated as unplugged. Carries the last error message.
+    # The active measurement (if any) is stopped before this is emitted.
+    pm400_connection_lost = Signal(str)
 
     # Error signals
     error_occurred = Signal(str)  # error_message
@@ -193,6 +213,13 @@ class DataController(QObject):
 
         # Active detector calibration profile; None when not loaded.
         self._calibration_profile: PowerCalibrationProfile | None = None
+
+        # PM400 power meter: None means the PD-TIA is the active detector.
+        # Non-None means PM400 takes precedence — see _poll_sensors().
+        self._pm400: PM400PowerMeter | None = None
+        self._pm400_worker: PM400PollWorker | None = None
+        self._pm400_power_W: float | None = None
+        self._pm400_last_ts: float = 0.0
 
         # When True, the raw_frame signal is emitted with the DATA:FRAME string
         # on every poll.  Disabled by default — only enabled when the Raw Stream
@@ -435,6 +462,79 @@ class DataController(QObject):
         """Currently active PDTIA gain stage (0 = not set)."""
         return self._current_pdtia_gain
 
+    # ==================== PM400 Detector Precedence ====================
+
+    def set_pm400(self, pm: "PM400PowerMeter") -> None:
+        """Make the already-connected *pm* the active power detector.
+
+        Starts a ``PM400PollWorker`` to read it continuously off the main
+        thread. Every subsequent ``Frame`` reports ``power_W`` from the PM400
+        and ``detector=DETECTOR_PM400`` until ``clear_pm400()`` is called or
+        the worker reports ``connection_lost``.
+        """
+        if self._pm400_worker is not None:
+            self.clear_pm400()
+        self._pm400 = pm
+        self._pm400_power_W = None
+        self._pm400_last_ts = 0.0
+        worker = PM400PollWorker(pm, parent=self)
+        worker.power_read.connect(self._on_pm400_power_read)
+        worker.connection_lost.connect(self._on_pm400_connection_lost)
+        worker.finished.connect(worker.deleteLater)
+        self._pm400_worker = worker
+        worker.start()
+        self.active_detector_changed.emit(DETECTOR_PM400)
+        Debug.info("DataController: PM400 set as active detector")
+
+    def clear_pm400(self) -> None:
+        """Stop polling the PM400 (if any) and fall back to the PD-TIA path.
+
+        Called both for a user-initiated disconnect and, internally, right
+        before ``pm400_connection_lost`` is emitted.
+        """
+        if self._pm400_worker is not None:
+            self._pm400_worker.abort()
+            # Block until the thread actually exits (bounded by the 100 ms
+            # poll interval) rather than just dropping the reference — Qt
+            # aborts the process if a QThread is destroyed while still
+            # running, and this worker is parented to `self`.
+            self._pm400_worker.wait(2000)
+            self._pm400_worker = None
+        was_active = self._pm400 is not None
+        self._pm400 = None
+        self._pm400_power_W = None
+        self._pm400_last_ts = 0.0
+        if was_active:
+            self.active_detector_changed.emit(DETECTOR_PDTIA)
+            Debug.info("DataController: PM400 cleared — PD-TIA active again")
+
+    @property
+    def is_pm400_active(self) -> bool:
+        """Return True while a PM400 is set as the active detector."""
+        return self._pm400 is not None
+
+    @Slot(float)
+    def _on_pm400_power_read(self, power_W: float) -> None:
+        """Cache the latest PM400 reading; ignore signals from a superseded worker."""
+        if self.sender() is not self._pm400_worker:
+            return
+        self._pm400_power_W = power_W
+        self._pm400_last_ts = time.monotonic()
+
+    @Slot(str)
+    def _on_pm400_connection_lost(self, msg: str) -> None:
+        """Treat the PM400 as unplugged: stop any measurement, fall back to PD-TIA.
+
+        Ignores signals from a worker already superseded by clear_pm400()/set_pm400().
+        """
+        if self.sender() is not self._pm400_worker:
+            return
+        self.clear_pm400()
+        if self._is_measuring:
+            self.stop_measurement()
+        self.pm400_connection_lost.emit(msg)
+        Debug.error(f"DataController: PM400 connection lost — {msg}")
+
     # ==================== Dark-Current Tare ====================
 
     @property
@@ -601,10 +701,19 @@ class DataController(QObject):
             )
             self.intensity_updated.emit(display_intensity)
             self.angles_updated.emit(display_sample, display_det)
-            # Compute optical power from calibration profile (if loaded).
+
+            # Compute optical power. PM400 takes precedence over the PD-TIA
+            # calibration path whenever it is connected — its sensor head has
+            # physically replaced the photodiode on the detector arm, so a
+            # PD-TIA voltage-based figure would be meaningless. See core.detector.
             conv_factor: float | None = None
             power_W: float | None = None
-            if self._calibration_profile is not None:
+            detector_source = DETECTOR_PDTIA
+            if self._pm400 is not None:
+                detector_source = DETECTOR_PM400
+                if time.monotonic() - self._pm400_last_ts <= _PM400_STALE_S:
+                    power_W = self._pm400_power_W
+            elif self._calibration_profile is not None:
                 conv_factor = self._calibration_profile.conversion_factor(self._current_pdtia_gain)
                 if conv_factor is not None:
                     power_W = display_intensity * conv_factor
@@ -619,6 +728,7 @@ class DataController(QObject):
                 pdtia_gain=self._current_pdtia_gain,
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor,
+                detector=detector_source,
             )
             self.frame_ready.emit(frame)
             if self._raw_frame_enabled:
@@ -802,6 +912,7 @@ class DataController(QObject):
     def cleanup(self) -> None:
         """Clean up resources."""
         self.stop_continuous_reading()
+        self.clear_pm400()
 
         if self._reconnect_worker is not None and self._reconnect_worker.isRunning():
             self._reconnect_worker.quit()
