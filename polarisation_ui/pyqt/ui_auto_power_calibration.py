@@ -77,7 +77,7 @@ class Ui_AutoPowerCalibrationDialog(object):
     def setupUi(self, AutoPowerCalibrationDialog):
         if not AutoPowerCalibrationDialog.objectName():
             AutoPowerCalibrationDialog.setObjectName("AutoPowerCalibrationDialog")
-        AutoPowerCalibrationDialog.resize(1280, 980)
+        AutoPowerCalibrationDialog.resize(1429, 1063)
         self.mainLayout = QVBoxLayout(AutoPowerCalibrationDialog)
         self.mainLayout.setSpacing(6)
         self.mainLayout.setObjectName("mainLayout")

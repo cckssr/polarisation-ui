@@ -871,9 +871,13 @@ class AutoPowerCalibrationWindow(QDialog):
 
         Uses ``pdtia.gain_auto_switch_power_W`` from config.json (the same
         windows the live app uses for gain auto-switching) intersected with
-        the gain stages actually present in ``self._profile``. Each overlap
-        contributes one target power (its geometric mean), inverted to a
-        position via the calibrated ND scan.
+        the gain stages actually present in ``self._profile``. There are at
+        most ``len(calibrated_gains) - 1`` overlap windows (3, for 4 gain
+        stages) regardless of *n_levels*, so *n_levels* controls how many
+        target powers are spread across them, not how many overlaps exist:
+        one log-spaced point per overlap when *n_levels* is small, several
+        per overlap (log-spaced within it) when it's larger. Each target is
+        inverted to a position via the calibrated ND scan.
         """
         if self._profile is None:
             return []
@@ -882,22 +886,51 @@ class AutoPowerCalibrationWindow(QDialog):
         calibrated_gains = sorted(
             g for g, cal in self._profile.gains.items() if cal.points and g in limits
         )
-        overlaps: list[float] = []
+        overlaps: list[tuple[float, float]] = []
         for g_hi, g_lo in zip(calibrated_gains, calibrated_gains[1:], strict=False):
             lo_min, lo_max = limits[g_lo]
             hi_min, hi_max = limits[g_hi]
             overlap_lo = max(lo_min, hi_min)
             overlap_hi = min(lo_max, hi_max)
             if overlap_lo > 0 and overlap_hi > overlap_lo:
-                overlaps.append((overlap_lo * overlap_hi) ** 0.5)
+                overlaps.append((overlap_lo, overlap_hi))
         if not overlaps:
             return []
         scan = self._get_nd_scan_points()
         if not scan:
             return []
-        from polarisation_ui.core.auto_calibration_settings import positions_for_target_powers
+        from polarisation_ui.core.auto_calibration_settings import (
+            build_power_grid,
+            positions_for_target_powers,
+        )
 
-        targets = overlaps[:n_levels] if n_levels <= len(overlaps) else overlaps
+        n_levels = max(1, n_levels)
+        n_overlaps = len(overlaps)
+
+        if n_levels <= n_overlaps:
+            # Evenly-spaced subset of overlaps, one point (geometric mean) each.
+            step = n_overlaps / n_levels
+            chosen = (
+                overlaps
+                if n_levels == n_overlaps
+                else [overlaps[int(i * step)] for i in range(n_levels)]
+            )
+            targets = [(lo * hi) ** 0.5 for lo, hi in chosen]
+        else:
+            # Distribute the extra points round-robin across overlaps, then
+            # log-space that many points within each overlap that got > 1.
+            counts = [1] * n_overlaps
+            i = 0
+            while sum(counts) < n_levels:
+                counts[i % n_overlaps] += 1
+                i += 1
+            targets = []
+            for (lo, hi), k in zip(overlaps, counts, strict=True):
+                if k == 1:
+                    targets.append((lo * hi) ** 0.5)
+                else:
+                    targets.extend(build_power_grid(hi, lo, k, mode="log_power"))
+
         return positions_for_target_powers(targets, scan)
 
     @Slot()

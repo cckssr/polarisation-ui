@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>980</height>
+    <width>1429</width>
+    <height>1063</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -658,7 +658,7 @@
                    <string>Dämpfung des Strahlteilers in dB. Wird direkt an das PM400 übergeben.</string>
                   </property>
                   <property name="decimals">
-                   <number>3</number>
+                   <number>5</number>
                   </property>
                   <property name="minimum">
                    <double>-60.000000000000000</double>

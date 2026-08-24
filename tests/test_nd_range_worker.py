@@ -37,8 +37,14 @@ class TestNDRangeScanWorker:
         results: list[NDFilterRange] = []
         failures: list[str] = []
 
+        # Stay within 0..20 mm, not the full 0..50 mm travel: MockPM400's ND
+        # model (P_max=1e-6 W, 3 OD over 50 mm) drops to ~1e-9 W at 50 mm,
+        # within ~2x of the mock's noise floor (std=5e-10 W) — the raw-minimum
+        # dark-end pick would then occasionally land on a noisy neighbour
+        # instead of the true endpoint and flake this test. At 20 mm the
+        # signal (~6e-8 W) is still >100x the noise, which is safe.
         worker = NDRangeScanWorker(
-            nd=nd, pm=pm, start_mm=0.0, end_mm=50.0, n_points=11, settle_s=0.0
+            nd=nd, pm=pm, start_mm=0.0, end_mm=20.0, n_points=11, settle_s=0.0
         )
         worker.point_scanned.connect(lambda *a: points.append(a), _DIRECT)
         worker.finished.connect(lambda r: results.append(r), _DIRECT)
@@ -54,7 +60,7 @@ class TestNDRangeScanWorker:
         assert isinstance(result, NDFilterRange)
         # MockPM400's ND model is monotonically decreasing with position.
         assert result.pos_clear_mm == pytest.approx(0.0, abs=1e-6)
-        assert result.pos_dark_mm == pytest.approx(50.0, abs=1e-6)
+        assert result.pos_dark_mm == pytest.approx(20.0, abs=1e-6)
         assert result.monotonic is True
 
     def test_abort_stops_worker_cleanly(self):
