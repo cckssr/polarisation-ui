@@ -5,6 +5,15 @@
 #include "ads_session.h"
 #include "scpi.h"
 
+/**
+ * @brief Arduino setup function.
+ *
+ * The function initializes the serial communication, prints device information,
+ * initializes the encoder, and checks for the presence of the ADS1220 ADC.
+ * If the ADC is not detected, a warning message is printed.
+ *
+ * @return void
+ */
 void setup()
 {
   Serial.begin(BAUD_RATE);
@@ -20,13 +29,20 @@ void setup()
   }
 }
 
-// ── Non-blocking line accumulator ─────────────────────────────────────────────
-// Drains only bytes already in the UART FIFO on each loop() tick so streaming
-// frames are never stalled by a slow or incomplete host command.
-static char s_lineBuf[256];
-static uint16_t s_lineLen = 0;
+static char s_lineBuf[256];           // data buffer
+static uint16_t s_lineLen = 0;        // current data length
 static bool s_lineOverflowed = false; // true while discarding a too-long line
 
+/**
+ * @brief Pre-process serial buffer for SCPI commands.
+ *
+ * Checks for available data on the serial port, reads it character by
+ * character, and processes complete lines as SCPI commands. Lines are
+ * terminated by either a newline or carriage return. If a line exceeds the
+ * buffer size, it is discarded until the next line ending.
+ *
+ * @return void
+ */
 static void processSerial()
 {
   while (Serial.available())
@@ -36,10 +52,7 @@ static void processSerial()
     {
       if (s_lineOverflowed)
       {
-        // The line that just ended was >255 chars — it was never a complete,
-        // trustworthy command, so drop it entirely instead of dispatching
-        // whatever fit in the buffer (which would silently run a truncated,
-        // and likely wrong, command).
+        // Buffer overflowed, discard line
         s_lineOverflowed = false;
       }
       else if (s_lineLen > 0)
@@ -50,7 +63,7 @@ static void processSerial()
         line.toUpperCase();
         scpiDispatch(line);
       }
-      // Ignore bare CR / lone LF — CRLF line endings handled transparently.
+      // Ignore bare CR / lone LF
       s_lineLen = 0;
     }
     else if (s_lineLen < (uint16_t)(sizeof(s_lineBuf) - 1))
@@ -59,14 +72,22 @@ static void processSerial()
     }
     else
     {
-      // Buffer full without a line ending — discard the rest of this line
-      // once the terminator finally arrives, rather than dispatching a
-      // truncated command.
+      // If buffer full, discard next until line ending
       s_lineOverflowed = true;
     }
   }
 }
 
+/**
+ * Main arduino loop function.
+ *
+ * In the main loop the serial input from the master is processed,
+ * The PD-TIA ADC is read through the ADS,
+ * A one-time measurement is sent back to master or
+ * Continous streaming is enabled.
+ *
+ * @return void
+ */
 void loop()
 {
   // ── Process incoming SCPI commands (non-blocking) ───────────────────────────
