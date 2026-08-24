@@ -7,7 +7,12 @@ from PySide6.QtCore import Qt
 
 from polarisation_ui.core.auto_calibration_settings import AutoCalibrationParams
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
+from polarisation_ui.infrastructure.devices.intensity_actuator import (
+    NDFilterActuator,
+    PolariserActuator,
+)
 from polarisation_ui.infrastructure.mocks.mock_arduino import MockArduino
+from polarisation_ui.infrastructure.mocks.mock_kdc101_nd_stage import MockKDC101NDStage
 from polarisation_ui.infrastructure.mocks.mock_kdc101_polariser import (
     MockKDC101Polariser,
 )
@@ -85,7 +90,9 @@ class TestAutoPowerCalibrationWorker:
         finished_profiles: list[PowerCalibrationProfile] = []
         failed_messages: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=PolariserActuator(kdc), pm=pm, params=params
+        )
         worker.point_recorded.connect(lambda *args: received_points.append(args), _DIRECT)
         worker.finished.connect(lambda p: finished_profiles.append(p), _DIRECT)
         worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
@@ -129,7 +136,9 @@ class TestAutoPowerCalibrationWorker:
 
         failed_messages: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=PolariserActuator(kdc), pm=pm, params=params
+        )
         worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
         worker.start()
         # Give the worker time to start and enter the angle loop, then abort
@@ -156,7 +165,9 @@ class TestAutoPowerCalibrationWorker:
         params = _make_params(selected_gains=(1,), n_points=3, profile_name="det_b_test")
 
         finished: list[PowerCalibrationProfile] = []
-        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=PolariserActuator(kdc), pm=pm, params=params
+        )
         worker.finished.connect(lambda p: finished.append(p), _DIRECT)
         worker.start()
         worker.wait(15_000)
@@ -251,7 +262,7 @@ class TestAlignPolariserWorker:
         assert "abgebrochen" in failed_messages[0].lower()
 
     def test_sweep_with_nonzero_offset_shifts_stage_angle(self):
-        """With an angle_offset_deg set, the worker moves to logical_angle + offset."""
+        """With the actuator's angle_offset_deg set, the worker moves to logical_angle + offset."""
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
         mock_arduino = MockArduino()
@@ -278,7 +289,13 @@ class TestAlignPolariserWorker:
         finished: list = []
         failed: list[str] = []
 
-        worker = AutoPowerCalibrationWorker(device_manager=dm, kdc=kdc, pm=pm, params=params)
+        # The offset is applied by the actuator itself now, not read from params.
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm,
+            actuator=PolariserActuator(kdc, angle_offset_deg=OFFSET),
+            pm=pm,
+            params=params,
+        )
         worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
         worker.finished.connect(lambda p: finished.append(p), _DIRECT)
         worker.failed.connect(lambda m: failed.append(m), _DIRECT)
@@ -294,6 +311,137 @@ class TestAlignPolariserWorker:
         assert abs(final_stage_pos - (90.0 + OFFSET)) < 0.5, (
             f"Expected stage at {90 + OFFSET}°, got {final_stage_pos:.2f}°"
         )
+
+
+# ── AutoPowerCalibrationWorker, ND-filter (power-domain) mode ─────────────────
+
+
+@pytest.mark.skipif(
+    __import__("sys").platform == "win32",
+    reason="PTY-based MockArduino not available on Windows",
+)
+class TestAutoPowerCalibrationWorkerNDMode:
+    def setup_method(self):
+        import sys
+
+        from PySide6.QtWidgets import QApplication
+
+        self._app = QApplication.instance() or QApplication(sys.argv)
+
+    def _nd_scan(self, end_mm: float = 20.0, n: int = 5) -> tuple[tuple[float, float], ...]:
+        """Coarse scan matching MockPM400's ND model exactly (P_max=1e-6, OD_MAX=3, travel=50).
+
+        Deliberately coarse (5 points over 20 mm) so linear interpolation of
+        this exponential curve has real error — exercising the worker's
+        bisection refinement, not just its initial interpolated guess.
+        """
+        step = end_mm / (n - 1)
+        return tuple((i * step, 1e-6 * 10 ** (-3.0 * (i * step) / 50.0)) for i in range(n))
+
+    def test_nd_sweep_hits_target_powers_within_tolerance(self):
+        from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+
+        mock_arduino = MockArduino()
+        dm = _make_device_manager(mock_arduino)
+        nd = MockKDC101NDStage()
+        nd.connect("mock://nd-stage")
+        pm = MockPM400(nd_mock=nd)
+        pm.connect("mock://pm400")
+
+        scan = self._nd_scan()
+        tolerance_pct = 8.0
+        params = _make_params(
+            selected_gains=(1, 2),
+            n_points=6,
+            intensity_source="nd_filter",
+            power_grid_mode="log_power",
+            nd_scan_points=scan,
+            power_tolerance_pct=tolerance_pct,
+            max_refine_steps=3,
+            adc_saturation_threshold_V=2.6,
+            # _nd_scan()'s reference powers don't include a beamsplitter
+            # attenuation factor, so match the PM400 config to 0 dB here —
+            # otherwise every achieved reading is off by a constant factor
+            # relative to the synthetic scan, not a real tolerance failure.
+            beamsplitter_attenuation_dB=0.0,
+        )
+
+        from polarisation_ui.core.auto_calibration_settings import build_power_grid
+
+        powers_in_scan = [p for _, p in scan]
+        expected_targets = build_power_grid(
+            max(powers_in_scan), min(powers_in_scan), params.n_points, params.power_grid_mode
+        )
+
+        recorded: list[tuple] = []
+        finished: list[PowerCalibrationProfile] = []
+        failed: list[str] = []
+
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=NDFilterActuator(nd), pm=pm, params=params
+        )
+        worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
+        worker.finished.connect(lambda p: finished.append(p), _DIRECT)
+        worker.failed.connect(lambda m: failed.append(m), _DIRECT)
+        worker.start()
+        worker.wait(30_000)
+
+        assert not failed, f"Worker failed: {failed}"
+        assert len(finished) == 1
+        assert len(recorded) == 2 * params.n_points
+
+        # First gain's points, in sweep order, should match expected_targets 1:1.
+        gain1_points = [r for r in recorded if r[0] == 1]
+        assert len(gain1_points) == len(expected_targets)
+        for (_, _position, _voltage, achieved), target in zip(
+            gain1_points, expected_targets, strict=True
+        ):
+            assert abs(achieved - target) / target <= tolerance_pct / 100.0 + 1e-6, (
+                f"achieved={achieved:.3e} W outside {tolerance_pct}% of target={target:.3e} W"
+            )
+
+        profile = finished[0]
+        assert profile.intensity_control["kind"] == "nd_filter"
+        assert profile.intensity_control["grid"]["mode"] == "log_power"
+        assert len(profile.intensity_control["levels"]) == len(expected_targets)
+
+        dm.disconnect_all()
+        mock_arduino.stop()
+
+    def test_abort_stops_nd_sweep_cleanly(self):
+        from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+
+        mock_arduino = MockArduino()
+        dm = _make_device_manager(mock_arduino)
+        nd = MockKDC101NDStage()
+        nd.connect("mock://nd-stage")
+        pm = MockPM400(nd_mock=nd)
+        pm.connect("mock://pm400")
+
+        params = _make_params(
+            selected_gains=(1, 2, 3, 4),
+            n_points=30,
+            point_settle_s=0.02,
+            gain_settle_s=0.05,
+            intensity_source="nd_filter",
+            nd_scan_points=self._nd_scan(),
+        )
+
+        failed_messages: list[str] = []
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=NDFilterActuator(nd), pm=pm, params=params
+        )
+        worker.failed.connect(lambda m: failed_messages.append(m), _DIRECT)
+        worker.start()
+        time.sleep(0.3)
+        worker.abort()
+        worker.wait(10_000)
+
+        assert len(failed_messages) == 1
+        assert "abort" in failed_messages[0].lower()
+
+        dm.disconnect_all()
+        mock_arduino.stop()
 
         dm.disconnect_all()
         mock_arduino.stop()

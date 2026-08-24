@@ -143,6 +143,21 @@ python -m polarisation_ui.infrastructure.mocks.mock_arduino
 
 Then launch the UI — the mock PTY path appears automatically in the port list (registered via temp file). The simulator generates Malus-law-correct intensity curves.
 
+### Power Calibration
+
+The automated power-calibration wizard (menu → "Automatische Leistungskalibrierung") records (voltage, power) pairs for each PD-TIA gain stage and writes a `PowerCalibrationProfile` JSON. It supports two intensity actuators, selectable per run:
+
+- **Polarisator** (default) — a KDC101 + PRM1-Z8 rotating polariser; intensity follows Malus's law.
+- **ND-Filter** — a KDC101 + Thorlabs MTS50/M-Z8 linear stage carrying a gradient neutral-density filter. Sweep points are chosen in the *power* domain (log- or linear-spaced target watts, inverted to stage position via the calibrated range scan) rather than in position, with closed-loop bisection against the live PM400 reading to correct for wedge drift.
+
+Three additional tabs support bringing the ND filter into service:
+
+- **ND-Bereich** — scans the stage across its travel and derives the usable `[clear, dark]` position range from the power-meter curve (persisted in `~/.config/polarisation-ui/auto_calibration_settings.json`).
+- **Detektor-Vergleich** — cross-checks a second PM400 against the first across the calibrated ND range, to validate a reference meter before trusting it for PD-TIA calibration. Results export to a standalone JSON (not a calibration profile).
+- **Gain-Prüfung** — after calibrating, verifies that every PD-TIA gain stage reports the same watts at a handful of power levels chosen from the overlap of adjacent `gain_auto_switch_power_W` windows in `config.json`.
+
+Profiles carry optional `intensity_control` and `gain_crosscheck` metadata blocks describing how the run was performed; both are additive and ignored by older application versions and by `calibration_tool/analyze_detector.py`'s point-based fit.
+
 ---
 
 ## Configuration

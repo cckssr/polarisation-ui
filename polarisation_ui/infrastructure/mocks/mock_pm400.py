@@ -1,32 +1,45 @@
 """Mock PM400PowerMeter for headless tests.
 
-Simulates Malus-law power from the MockKDC101Polariser's current angle so
-that the full calibration worker can run without any real hardware.
+Simulates power from either a MockKDC101Polariser's current angle (Malus's
+law) or a MockKDC101NDStage's current position (exponential wedge
+transmission) so that the full calibration worker can run without any real
+hardware.
 """
 
 import math
 import random
 
 from polarisation_ui.core.exceptions import PM400Error
+from polarisation_ui.infrastructure.devices.kdc101_nd_stage import TRAVEL_MM
 
 
 class MockPM400:
     """Simulated PM400PowerMeter.
 
-    *kdc_mock* is a MockKDC101Polariser (or any object with ``get_position_deg()``).
-    Power is computed as:
+    *kdc_mock* is a MockKDC101Polariser (or any object with ``get_position_deg()``);
+    when given, power follows Malus's law:
 
         P = P_max * cos²(θ) * 10^(-attenuation_dB/10) + noise
 
-    where θ is the current KDC position, P_max = 1 µW, and noise is ±0.5 nW.
+    *nd_mock* is a MockKDC101NDStage (or any object with ``get_position_mm()``);
+    when given instead, power follows an exponential gradient-ND-filter model:
+
+        P = P_max * 10^(-OD_max * x / TRAVEL_MM) * 10^(-attenuation_dB/10) + noise
+
+    where x is the current ND-stage position (mm). Passing both is not a
+    supported configuration; *nd_mock* takes precedence if both are given.
+    P_max = 1 µW, noise is Gaussian with the same magnitude in both models.
     """
 
     _P_MAX_W: float = 1e-6
     _NOISE_W: float = 5e-10
+    _OD_MAX: float = 3.0
+    """Maximum optical density of the simulated gradient ND filter (3 OD ≈ 30 dB)."""
 
-    def __init__(self, kdc_mock: object | None = None) -> None:
-        """Set up the mock, optionally linked to a MockKDC101Polariser for angle-driven power."""
+    def __init__(self, kdc_mock: object | None = None, nd_mock: object | None = None) -> None:
+        """Set up the mock, optionally linked to an angle- or position-driven power source."""
         self._kdc = kdc_mock
+        self._nd = nd_mock
         self._connected: bool = False
         self._wavelength_nm: float = 633.0
         self._attenuation_dB: float = 0.0
@@ -49,12 +62,17 @@ class MockPM400:
     # ── Measurement ───────────────────────────────────────────────────────────
 
     def read_power_W(self) -> float:
-        """Return a simulated power reading (W) following Malus's law + noise."""
+        """Return a simulated power reading (W) from whichever intensity source is linked."""
         self._require_connected()
-        angle_deg = self._kdc.get_position_deg() if self._kdc is not None else 0.0
-        cos2 = math.cos(math.radians(angle_deg)) ** 2
         att_factor = 10.0 ** (-self._attenuation_dB / 10.0)
-        power = self._P_MAX_W * cos2 * att_factor
+        if self._nd is not None:
+            position_mm = self._nd.get_position_mm()
+            transmission = 10.0 ** (-self._OD_MAX * position_mm / TRAVEL_MM)
+            power = self._P_MAX_W * transmission * att_factor
+        else:
+            angle_deg = self._kdc.get_position_deg() if self._kdc is not None else 0.0
+            cos2 = math.cos(math.radians(angle_deg)) ** 2
+            power = self._P_MAX_W * cos2 * att_factor
         power += random.gauss(0.0, self._NOISE_W)
         return max(0.0, power)
 

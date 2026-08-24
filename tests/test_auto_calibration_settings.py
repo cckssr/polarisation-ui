@@ -60,6 +60,51 @@ class TestAutoCalibrationConnectionSettings:
         s = AutoCalibrationConnectionSettings.load(path)
         assert s.kdc101_conn_id == ""
 
+    def test_nd_fields_default_to_none_or_empty(self):
+        s = AutoCalibrationConnectionSettings()
+        assert s.nd_stage_conn_id == ""
+        assert s.pm400_b_visa_resource == ""
+        assert s.nd_pos_clear_mm is None
+        assert s.nd_pos_dark_mm is None
+        assert s.nd_power_clear_W is None
+        assert s.nd_power_dark_W is None
+        assert s.nd_calibrated_at == ""
+
+    def test_nd_fields_roundtrip_json(self, tmp_path):
+        path = tmp_path / "settings.json"
+        s = AutoCalibrationConnectionSettings(
+            nd_stage_conn_id="27123456",
+            pm400_b_visa_resource="USB0::0x1313::0x8078::P0002::INSTR",
+            nd_pos_clear_mm=2.5,
+            nd_pos_dark_mm=47.5,
+            nd_power_clear_W=1e-3,
+            nd_power_dark_W=1e-7,
+            nd_calibrated_at="2026-08-24T10:00:00",
+        )
+        s.save(path)
+        loaded = AutoCalibrationConnectionSettings.load(path)
+        assert loaded.nd_stage_conn_id == "27123456"
+        assert loaded.pm400_b_visa_resource == "USB0::0x1313::0x8078::P0002::INSTR"
+        assert loaded.nd_pos_clear_mm == pytest.approx(2.5)
+        assert loaded.nd_pos_dark_mm == pytest.approx(47.5)
+        assert loaded.nd_power_clear_W == pytest.approx(1e-3)
+        assert loaded.nd_power_dark_W == pytest.approx(1e-7)
+        assert loaded.nd_calibrated_at == "2026-08-24T10:00:00"
+
+    def test_nd_fields_default_on_old_json(self, tmp_path):
+        """JSON files from before the ND stage existed must still load cleanly."""
+        path = tmp_path / "old.json"
+        path.write_text(
+            '{"kdc101_conn_id":"X","pm400_visa_resource":"Y",'
+            '"beamsplitter_attenuation_dB":3.0,"wavelength_nm":633.0,'
+            '"angle_offset_deg":12.0}',
+            encoding="utf-8",
+        )
+        loaded = AutoCalibrationConnectionSettings.load(path)
+        assert loaded.kdc101_conn_id == "X"
+        assert loaded.nd_stage_conn_id == ""
+        assert loaded.nd_pos_clear_mm is None
+
 
 # ── build_angle_grid ──────────────────────────────────────────────────────────
 

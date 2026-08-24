@@ -4,7 +4,6 @@ Qt is allowed in this module only. All other infrastructure modules must remain
 free of PySide6 imports.
 """
 
-import bisect
 import dataclasses
 import math
 import time
@@ -16,17 +15,30 @@ from PySide6.QtCore import QThread, Signal
 from polarisation_ui.core.auto_calibration_settings import (
     AutoCalibrationParams,
     build_angle_grid,
+    build_power_grid,
+    positions_for_target_powers,
+)
+from polarisation_ui.core.detector_crosscheck import (
+    DetectorComparisonPoint,
+    evaluate_detector_comparison,
 )
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
+from polarisation_ui.core.gain_crosscheck import (
+    GainCrossCheckLevel,
+    evaluate_gain_crosscheck,
+)
+from polarisation_ui.core.nd_filter import analyse_nd_scan
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
 )
-from polarisation_ui.core.utils import linear_angle_grid
+from polarisation_ui.core.utils import interp_monotonic, linear_angle_grid
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 
 if TYPE_CHECKING:
     from polarisation_ui.core.models import Frame
+    from polarisation_ui.infrastructure.devices.intensity_actuator import IntensityActuator
+    from polarisation_ui.infrastructure.devices.kdc101_nd_stage import KDC101NDStage
     from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
@@ -113,15 +125,22 @@ class AutoPowerCalibrationWorker(QThread):
     def __init__(
         self,
         device_manager: "GoniometerDeviceManager",
-        kdc: "KDC101Polariser",
+        actuator: "IntensityActuator",
         pm: "PM400PowerMeter",
         params: AutoCalibrationParams,
         parent=None,
     ) -> None:
-        """Store the devices and sweep parameters this worker will drive."""
+        """Store the devices and sweep parameters this worker will drive.
+
+        *actuator* is whatever varies beam intensity — a ``PolariserActuator``
+        or ``NDFilterActuator`` (see infrastructure/devices/intensity_actuator.py).
+        It is fully configured by the caller (e.g. already carries the
+        polariser's max-transmission angle offset), so this worker only ever
+        calls ``actuator.home()`` / ``actuator.move_to(level)``.
+        """
         super().__init__(parent)
         self._device_manager = device_manager
-        self._kdc = kdc
+        self._actuator = actuator
         self._pm = pm
         self._params = params
         self._abort: bool = False
@@ -165,17 +184,14 @@ class AutoPowerCalibrationWorker(QThread):
                 f"({sensor_meta.get('type', '?')})"
             )
 
-        # Home the stage
-        self.log.emit("KDC101: homing…")
+        # Home the intensity actuator
+        self.log.emit(f"{self._actuator.label}: homing…")
         try:
-            self._kdc.home()
+            self._actuator.home()
         except KDC101Error as exc:
-            self.failed.emit(f"KDC101 homing failed: {exc}")
+            self.failed.emit(f"{self._actuator.label} homing failed: {exc}")
             return
 
-        angles = build_angle_grid(p)
-        total = len(angles) * len(p.selected_gains)
-        done = 0
         profile = PowerCalibrationProfile(
             name=p.profile_name,
             wavelength_nm=p.wavelength_nm,
@@ -190,10 +206,45 @@ class AutoPowerCalibrationWorker(QThread):
             f"points at or above this voltage will be skipped."
         )
 
+        if p.intensity_source == "nd_filter":
+            recorded_levels = self._run_sweep_nd(profile, sat_threshold)
+        else:
+            recorded_levels = self._run_sweep_polariser(profile, sat_threshold)
+        if recorded_levels is None:
+            return  # failed/aborted — the signal has already been emitted
+
+        intensity_meta = self._actuator.metadata()
+        intensity_meta["grid"] = {
+            "mode": p.power_grid_mode if p.intensity_source == "nd_filter" else p.grid_mode,
+            "n": p.n_points,
+            "tolerance_pct": p.power_tolerance_pct,
+            "max_refine_steps": p.max_refine_steps,
+        }
+        intensity_meta["levels"] = recorded_levels
+        profile.intensity_control = intensity_meta
+
+        self.log.emit("Sweep complete.")
+        self.finished.emit(profile)
+
+    def _run_sweep_polariser(
+        self, profile: PowerCalibrationProfile, sat_threshold: float
+    ) -> "list[list[float]] | None":
+        """Run the Malus-law (rotating-polariser) sweep.
+
+        Returns the recorded ``[angle, power_W]`` levels for the first
+        selected gain, or None if the sweep failed/aborted (the
+        corresponding signal has been emitted).
+        """
+        p = self._params
+        angles = build_angle_grid(p)
+        total = len(angles) * len(p.selected_gains)
+        done = 0
+        recorded_levels: list[list[float]] = []
+
         for gain in p.selected_gains:
             if self._abort:
                 self.failed.emit("Aborted by user")
-                return
+                return None
 
             self.gain_started.emit(gain)
             self.log.emit(f"Gain {gain}: starting ({len(angles)} angles)")
@@ -201,7 +252,7 @@ class AutoPowerCalibrationWorker(QThread):
             ok = self._device_manager.set_pdtia_gain(gain - 1)  # firmware is 0-based
             if not ok:
                 self.failed.emit(f"Could not set PDTIA gain stage {gain}")
-                return
+                return None
             time.sleep(p.gain_settle_s)
 
             # Mutable per-gain angle list: allows tail redistribution after
@@ -212,31 +263,25 @@ class AutoPowerCalibrationWorker(QThread):
             while idx < len(gain_angles):
                 if self._abort:
                     self.failed.emit("Aborted by user")
-                    return
+                    return None
 
                 angle = gain_angles[idx]
 
                 try:
-                    self._kdc.move_to(angle + p.angle_offset_deg)
+                    self._actuator.move_to(angle)
                 except KDC101Error as exc:
-                    self.failed.emit(f"KDC101 move failed: {exc}")
-                    return
+                    self.failed.emit(f"{self._actuator.label} move failed: {exc}")
+                    return None
 
                 time.sleep(p.point_settle_s)
 
-                # Average N detector readings
-                voltages: list[float] = []
-                for _ in range(p.detector_samples):
-                    v = self._device_manager.read_adc_voltage()
-                    if v is not None:
-                        voltages.append(v)
-                if not voltages:
+                voltage_mean = self._average_adc_voltage(p.detector_samples)
+                if voltage_mean is None:
                     self.log.emit(f"  Warning: no ADC readings at θ={angle:.2f}°, skipping")
                     done += 1
                     self.progress.emit(done, total)
                     idx += 1
                     continue
-                voltage_mean = sum(voltages) / len(voltages)
 
                 # Saturation guard — skip PM400 read and don't record the point
                 if voltage_mean >= sat_threshold:
@@ -275,9 +320,11 @@ class AutoPowerCalibrationWorker(QThread):
                     power_W = self._pm.read_power_W()
                 except PM400Error as exc:
                     self.failed.emit(f"PM400 read failed: {exc}")
-                    return
+                    return None
 
                 profile.gains[gain].add_point(voltage_mean, power_W)
+                if gain == p.selected_gains[0]:
+                    recorded_levels.append([angle, power_W])
                 done += 1
                 self.point_recorded.emit(gain, angle, voltage_mean, power_W)
                 self.progress.emit(done, total)
@@ -289,8 +336,205 @@ class AutoPowerCalibrationWorker(QThread):
             if n_sat:
                 self.log.emit(f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)")
 
-        self.log.emit("Sweep complete.")
-        self.finished.emit(profile)
+        return recorded_levels
+
+    def _run_sweep_nd(
+        self, profile: PowerCalibrationProfile, sat_threshold: float
+    ) -> "list[list[float]] | None":
+        """Run the ND-filter (power-domain) sweep.
+
+        Returns the recorded ``[position_mm, power_W]`` levels for the first
+        selected gain, or None if the sweep failed/aborted (the
+        corresponding signal has been emitted).
+        """
+        p = self._params
+        scan = p.nd_scan_points
+        powers_in_scan = [power for _, power in scan]
+        p_hi = max(powers_in_scan)
+        p_lo = min(powers_in_scan)
+
+        targets = build_power_grid(p_hi, p_lo, p.n_points, p.power_grid_mode)
+        positions = positions_for_target_powers(targets, scan)
+        total = len(targets) * len(p.selected_gains)
+        done = 0
+        recorded_levels: list[list[float]] = []
+
+        for gain in p.selected_gains:
+            if self._abort:
+                self.failed.emit("Aborted by user")
+                return None
+
+            self.gain_started.emit(gain)
+            self.log.emit(f"Gain {gain}: starting ({len(targets)} Zielwerte)")
+
+            ok = self._device_manager.set_pdtia_gain(gain - 1)  # firmware is 0-based
+            if not ok:
+                self.failed.emit(f"Could not set PDTIA gain stage {gain}")
+                return None
+            time.sleep(p.gain_settle_s)
+
+            # Mutable per-gain lists: allow tail redistribution after the
+            # first non-saturated point when the sweep starts in saturation.
+            gain_targets: list[float] = list(targets)
+            gain_positions: list[float] = list(positions)
+            first_valid_found = False
+            idx = 0
+            while idx < len(gain_targets):
+                if self._abort:
+                    self.failed.emit("Aborted by user")
+                    return None
+
+                target = gain_targets[idx]
+                position = gain_positions[idx]
+
+                try:
+                    self._actuator.move_to(position)
+                except KDC101Error as exc:
+                    self.failed.emit(f"{self._actuator.label} move failed: {exc}")
+                    return None
+                time.sleep(p.point_settle_s)
+
+                try:
+                    achieved_power = self._pm.read_power_W()
+                except PM400Error as exc:
+                    self.failed.emit(f"PM400 read failed: {exc}")
+                    return None
+
+                position, achieved_power = self._refine_to_target(
+                    target, position, achieved_power, scan
+                )
+
+                voltage_mean = self._average_adc_voltage(p.detector_samples)
+                if voltage_mean is None:
+                    self.log.emit(f"  Warning: no ADC readings at x={position:.2f} mm, skipping")
+                    done += 1
+                    self.progress.emit(done, total)
+                    idx += 1
+                    continue
+
+                # Saturation guard — don't record the point
+                if voltage_mean >= sat_threshold:
+                    profile.gains[gain].n_saturated_skipped += 1
+                    self.log.emit(
+                        f"  x={position:.2f} mm | V={voltage_mean:.4f} V — "
+                        f"SATURATED (≥{sat_threshold:.2f} V), skipping"
+                    )
+                    done += 1
+                    self.progress.emit(done, total)
+                    idx += 1
+                    continue
+
+                # First valid point after a saturated prefix: rebuild the
+                # remaining target-power grid from the achieved power down to
+                # the originally requested lowest power, at the requested
+                # density — the power-domain equivalent of the angle regrid.
+                if not first_valid_found and profile.gains[gain].n_saturated_skipped > 0:
+                    new_targets = build_power_grid(
+                        achieved_power, targets[-1], p.n_points, p.power_grid_mode
+                    )
+                    new_positions = positions_for_target_powers(new_targets, scan)
+                    gain_targets[idx + 1 :] = new_targets[1:]
+                    gain_positions[idx + 1 :] = new_positions[1:]
+                    total += idx
+                    self.log.emit(
+                        f"  Zielraster neu berechnet: {p.n_points} Punkte von "
+                        f"{achieved_power:.3e} W bis {targets[-1]:.3e} W"
+                    )
+                first_valid_found = True
+
+                profile.gains[gain].add_point(voltage_mean, achieved_power)
+                if gain == p.selected_gains[0]:
+                    recorded_levels.append([position, achieved_power])
+                done += 1
+                self.point_recorded.emit(gain, position, voltage_mean, achieved_power)
+                self.progress.emit(done, total)
+                self.log.emit(
+                    f"  x={position:.2f} mm | V={voltage_mean:.6f} V | "
+                    f"P={achieved_power:.3e} W (Ziel {target:.3e} W)"
+                )
+                idx += 1
+
+            n_sat = profile.gains[gain].n_saturated_skipped
+            n_rec = len(profile.gains[gain].points)
+            if n_sat:
+                self.log.emit(f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)")
+
+        return recorded_levels
+
+    def _refine_to_target(
+        self,
+        target_W: float,
+        position: float,
+        achieved_power: float,
+        scan: "tuple[tuple[float, float], ...]",
+    ) -> "tuple[float, float]":
+        """Bisect the ND position within its calibrated-scan bracket to reach *target_W*.
+
+        Returns ``(position, achieved_power)`` after up to
+        ``params.max_refine_steps`` additional moves — the position/power
+        pair actually achieved, whether or not it landed within tolerance
+        (the caller records what was actually measured, not the target).
+        """
+        p = self._params
+        if target_W <= 0:
+            return position, achieved_power
+        tolerance = p.power_tolerance_pct / 100.0
+        if abs(achieved_power - target_W) / target_W <= tolerance:
+            return position, achieved_power
+
+        lo_pos, hi_pos = _power_bracket(target_W, scan)
+        for _ in range(p.max_refine_steps):
+            if abs(achieved_power - target_W) / target_W <= tolerance:
+                break
+            mid = (lo_pos + hi_pos) / 2.0
+            try:
+                self._actuator.move_to(mid)
+            except KDC101Error:
+                break  # keep the last good reading rather than failing the whole sweep
+            time.sleep(p.point_settle_s)
+            try:
+                achieved_power = self._pm.read_power_W()
+            except PM400Error:
+                break
+            position = mid
+            if achieved_power > target_W:
+                lo_pos = mid  # too bright — the target sits further along (lower power)
+            else:
+                hi_pos = mid
+        return position, achieved_power
+
+    def _average_adc_voltage(self, n_samples: int) -> float | None:
+        """Return the mean of up to *n_samples* ADC voltage reads, or None if all failed."""
+        voltages: list[float] = []
+        for _ in range(n_samples):
+            v = self._device_manager.read_adc_voltage()
+            if v is not None:
+                voltages.append(v)
+        if not voltages:
+            return None
+        return sum(voltages) / len(voltages)
+
+
+def _power_bracket(target_W: float, scan: "tuple[tuple[float, float], ...]") -> tuple[float, float]:
+    """Return ``(pos_high_power, pos_low_power)`` bracketing *target_W* in *scan*.
+
+    *scan* is a raw ``(position_mm, power_W)`` scan. Positions are returned
+    ordered so the first element's power is >= *target_W* >= the second's,
+    matching the sweep's assumption that power decreases as position
+    increases. Falls back to clamping at whichever end is closest when
+    *target_W* is outside the scanned power range.
+    """
+    ordered = sorted(scan, key=lambda pt: pt[1], reverse=True)  # descending power
+    positions = [x for x, _ in ordered]
+    powers = [pw for _, pw in ordered]
+    if target_W >= powers[0]:
+        return positions[0], positions[0]
+    if target_W <= powers[-1]:
+        return positions[-1], positions[-1]
+    for i in range(len(powers) - 1):
+        if powers[i] >= target_W >= powers[i + 1]:
+            return positions[i], positions[i + 1]
+    return positions[-1], positions[-1]
 
 
 class AlignPolariserWorker(QThread):
@@ -388,6 +632,368 @@ class AlignPolariserWorker(QThread):
             f"→ Polarisator-Versatz auf {angle_max:.2f}° gesetzt"
         )
         self.finished.emit(angle_max)
+
+
+class NDRangeScanWorker(QThread):
+    """Off-main-thread worker that scans the ND-filter stage across its travel.
+
+    Reports (position_mm, power_W) pairs so
+    ``core.nd_filter.analyse_nd_scan`` can derive the calibrated clear/dark
+    end positions used as the ND stage's usable range.
+
+    Signals are delivered to the main thread via Qt's queued-connection
+    mechanism.
+    """
+
+    point_scanned = Signal(float, float)  # (position_mm, power_W)
+    progress = Signal(int, int)  # (done, total)
+    finished = Signal(object)  # NDFilterRange
+    failed = Signal(str)
+    log = Signal(str)
+
+    def __init__(
+        self,
+        nd: "KDC101NDStage",
+        pm: "PM400PowerMeter",
+        start_mm: float,
+        end_mm: float,
+        n_points: int,
+        settle_s: float,
+        dark_floor_W: float | None = None,
+        plateau_frac: float = 0.01,
+        parent=None,
+    ) -> None:
+        """Store the devices and scan parameters this worker will drive."""
+        super().__init__(parent)
+        self._nd = nd
+        self._pm = pm
+        self._start = start_mm
+        self._end = end_mm
+        self._n_points = max(n_points, 3)
+        self._settle = settle_s
+        self._dark_floor_W = dark_floor_W
+        self._plateau_frac = plateau_frac
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Run the range scan, catching and reporting unexpected errors."""
+        Debug.info("NDRangeScanWorker: starting range scan")
+        try:
+            self._run_scan()
+        except Exception as exc:
+            Debug.error(f"NDRangeScanWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run_scan(self) -> None:
+        n = self._n_points
+        positions = linear_angle_grid(self._start, self._end, n)
+
+        self.log.emit(f"ND-Bereichsscan: {self._start:.2f}…{self._end:.2f} mm ({n} Punkte)")
+
+        scan: list[tuple[float, float]] = []
+
+        for i, pos in enumerate(positions):
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+
+            try:
+                self._nd.move_to_mm(pos)
+            except KDC101Error as exc:
+                self.failed.emit(f"ND-Bühne Bewegung fehlgeschlagen: {exc}")
+                return
+
+            time.sleep(self._settle)
+
+            try:
+                power = self._pm.read_power_W()
+            except PM400Error as exc:
+                self.failed.emit(f"PM400 Lesefehler: {exc}")
+                return
+
+            scan.append((pos, power))
+            self.point_scanned.emit(pos, power)
+            self.progress.emit(i + 1, n)
+            self.log.emit(f"  x={pos:.2f} mm | P={power:.3e} W")
+
+        try:
+            result = analyse_nd_scan(
+                scan, plateau_frac=self._plateau_frac, dark_floor_W=self._dark_floor_W
+            )
+        except ValueError as exc:
+            self.failed.emit(str(exc))
+            return
+
+        if not result.monotonic:
+            self.log.emit("Warnung: Scan ist zwischen den Enden nicht monoton.")
+        self.log.emit(
+            f"Bereich: klar={result.pos_clear_mm:.2f} mm ({result.power_clear_W:.3e} W), "
+            f"dunkel={result.pos_dark_mm:.2f} mm ({result.power_dark_W:.3e} W), "
+            f"Dynamikbereich={result.dynamic_range_dB:.1f} dB"
+        )
+        self.finished.emit(result)
+
+
+class DetectorCrossCheckWorker(QThread):
+    """Off-main-thread worker that cross-checks two PM400s across the ND range.
+
+    Drives the ND stage across its calibrated ``[pos_clear_mm, pos_dark_mm]``
+    range and records simultaneous readings from two power meters, so
+    ``core.detector_crosscheck.evaluate_detector_comparison`` can verify they
+    agree before one of them is trusted as the beamsplitter-arm reference for
+    PD-TIA calibration.
+
+    Signals are delivered to the main thread via Qt's queued-connection
+    mechanism.
+    """
+
+    point_recorded = Signal(float, float, float)  # (position_mm, power_a_W, power_b_W)
+    progress = Signal(int, int)  # (done, total)
+    finished = Signal(object)  # DetectorComparisonResult
+    failed = Signal(str)
+    log = Signal(str)
+
+    def __init__(
+        self,
+        nd: "KDC101NDStage",
+        pm_a: "PM400PowerMeter",
+        pm_b: "PM400PowerMeter",
+        pos_clear_mm: float,
+        pos_dark_mm: float,
+        n_points: int,
+        settle_s: float,
+        tolerance_pct: float = 5.0,
+        parent=None,
+    ) -> None:
+        """Store the devices and scan parameters this worker will drive."""
+        super().__init__(parent)
+        self._nd = nd
+        self._pm_a = pm_a
+        self._pm_b = pm_b
+        self._pos_clear = pos_clear_mm
+        self._pos_dark = pos_dark_mm
+        self._n_points = max(n_points, 3)
+        self._settle = settle_s
+        self._tolerance_pct = tolerance_pct
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Run the cross-check sweep, catching and reporting unexpected errors."""
+        Debug.info("DetectorCrossCheckWorker: starting cross-check")
+        try:
+            self._run_check()
+        except Exception as exc:
+            Debug.error(f"DetectorCrossCheckWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run_check(self) -> None:
+        n = self._n_points
+        positions = linear_angle_grid(self._pos_clear, self._pos_dark, n)
+
+        self.log.emit(
+            f"Detektor-Vergleich: {self._pos_clear:.2f}…{self._pos_dark:.2f} mm ({n} Punkte)"
+        )
+
+        points: list[DetectorComparisonPoint] = []
+
+        for i, pos in enumerate(positions):
+            if self._abort:
+                self.failed.emit("Abgebrochen")
+                return
+
+            try:
+                self._nd.move_to_mm(pos)
+            except KDC101Error as exc:
+                self.failed.emit(f"ND-Bühne Bewegung fehlgeschlagen: {exc}")
+                return
+
+            time.sleep(self._settle)
+
+            try:
+                power_a = self._pm_a.read_power_W()
+                power_b = self._pm_b.read_power_W()
+            except PM400Error as exc:
+                self.failed.emit(f"PM400 Lesefehler: {exc}")
+                return
+
+            point = DetectorComparisonPoint(position=pos, power_a_W=power_a, power_b_W=power_b)
+            points.append(point)
+            self.point_recorded.emit(pos, power_a, power_b)
+            self.progress.emit(i + 1, n)
+            self.log.emit(f"  x={pos:.2f} mm | A={power_a:.3e} W | B={power_b:.3e} W")
+
+        try:
+            result = evaluate_detector_comparison(points, tolerance_pct=self._tolerance_pct)
+        except ValueError as exc:
+            self.failed.emit(str(exc))
+            return
+
+        verdict = "OK" if result.passed else "FEHLGESCHLAGEN"
+        self.log.emit(
+            f"Ergebnis: mittleres Verhältnis={result.mean_ratio:.4f}, "
+            f"Streuung={result.ratio_spread_pct:.2f}%, "
+            f"max. Abweichung={result.worst_deviation_pct:.2f}% — {verdict}"
+        )
+        self.finished.emit(result)
+
+
+class GainCrossCheckWorker(QThread):
+    """Off-main-thread worker that verifies PD-TIA gain-switch consistency.
+
+    Drives the intensity actuator to each of *levels* — positions chosen so
+    the resulting power sits in the overlap of adjacent gain windows — and at
+    each one, cycles through *gains*, applying each stage's own calibration
+    from *profile* to its averaged voltage reading. If those per-gain watts
+    (and the reference PM400 reading) don't agree, the per-gain calibrations
+    are inconsistent with each other even though each looks fine alone.
+
+    Signals are delivered to the main thread via Qt's queued-connection
+    mechanism.
+    """
+
+    level_done = Signal(object)  # GainCrossCheckLevel
+    progress = Signal(int, int)  # (done, total)
+    finished = Signal(object)  # GainCrossCheckResult
+    failed = Signal(str)
+    log = Signal(str)
+
+    _DEFAULT_SAT_THRESHOLD_V = 2.35
+
+    def __init__(
+        self,
+        device_manager: "GoniometerDeviceManager",
+        actuator: "IntensityActuator",
+        pm: "PM400PowerMeter",
+        profile: PowerCalibrationProfile,
+        levels: list[float],
+        gains: tuple[int, ...],
+        settle_s: float,
+        detector_samples: int,
+        tolerance_pct: float = 5.0,
+        parent=None,
+    ) -> None:
+        """Store the devices, calibrated profile, and verification parameters."""
+        super().__init__(parent)
+        self._device_manager = device_manager
+        self._actuator = actuator
+        self._pm = pm
+        self._profile = profile
+        self._levels = levels
+        self._gains = gains
+        self._settle = settle_s
+        self._detector_samples = detector_samples
+        self._tolerance_pct = tolerance_pct
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Run the verification sweep, catching and reporting unexpected errors."""
+        Debug.info("GainCrossCheckWorker: starting gain cross-check")
+        try:
+            self._run_check()
+        except Exception as exc:
+            Debug.error(f"GainCrossCheckWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _run_check(self) -> None:
+        sat_threshold = self._profile.adc_saturation_threshold_V or self._DEFAULT_SAT_THRESHOLD_V
+        n = len(self._levels)
+        self.log.emit(
+            f"Gain-Prüfung: {n} Pegel × {len(self._gains)} Gains "
+            f"(Toleranz {self._tolerance_pct:.1f}%)"
+        )
+
+        results: list[GainCrossCheckLevel] = []
+
+        for i, level in enumerate(self._levels):
+            if self._abort:
+                self.failed.emit("Aborted by user")
+                return
+
+            try:
+                self._actuator.move_to(level)
+            except KDC101Error as exc:
+                self.failed.emit(f"{self._actuator.label} move failed: {exc}")
+                return
+            time.sleep(self._settle)
+
+            try:
+                pm_power = self._pm.read_power_W()
+            except PM400Error as exc:
+                self.failed.emit(f"PM400 read failed: {exc}")
+                return
+
+            per_gain: dict[int, tuple[float, float]] = {}
+            for gain in self._gains:
+                if self._abort:
+                    self.failed.emit("Aborted by user")
+                    return
+
+                ok = self._device_manager.set_pdtia_gain(gain - 1)  # firmware is 0-based
+                if not ok:
+                    self.failed.emit(f"Could not set PDTIA gain stage {gain}")
+                    return
+                time.sleep(self._settle)
+
+                voltage_mean = self._average_adc_voltage()
+                if voltage_mean is None:
+                    self.log.emit(f"  level={level:.2f} gain={gain}: keine ADC-Messwerte")
+                    continue
+                if voltage_mean >= sat_threshold:
+                    self.log.emit(
+                        f"  level={level:.2f} gain={gain}: gesättigt (V={voltage_mean:.4f})"
+                    )
+                    continue
+
+                power_W = self._profile.watts_from_voltage(voltage_mean, gain)
+                if power_W is None:
+                    self.log.emit(f"  level={level:.2f} gain={gain}: nicht kalibriert")
+                    continue
+
+                per_gain[gain] = (voltage_mean, power_W)
+                self.log.emit(
+                    f"  level={level:.2f} gain={gain}: V={voltage_mean:.6f} V | P={power_W:.3e} W"
+                )
+
+            lvl_result = GainCrossCheckLevel(level=level, pm_power_W=pm_power, per_gain=per_gain)
+            results.append(lvl_result)
+            self.level_done.emit(lvl_result)
+            self.progress.emit(i + 1, n)
+
+        try:
+            result = evaluate_gain_crosscheck(results, tolerance_pct=self._tolerance_pct)
+        except ValueError as exc:
+            self.failed.emit(str(exc))
+            return
+
+        verdict = "OK" if result.passed else "FEHLGESCHLAGEN"
+        self.log.emit(
+            f"Ergebnis: max. Streuung={result.worst_spread_pct:.2f}%, "
+            f"max. PM400-Abweichung={result.worst_pm_deviation_pct:.2f}% — {verdict}"
+        )
+        self.finished.emit(result)
+
+    def _average_adc_voltage(self) -> float | None:
+        """Return the mean of up to detector_samples ADC voltage reads, or None if all failed."""
+        voltages: list[float] = []
+        for _ in range(self._detector_samples):
+            v = self._device_manager.read_adc_voltage()
+            if v is not None:
+                voltages.append(v)
+        if not voltages:
+            return None
+        return sum(voltages) / len(voltages)
 
 
 class KDCSweepWorker(QThread):
@@ -499,21 +1105,6 @@ class KDCSweepWorker(QThread):
             time.sleep(self._FRESH_FRAME_POLL_S)
             intensity_V, frame = self._read_average()
         return intensity_V, frame
-
-
-def _lerp(x: float, xs: "list[float]", ys: "list[float]") -> float:
-    """Linearly interpolate *ys* at *x*, clamping outside the [xs[0], xs[-1]] range."""
-    i = bisect.bisect_left(xs, x)
-    if i <= 0:
-        return ys[0]
-    if i >= len(xs):
-        return ys[-1]
-    x0, x1 = xs[i - 1], xs[i]
-    y0, y1 = ys[i - 1], ys[i]
-    if x1 == x0:
-        return y0
-    t = (x - x0) / (x1 - x0)
-    return y0 + t * (y1 - y0)
 
 
 class KDCZeroFindWorker(QThread):
@@ -712,7 +1303,8 @@ class KDCZeroFindWorker(QThread):
     ) -> "tuple[float, float] | None":
         """Interpolate the stage angle at each intensity sample's timestamp and
         return the (angle, intensity) pair at the minimum, or None if nothing
-        usable was collected."""
+        usable was collected.
+        """
         if len(positions) < 2 or not intensities:
             return None
         ts_pos = [p[0] for p in positions]
@@ -721,7 +1313,7 @@ class KDCZeroFindWorker(QThread):
         for ts, intensity in intensities:
             if ts < ts_pos[0] or ts > ts_pos[-1]:
                 continue
-            angle = _lerp(ts, ts_pos, angles)
+            angle = interp_monotonic(ts, ts_pos, angles)
             if best is None or intensity < best[1]:
                 best = (angle, intensity)
         return best
@@ -730,7 +1322,8 @@ class KDCZeroFindWorker(QThread):
 
     def _read_fresh(self) -> "Frame | None":
         """Block until a frame newer than the last one consumed arrives, after
-        the fine-pass settle time, up to a bounded timeout."""
+        the fine-pass settle time, up to a bounded timeout.
+        """
         time.sleep(self._FINE_SETTLE_S)
         deadline = time.monotonic() + self._FRESH_FRAME_TIMEOUT_S
         while time.monotonic() < deadline:
@@ -747,7 +1340,8 @@ class KDCZeroFindWorker(QThread):
 
     def _scan_stepped(self, center_deg: float) -> "list[tuple[float, float]]":
         """Step ±_FINE_HALF_WINDOW_DEG around *center_deg*, waiting for a fresh
-        frame at each step. Returns (angle, intensity) pairs."""
+        frame at each step. Returns (angle, intensity) pairs.
+        """
         lo = max(0.0, center_deg - self._FINE_HALF_WINDOW_DEG)
         hi = min(180.0, center_deg + self._FINE_HALF_WINDOW_DEG)
         n = max(2, round((hi - lo) / self._FINE_STEP_DEG) + 1)

@@ -19,6 +19,13 @@ File format example:
         "4": {"points": []}
       }
     }
+
+"intensity_control" and "gain_crosscheck" are optional metadata blocks added
+for the ND-filter intensity source (see infrastructure/devices/intensity_actuator.py
+and core/gain_crosscheck.py) — purely informational, read via .get() with an
+empty-dict default, so older files without them load unchanged and older
+readers of new files simply ignore them. Neither is consulted by
+watts_from_voltage() or conversion_factor().
 """
 
 from __future__ import annotations
@@ -107,6 +114,13 @@ class PowerCalibrationProfile:
     sensor: dict = field(default_factory=dict)
     units: dict = field(default_factory=lambda: {"voltage": "V", "power": "W"})
     gains: dict[int, GainCalibration] = field(default_factory=dict)
+    # Provenance of the intensity actuator used for this run — see
+    # infrastructure/devices/intensity_actuator.py. Purely informational;
+    # never read back by watts_from_voltage() or conversion_factor().
+    intensity_control: dict = field(default_factory=dict)
+    # Post-calibration gain-switch consistency check — see
+    # core/gain_crosscheck.py. Purely informational.
+    gain_crosscheck: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Ensure every valid gain stage has a (possibly empty) GainCalibration."""
@@ -145,6 +159,8 @@ class PowerCalibrationProfile:
             "adc_saturation_threshold_V": self.adc_saturation_threshold_V,
             "sensor": self.sensor,
             "units": self.units,
+            "intensity_control": self.intensity_control,
+            "gain_crosscheck": self.gain_crosscheck,
             "gains": {
                 str(stage): {
                     "points": list(cal.points),
@@ -171,6 +187,8 @@ class PowerCalibrationProfile:
             adc_saturation_threshold_V=data.get("adc_saturation_threshold_V"),
             sensor=data.get("sensor", {}),
             units=data.get("units", {"voltage": "V", "power": "W"}),
+            intensity_control=data.get("intensity_control", {}),
+            gain_crosscheck=data.get("gain_crosscheck", {}),
         )
         for stage_str, cal_data in data.get("gains", {}).items():
             stage = int(stage_str)

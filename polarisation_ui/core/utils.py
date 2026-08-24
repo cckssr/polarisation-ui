@@ -1,9 +1,42 @@
 """Core utilities — pure Python, no Qt or I/O dependencies."""
 
+import bisect
 import math
 from collections.abc import Sequence
 
 from polarisation_ui.core.models import Frame
+
+
+def interp_monotonic(x: float, xs: Sequence[float], ys: Sequence[float]) -> float:
+    """Linearly interpolate *ys* at *x* over a monotonically increasing *xs*.
+
+    Clamps to ``ys[0]``/``ys[-1]`` outside the ``[xs[0], xs[-1]]`` range.
+    *xs* must be sorted ascending; *ys* need not be monotonic.
+
+    Args:
+        x: Query point.
+        xs: Ascending-sorted independent variable samples.
+        ys: Dependent variable samples, same length as *xs*.
+
+    Returns:
+        Interpolated (or clamped) value.
+
+    Raises:
+        ValueError: if *xs* is empty, or *xs* and *ys* differ in length.
+    """
+    if not xs or len(xs) != len(ys):
+        raise ValueError("interp_monotonic requires non-empty xs and ys of equal length")
+    i = bisect.bisect_left(xs, x)
+    if i <= 0:
+        return ys[0]
+    if i >= len(xs):
+        return ys[-1]
+    x0, x1 = xs[i - 1], xs[i]
+    y0, y1 = ys[i - 1], ys[i]
+    if x1 == x0:
+        return y0
+    t = (x - x0) / (x1 - x0)
+    return y0 + t * (y1 - y0)
 
 
 def linear_angle_grid(start: float, end: float, n: int) -> list[float]:
