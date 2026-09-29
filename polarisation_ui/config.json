@@ -11,19 +11,10 @@
     },
     "connection": {
       "max_retry_attempts": 10,
-      "backoff_delays_ms": [
-        1000,
-        2000,
-        4000,
-        8000,
-        15000
-      ]
+      "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
     },
     "pdtia": {
-      "device_ids": [
-        "E20057",
-        "E83569"
-      ],
+      "device_ids": ["E20057", "E83569"],
       "gain_auto_switch_power_W": {
         "1": { "min": 8.0e-5, "max": 1.0 },
         "2": { "min": 8.0e-6, "max": 1.2e-4 },

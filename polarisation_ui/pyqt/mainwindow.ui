@@ -2597,10 +2597,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>VISA-Ressourcenadresse des PM400 (z.B. USB0::0x1313::0x8078::P0000001::INSTR)</string>
-              </property>
-              <property name="editable">
-               <bool>true</bool>
+               <string>Automatisch erkannte USB/VISA-Ressourcen des PM400 (Aktualisieren zum erneuten Suchen)</string>
               </property>
              </widget>
             </item>

@@ -70,6 +70,7 @@ from polarisation_ui.infrastructure.utils import (
 )
 from polarisation_ui.pyqt.ui_mainwindow import Ui_MainWindow
 from polarisation_ui.ui.common.dialogs import show_error
+from polarisation_ui.ui.common.pm400_combo import populate_pm400_combo
 from polarisation_ui.ui.common.status_led import (
     LED_GREEN,
     LED_RED,
@@ -250,6 +251,8 @@ class MainWindow(QMainWindow):
         self._populate_pdtia_ids()
 
         # PM400 group: populate resource list and set initial state
+        auto_cal_settings = AutoCalibrationConnectionSettings.load()
+        self._pm400_preferred = auto_cal_settings.pm400_visa_resource
         self._refresh_pm400_list()
         set_connection_status(
             self.ui.ledPM400Status,
@@ -258,9 +261,6 @@ class MainWindow(QMainWindow):
             LED_RED,
         )
         self.ui.btnZeroPM400.setEnabled(False)
-        auto_cal_settings = AutoCalibrationConnectionSettings.load()
-        if auto_cal_settings.pm400_visa_resource:
-            self.ui.comboPM400.setEditText(auto_cal_settings.pm400_visa_resource)
         if auto_cal_settings.wavelength_nm:
             self.ui.spbPM400Wavelength.setValue(auto_cal_settings.wavelength_nm)
         self._set_active_detector(DETECTOR_PDTIA)
@@ -1000,17 +1000,7 @@ class MainWindow(QMainWindow):
 
     def _refresh_pm400_list(self) -> None:
         """Populate comboPM400 with currently discovered Thorlabs VISA resources."""
-        current = self.ui.comboPM400.currentText()
-        resources = PM400PowerMeter.list_resources()
-        self.ui.comboPM400.clear()
-        for r in resources:
-            self.ui.comboPM400.addItem(r)
-        if current and self.ui.comboPM400.findText(current) < 0:
-            self.ui.comboPM400.addItem(current)
-        if current:
-            idx = self.ui.comboPM400.findText(current)
-            if idx >= 0:
-                self.ui.comboPM400.setCurrentIndex(idx)
+        resources = populate_pm400_combo(self.ui.comboPM400, self._pm400_preferred)
         Debug.info(f"PM400 VISA resources found: {resources}")
 
     @Slot()
@@ -1511,6 +1501,7 @@ class MainWindow(QMainWindow):
 
         dialog = PowerCalibrationWindow(
             data_controller=self.data_controller,
+            pm400=self._pm400,
             parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -1524,6 +1515,7 @@ class MainWindow(QMainWindow):
 
         dialog = AutoPowerCalibrationWindow(
             data_controller=self.data_controller,
+            pm400=self._pm400,
             parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -1636,6 +1628,7 @@ class MainWindow(QMainWindow):
             self.device_manager,
             sample_inverted=self._acq_settings.sample_stage_inverted,
             data_controller=self.data_controller,
+            pm400=self._pm400,
             parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -2061,7 +2054,9 @@ class MainWindow(QMainWindow):
             self._sync_kdc_offset_display()
 
         if state.pm400_visa_resource:
-            self.ui.comboPM400.setEditText(state.pm400_visa_resource)
+            idx = self.ui.comboPM400.findText(state.pm400_visa_resource)
+            if idx >= 0:
+                self.ui.comboPM400.setCurrentIndex(idx)
         if state.pm400_wavelength_nm:
             self.ui.spbPM400Wavelength.setValue(state.pm400_wavelength_nm)
 

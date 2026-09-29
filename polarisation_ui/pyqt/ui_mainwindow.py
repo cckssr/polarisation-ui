@@ -1399,7 +1399,6 @@ class Ui_MainWindow(object):
         sizePolicy11.setVerticalStretch(0)
         sizePolicy11.setHeightForWidth(self.comboPM400.sizePolicy().hasHeightForWidth())
         self.comboPM400.setSizePolicy(sizePolicy11)
-        self.comboPM400.setEditable(True)
 
         self.gridLayout_7.addWidget(self.comboPM400, 1, 1, 1, 1)
 
@@ -2096,7 +2095,7 @@ class Ui_MainWindow(object):
         self.comboPM400.setToolTip(
             QCoreApplication.translate(
                 "MainWindow",
-                "VISA-Ressourcenadresse des PM400 (z.B. USB0::0x1313::0x8078::P0000001::INSTR)",
+                "Automatisch erkannte USB/VISA-Ressourcen des PM400 (Aktualisieren zum erneuten Suchen)",
                 None,
             )
         )

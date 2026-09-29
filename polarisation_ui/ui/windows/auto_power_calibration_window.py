@@ -35,6 +35,7 @@ from polarisation_ui.infrastructure.qt_threads import (
     KDC101HomeWorker,
 )
 from polarisation_ui.pyqt.ui_auto_power_calibration import Ui_AutoPowerCalibrationDialog
+from polarisation_ui.ui.common.pm400_combo import populate_pm400_combo
 
 
 class AutoPowerCalibrationWindow(QDialog):
@@ -48,7 +49,12 @@ class AutoPowerCalibrationWindow(QDialog):
 
     profile_saved = Signal()
 
-    def __init__(self, data_controller=None, parent=None) -> None:
+    def __init__(
+        self,
+        data_controller=None,
+        pm400: PM400PowerMeter | None = None,
+        parent=None,
+    ) -> None:
         """Build the dialog UI; standalone mode is enabled when data_controller is None."""
         super().__init__(parent)
         self.ui = Ui_AutoPowerCalibrationDialog()
@@ -62,7 +68,10 @@ class AutoPowerCalibrationWindow(QDialog):
         )
 
         self._kdc = KDC101Polariser()
-        self._pm = PM400PowerMeter()
+        # A PM400 handed in by MainWindow is the one VISA session to the meter
+        # (it is also the active detector there): reuse it, never open a second.
+        self._pm_shared = pm400 is not None
+        self._pm = pm400 if pm400 is not None else PM400PowerMeter()
         self._worker: AutoPowerCalibrationWorker | None = None
         self._align_worker: AlignPolariserWorker | None = None
         self._home_thread: KDC101HomeWorker | None = None
@@ -87,8 +96,6 @@ class AutoPowerCalibrationWindow(QDialog):
         s = self._settings
         if s.kdc101_conn_id:
             self.ui.comboKDC.addItem(s.kdc101_conn_id)
-        if s.pm400_visa_resource:
-            self.ui.comboPM400.setEditText(s.pm400_visa_resource)
         self.ui.spinWavelength.setValue(s.wavelength_nm)
         self.ui.spinAttenuation.setValue(s.beamsplitter_attenuation_dB)
         if s.angle_offset_deg != 0.0:
@@ -221,18 +228,25 @@ class AutoPowerCalibrationWindow(QDialog):
 
     @Slot()
     def _refresh_pm_list(self) -> None:
-        current = self.ui.comboPM400.currentText()
-        resources = PM400PowerMeter.list_resources()
-        self.ui.comboPM400.clear()
-        for r in resources:
-            self.ui.comboPM400.addItem(r)
-        if current and self.ui.comboPM400.findText(current) < 0:
-            self.ui.comboPM400.addItem(current)
-        if current:
-            idx = self.ui.comboPM400.findText(current)
-            if idx >= 0:
-                self.ui.comboPM400.setCurrentIndex(idx)
+        if self._pm_shared:
+            self._sync_shared_pm_ui()
+        else:
+            populate_pm400_combo(self.ui.comboPM400, self._settings.pm400_visa_resource)
         self._update_start_button_state()
+
+    def _sync_shared_pm_ui(self) -> None:
+        """Mirror MainWindow's PM400 connection; connecting happens there."""
+        self.ui.btnRefreshPM400.setEnabled(False)
+        self.ui.comboPM400.setEnabled(False)
+        self.ui.btnConnectPM400.setEnabled(False)
+        if self._pm.is_connected():
+            info = self._pm.sensor_info()
+            sensor_str = " | ".join(str(x) for x in info[:3]) if info else "–"
+            self.ui.lblPM400Status.setText(f"Verbunden (Hauptfenster): {sensor_str}")
+            self.ui.btnZeroPM400.setEnabled(True)
+        else:
+            self.ui.lblPM400Status.setText("Nicht verbunden — PM400 im Hauptfenster verbinden")
+            self.ui.btnZeroPM400.setEnabled(False)
 
     @Slot()
     def _toggle_pm400(self) -> None:
@@ -525,7 +539,8 @@ class AutoPowerCalibrationWindow(QDialog):
         if self._home_thread is not None and self._home_thread.isRunning():
             self._home_thread.wait(3000)
         self._kdc.disconnect()
-        self._pm.disconnect()
+        if not self._pm_shared:
+            self._pm.disconnect()
         if self._standalone and self._device_manager is not None:
             self._device_manager.disconnect_all()
         self._persist_settings()

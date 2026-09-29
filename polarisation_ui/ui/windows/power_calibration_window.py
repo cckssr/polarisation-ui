@@ -54,6 +54,7 @@ from polarisation_ui.core.power_calibration import (
 )
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.ui.common.pm400_combo import populate_pm400_combo
 
 _GAIN_STAGES = (1, 2, 3, 4)
 
@@ -241,6 +242,7 @@ class PowerCalibrationWindow(QDialog):
     def __init__(
         self,
         data_controller=None,
+        pm400: PM400PowerMeter | None = None,
         parent: QWidget | None = None,
     ) -> None:
         """Build the dialog's widgets in Python (no .ui counterpart by design)."""
@@ -251,7 +253,9 @@ class PowerCalibrationWindow(QDialog):
         self._gain_tabs: dict[int, _GainCalTab] = {}
         self._live_voltage: float = 0.0
         self._live_pm400_power_W: float | None = None
-        self._pm = PM400PowerMeter()
+        # Reuse MainWindow's PM400 session when given (one VISA session only).
+        self._pm_shared = pm400 is not None
+        self._pm = pm400 if pm400 is not None else PM400PowerMeter()
         self._pm_poll_timer = QTimer(self)
         self._pm_poll_timer.timeout.connect(self._on_pm400_power_poll)
         self._setup_ui()
@@ -333,9 +337,7 @@ class PowerCalibrationWindow(QDialog):
         settings = AutoCalibrationConnectionSettings.load()
 
         self._cb_pm400 = QComboBox()
-        self._cb_pm400.setEditable(True)
-        if settings.pm400_visa_resource:
-            self._cb_pm400.setEditText(settings.pm400_visa_resource)
+        self._pm400_preferred = settings.pm400_visa_resource
         btn_refresh = QPushButton("Aktualisieren")
         btn_refresh.clicked.connect(self._refresh_pm400_list)
         self._btn_connect_pm400 = QPushButton("Verbinden")
@@ -399,17 +401,20 @@ class PowerCalibrationWindow(QDialog):
 
     @Slot()
     def _refresh_pm400_list(self) -> None:
-        current = self._cb_pm400.currentText()
-        resources = PM400PowerMeter.list_resources()
-        self._cb_pm400.clear()
-        for r in resources:
-            self._cb_pm400.addItem(r)
-        if current and self._cb_pm400.findText(current) < 0:
-            self._cb_pm400.addItem(current)
-        if current:
-            idx = self._cb_pm400.findText(current)
-            if idx >= 0:
-                self._cb_pm400.setCurrentIndex(idx)
+        if not self._pm_shared:
+            populate_pm400_combo(self._cb_pm400, self._pm400_preferred)
+            return
+        # Shared session: connecting/disconnecting happens in MainWindow.
+        self._cb_pm400.setEnabled(False)
+        self._btn_connect_pm400.setEnabled(False)
+        if self._pm.is_connected():
+            info = self._pm.sensor_info()
+            sensor_str = " | ".join(str(x) for x in info[:3]) if info else "–"
+            self._lbl_pm400_status.setText(f"Verbunden (Hauptfenster): {sensor_str}")
+            self._btn_toggle_attenuation.setEnabled(True)
+            self._pm_poll_timer.start(_PM400_POLL_MS)
+        else:
+            self._lbl_pm400_status.setText("Nicht verbunden — PM400 im Hauptfenster verbinden")
 
     @Slot()
     def _toggle_pm400(self) -> None:
@@ -538,6 +543,6 @@ class PowerCalibrationWindow(QDialog):
             except RuntimeError:
                 pass
         self._pm_poll_timer.stop()
-        if self._pm.is_connected():
+        if self._pm.is_connected() and not self._pm_shared:
             self._pm.disconnect()
         super().closeEvent(event)

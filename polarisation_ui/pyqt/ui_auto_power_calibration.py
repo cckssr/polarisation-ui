@@ -172,7 +172,6 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.comboPM400.setObjectName("comboPM400")
         sizePolicy.setHeightForWidth(self.comboPM400.sizePolicy().hasHeightForWidth())
         self.comboPM400.setSizePolicy(sizePolicy)
-        self.comboPM400.setEditable(True)
 
         self.pmGrid.addWidget(self.comboPM400, 0, 1, 1, 1)
 
