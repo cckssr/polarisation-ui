@@ -17,6 +17,7 @@ from polarisation_ui.core.auto_calibration_settings import (
     AutoCalibrationParams,
     build_angle_grid,
 )
+from polarisation_ui.core.detector import DETECTOR_PM400
 from polarisation_ui.core.exceptions import KDC101Error, PM400Error
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
@@ -540,6 +541,11 @@ class KDCZeroFindWorker(QThread):
     ``gain_requested(stage)`` and waits (via the live frame stream itself, not
     a separate synchronisation primitive) for a frame confirming the new gain
     is active before proceeding.
+
+    Detector: when a frame reports ``detector == DETECTOR_PM400`` the PM400's
+    ``power_W`` is the signal to minimise (the PD-TIA is physically replaced by
+    the PM400 head, so ``Frame.intensity`` is meaningless) and the PD-TIA gain
+    steps are skipped. Otherwise ``Frame.intensity`` is used as before.
     """
 
     gain_requested = Signal(int)
@@ -556,6 +562,7 @@ class KDCZeroFindWorker(QThread):
     _FINE_HALF_WINDOW_DEG = 8.0
     _FINE_STEP_DEG = 0.5
     _FINE_SETTLE_S = 0.1
+    _PM400_EXTRA_SETTLE_S = 0.4
     _FRESH_FRAME_TIMEOUT_S = 2.0
     _GAIN_TIMEOUT_S = 5.0
     _GAIN_POLL_S = 0.05
@@ -572,6 +579,13 @@ class KDCZeroFindWorker(QThread):
         self._read_latest = read_latest
         self._abort: bool = False
         self._last_seen_ts_ms: int | None = None
+
+    @staticmethod
+    def _signal(frame: "Frame") -> float:
+        """Return the value to minimise for *frame* (NaN if not available)."""
+        if frame.detector == DETECTOR_PM400:
+            return float("nan") if frame.power_W is None else frame.power_W
+        return frame.intensity
 
     def abort(self) -> None:
         """Request a clean stop; checked between steps and inside both scan loops."""
@@ -614,7 +628,7 @@ class KDCZeroFindWorker(QThread):
             self.failed.emit("Grobsuche: keine gültigen Messwerte")
             return
         coarse_angle, coarse_intensity = coarse
-        self.log.emit(f"Grobminimum: θ={coarse_angle:.2f}° (I={coarse_intensity:.4f} V)")
+        self.log.emit(f"Grobminimum: θ={coarse_angle:.2f}° (Signal={coarse_intensity:.4e})")
         self.progress.emit(1, 2)
 
         self.log.emit("Feinsuche (Gain 3)…")
@@ -652,6 +666,9 @@ class KDCZeroFindWorker(QThread):
         Returns:
             False on timeout or abort.
         """
+        latest = self._read_latest()
+        if latest is not None and latest.detector == DETECTOR_PM400:
+            return True  # PM400 autoranges; PD-TIA gain is irrelevant
         self.gain_requested.emit(stage)
         deadline = time.monotonic() + self._GAIN_TIMEOUT_S
         while time.monotonic() < deadline:
@@ -667,12 +684,12 @@ class KDCZeroFindWorker(QThread):
 
     def _sample_frame(self, intensities: "list[tuple[float, float]]") -> None:
         frame = self._read_latest()
-        if frame is None or math.isnan(frame.intensity):
+        if frame is None or math.isnan(self._signal(frame)):
             return
         if self._last_seen_ts_ms is not None and frame.ts_ms <= self._last_seen_ts_ms:
             return
         self._last_seen_ts_ms = frame.ts_ms
-        intensities.append((frame.ts_ms / 1000.0, frame.intensity))
+        intensities.append((frame.ts_ms / 1000.0, self._signal(frame)))
 
     def _scan_continuous(
         self, start_deg: float, end_deg: float, timeout_s: float
@@ -712,7 +729,8 @@ class KDCZeroFindWorker(QThread):
     ) -> "tuple[float, float] | None":
         """Interpolate the stage angle at each intensity sample's timestamp and
         return the (angle, intensity) pair at the minimum, or None if nothing
-        usable was collected."""
+        usable was collected.
+        """
         if len(positions) < 2 or not intensities:
             return None
         ts_pos = [p[0] for p in positions]
@@ -730,8 +748,14 @@ class KDCZeroFindWorker(QThread):
 
     def _read_fresh(self) -> "Frame | None":
         """Block until a frame newer than the last one consumed arrives, after
-        the fine-pass settle time, up to a bounded timeout."""
+        the fine-pass settle time, up to a bounded timeout.
+        """
         time.sleep(self._FINE_SETTLE_S)
+        latest = self._read_latest()
+        if latest is not None and latest.detector == DETECTOR_PM400:
+            # The PM400 reading in a frame lags the poll thread; let it catch up
+            # so the value belongs to the new stage angle.
+            time.sleep(self._PM400_EXTRA_SETTLE_S)
         deadline = time.monotonic() + self._FRESH_FRAME_TIMEOUT_S
         while time.monotonic() < deadline:
             if self._abort:
@@ -747,7 +771,8 @@ class KDCZeroFindWorker(QThread):
 
     def _scan_stepped(self, center_deg: float) -> "list[tuple[float, float]]":
         """Step ±_FINE_HALF_WINDOW_DEG around *center_deg*, waiting for a fresh
-        frame at each step. Returns (angle, intensity) pairs."""
+        frame at each step. Returns (angle, intensity) pairs.
+        """
         lo = max(0.0, center_deg - self._FINE_HALF_WINDOW_DEG)
         hi = min(180.0, center_deg + self._FINE_HALF_WINDOW_DEG)
         n = max(2, round((hi - lo) / self._FINE_STEP_DEG) + 1)
@@ -757,8 +782,8 @@ class KDCZeroFindWorker(QThread):
                 break
             self._kdc.move_to(angle, wait=True)
             frame = self._read_fresh()
-            if frame is not None and not math.isnan(frame.intensity):
-                results.append((angle, frame.intensity))
+            if frame is not None and not math.isnan(self._signal(frame)):
+                results.append((angle, self._signal(frame)))
         return results
 
 

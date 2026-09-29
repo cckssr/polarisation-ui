@@ -288,7 +288,38 @@ class _FrameSource:
         )
 
 
+class _Pm400FrameSource(_FrameSource):
+    """PM400 active: intensity is NaN (PD-TIA replaced), power_W carries the dip."""
+
+    def read_latest(self) -> Frame:
+        angle = self._kdc.get_position_deg()
+        return Frame(
+            ts_ms=int(time.monotonic() * 1000),
+            sample_angle=0.0,
+            detector_angle=0.0,
+            intensity=float("nan"),
+            pdtia_gain=0,
+            power_W=1e-6 + 1e-8 * abs(angle - self._minimum_angle),
+            detector="pm400",
+        )
+
+
 class TestKDCZeroFindWorker:
+    def test_uses_pm400_power_and_skips_gain(self, qtbot):
+        kdc = _FakeZeroFindKDC(homed=True)
+        source = _Pm400FrameSource(kdc, minimum_angle=60.0)
+
+        worker = KDCZeroFindWorker(kdc=kdc, read_latest=source.read_latest)
+        gains: list[int] = []
+        worker.gain_requested.connect(gains.append, _DIRECT)
+
+        with qtbot.waitSignal(worker.finished, timeout=20000, raising=True) as blocker:
+            worker.start()
+
+        worker.wait(2000)
+        assert abs(blocker.args[0] - 60.0) <= 1.0
+        assert gains == []
+
     def test_finds_minimum_and_cycles_gain(self, qtbot):
         kdc = _FakeZeroFindKDC(homed=True)
         source = _FrameSource(kdc, minimum_angle=60.0)
