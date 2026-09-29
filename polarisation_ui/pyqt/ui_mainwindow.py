@@ -79,7 +79,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1316, 980)
+        MainWindow.resize(1257, 980)
         MainWindow.setMinimumSize(QSize(0, 0))
         self.actionAutoSaveEnabled = QAction(MainWindow)
         self.actionAutoSaveEnabled.setObjectName("actionAutoSaveEnabled")
@@ -1382,7 +1382,7 @@ class Ui_MainWindow(object):
         self.lcdPM400Power.setSizePolicy(sizePolicy3)
         self.lcdPM400Power.setMinimumSize(QSize(0, 30))
         self.lcdPM400Power.setLineWidth(2)
-        self.lcdPM400Power.setDigitCount(8)
+        self.lcdPM400Power.setDigitCount(9)
         self.lcdPM400Power.setSegmentStyle(QLCDNumber.SegmentStyle.Filled)
 
         self.gridLayout_7.addWidget(self.lcdPM400Power, 0, 3, 1, 1)
@@ -1399,6 +1399,7 @@ class Ui_MainWindow(object):
         sizePolicy11.setVerticalStretch(0)
         sizePolicy11.setHeightForWidth(self.comboPM400.sizePolicy().hasHeightForWidth())
         self.comboPM400.setSizePolicy(sizePolicy11)
+        self.comboPM400.setMaximumSize(QSize(800, 16777215))
 
         self.gridLayout_7.addWidget(self.comboPM400, 1, 1, 1, 1)
 
@@ -1465,7 +1466,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.dockEventLog)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName("menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1316, 39))
+        self.menubar.setGeometry(QRect(0, 0, 1257, 39))
         self.menuEinstellungen = QMenu(self.menubar)
         self.menuEinstellungen.setObjectName("menuEinstellungen")
         MainWindow.setMenuBar(self.menubar)
@@ -1488,7 +1489,7 @@ class Ui_MainWindow(object):
 
         self.tabWidget.setCurrentIndex(0)
         self.cbGroupLetter.setCurrentIndex(-1)
-        self.tabDetector.setCurrentIndex(0)
+        self.tabDetector.setCurrentIndex(1)
 
         QMetaObject.connectSlotsByName(MainWindow)
 
@@ -1780,14 +1781,12 @@ class Ui_MainWindow(object):
         self.btnKDCZero.setToolTip(
             QCoreApplication.translate(
                 "MainWindow",
-                "Extinktionswinkel des eingesetzten Polarisators (linear, \u03bb/4 oder \u03bb/2) suchen: Grobsuche bei PDTIA-Gain 1, Feinsuche bei Gain 3. Das Ergebnis wird als Offset gespeichert und von Malus- und Verz\u00f6gerungsplatten-Scans automatisch verwendet.",
+                "<html><head/><body><p>Extinktionswinkel des eingesetzten Polarisators (linear, \u03bb/4 oder \u03bb/2) suchen: Grobsuche bei PDTIA-Gain 1, Feinsuche bei Gain 3 oder alternativ mit PM400. Das Ergebnis wird als Offset gespeichert und von Malus- und Verz\u00f6gerungsplatten-Scans automatisch verwendet.</p></body></html>",
                 None,
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnKDCZero.setText(
-            QCoreApplication.translate("MainWindow", "Polarisator Nullen", None)
-        )
+        self.btnKDCZero.setText(QCoreApplication.translate("MainWindow", "Optik Nullen", None))
         # if QT_CONFIG(tooltip)
         self.btnKDCOffsetReset.setToolTip(
             QCoreApplication.translate(

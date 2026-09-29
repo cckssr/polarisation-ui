@@ -102,17 +102,20 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="minimumWidth">
-      <number>340</number>
+     <property name="minimumSize">
+      <size>
+       <width>310</width>
+       <height>0</height>
+      </size>
      </property>
      <property name="frameShape">
       <enum>QFrame::Shape::NoFrame</enum>
      </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-     </property>
      <property name="verticalScrollBarPolicy">
       <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
@@ -121,13 +124,13 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-275</y>
-        <width>371</width>
-        <height>1320</height>
+        <y>0</y>
+        <width>346</width>
+        <height>1208</height>
        </rect>
       </property>
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -161,7 +164,7 @@
          </property>
          <layout class="QFormLayout" name="formLive">
           <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+           <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
           </property>
           <property name="verticalSpacing">
            <number>2</number>
@@ -270,12 +273,18 @@
        </item>
        <item>
         <widget class="QGroupBox" name="gbSetup">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="title">
           <string>Konfiguration</string>
          </property>
          <layout class="QFormLayout" name="formSetup">
           <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
+           <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
           </property>
           <property name="verticalSpacing">
            <number>4</number>
@@ -301,8 +310,11 @@
           </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="spinWavelength">
-            <property name="maximumWidth">
-             <number>90</number>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
             <property name="toolTip">
              <string>Beleuchtungswellenlänge — geht in das Dünnschicht-Modell ein (d/λ)</string>
@@ -333,9 +345,6 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="spinPolariser">
-            <property name="maximumWidth">
-             <number>90</number>
-            </property>
             <property name="toolTip">
              <string>Polarisatorazimut relativ zur Einfallsebene — 45° maximiert die RAE-Empfindlichkeit; darf nicht 0° oder 90° sein</string>
             </property>
@@ -368,9 +377,6 @@
           </item>
           <item row="2" column="1">
            <widget class="QDoubleSpinBox" name="spinAnalyserOffset">
-            <property name="maximumWidth">
-             <number>90</number>
-            </property>
             <property name="toolTip">
              <string>Azimut = KDC-Winkel (logisch) + dieser Offset. Der KDC-Nullpunkt referenziert auf den Polarisator, nicht auf die Einfallsebene — Standardwert P+90° (Auslöschung des Geradeausstrahls), bei Bedarf hier korrigieren</string>
             </property>
@@ -403,9 +409,6 @@
           </item>
           <item row="3" column="1">
            <widget class="QDoubleSpinBox" name="spinAmbientIndex">
-            <property name="maximumWidth">
-             <number>70</number>
-            </property>
             <property name="toolTip">
              <string>Brechungsindex des Umgebungsmediums (Luft ≈ 1.0003)</string>
             </property>
@@ -495,9 +498,9 @@
           </item>
           <item>
            <layout class="QFormLayout" name="formSweepParams">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+            </property>
             <property name="verticalSpacing">
              <number>3</number>
             </property>
@@ -510,9 +513,6 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepStart">
-            <property name="maximumWidth">
-             <number>80</number>
-            </property>
               <property name="toolTip">
                <string>Startwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
               </property>
@@ -542,9 +542,6 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepEnd">
-            <property name="maximumWidth">
-             <number>80</number>
-            </property>
               <property name="toolTip">
                <string>Endwinkel des Analysator-Scans (logischer KDC-Winkel)</string>
               </property>
@@ -574,9 +571,6 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="spinSweepStep">
-            <property name="maximumWidth">
-             <number>80</number>
-            </property>
               <property name="toolTip">
                <string>Schrittweite des Analysator-Scans (°)</string>
               </property>
@@ -609,9 +603,6 @@
             </item>
             <item row="3" column="1">
              <widget class="QSpinBox" name="spinSettleMs">
-            <property name="maximumWidth">
-             <number>80</number>
-            </property>
               <property name="toolTip">
                <string>Wartezeit nach jedem Analysator-Schritt vor der Mittelung (ms)</string>
               </property>
@@ -686,9 +677,9 @@
           </property>
           <item>
            <layout class="QFormLayout" name="formManual">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+            </property>
             <item row="0" column="0">
              <widget class="QLabel" name="lblAnalyserManual">
               <property name="text">
@@ -698,9 +689,6 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="spinAnalyserManual">
-            <property name="maximumWidth">
-             <number>90</number>
-            </property>
               <property name="toolTip">
                <string>Logischer KDC-Winkel für diesen Einzelpunkt (Analysator per Hand gedreht)</string>
               </property>
@@ -768,17 +756,78 @@
            <number>6</number>
           </property>
           <item>
-           <layout class="QFormLayout" name="formResult">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
+           <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1,0,0,1">
             <property name="verticalSpacing">
              <number>2</number>
             </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="lblAlphaLabel">
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblI0Label">
               <property name="text">
-               <string>α:</string>
+               <string>I₀:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QLabel" name="lblBeta">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QLabel" name="lblResidual">
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="lblDelta">
+              <property name="toolTip">
+               <string>Nur cos(Δ) wird gemessen — das Vorzeichen von Δ ist prinzipiell unbestimmt</string>
+              </property>
+              <property name="text">
+               <string>—</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="3">
+             <widget class="QLabel" name="lblKPseudoLabel">
+              <property name="text">
+               <string>k (pseudo):</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QLabel" name="lblBetaLabel">
+              <property name="text">
+               <string>β:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblModulationLabel">
+              <property name="text">
+               <string>Modulation m:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="lblI0">
+              <property name="text">
+               <string>—</string>
               </property>
              </widget>
             </item>
@@ -789,56 +838,41 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="lblBetaLabel">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblAlphaLabel">
               <property name="text">
-               <string>β:</string>
+               <string>α:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="lblBeta">
-              <property name="text">
-               <string>—</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="lblI0Label">
-              <property name="text">
-               <string>I₀:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="lblI0">
+            <item row="4" column="4">
+             <widget class="QLabel" name="lblKPseudo">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="3" column="0">
-             <widget class="QLabel" name="lblResidualLabel">
+             <widget class="QLabel" name="lblDeltaLabel">
               <property name="text">
-               <string>Residuum:</string>
+               <string>Δ:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QLabel" name="lblResidual">
+            <item row="2" column="4">
+             <widget class="QLabel" name="lblPsi">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="lblModulationLabel">
-              <property name="text">
-               <string>Modulation m:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
+            <item row="2" column="1">
              <widget class="QLabel" name="lblModulation">
               <property name="toolTip">
                <string>sqrt(α²+β²) — muss &lt; 1 sein, sonst ist der Fit unphysikalisch</string>
@@ -848,62 +882,47 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="0">
+            <item row="2" column="3">
              <widget class="QLabel" name="lblPsiLabel">
               <property name="text">
                <string>Ψ:</string>
               </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QLabel" name="lblPsi">
-              <property name="text">
-               <string>—</string>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
               </property>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="lblDeltaLabel">
-              <property name="text">
-               <string>Δ:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1">
-             <widget class="QLabel" name="lblDelta">
-              <property name="toolTip">
-               <string>Nur cos(Δ) wird gemessen — das Vorzeichen von Δ ist prinzipiell unbestimmt</string>
-              </property>
-              <property name="text">
-               <string>—</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="lblNPseudoLabel">
-              <property name="text">
-               <string>n (pseudo):</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="1">
+            <item row="4" column="1">
              <widget class="QLabel" name="lblNPseudo">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
-            <item row="8" column="0">
-             <widget class="QLabel" name="lblKPseudoLabel">
+            <item row="4" column="0">
+             <widget class="QLabel" name="lblNPseudoLabel">
               <property name="text">
-               <string>k (pseudo):</string>
+               <string>n (pseudo):</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
               </property>
              </widget>
             </item>
-            <item row="8" column="1">
-             <widget class="QLabel" name="lblKPseudo">
+            <item row="1" column="3">
+             <widget class="QLabel" name="lblResidualLabel">
               <property name="text">
-               <string>—</string>
+               <string>Residuum:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2" rowspan="5">
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -945,9 +964,9 @@
           </property>
           <item>
            <layout class="QFormLayout" name="formModel">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+            </property>
             <property name="verticalSpacing">
              <number>3</number>
             </property>
@@ -961,7 +980,7 @@
             <item row="0" column="1">
              <widget class="QComboBox" name="cmbModel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -990,9 +1009,6 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="spinSubstrateN">
-            <property name="maximumWidth">
-             <number>70</number>
-            </property>
               <property name="toolTip">
                <string>Bekannter Brechungsindex des Substrats bei λ (Standard: Silizium bei 632.8 nm)</string>
               </property>
@@ -1022,9 +1038,6 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="spinSubstrateK">
-            <property name="maximumWidth">
-             <number>70</number>
-            </property>
               <property name="toolTip">
                <string>Bekannter Extinktionskoeffizient des Substrats bei λ</string>
               </property>
@@ -1053,52 +1066,72 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <layout class="QHBoxLayout" name="hboxDRange">
-              <item>
-               <widget class="QDoubleSpinBox" name="spinDMin">
-            <property name="maximumWidth">
-             <number>90</number>
-            </property>
-                <property name="suffix">
-                 <string> nm</string>
-                </property>
-                <property name="decimals">
-                 <number>0</number>
-                </property>
-                <property name="minimum">
-                 <double>0.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spinDMax">
-            <property name="maximumWidth">
-             <number>90</number>
-            </property>
-                <property name="suffix">
-                 <string> nm</string>
-                </property>
-                <property name="decimals">
-                 <number>0</number>
-                </property>
-                <property name="minimum">
-                 <double>0.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <widget class="QWidget" name="wDRange" native="true">
+              <layout class="QHBoxLayout" name="hboxDRange">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QDoubleSpinBox" name="spinDMin">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="suffix">
+                  <string> nm</string>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>100000.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="spinDMax">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="suffix">
+                  <string> nm</string>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>100000.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>1000.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </item>
             <item row="4" column="0">
              <widget class="QLabel" name="lblNfMin">
@@ -1108,46 +1141,66 @@
              </widget>
             </item>
             <item row="4" column="1">
-             <layout class="QHBoxLayout" name="hboxNRange">
-              <item>
-               <widget class="QDoubleSpinBox" name="spinNfMin">
-            <property name="maximumWidth">
-             <number>70</number>
-            </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>1.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.200000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spinNfMax">
-            <property name="maximumWidth">
-             <number>70</number>
-            </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>1.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>3.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <widget class="QWidget" name="wNRange" native="true">
+              <layout class="QHBoxLayout" name="hboxNRange">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QDoubleSpinBox" name="spinNfMin">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="decimals">
+                  <number>3</number>
+                 </property>
+                 <property name="minimum">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>10.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>1.200000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="spinNfMax">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="decimals">
+                  <number>3</number>
+                 </property>
+                 <property name="minimum">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>10.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>3.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </item>
@@ -1175,17 +1228,17 @@
            </widget>
           </item>
           <item>
-           <layout class="QFormLayout" name="formModelResult">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
+           <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1,0,0,1">
             <property name="verticalSpacing">
              <number>2</number>
             </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="lblThicknessLabel">
+            <item row="1" column="3">
+             <widget class="QLabel" name="lblMSELabel">
               <property name="text">
-               <string>Dicke d:</string>
+               <string>MSE:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -1196,45 +1249,61 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="lblNFilmLabel">
-              <property name="text">
-               <string>n (Schicht):</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="lblNFilm">
+            <item row="1" column="4">
+             <widget class="QLabel" name="lblMSE">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="lblKFilmLabel">
-              <property name="text">
-               <string>k (Schicht):</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
+            <item row="1" column="1">
              <widget class="QLabel" name="lblKFilm">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="lblMSELabel">
+            <item row="0" column="4">
+             <widget class="QLabel" name="lblNFilm">
               <property name="text">
-               <string>MSE:</string>
+               <string>—</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QLabel" name="lblMSE">
+            <item row="0" column="3">
+             <widget class="QLabel" name="lblNFilmLabel">
               <property name="text">
-               <string>—</string>
+               <string>n (Schicht):</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblThicknessLabel">
+              <property name="text">
+               <string>Dicke d:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblKFilmLabel">
+              <property name="text">
+               <string>k (Schicht):</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2" rowspan="2">
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
              </widget>
             </item>

@@ -123,15 +123,15 @@ class Ui_EllipsometryTab(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.rightScroll.sizePolicy().hasHeightForWidth())
         self.rightScroll.setSizePolicy(sizePolicy)
-        self.rightScroll.setMinimumWidth(340)
+        self.rightScroll.setMinimumSize(QSize(310, 0))
         self.rightScroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.rightScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.rightScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.rightScroll.setWidgetResizable(True)
         self.rightScrollContents = QWidget()
         self.rightScrollContents.setObjectName("rightScrollContents")
-        self.rightScrollContents.setGeometry(QRect(0, -275, 371, 1320))
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
+        self.rightScrollContents.setGeometry(QRect(0, 0, 346, 1208))
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
         sizePolicy1.setHeightForWidth(self.rightScrollContents.sizePolicy().hasHeightForWidth())
@@ -149,7 +149,7 @@ class Ui_EllipsometryTab(object):
         self.gbLive.setSizePolicy(sizePolicy2)
         self.formLive = QFormLayout(self.gbLive)
         self.formLive.setObjectName("formLive")
-        self.formLive.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        self.formLive.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formLive.setVerticalSpacing(2)
         self.formLive.setContentsMargins(6, 4, 6, 4)
         self.lblLiveIntensityLabel = QLabel(self.gbLive)
@@ -216,9 +216,11 @@ class Ui_EllipsometryTab(object):
 
         self.gbSetup = QGroupBox(self.rightScrollContents)
         self.gbSetup.setObjectName("gbSetup")
+        sizePolicy1.setHeightForWidth(self.gbSetup.sizePolicy().hasHeightForWidth())
+        self.gbSetup.setSizePolicy(sizePolicy1)
         self.formSetup = QFormLayout(self.gbSetup)
         self.formSetup.setObjectName("formSetup")
-        self.formSetup.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        self.formSetup.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formSetup.setVerticalSpacing(4)
         self.formSetup.setContentsMargins(6, 6, 6, 6)
         self.lblWavelength = QLabel(self.gbSetup)
@@ -228,7 +230,11 @@ class Ui_EllipsometryTab(object):
 
         self.spinWavelength = QDoubleSpinBox(self.gbSetup)
         self.spinWavelength.setObjectName("spinWavelength")
-        self.spinWavelength.setMaximumWidth(90)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.spinWavelength.sizePolicy().hasHeightForWidth())
+        self.spinWavelength.setSizePolicy(sizePolicy3)
         self.spinWavelength.setDecimals(1)
         self.spinWavelength.setMinimum(200.000000000000000)
         self.spinWavelength.setMaximum(2000.000000000000000)
@@ -243,7 +249,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinPolariser = QDoubleSpinBox(self.gbSetup)
         self.spinPolariser.setObjectName("spinPolariser")
-        self.spinPolariser.setMaximumWidth(90)
         self.spinPolariser.setDecimals(2)
         self.spinPolariser.setMinimum(-360.000000000000000)
         self.spinPolariser.setMaximum(360.000000000000000)
@@ -259,7 +264,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinAnalyserOffset = QDoubleSpinBox(self.gbSetup)
         self.spinAnalyserOffset.setObjectName("spinAnalyserOffset")
-        self.spinAnalyserOffset.setMaximumWidth(90)
         self.spinAnalyserOffset.setDecimals(2)
         self.spinAnalyserOffset.setMinimum(-360.000000000000000)
         self.spinAnalyserOffset.setMaximum(360.000000000000000)
@@ -275,7 +279,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinAmbientIndex = QDoubleSpinBox(self.gbSetup)
         self.spinAmbientIndex.setObjectName("spinAmbientIndex")
-        self.spinAmbientIndex.setMaximumWidth(70)
         self.spinAmbientIndex.setDecimals(4)
         self.spinAmbientIndex.setMinimum(1.000000000000000)
         self.spinAmbientIndex.setMaximum(2.000000000000000)
@@ -296,11 +299,11 @@ class Ui_EllipsometryTab(object):
 
         self.btnSetAoiZero = QPushButton(self.gbSetup)
         self.btnSetAoiZero.setObjectName("btnSetAoiZero")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.btnSetAoiZero.sizePolicy().hasHeightForWidth())
-        self.btnSetAoiZero.setSizePolicy(sizePolicy3)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.btnSetAoiZero.sizePolicy().hasHeightForWidth())
+        self.btnSetAoiZero.setSizePolicy(sizePolicy4)
 
         self.formSetup.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.btnSetAoiZero)
 
@@ -320,7 +323,7 @@ class Ui_EllipsometryTab(object):
         self.formSweepParams = QFormLayout()
         self.formSweepParams.setObjectName("formSweepParams")
         self.formSweepParams.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
         )
         self.formSweepParams.setVerticalSpacing(3)
         self.lblSweepStart = QLabel(self.gbSweep)
@@ -330,7 +333,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepStart = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStart.setObjectName("spinSweepStart")
-        self.spinSweepStart.setMaximumWidth(80)
         self.spinSweepStart.setDecimals(1)
         self.spinSweepStart.setMinimum(0.000000000000000)
         self.spinSweepStart.setMaximum(360.000000000000000)
@@ -345,7 +347,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepEnd = QDoubleSpinBox(self.gbSweep)
         self.spinSweepEnd.setObjectName("spinSweepEnd")
-        self.spinSweepEnd.setMaximumWidth(80)
         self.spinSweepEnd.setDecimals(1)
         self.spinSweepEnd.setMinimum(0.000000000000000)
         self.spinSweepEnd.setMaximum(360.000000000000000)
@@ -360,7 +361,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSweepStep = QDoubleSpinBox(self.gbSweep)
         self.spinSweepStep.setObjectName("spinSweepStep")
-        self.spinSweepStep.setMaximumWidth(80)
         self.spinSweepStep.setDecimals(1)
         self.spinSweepStep.setMinimum(0.100000000000000)
         self.spinSweepStep.setMaximum(90.000000000000000)
@@ -376,7 +376,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSettleMs = QSpinBox(self.gbSweep)
         self.spinSettleMs.setObjectName("spinSettleMs")
-        self.spinSettleMs.setMaximumWidth(80)
         self.spinSettleMs.setMinimum(0)
         self.spinSettleMs.setMaximum(5000)
         self.spinSettleMs.setSingleStep(50)
@@ -408,7 +407,7 @@ class Ui_EllipsometryTab(object):
         self.vboxManual.setContentsMargins(6, 6, 6, 6)
         self.formManual = QFormLayout()
         self.formManual.setObjectName("formManual")
-        self.formManual.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        self.formManual.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.lblAnalyserManual = QLabel(self.gbManual)
         self.lblAnalyserManual.setObjectName("lblAnalyserManual")
 
@@ -416,7 +415,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinAnalyserManual = QDoubleSpinBox(self.gbManual)
         self.spinAnalyserManual.setObjectName("spinAnalyserManual")
-        self.spinAnalyserManual.setMaximumWidth(90)
         self.spinAnalyserManual.setDecimals(2)
         self.spinAnalyserManual.setMinimum(-360.000000000000000)
         self.spinAnalyserManual.setMaximum(360.000000000000000)
@@ -444,101 +442,155 @@ class Ui_EllipsometryTab(object):
         self.vboxResult = QVBoxLayout(self.gbResult)
         self.vboxResult.setObjectName("vboxResult")
         self.vboxResult.setContentsMargins(6, 6, 6, 6)
-        self.formResult = QFormLayout()
-        self.formResult.setObjectName("formResult")
-        self.formResult.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
-        self.formResult.setVerticalSpacing(2)
-        self.lblAlphaLabel = QLabel(self.gbResult)
-        self.lblAlphaLabel.setObjectName("lblAlphaLabel")
+        self.gridLayout_3 = QGridLayout()
+        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.gridLayout_3.setVerticalSpacing(2)
+        self.lblI0Label = QLabel(self.gbResult)
+        self.lblI0Label.setObjectName("lblI0Label")
+        self.lblI0Label.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.formResult.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblAlphaLabel)
-
-        self.lblAlpha = QLabel(self.gbResult)
-        self.lblAlpha.setObjectName("lblAlpha")
-
-        self.formResult.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblAlpha)
-
-        self.lblBetaLabel = QLabel(self.gbResult)
-        self.lblBetaLabel.setObjectName("lblBetaLabel")
-
-        self.formResult.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblBetaLabel)
+        self.gridLayout_3.addWidget(self.lblI0Label, 1, 0, 1, 1)
 
         self.lblBeta = QLabel(self.gbResult)
         self.lblBeta.setObjectName("lblBeta")
 
-        self.formResult.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblBeta)
-
-        self.lblI0Label = QLabel(self.gbResult)
-        self.lblI0Label.setObjectName("lblI0Label")
-
-        self.formResult.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblI0Label)
-
-        self.lblI0 = QLabel(self.gbResult)
-        self.lblI0.setObjectName("lblI0")
-
-        self.formResult.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lblI0)
-
-        self.lblResidualLabel = QLabel(self.gbResult)
-        self.lblResidualLabel.setObjectName("lblResidualLabel")
-
-        self.formResult.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblResidualLabel)
+        self.gridLayout_3.addWidget(self.lblBeta, 0, 4, 1, 1)
 
         self.lblResidual = QLabel(self.gbResult)
         self.lblResidual.setObjectName("lblResidual")
 
-        self.formResult.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lblResidual)
-
-        self.lblModulationLabel = QLabel(self.gbResult)
-        self.lblModulationLabel.setObjectName("lblModulationLabel")
-
-        self.formResult.setWidget(4, QFormLayout.ItemRole.LabelRole, self.lblModulationLabel)
-
-        self.lblModulation = QLabel(self.gbResult)
-        self.lblModulation.setObjectName("lblModulation")
-
-        self.formResult.setWidget(4, QFormLayout.ItemRole.FieldRole, self.lblModulation)
-
-        self.lblPsiLabel = QLabel(self.gbResult)
-        self.lblPsiLabel.setObjectName("lblPsiLabel")
-
-        self.formResult.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblPsiLabel)
-
-        self.lblPsi = QLabel(self.gbResult)
-        self.lblPsi.setObjectName("lblPsi")
-
-        self.formResult.setWidget(5, QFormLayout.ItemRole.FieldRole, self.lblPsi)
-
-        self.lblDeltaLabel = QLabel(self.gbResult)
-        self.lblDeltaLabel.setObjectName("lblDeltaLabel")
-
-        self.formResult.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblDeltaLabel)
+        self.gridLayout_3.addWidget(self.lblResidual, 1, 4, 1, 1)
 
         self.lblDelta = QLabel(self.gbResult)
         self.lblDelta.setObjectName("lblDelta")
 
-        self.formResult.setWidget(6, QFormLayout.ItemRole.FieldRole, self.lblDelta)
-
-        self.lblNPseudoLabel = QLabel(self.gbResult)
-        self.lblNPseudoLabel.setObjectName("lblNPseudoLabel")
-
-        self.formResult.setWidget(7, QFormLayout.ItemRole.LabelRole, self.lblNPseudoLabel)
-
-        self.lblNPseudo = QLabel(self.gbResult)
-        self.lblNPseudo.setObjectName("lblNPseudo")
-
-        self.formResult.setWidget(7, QFormLayout.ItemRole.FieldRole, self.lblNPseudo)
+        self.gridLayout_3.addWidget(self.lblDelta, 3, 1, 1, 1)
 
         self.lblKPseudoLabel = QLabel(self.gbResult)
         self.lblKPseudoLabel.setObjectName("lblKPseudoLabel")
+        self.lblKPseudoLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.formResult.setWidget(8, QFormLayout.ItemRole.LabelRole, self.lblKPseudoLabel)
+        self.gridLayout_3.addWidget(self.lblKPseudoLabel, 4, 3, 1, 1)
+
+        self.lblBetaLabel = QLabel(self.gbResult)
+        self.lblBetaLabel.setObjectName("lblBetaLabel")
+        self.lblBetaLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblBetaLabel, 0, 3, 1, 1)
+
+        self.lblModulationLabel = QLabel(self.gbResult)
+        self.lblModulationLabel.setObjectName("lblModulationLabel")
+        self.lblModulationLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblModulationLabel, 2, 0, 1, 1)
+
+        self.lblI0 = QLabel(self.gbResult)
+        self.lblI0.setObjectName("lblI0")
+
+        self.gridLayout_3.addWidget(self.lblI0, 1, 1, 1, 1)
+
+        self.lblAlpha = QLabel(self.gbResult)
+        self.lblAlpha.setObjectName("lblAlpha")
+
+        self.gridLayout_3.addWidget(self.lblAlpha, 0, 1, 1, 1)
+
+        self.lblAlphaLabel = QLabel(self.gbResult)
+        self.lblAlphaLabel.setObjectName("lblAlphaLabel")
+        self.lblAlphaLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblAlphaLabel, 0, 0, 1, 1)
 
         self.lblKPseudo = QLabel(self.gbResult)
         self.lblKPseudo.setObjectName("lblKPseudo")
 
-        self.formResult.setWidget(8, QFormLayout.ItemRole.FieldRole, self.lblKPseudo)
+        self.gridLayout_3.addWidget(self.lblKPseudo, 4, 4, 1, 1)
 
-        self.vboxResult.addLayout(self.formResult)
+        self.lblDeltaLabel = QLabel(self.gbResult)
+        self.lblDeltaLabel.setObjectName("lblDeltaLabel")
+        self.lblDeltaLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblDeltaLabel, 3, 0, 1, 1)
+
+        self.lblPsi = QLabel(self.gbResult)
+        self.lblPsi.setObjectName("lblPsi")
+
+        self.gridLayout_3.addWidget(self.lblPsi, 2, 4, 1, 1)
+
+        self.lblModulation = QLabel(self.gbResult)
+        self.lblModulation.setObjectName("lblModulation")
+
+        self.gridLayout_3.addWidget(self.lblModulation, 2, 1, 1, 1)
+
+        self.lblPsiLabel = QLabel(self.gbResult)
+        self.lblPsiLabel.setObjectName("lblPsiLabel")
+        self.lblPsiLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblPsiLabel, 2, 3, 1, 1)
+
+        self.lblNPseudo = QLabel(self.gbResult)
+        self.lblNPseudo.setObjectName("lblNPseudo")
+
+        self.gridLayout_3.addWidget(self.lblNPseudo, 4, 1, 1, 1)
+
+        self.lblNPseudoLabel = QLabel(self.gbResult)
+        self.lblNPseudoLabel.setObjectName("lblNPseudoLabel")
+        self.lblNPseudoLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblNPseudoLabel, 4, 0, 1, 1)
+
+        self.lblResidualLabel = QLabel(self.gbResult)
+        self.lblResidualLabel.setObjectName("lblResidualLabel")
+        self.lblResidualLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_3.addWidget(self.lblResidualLabel, 1, 3, 1, 1)
+
+        self.line_2 = QFrame(self.gbResult)
+        self.line_2.setObjectName("line_2")
+        self.line_2.setFrameShape(QFrame.Shape.VLine)
+        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_3.addWidget(self.line_2, 0, 2, 5, 1)
+
+        self.gridLayout_3.setColumnStretch(1, 1)
+        self.gridLayout_3.setColumnStretch(4, 1)
+
+        self.vboxResult.addLayout(self.gridLayout_3)
 
         self.btnAcceptPoint = QPushButton(self.gbResult)
         self.btnAcceptPoint.setObjectName("btnAcceptPoint")
@@ -555,7 +607,7 @@ class Ui_EllipsometryTab(object):
         self.vboxModel.setContentsMargins(6, 6, 6, 6)
         self.formModel = QFormLayout()
         self.formModel.setObjectName("formModel")
-        self.formModel.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        self.formModel.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.formModel.setVerticalSpacing(3)
         self.lblModelType = QLabel(self.gbModel)
         self.lblModelType.setObjectName("lblModelType")
@@ -566,11 +618,8 @@ class Ui_EllipsometryTab(object):
         self.cmbModel.addItem("")
         self.cmbModel.addItem("")
         self.cmbModel.setObjectName("cmbModel")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.cmbModel.sizePolicy().hasHeightForWidth())
-        self.cmbModel.setSizePolicy(sizePolicy4)
+        sizePolicy3.setHeightForWidth(self.cmbModel.sizePolicy().hasHeightForWidth())
+        self.cmbModel.setSizePolicy(sizePolicy3)
 
         self.formModel.setWidget(0, QFormLayout.ItemRole.FieldRole, self.cmbModel)
 
@@ -581,7 +630,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSubstrateN = QDoubleSpinBox(self.gbModel)
         self.spinSubstrateN.setObjectName("spinSubstrateN")
-        self.spinSubstrateN.setMaximumWidth(70)
         self.spinSubstrateN.setDecimals(3)
         self.spinSubstrateN.setMinimum(0.100000000000000)
         self.spinSubstrateN.setMaximum(10.000000000000000)
@@ -597,7 +645,6 @@ class Ui_EllipsometryTab(object):
 
         self.spinSubstrateK = QDoubleSpinBox(self.gbModel)
         self.spinSubstrateK.setObjectName("spinSubstrateK")
-        self.spinSubstrateK.setMaximumWidth(70)
         self.spinSubstrateK.setDecimals(3)
         self.spinSubstrateK.setMinimum(0.000000000000000)
         self.spinSubstrateK.setMaximum(10.000000000000000)
@@ -611,11 +658,15 @@ class Ui_EllipsometryTab(object):
 
         self.formModel.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblDMin)
 
-        self.hboxDRange = QHBoxLayout()
+        self.wDRange = QWidget(self.gbModel)
+        self.wDRange.setObjectName("wDRange")
+        self.hboxDRange = QHBoxLayout(self.wDRange)
         self.hboxDRange.setObjectName("hboxDRange")
-        self.spinDMin = QDoubleSpinBox(self.gbModel)
+        self.hboxDRange.setContentsMargins(0, 0, 0, 0)
+        self.spinDMin = QDoubleSpinBox(self.wDRange)
         self.spinDMin.setObjectName("spinDMin")
-        self.spinDMin.setMaximumWidth(90)
+        sizePolicy3.setHeightForWidth(self.spinDMin.sizePolicy().hasHeightForWidth())
+        self.spinDMin.setSizePolicy(sizePolicy3)
         self.spinDMin.setDecimals(0)
         self.spinDMin.setMinimum(0.000000000000000)
         self.spinDMin.setMaximum(100000.000000000000000)
@@ -623,9 +674,10 @@ class Ui_EllipsometryTab(object):
 
         self.hboxDRange.addWidget(self.spinDMin)
 
-        self.spinDMax = QDoubleSpinBox(self.gbModel)
+        self.spinDMax = QDoubleSpinBox(self.wDRange)
         self.spinDMax.setObjectName("spinDMax")
-        self.spinDMax.setMaximumWidth(90)
+        sizePolicy3.setHeightForWidth(self.spinDMax.sizePolicy().hasHeightForWidth())
+        self.spinDMax.setSizePolicy(sizePolicy3)
         self.spinDMax.setDecimals(0)
         self.spinDMax.setMinimum(0.000000000000000)
         self.spinDMax.setMaximum(100000.000000000000000)
@@ -633,18 +685,22 @@ class Ui_EllipsometryTab(object):
 
         self.hboxDRange.addWidget(self.spinDMax)
 
-        self.formModel.setLayout(3, QFormLayout.ItemRole.FieldRole, self.hboxDRange)
+        self.formModel.setWidget(3, QFormLayout.ItemRole.FieldRole, self.wDRange)
 
         self.lblNfMin = QLabel(self.gbModel)
         self.lblNfMin.setObjectName("lblNfMin")
 
         self.formModel.setWidget(4, QFormLayout.ItemRole.LabelRole, self.lblNfMin)
 
-        self.hboxNRange = QHBoxLayout()
+        self.wNRange = QWidget(self.gbModel)
+        self.wNRange.setObjectName("wNRange")
+        self.hboxNRange = QHBoxLayout(self.wNRange)
         self.hboxNRange.setObjectName("hboxNRange")
-        self.spinNfMin = QDoubleSpinBox(self.gbModel)
+        self.hboxNRange.setContentsMargins(0, 0, 0, 0)
+        self.spinNfMin = QDoubleSpinBox(self.wNRange)
         self.spinNfMin.setObjectName("spinNfMin")
-        self.spinNfMin.setMaximumWidth(70)
+        sizePolicy3.setHeightForWidth(self.spinNfMin.sizePolicy().hasHeightForWidth())
+        self.spinNfMin.setSizePolicy(sizePolicy3)
         self.spinNfMin.setDecimals(3)
         self.spinNfMin.setMinimum(1.000000000000000)
         self.spinNfMin.setMaximum(10.000000000000000)
@@ -652,9 +708,10 @@ class Ui_EllipsometryTab(object):
 
         self.hboxNRange.addWidget(self.spinNfMin)
 
-        self.spinNfMax = QDoubleSpinBox(self.gbModel)
+        self.spinNfMax = QDoubleSpinBox(self.wNRange)
         self.spinNfMax.setObjectName("spinNfMax")
-        self.spinNfMax.setMaximumWidth(70)
+        sizePolicy3.setHeightForWidth(self.spinNfMax.sizePolicy().hasHeightForWidth())
+        self.spinNfMax.setSizePolicy(sizePolicy3)
         self.spinNfMax.setDecimals(3)
         self.spinNfMax.setMinimum(1.000000000000000)
         self.spinNfMax.setMaximum(10.000000000000000)
@@ -662,7 +719,7 @@ class Ui_EllipsometryTab(object):
 
         self.hboxNRange.addWidget(self.spinNfMax)
 
-        self.formModel.setLayout(4, QFormLayout.ItemRole.FieldRole, self.hboxNRange)
+        self.formModel.setWidget(4, QFormLayout.ItemRole.FieldRole, self.wNRange)
 
         self.vboxModel.addLayout(self.formModel)
 
@@ -677,53 +734,80 @@ class Ui_EllipsometryTab(object):
 
         self.vboxModel.addWidget(self.btnFitModel)
 
-        self.formModelResult = QFormLayout()
-        self.formModelResult.setObjectName("formModelResult")
-        self.formModelResult.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint
+        self.gridLayout_2 = QGridLayout()
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.gridLayout_2.setVerticalSpacing(2)
+        self.lblMSELabel = QLabel(self.gbModel)
+        self.lblMSELabel.setObjectName("lblMSELabel")
+        self.lblMSELabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
         )
-        self.formModelResult.setVerticalSpacing(2)
-        self.lblThicknessLabel = QLabel(self.gbModel)
-        self.lblThicknessLabel.setObjectName("lblThicknessLabel")
 
-        self.formModelResult.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblThicknessLabel)
+        self.gridLayout_2.addWidget(self.lblMSELabel, 1, 3, 1, 1)
 
         self.lblThickness = QLabel(self.gbModel)
         self.lblThickness.setObjectName("lblThickness")
 
-        self.formModelResult.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblThickness)
-
-        self.lblNFilmLabel = QLabel(self.gbModel)
-        self.lblNFilmLabel.setObjectName("lblNFilmLabel")
-
-        self.formModelResult.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblNFilmLabel)
-
-        self.lblNFilm = QLabel(self.gbModel)
-        self.lblNFilm.setObjectName("lblNFilm")
-
-        self.formModelResult.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblNFilm)
-
-        self.lblKFilmLabel = QLabel(self.gbModel)
-        self.lblKFilmLabel.setObjectName("lblKFilmLabel")
-
-        self.formModelResult.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblKFilmLabel)
-
-        self.lblKFilm = QLabel(self.gbModel)
-        self.lblKFilm.setObjectName("lblKFilm")
-
-        self.formModelResult.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lblKFilm)
-
-        self.lblMSELabel = QLabel(self.gbModel)
-        self.lblMSELabel.setObjectName("lblMSELabel")
-
-        self.formModelResult.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblMSELabel)
+        self.gridLayout_2.addWidget(self.lblThickness, 0, 1, 1, 1)
 
         self.lblMSE = QLabel(self.gbModel)
         self.lblMSE.setObjectName("lblMSE")
 
-        self.formModelResult.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lblMSE)
+        self.gridLayout_2.addWidget(self.lblMSE, 1, 4, 1, 1)
 
-        self.vboxModel.addLayout(self.formModelResult)
+        self.lblKFilm = QLabel(self.gbModel)
+        self.lblKFilm.setObjectName("lblKFilm")
+
+        self.gridLayout_2.addWidget(self.lblKFilm, 1, 1, 1, 1)
+
+        self.lblNFilm = QLabel(self.gbModel)
+        self.lblNFilm.setObjectName("lblNFilm")
+
+        self.gridLayout_2.addWidget(self.lblNFilm, 0, 4, 1, 1)
+
+        self.lblNFilmLabel = QLabel(self.gbModel)
+        self.lblNFilmLabel.setObjectName("lblNFilmLabel")
+        self.lblNFilmLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_2.addWidget(self.lblNFilmLabel, 0, 3, 1, 1)
+
+        self.lblThicknessLabel = QLabel(self.gbModel)
+        self.lblThicknessLabel.setObjectName("lblThicknessLabel")
+        self.lblThicknessLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_2.addWidget(self.lblThicknessLabel, 0, 0, 1, 1)
+
+        self.lblKFilmLabel = QLabel(self.gbModel)
+        self.lblKFilmLabel.setObjectName("lblKFilmLabel")
+        self.lblKFilmLabel.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.gridLayout_2.addWidget(self.lblKFilmLabel, 1, 0, 1, 1)
+
+        self.line = QFrame(self.gbModel)
+        self.line.setObjectName("line")
+        self.line.setFrameShape(QFrame.Shape.VLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_2.addWidget(self.line, 0, 2, 2, 1)
+
+        self.gridLayout_2.setColumnStretch(1, 1)
+        self.gridLayout_2.setColumnStretch(4, 1)
+
+        self.vboxModel.addLayout(self.gridLayout_2)
 
         self.lblBranches = QLabel(self.gbModel)
         self.lblBranches.setObjectName("lblBranches")
@@ -1026,19 +1110,32 @@ class Ui_EllipsometryTab(object):
         self.gbResult.setTitle(
             QCoreApplication.translate("EllipsometryTab", "Fit-Ergebnis (aktuelle AOI)", None)
         )
-        self.lblAlphaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u03b1:", None))
-        self.lblAlpha.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
-        self.lblBetaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u03b2:", None))
-        self.lblBeta.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         self.lblI0Label.setText(QCoreApplication.translate("EllipsometryTab", "I\u2080:", None))
-        self.lblI0.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
-        self.lblResidualLabel.setText(
-            QCoreApplication.translate("EllipsometryTab", "Residuum:", None)
-        )
+        self.lblBeta.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         self.lblResidual.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        # if QT_CONFIG(tooltip)
+        self.lblDelta.setToolTip(
+            QCoreApplication.translate(
+                "EllipsometryTab",
+                "Nur cos(\u0394) wird gemessen \u2014 das Vorzeichen von \u0394 ist prinzipiell unbestimmt",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.lblDelta.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblKPseudoLabel.setText(
+            QCoreApplication.translate("EllipsometryTab", "k (pseudo):", None)
+        )
+        self.lblBetaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u03b2:", None))
         self.lblModulationLabel.setText(
             QCoreApplication.translate("EllipsometryTab", "Modulation m:", None)
         )
+        self.lblI0.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblAlpha.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblAlphaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u03b1:", None))
+        self.lblKPseudo.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblDeltaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u0394:", None))
+        self.lblPsi.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         # if QT_CONFIG(tooltip)
         self.lblModulation.setToolTip(
             QCoreApplication.translate(
@@ -1050,26 +1147,13 @@ class Ui_EllipsometryTab(object):
         # endif // QT_CONFIG(tooltip)
         self.lblModulation.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         self.lblPsiLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u03a8:", None))
-        self.lblPsi.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
-        self.lblDeltaLabel.setText(QCoreApplication.translate("EllipsometryTab", "\u0394:", None))
-        # if QT_CONFIG(tooltip)
-        self.lblDelta.setToolTip(
-            QCoreApplication.translate(
-                "EllipsometryTab",
-                "Nur cos(\u0394) wird gemessen \u2014 das Vorzeichen von \u0394 ist prinzipiell unbestimmt",
-                None,
-            )
-        )
-        # endif // QT_CONFIG(tooltip)
-        self.lblDelta.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblNPseudo.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         self.lblNPseudoLabel.setText(
             QCoreApplication.translate("EllipsometryTab", "n (pseudo):", None)
         )
-        self.lblNPseudo.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
-        self.lblKPseudoLabel.setText(
-            QCoreApplication.translate("EllipsometryTab", "k (pseudo):", None)
+        self.lblResidualLabel.setText(
+            QCoreApplication.translate("EllipsometryTab", "Residuum:", None)
         )
-        self.lblKPseudo.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         # if QT_CONFIG(tooltip)
         self.btnAcceptPoint.setToolTip(
             QCoreApplication.translate(
@@ -1152,20 +1236,20 @@ class Ui_EllipsometryTab(object):
         self.btnFitModel.setText(
             QCoreApplication.translate("EllipsometryTab", "Modell fitten", None)
         )
-        self.lblThicknessLabel.setText(
-            QCoreApplication.translate("EllipsometryTab", "Dicke d:", None)
-        )
+        self.lblMSELabel.setText(QCoreApplication.translate("EllipsometryTab", "MSE:", None))
         self.lblThickness.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblMSE.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblKFilm.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblNFilm.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         self.lblNFilmLabel.setText(
             QCoreApplication.translate("EllipsometryTab", "n (Schicht):", None)
         )
-        self.lblNFilm.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
+        self.lblThicknessLabel.setText(
+            QCoreApplication.translate("EllipsometryTab", "Dicke d:", None)
+        )
         self.lblKFilmLabel.setText(
             QCoreApplication.translate("EllipsometryTab", "k (Schicht):", None)
         )
-        self.lblKFilm.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
-        self.lblMSELabel.setText(QCoreApplication.translate("EllipsometryTab", "MSE:", None))
-        self.lblMSE.setText(QCoreApplication.translate("EllipsometryTab", "\u2014", None))
         # if QT_CONFIG(tooltip)
         self.lblBranches.setToolTip(
             QCoreApplication.translate(

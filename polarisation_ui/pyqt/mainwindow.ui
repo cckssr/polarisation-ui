@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1316</width>
+    <width>1257</width>
     <height>980</height>
    </rect>
   </property>
@@ -1356,10 +1356,10 @@
                 </sizepolicy>
                </property>
                <property name="toolTip">
-                <string>Extinktionswinkel des eingesetzten Polarisators (linear, λ/4 oder λ/2) suchen: Grobsuche bei PDTIA-Gain 1, Feinsuche bei Gain 3. Das Ergebnis wird als Offset gespeichert und von Malus- und Verzögerungsplatten-Scans automatisch verwendet.</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extinktionswinkel des eingesetzten Polarisators (linear, λ/4 oder λ/2) suchen: Grobsuche bei PDTIA-Gain 1, Feinsuche bei Gain 3 oder alternativ mit PM400. Das Ergebnis wird als Offset gespeichert und von Malus- und Verzögerungsplatten-Scans automatisch verwendet.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Polarisator Nullen</string>
+                <string>Optik Nullen</string>
                </property>
               </widget>
              </item>
@@ -2001,7 +2001,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tabPDTIA">
            <attribute name="title">
@@ -2574,7 +2574,7 @@
                <number>2</number>
               </property>
               <property name="digitCount">
-               <number>8</number>
+               <number>9</number>
               </property>
               <property name="segmentStyle">
                <enum>QLCDNumber::SegmentStyle::Filled</enum>
@@ -2595,6 +2595,12 @@
                 <horstretch>1</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>800</width>
+                <height>16777215</height>
+               </size>
               </property>
               <property name="toolTip">
                <string>Automatisch erkannte USB/VISA-Ressourcen des PM400 (Aktualisieren zum erneuten Suchen)</string>
@@ -2699,7 +2705,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1316</width>
+     <width>1257</width>
      <height>39</height>
     </rect>
    </property>
