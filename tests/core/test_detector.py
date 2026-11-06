@@ -1,5 +1,7 @@
 """Tests for core.detector.point_power — the shared per-point power derivation."""
 
+import pytest
+
 from polarisation_ui.core.detector import DETECTOR_PDTIA, DETECTOR_PM400, point_power
 from polarisation_ui.core.models import Frame
 
@@ -48,3 +50,15 @@ def test_pm400_with_no_power_reading_yet_returns_none():
     power_W, conv_factor = point_power(frame, 0.5)
     assert power_W is None
     assert conv_factor is None
+
+
+def test_pdtia_power_subtracts_frame_zero_light_offset():
+    frame = _frame(detector=DETECTOR_PDTIA, conv_factor_W_per_V=2.0e-6, power_offset_V=-0.004)
+    power_W, _ = point_power(frame, 0.5)
+    assert power_W == pytest.approx(2.0e-6 * (0.5 + 0.004))
+
+
+def test_pdtia_power_is_clipped_at_zero():
+    frame = _frame(detector=DETECTOR_PDTIA, conv_factor_W_per_V=2.0e-6, power_offset_V=0.01)
+    power_W, _ = point_power(frame, 0.0)
+    assert power_W == 0.0

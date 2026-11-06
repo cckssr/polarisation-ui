@@ -69,6 +69,12 @@ class Frame:
 
     ``detector`` names which detector produced ``power_W``: ``"pdtia"`` (the
     default) or ``"pm400"`` — see ``core.detector``.
+
+    ``power_offset_V`` is the PD-TIA zero-light offset expressed in the same
+    (dark-tared) domain as ``intensity``: ``power = conv_factor_W_per_V *
+    (intensity - power_offset_V)``. It is the calibration profile's per-gain
+    zero-light voltage minus the user's dark tare, and 0.0 when no profile is
+    in use.
     """
 
     ts_ms: int
@@ -79,6 +85,7 @@ class Frame:
     power_W: float | None = None
     conv_factor_W_per_V: float | None = None
     stat: int = 0  # streaming stat bitmask (see docstring)
+    power_offset_V: float = 0.0  # tare-domain zero-light offset — see docstring
     detector: str = "pdtia"  # "pdtia" or "pm400" — see core.detector
 
 

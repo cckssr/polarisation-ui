@@ -126,6 +126,11 @@ class AutoCalibrationParams:
     the worker bisects to refine the position (see max_refine_steps)."""
     max_refine_steps: int = 2
     """Max bisection refinement moves per ND-mode sweep point."""
+    return_pass: bool = False
+    """After the forward pass of each gain, measure the same positions again in
+    reverse order. The forward/backward W/V factors are compared in the log, so
+    hysteresis or drift of the actuator becomes visible; both passes enter the
+    profile."""
     power_from_nd_curve: bool = False
     """ND mode only: take each point's power from the calibrated ND curve
     (``nd_scan_points``) instead of reading the PM400, so the PM400 may be out

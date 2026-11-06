@@ -27,7 +27,7 @@ from polarisation_ui.core.gain_crosscheck import (
     GainCrossCheckLevel,
     evaluate_gain_crosscheck,
 )
-from polarisation_ui.core.nd_filter import analyse_nd_scan
+from polarisation_ui.core.nd_filter import analyse_nd_scan, power_at_position
 from polarisation_ui.core.nd_linearity import BACKWARD, FORWARD, NDLinearityScan
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
@@ -225,6 +225,7 @@ class AutoPowerCalibrationWorker(QThread):
             "n": p.n_points,
             "tolerance_pct": p.power_tolerance_pct,
             "max_refine_steps": p.max_refine_steps,
+            "return_pass": p.return_pass,
         }
         intensity_meta["levels"] = recorded_levels
         intensity_meta["power_source"] = "nd_curve" if from_curve else "pm400"
@@ -244,7 +245,7 @@ class AutoPowerCalibrationWorker(QThread):
         """
         p = self._params
         angles = build_angle_grid(p)
-        total = len(angles) * len(p.selected_gains)
+        total = len(angles) * len(p.selected_gains) * (2 if p.return_pass else 1)
         done = 0
         recorded_levels: list[list[float]] = []
 
@@ -265,6 +266,7 @@ class AutoPowerCalibrationWorker(QThread):
             # Mutable per-gain angle list: allows tail redistribution after
             # the first non-saturated point when the sweep starts in saturation.
             gain_angles: list[float] = list(angles)
+            visited: list[tuple[float, float | None]] = []
             first_valid_found = False
             idx = 0
             while idx < len(gain_angles):
@@ -332,11 +334,26 @@ class AutoPowerCalibrationWorker(QThread):
                 profile.gains[gain].add_point(voltage_mean, power_W)
                 if gain == p.selected_gains[0]:
                     recorded_levels.append([angle, power_W])
+                visited.append((angle, None))
                 done += 1
                 self.point_recorded.emit(gain, angle, voltage_mean, power_W)
                 self.progress.emit(done, total)
                 self.log.emit(f"  θ={angle:.1f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W")
                 idx += 1
+
+            if p.return_pass:
+                outcome = self._run_return_pass(
+                    profile,
+                    gain,
+                    visited,
+                    sat_threshold,
+                    done,
+                    len(angles),
+                    self._gains_left_after(gain),
+                )
+                if outcome is None:
+                    return None
+                done, total = outcome
 
             n_sat = profile.gains[gain].n_saturated_skipped
             n_rec = len(profile.gains[gain].points)
@@ -344,6 +361,79 @@ class AutoPowerCalibrationWorker(QThread):
                 self.log.emit(f"Gain {gain}: {n_rec} points recorded, {n_sat} skipped (saturated)")
 
         return recorded_levels
+
+    def _gains_left_after(self, gain: int) -> int:
+        """Number of selected gain stages still to run after *gain*."""
+        gains = self._params.selected_gains
+        return len(gains) - gains.index(gain) - 1
+
+    def _run_return_pass(
+        self,
+        profile: PowerCalibrationProfile,
+        gain: int,
+        visited: "list[tuple[float, float | None]]",
+        sat_threshold: float,
+        done: int,
+        nominal_points: int,
+        gains_left: int,
+    ) -> "tuple[int, int] | None":
+        """Re-measure *visited* positions in reverse order for *gain*.
+
+        *visited* holds ``(position, curve_power)`` of every point recorded in
+        the forward pass; ``curve_power`` is ``None`` when the PM400 is read.
+        The positions are not refined again — the point of the pass is to see
+        whether the same position gives the same reading when approached from
+        the other side. Returns the updated ``(done, total)`` for the progress
+        bar, or None if the sweep failed/aborted (signal already emitted).
+        """
+        p = self._params
+        cal = profile.gains[gain]
+        n_forward = len(cal.points)
+        points = list(reversed(visited))
+        total = done + len(points) + gains_left * nominal_points * 2
+        self.log.emit(f"Gain {gain}: Rückfahrt ({len(points)} Punkte)")
+
+        for position, curve_power in points:
+            if self._abort:
+                self.failed.emit("Aborted by user")
+                return None
+            try:
+                self._actuator.move_to(position)
+            except ActuatorError as exc:
+                self.failed.emit(f"{self._actuator.label} move failed: {exc}")
+                return None
+            time.sleep(p.point_settle_s)
+
+            voltage_mean = self._average_adc_voltage(p.detector_samples)
+            if voltage_mean is None or voltage_mean >= sat_threshold:
+                self.log.emit(f"  ← θ={position:.2f}° — übersprungen (keine Messung/gesättigt)")
+                done += 1
+                self.progress.emit(done, total)
+                continue
+
+            if curve_power is not None:
+                power_W = curve_power
+            else:
+                try:
+                    power_W = self._pm.read_power_W()
+                except PM400Error as exc:
+                    self.failed.emit(f"PM400 read failed: {exc}")
+                    return None
+
+            cal.add_point(voltage_mean, power_W)
+            done += 1
+            self.point_recorded.emit(gain, position, voltage_mean, power_W)
+            self.progress.emit(done, total)
+            self.log.emit(f"  ← θ={position:.2f}° | V={voltage_mean:.6f} V | P={power_W:.3e} W")
+
+        forward = _mean_w_per_v(cal.points[:n_forward])
+        backward = _mean_w_per_v(cal.points[n_forward:])
+        if forward and backward:
+            self.log.emit(
+                f"Gain {gain}: W/V hin={forward:.4e}, zurück={backward:.4e} "
+                f"(Abweichung {100.0 * (backward - forward) / forward:+.2f} %)"
+            )
+        return done, total
 
     def _run_sweep_nd(
         self, profile: PowerCalibrationProfile, sat_threshold: float
@@ -362,7 +452,7 @@ class AutoPowerCalibrationWorker(QThread):
 
         targets = build_power_grid(p_hi, p_lo, p.n_points, p.power_grid_mode)
         positions = positions_for_target_powers(targets, scan)
-        total = len(targets) * len(p.selected_gains)
+        total = len(targets) * len(p.selected_gains) * (2 if p.return_pass else 1)
         done = 0
         recorded_levels: list[list[float]] = []
 
@@ -384,6 +474,7 @@ class AutoPowerCalibrationWorker(QThread):
             # first non-saturated point when the sweep starts in saturation.
             gain_targets: list[float] = list(targets)
             gain_positions: list[float] = list(positions)
+            visited: list[tuple[float, float | None]] = []
             first_valid_found = False
             idx = 0
             while idx < len(gain_targets):
@@ -457,6 +548,7 @@ class AutoPowerCalibrationWorker(QThread):
                 profile.gains[gain].add_point(voltage_mean, achieved_power)
                 if gain == p.selected_gains[0]:
                     recorded_levels.append([position, achieved_power])
+                visited.append((position, achieved_power if p.power_from_nd_curve else None))
                 done += 1
                 self.point_recorded.emit(gain, position, voltage_mean, achieved_power)
                 self.progress.emit(done, total)
@@ -466,6 +558,20 @@ class AutoPowerCalibrationWorker(QThread):
                     + ("(ND-Kennlinie)" if p.power_from_nd_curve else f"(Ziel {target:.3e} W)")
                 )
                 idx += 1
+
+            if p.return_pass:
+                outcome = self._run_return_pass(
+                    profile,
+                    gain,
+                    visited,
+                    sat_threshold,
+                    done,
+                    len(targets),
+                    self._gains_left_after(gain),
+                )
+                if outcome is None:
+                    return None
+                done, total = outcome
 
             n_sat = profile.gains[gain].n_saturated_skipped
             n_rec = len(profile.gains[gain].points)
@@ -526,6 +632,12 @@ class AutoPowerCalibrationWorker(QThread):
         if not voltages:
             return None
         return sum(voltages) / len(voltages)
+
+
+def _mean_w_per_v(points: "list[tuple[float, float]]") -> float | None:
+    """Mean W/V ratio of ``(voltage, power)`` points with positive voltage."""
+    ratios = [pw / v for v, pw in points if v > 0]
+    return sum(ratios) / len(ratios) if ratios else None
 
 
 def _power_bracket(target_W: float, scan: "tuple[tuple[float, float], ...]") -> tuple[float, float]:
@@ -1008,9 +1120,15 @@ class GainCrossCheckWorker(QThread):
         settle_s: float,
         detector_samples: int,
         tolerance_pct: float = 5.0,
+        nd_curve: "tuple[tuple[float, float], ...] | None" = None,
         parent=None,
     ) -> None:
-        """Store the devices, calibrated profile, and verification parameters."""
+        """Store the devices, calibrated profile, and verification parameters.
+
+        With *nd_curve* (a position/power scan) the reference power of each
+        level is read off that curve instead of the PM400, which is then not
+        touched and may be out of the beam.
+        """
         super().__init__(parent)
         self._device_manager = device_manager
         self._actuator = actuator
@@ -1021,6 +1139,7 @@ class GainCrossCheckWorker(QThread):
         self._settle = settle_s
         self._detector_samples = detector_samples
         self._tolerance_pct = tolerance_pct
+        self._nd_curve = nd_curve
         self._abort: bool = False
 
     def abort(self) -> None:
@@ -1041,7 +1160,8 @@ class GainCrossCheckWorker(QThread):
         n = len(self._levels)
         self.log.emit(
             f"Gain-Prüfung: {n} Pegel × {len(self._gains)} Gains "
-            f"(Toleranz {self._tolerance_pct:.1f}%)"
+            f"(Toleranz {self._tolerance_pct:.1f}%, Referenz: "
+            f"{'ND-Kennlinie' if self._nd_curve is not None else 'PM400'})"
         )
 
         results: list[GainCrossCheckLevel] = []
@@ -1058,11 +1178,14 @@ class GainCrossCheckWorker(QThread):
                 return
             time.sleep(self._settle)
 
-            try:
-                pm_power = self._pm.read_power_W()
-            except PM400Error as exc:
-                self.failed.emit(f"PM400 read failed: {exc}")
-                return
+            if self._nd_curve is not None:
+                pm_power = power_at_position(level, self._nd_curve)
+            else:
+                try:
+                    pm_power = self._pm.read_power_W()
+                except PM400Error as exc:
+                    self.failed.emit(f"PM400 read failed: {exc}")
+                    return
 
             per_gain: dict[int, tuple[float, float]] = {}
             for gain in self._gains:

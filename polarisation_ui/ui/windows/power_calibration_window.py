@@ -211,10 +211,13 @@ class _GainCalTab(QWidget):
             vs = [v for v, _ in pts]
             ps = [p for _, p in pts]
             self._scatter.setData(vs, ps)
-            # Fit line: y = factor * x
+            # Fit line: y = factor * (x - V0)
             if factor is not None and len(vs) >= 1:
                 x_min, x_max = min(vs), max(vs)
-                self._fit_line.setData([x_min, x_max], [factor * x_min, factor * x_max])
+                v0 = self._cal.zero_offset_V()
+                self._fit_line.setData(
+                    [x_min, x_max], [factor * (x_min - v0), factor * (x_max - v0)]
+                )
             else:
                 self._fit_line.setData([], [])
         else:

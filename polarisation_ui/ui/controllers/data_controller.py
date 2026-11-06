@@ -187,6 +187,10 @@ class DataController(QObject):
         self._sample_buffer: deque[float] = deque(maxlen=self._acq_settings.samp_averages)
         self._det_buffer: deque[float] = deque(maxlen=self._acq_settings.det_averages)
         self._intensity_buffer: deque[float] = deque(maxlen=self._acq_settings.pdtia_averages)
+        # Raw (un-tared, un-clipped) ADC voltages for the calibrated power path:
+        # the calibration profile carries its own zero-light offset per gain,
+        # and clipping at 0 would discard the (small, negative) dark readings.
+        self._raw_voltage_buffer: deque[float] = deque(maxlen=self._acq_settings.pdtia_averages)
 
         # Spike filter: last accepted angles for derivative check.
         self._last_sample_angle: float | None = None
@@ -265,6 +269,7 @@ class DataController(QObject):
         self._sample_buffer = deque(maxlen=settings.samp_averages)
         self._det_buffer = deque(maxlen=settings.det_averages)
         self._intensity_buffer = deque(maxlen=settings.pdtia_averages)
+        self._raw_voltage_buffer = deque(maxlen=settings.pdtia_averages)
         self.sample_inverted = settings.sample_stage_inverted
         Debug.info(
             f"Acq settings updated: "
@@ -449,6 +454,7 @@ class DataController(QObject):
             # figure derived from it) doesn't blend readings taken at two
             # different gains for the next few polls.
             self._intensity_buffer.clear()
+            self._raw_voltage_buffer.clear()
             Debug.info(f"DataController: PDTIA gain updated to stage {stage}")
         return ok
 
@@ -694,6 +700,7 @@ class DataController(QObject):
             )
             if not math.isnan(intensity):
                 self._intensity_buffer.append(intensity)
+                self._raw_voltage_buffer.append(raw_intensity)
             display_intensity = (
                 sum(self._intensity_buffer) / len(self._intensity_buffer)
                 if self._acq_settings.pdtia_average_on and self._intensity_buffer
@@ -707,6 +714,7 @@ class DataController(QObject):
             # physically replaced the photodiode on the detector arm, so a
             # PD-TIA voltage-based figure would be meaningless. See core.detector.
             conv_factor: float | None = None
+            power_offset_V = 0.0
             power_W: float | None = None
             detector_source = DETECTOR_PDTIA
             if self._pm400 is not None:
@@ -715,8 +723,20 @@ class DataController(QObject):
                     power_W = self._pm400_power_W
             elif self._calibration_profile is not None:
                 conv_factor = self._calibration_profile.conversion_factor(self._current_pdtia_gain)
-                if conv_factor is not None:
-                    power_W = display_intensity * conv_factor
+                if conv_factor is not None and not math.isnan(raw_intensity):
+                    # The profile maps the *raw* voltage to power, including its
+                    # per-gain zero-light offset, so the user dark tare does not
+                    # enter here (it only shifts the displayed voltage).
+                    raw_voltage = (
+                        sum(self._raw_voltage_buffer) / len(self._raw_voltage_buffer)
+                        if self._acq_settings.pdtia_average_on and self._raw_voltage_buffer
+                        else raw_intensity
+                    )
+                    zero_V = self._calibration_profile.zero_offset_V(self._current_pdtia_gain)
+                    power_W = max(0.0, conv_factor * (raw_voltage - zero_V))
+                    # Same offset in the tared domain, for consumers that only
+                    # have the (tared, clipped) Frame.intensity — see point_power().
+                    power_offset_V = zero_V - self._dark_V
 
             self.power_updated.emit(power_W if power_W is not None else float("nan"))
 
@@ -729,6 +749,7 @@ class DataController(QObject):
                 power_W=power_W,
                 conv_factor_W_per_V=conv_factor,
                 detector=detector_source,
+                power_offset_V=power_offset_V,
             )
             self.frame_ready.emit(frame)
             if self._raw_frame_enabled:

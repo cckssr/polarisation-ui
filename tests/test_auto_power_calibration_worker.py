@@ -454,6 +454,45 @@ class TestAutoPowerCalibrationWorkerNDMode:
         dm.disconnect_all()
         mock_arduino.stop()
 
+    def test_curve_mode_return_pass_reuses_curve_power_and_never_touches_pm(self):
+        from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+
+        mock_arduino = MockArduino()
+        dm = _make_device_manager(mock_arduino)
+        nd = MockNDStage()
+        nd.connect("mock://nd-stage")
+
+        class ExplodingPM:
+            def __getattr__(self, name):
+                raise AssertionError(f"PM400.{name} must not be used in curve mode")
+
+        params = _make_params(
+            selected_gains=(1,),
+            n_points=5,
+            intensity_source="nd_filter",
+            nd_scan_points=self._nd_scan(),
+            power_from_nd_curve=True,
+            return_pass=True,
+            adc_saturation_threshold_V=2.6,
+        )
+        recorded: list[tuple] = []
+        failed: list[str] = []
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=NDFilterActuator(nd), pm=ExplodingPM(), params=params
+        )
+        worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
+        worker.failed.connect(failed.append, _DIRECT)
+        worker.start()
+        worker.wait(30_000)
+
+        assert not failed, failed
+        assert len(recorded) == 10
+        forward_powers = [r[3] for r in recorded[:5]]
+        assert [r[3] for r in recorded[5:]] == pytest.approx(list(reversed(forward_powers)))
+
+        dm.disconnect_all()
+        mock_arduino.stop()
+
     def test_abort_stops_nd_sweep_cleanly(self):
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
@@ -491,6 +530,70 @@ class TestAutoPowerCalibrationWorkerNDMode:
 
         dm.disconnect_all()
         mock_arduino.stop()
+
+
+@pytest.mark.skipif(
+    __import__("sys").platform == "win32",
+    reason="PTY-based MockArduino not available on Windows",
+)
+class TestReturnPass:
+    def setup_method(self):
+        import sys
+
+        from PySide6.QtWidgets import QApplication
+
+        self._app = QApplication.instance() or QApplication(sys.argv)
+
+    def _run(self, **overrides):
+        from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+
+        mock_arduino = MockArduino()
+        dm = _make_device_manager(mock_arduino)
+        kdc = MockKDC101Polariser()
+        kdc.connect("mock://kdc101")
+        pm = MockPM400(kdc_mock=kdc)
+        pm.connect("mock://pm400")
+        params = _make_params(
+            selected_gains=(1, 2), n_points=4, adc_saturation_threshold_V=2.6, **overrides
+        )
+        recorded: list[tuple] = []
+        progress: list[tuple] = []
+        finished: list[PowerCalibrationProfile] = []
+        failed: list[str] = []
+        logs: list[str] = []
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=PolariserActuator(kdc), pm=pm, params=params
+        )
+        worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
+        worker.progress.connect(lambda *a: progress.append(a), _DIRECT)
+        worker.finished.connect(finished.append, _DIRECT)
+        worker.failed.connect(failed.append, _DIRECT)
+        worker.log.connect(logs.append, _DIRECT)
+        worker.start()
+        worker.wait(30_000)
+        dm.disconnect_all()
+        mock_arduino.stop()
+        assert not failed, failed
+        return recorded, progress, finished[0], logs
+
+    def test_return_pass_measures_every_position_again_in_reverse(self):
+        recorded, progress, profile, logs = self._run(return_pass=True)
+        gain1 = [r for r in recorded if r[0] == 1]
+        assert len(gain1) == 8  # 4 forward + 4 backward
+        forward, backward = [r[1] for r in gain1[:4]], [r[1] for r in gain1[4:]]
+        assert backward == pytest.approx(list(reversed(forward)))
+        assert len(profile.gains[1].points) == 8
+        assert profile.intensity_control["grid"]["return_pass"] is True
+        assert any("Rückfahrt" in m for m in logs)
+        assert any("W/V hin=" in m for m in logs)
+        # The progress bar finishes exactly at its maximum.
+        assert progress[-1][0] == progress[-1][1] == 16
+
+    def test_without_return_pass_nothing_changes(self):
+        recorded, progress, profile, logs = self._run(return_pass=False)
+        assert len([r for r in recorded if r[0] == 1]) == 4
+        assert not any("Rückfahrt" in m for m in logs)
+        assert progress[-1][0] == progress[-1][1] == 8
 
 
 class TestNDActuatorDoesNotRezero:

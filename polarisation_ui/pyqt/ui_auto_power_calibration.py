@@ -714,6 +714,11 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(6, QFormLayout.ItemRole.FieldRole, self.spinSaturationThreshold)
 
+        self.chkReturnPass = QCheckBox(self.gbSweep)
+        self.chkReturnPass.setObjectName("chkReturnPass")
+
+        self.sweepForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.chkReturnPass)
+
         self.sweepLayout.addLayout(self.sweepForm)
 
         self.gridModeLayout = QHBoxLayout()
@@ -1411,6 +1416,11 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.verifyForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinVerifyTolerancePct)
 
+        self.chkVerifyFromCurve = QCheckBox(self.gbVerifyParams)
+        self.chkVerifyFromCurve.setObjectName("chkVerifyFromCurve")
+
+        self.verifyForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.chkVerifyFromCurve)
+
         self.tabGainVerifyLayout.addWidget(self.gbVerifyParams)
 
         self.verifyButtonLayout = QHBoxLayout()
@@ -1851,6 +1861,20 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
+        self.chkReturnPass.setToolTip(
+            QCoreApplication.translate(
+                "AutoPowerCalibrationDialog",
+                "Misst nach dem Hin-Durchlauf jedes Gains dieselben Positionen in umgekehrter Reihenfolge noch einmal. Das Log vergleicht die W/V-Faktoren von Hin- und R\u00fcckfahrt (Hysterese/Drift); beide Durchl\u00e4ufe gehen ins Profil ein.",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.chkReturnPass.setText(
+            QCoreApplication.translate(
+                "AutoPowerCalibrationDialog", "R\u00fcckfahrt (R\u00fcckw\u00e4rts-Durchlauf)", None
+            )
+        )
         self.lblGridMode.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Winkelraster:", None)
         )
@@ -2143,6 +2167,22 @@ class Ui_AutoPowerCalibrationDialog(object):
         )
         self.lblVerifyTolerancePct.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Toleranz (%):", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.chkVerifyFromCurve.setToolTip(
+            QCoreApplication.translate(
+                "AutoPowerCalibrationDialog",
+                "Die Referenzleistung jedes Pegels wird aus der ND-Kennlinie des Bereichsscans dieser Sitzung genommen; der PM400 wird nicht gelesen und darf au\u00dferhalb des Strahls stehen.",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.chkVerifyFromCurve.setText(
+            QCoreApplication.translate(
+                "AutoPowerCalibrationDialog",
+                "Referenz aus ND-Kennlinie (PM400 nicht im Strahl)",
+                None,
+            )
         )
         self.btnStartVerify.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Pr\u00fcfung starten", None)

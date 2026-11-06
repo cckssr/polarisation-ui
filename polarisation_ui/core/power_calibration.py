@@ -2,8 +2,9 @@
 
 Each detector requires its own calibration because the TIA gain resistors vary.
 A profile stores (voltage_V, power_W) measurement pairs for each of the four
-discrete PDTIA gain stages, plus a derived W/V conversion factor used to convert
-live ADC readings to optical power in real time.
+discrete PDTIA gain stages, plus a derived W/V conversion factor and zero-light
+voltage offset (weighted least-squares fit, see GainCalibration.fit) used to
+convert live ADC readings to optical power in real time.
 
 Profiles are stored as JSON files in PROFILES_DIR.  The application loads a
 user-selected profile and pushes it to the Malus tab and the power LCD.
@@ -31,6 +32,7 @@ watts_from_voltage() or conversion_factor().
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -71,32 +73,83 @@ class GainCalibration:
             return True
         return False
 
-    def conversion_factor_W_per_V(self) -> float | None:
-        """Mean W/V ratio across all calibration points.
+    def fit(self) -> tuple[float, float] | None:
+        """Fit ``P = slope * (V - V0)`` to the calibration points.
+
+        The fit is a weighted least-squares line ``P = slope * V + b`` with
+        weights ``1 / P**2`` (i.e. it minimises the *relative* power error, so
+        the low-power end is not drowned out by the high-power points). ``V0 =
+        -b / slope`` is the voltage the PD-TIA reads at zero light (dark
+        offset); it is typically a few mV and differs per gain stage.
+
+        A plain mean of the per-point ratios ``P / V`` must not be used here:
+        points with a tiny ``V`` have a hugely inflated ratio, which biased the
+        factor up by up to 2x for the low-voltage gain stages.
 
         Returns:
-            float or None: The average conversion factor in W/V. None if no valid points available.
+            ``(slope_W_per_V, zero_offset_V)`` or None if no usable fit exists.
+            With a single usable point (or points that all share one voltage)
+            the fit falls back to a line through the origin (``V0 = 0``).
         """
-        if not self.points:
+        pts = [(v, p) for v, p in self.points if math.isfinite(v) and math.isfinite(p) and p > 0]
+        if not pts:
             return None
-        valid = [p_w / v_v for v_v, p_w in self.points if v_v > 0]
-        if not valid:
-            return None
-        return sum(valid) / len(valid)
+
+        weights = [1.0 / (p * p) for _, p in pts]
+        sw = sum(weights)
+        sv = sum(w * v for w, (v, _) in zip(weights, pts, strict=True))
+        sp = sum(w * p for w, (_, p) in zip(weights, pts, strict=True))
+        svv = sum(w * v * v for w, (v, _) in zip(weights, pts, strict=True))
+        svp = sum(w * v * p for w, (v, p) in zip(weights, pts, strict=True))
+
+        denom = sw * svv - sv * sv
+        slope: float | None = None
+        offset_V = 0.0
+        # Relative tolerance: denom is a difference of nearly equal products
+        # when every point shares the same voltage.
+        if len(pts) >= 2 and denom > 1e-12 * sw * svv:
+            slope = (sw * svp - sv * sp) / denom
+            if slope > 0.0:
+                intercept = (sp - slope * sv) / sw
+                offset_V = -intercept / slope
+        if slope is None or slope <= 0.0:
+            # Degenerate data: line through the origin, weighted LS slope.
+            if svv <= 0.0:
+                return None
+            slope = svp / svv
+            offset_V = 0.0
+            if slope <= 0.0:
+                return None
+        return slope, offset_V
+
+    def conversion_factor_W_per_V(self) -> float | None:
+        """Slope of the fitted voltage→power line in W/V (see :meth:`fit`).
+
+        Returns:
+            float or None: The conversion factor in W/V. None if no valid fit is available.
+        """
+        fitted = self.fit()
+        return None if fitted is None else fitted[0]
+
+    def zero_offset_V(self) -> float:
+        """Zero-light PD-TIA voltage ``V0`` of the fit (see :meth:`fit`); 0.0 if unavailable."""
+        fitted = self.fit()
+        return 0.0 if fitted is None else fitted[1]
 
     def watts_from_voltage(self, voltage_V: float) -> float | None:
-        """Convert a voltage reading to power using the calibration points.
+        """Convert a raw voltage reading to power using the fitted calibration.
 
         Args:
-            voltage_V: The voltage reading to convert (V)
+            voltage_V: The raw (not dark-tared) ADC voltage to convert (V)
 
         Returns:
-            float or None: The corresponding power in W. None if conversion factor is unavailable.
+            float or None: ``slope * (V - V0)`` in W. None if no fit is available.
         """
-        factor = self.conversion_factor_W_per_V()
-        if factor is None:
+        fitted = self.fit()
+        if fitted is None:
             return None
-        return voltage_V * factor
+        slope, offset_V = fitted
+        return slope * (voltage_V - offset_V)
 
 
 @dataclass
@@ -146,6 +199,11 @@ class PowerCalibrationProfile:
             return None
         return cal.conversion_factor_W_per_V()
 
+    def zero_offset_V(self, gain_stage: int) -> float:
+        """Return the zero-light voltage ``V0`` for *gain_stage* (0.0 if uncalibrated)."""
+        cal = self.gains.get(gain_stage)
+        return 0.0 if cal is None else cal.zero_offset_V()
+
     # ── Persistence ──────────────────────────────────────────────────────────
 
     def save(self, path: Path) -> None:
@@ -167,6 +225,7 @@ class PowerCalibrationProfile:
                     "n_points": len(cal.points),
                     "n_saturated_skipped": cal.n_saturated_skipped,
                     "conversion_factor_W_per_V": cal.conversion_factor_W_per_V(),
+                    "zero_offset_V": cal.zero_offset_V(),
                 }
                 for stage, cal in self.gains.items()
             },
@@ -210,6 +269,11 @@ class PowerCalibrationProfile:
             "wavelength_nm": self.wavelength_nm,
             "gain_conversion_factors": {
                 str(stage): cal.conversion_factor_W_per_V()
+                for stage, cal in self.gains.items()
+                if cal.conversion_factor_W_per_V() is not None
+            },
+            "gain_zero_offsets_V": {
+                str(stage): cal.zero_offset_V()
                 for stage, cal in self.gains.items()
                 if cal.conversion_factor_W_per_V() is not None
             },

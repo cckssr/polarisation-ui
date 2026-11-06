@@ -227,6 +227,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.btnAbortXCheck.clicked.connect(self._abort_xcheck)
         self.ui.btnSaveXCheck.clicked.connect(self._save_xcheck)
 
+        self.ui.chkVerifyFromCurve.toggled.connect(self._on_verify_source_changed)
         self.ui.btnStartVerify.clicked.connect(self._start_verify)
         self.ui.btnAbortVerify.clicked.connect(self._abort_verify)
 
@@ -790,6 +791,7 @@ class AutoPowerCalibrationWindow(QDialog):
             nd_scan_points=nd_scan_points,
             power_tolerance_pct=self.ui.spinPowerTolerancePct.value(),
             max_refine_steps=self.ui.spinMaxRefineSteps.value(),
+            return_pass=self.ui.chkReturnPass.isChecked(),
             power_from_nd_curve=from_curve,
         )
 
@@ -821,7 +823,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self._worker.failed.connect(self._on_sweep_failed)
         self._worker.log.connect(self._append_log)
 
-        total = params.n_points * len(params.selected_gains)
+        total = params.n_points * len(params.selected_gains) * (2 if params.return_pass else 1)
         self.ui.progressBar.setMaximum(total)
         self.ui.progressBar.setValue(0)
         self.ui.plotWidget.clear()
@@ -1290,9 +1292,21 @@ class AutoPowerCalibrationWindow(QDialog):
                 "Bitte zuerst eine Kalibrierung durchführen oder ein Profil laden.",
             )
             return
-        if not self._nd.is_connected() or not self._pm.is_connected():
+        from_curve = self.ui.chkVerifyFromCurve.isChecked()
+        if not self._nd.is_connected() or not (from_curve or self._pm.is_connected()):
             QMessageBox.warning(
-                self, "Gain-Prüfung", "ND-Filterrad und PM400 müssen verbunden sein."
+                self,
+                "Gain-Prüfung",
+                "ND-Filterrad verbunden und PM400 verbunden (oder 'Referenz aus ND-Kennlinie') "
+                "erforderlich.",
+            )
+            return
+        if from_curve and self._nd_range is None:
+            QMessageBox.warning(
+                self,
+                "Gain-Prüfung",
+                "Für 'Referenz aus ND-Kennlinie' ist ein Bereichsscan dieser Sitzung nötig "
+                "(der Nullpunkt des Filterrads ist pro Sitzung beliebig).",
             )
             return
 
@@ -1327,6 +1341,7 @@ class AutoPowerCalibrationWindow(QDialog):
             settle_s=self.ui.spinVerifySettle.value(),
             detector_samples=self.ui.spinDetectorSamples.value(),
             tolerance_pct=self.ui.spinVerifyTolerancePct.value(),
+            nd_curve=self._nd_curve_between_ends(self._nd_range) if from_curve else None,
             parent=self,
         )
         self._verify_worker.level_done.connect(self._on_verify_level_done)
@@ -1363,9 +1378,10 @@ class AutoPowerCalibrationWindow(QDialog):
         self._verify_result = result
         self._set_verify_running(False)
         verdict = "OK" if result.passed else "FEHLGESCHLAGEN"
+        reference = "Kennlinien" if self.ui.chkVerifyFromCurve.isChecked() else "PM400"
         self.ui.lblVerifyResult.setText(
             f"Ergebnis: max. Streuung={result.worst_spread_pct:.2f}%, "
-            f"max. PM400-Abweichung={result.worst_pm_deviation_pct:.2f}% — {verdict}"
+            f"max. {reference}-Abweichung={result.worst_pm_deviation_pct:.2f}% — {verdict}"
         )
         self._set_phase("Gain-Prüfung abgeschlossen")
         if self._profile is not None:
@@ -1384,7 +1400,15 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.btnAbortVerify.setEnabled(running)
 
     def _verify_ready(self) -> bool:
-        return self._profile is not None and self._nd.is_connected() and self._pm.is_connected()
+        pm_ok = self._pm.is_connected() or self.ui.chkVerifyFromCurve.isChecked()
+        return self._profile is not None and self._nd.is_connected() and pm_ok
+
+    @Slot()
+    def _on_verify_source_changed(self) -> None:
+        self.ui.btnStartVerify.setEnabled(not self._verify_worker_active() and self._verify_ready())
+
+    def _verify_worker_active(self) -> bool:
+        return self._verify_worker is not None and self._verify_worker.isRunning()
 
     # ── Save ──────────────────────────────────────────────────────────────────
 

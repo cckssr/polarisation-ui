@@ -123,3 +123,26 @@ class TestJsonRoundTrip:
             "dynamic_range_dB",
             "monotonic",
         }
+
+
+class TestPowerAtPosition:
+    def test_interpolates_between_scan_points_in_any_scan_order(self):
+        from polarisation_ui.core.nd_filter import power_at_position
+
+        scan = [(100.0, 1e-8), (0.0, 1e-6), (50.0, 1e-7)]  # not sorted by position
+        assert power_at_position(0.0, scan) == pytest.approx(1e-6)
+        assert power_at_position(50.0, scan) == pytest.approx(1e-7)
+        assert power_at_position(25.0, scan) == pytest.approx((1e-6 + 1e-7) / 2)
+
+    def test_clamps_outside_the_scan(self):
+        from polarisation_ui.core.nd_filter import power_at_position
+
+        scan = [(0.0, 1e-6), (100.0, 1e-8)]
+        assert power_at_position(-50.0, scan) == pytest.approx(1e-6)
+        assert power_at_position(500.0, scan) == pytest.approx(1e-8)
+
+    def test_empty_scan_raises(self):
+        from polarisation_ui.core.nd_filter import power_at_position
+
+        with pytest.raises(ValueError):
+            power_at_position(0.0, [])
