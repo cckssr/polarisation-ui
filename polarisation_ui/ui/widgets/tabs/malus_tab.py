@@ -31,6 +31,7 @@ from polarisation_ui.core.formatting import (
 )
 from polarisation_ui.core.models import Frame, MalusPoint, TabExport
 from polarisation_ui.core.utils import windowed_average_intensity
+from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.infrastructure.qt_threads import KDCSweepWorker
 from polarisation_ui.pyqt.ui_malus_tab import Ui_MalusTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
@@ -52,9 +53,9 @@ class MalusTab(PlotTabBase):
 
     points_changed = Signal(int)  # emits current point count after every add/remove/clear
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
         """Initialise empty buffers; build() constructs the widgets."""
-        super().__init__(parent)
+        super().__init__(parent, config)
         self._buffer: deque[Frame] = deque(maxlen=_BUFFER_MAXLEN)
         self._buffer_mutex = QMutex()
         self._is_measuring: bool = False

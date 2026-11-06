@@ -12,6 +12,8 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
+
 
 class NDTransmissionPlot(QWidget):
     """Live scatter plot for the ND-filter range scan.
@@ -32,8 +34,8 @@ class NDTransmissionPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Winkel", units="°")
         self._plot_widget.setLabel("left", "Optische Leistung", units="W")
@@ -42,21 +44,22 @@ class NDTransmissionPlot(QWidget):
         self._series = self._plot_widget.plot(
             [],
             [],
-            pen=pg.mkPen((50, 120, 220), width=1),
+            pen=pg.mkPen(colors.series_color(0), width=1),
             symbol="o",
             symbolSize=6,
-            symbolBrush=pg.mkBrush(50, 120, 220, 200),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
         self._clear_marker = self._plot_widget.addLine(
-            x=0, pen=pg.mkPen((30, 160, 50), width=2, style=Qt.PenStyle.DashLine)
+            x=0, pen=pg.mkPen(colors.series_color(2), width=2, style=Qt.PenStyle.DashLine)
         )
         self._clear_marker.setVisible(False)
         self._dark_marker = self._plot_widget.addLine(
-            x=0, pen=pg.mkPen((180, 40, 40), width=2, style=Qt.PenStyle.DashLine)
+            x=0, pen=pg.mkPen(colors.fit, width=2, style=Qt.PenStyle.DashLine)
         )
         self._dark_marker.setVisible(False)
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     # ── Public API ────────────────────────────────────────────────────────────

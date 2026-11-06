@@ -11,12 +11,7 @@ explicit exception per CLAUDE.md for pyqtgraph widgets.
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
-_GAIN_COLOURS: dict[int, tuple[int, int, int]] = {
-    1: (30, 160, 50),  # green
-    2: (50, 120, 220),  # blue
-    3: (210, 100, 30),  # orange
-    4: (180, 40, 180),  # purple
-}
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class MultiGainCalibrationPlot(QWidget):
@@ -37,15 +32,16 @@ class MultiGainCalibrationPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Detektorspannung", units="V")
         self._plot_widget.setLabel("left", "Optische Leistung", units="W")
         self._plot_widget.addLegend()
 
         self._series: dict[int, pg.PlotDataItem] = {}
-        for gain, (r, g_col, b) in _GAIN_COLOURS.items():
+        for gain in range(1, 5):
+            colour = colors.series_color(gain - 1)
             series = self._plot_widget.plot(
                 [],
                 [],
@@ -53,11 +49,12 @@ class MultiGainCalibrationPlot(QWidget):
                 pen=None,
                 symbol="o",
                 symbolSize=7,
-                symbolBrush=pg.mkBrush(r, g_col, b, 200),
+                symbolBrush=pg.mkBrush(*colour, colors.point_alpha),
                 symbolPen=pg.mkPen(None),
             )
             self._series[gain] = series
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     # ── Public API ────────────────────────────────────────────────────────────

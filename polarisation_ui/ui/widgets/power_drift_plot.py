@@ -1,7 +1,7 @@
 """Live plots for the Laser-Drift (power drift) tab.
 
 Two independent pyqtgraph widgets — one for intensity, one for both encoder
-angles — plotted against elapsed time in minutes.  Each carries a fixed red
+angles — plotted against elapsed time in minutes.  Each carries a fixed
 60-minute ``InfiniteLine`` marker so students can see at a glance when the
 standard 1-hour warm-up/observation window elapses.
 """
@@ -12,18 +12,21 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
+
 _ONE_HOUR_MIN: float = 60.0
 
 
 def _hour_marker() -> pg.InfiniteLine:
-    """Build a vertical dashed red line at the 60-minute mark."""
+    """Build a vertical dashed reference line at the 60-minute mark."""
+    colour = plot_colors().reference
     return pg.InfiniteLine(
         pos=_ONE_HOUR_MIN,
         angle=90,
         movable=False,
-        pen=pg.mkPen(color=(180, 0, 0), width=1, style=Qt.PenStyle.DashLine),
+        pen=pg.mkPen(color=colour, width=1, style=Qt.PenStyle.DashLine),
         label="1 h",
-        labelOpts={"color": (180, 0, 0), "position": 0.97},
+        labelOpts={"color": colour, "position": 0.97},
     )
 
 
@@ -39,8 +42,8 @@ class PowerDriftIntensityPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Zeit", units="min")
         self._plot_widget.setLabel("left", "Intensität", units="V")
@@ -49,11 +52,12 @@ class PowerDriftIntensityPlot(QWidget):
         self._curve = self._plot_widget.plot(
             [],
             [],
-            pen=pg.mkPen(color=(30, 120, 200), width=2),
+            pen=pg.mkPen(color=colors.series_color(0), width=2),
             name="Intensität",
         )
         self._plot_widget.addItem(_hour_marker())
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     def set_data(self, t_min: list[float], intensity: list[float]) -> None:
@@ -77,8 +81,8 @@ class PowerDriftAnglesPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Zeit", units="min")
         self._plot_widget.setLabel("left", "Winkel", units="°")
@@ -87,17 +91,18 @@ class PowerDriftAnglesPlot(QWidget):
         self._curve_sample = self._plot_widget.plot(
             [],
             [],
-            pen=pg.mkPen(color=(220, 130, 30), width=1.5, style=Qt.PenStyle.DashLine),
+            pen=pg.mkPen(color=colors.series_color(1), width=1.5, style=Qt.PenStyle.DashLine),
             name="Probenwinkel (θS)",
         )
         self._curve_detector = self._plot_widget.plot(
             [],
             [],
-            pen=pg.mkPen(color=(40, 160, 60), width=1.5, style=Qt.PenStyle.DotLine),
+            pen=pg.mkPen(color=colors.series_color(2), width=1.5, style=Qt.PenStyle.DotLine),
             name="Detektorwinkel (θD)",
         )
         self._plot_widget.addItem(_hour_marker())
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     def set_data(

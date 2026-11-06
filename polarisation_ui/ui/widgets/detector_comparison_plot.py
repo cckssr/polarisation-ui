@@ -11,6 +11,8 @@ explicit exception per CLAUDE.md for pyqtgraph widgets.
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
+
 
 class DetectorComparisonPlot(QWidget):
     """Live scatter plot for the dual-power-meter cross-check.
@@ -31,15 +33,15 @@ class DetectorComparisonPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "PM400 A (Referenz)", units="W")
         self._plot_widget.setLabel("left", "PM400 B (Prüfling)", units="W")
         self._plot_widget.setLogMode(x=True, y=True)
 
         self._unity_line = self._plot_widget.plot(
-            [1e-12, 1.0], [1e-12, 1.0], pen=pg.mkPen((150, 150, 150), width=1)
+            [1e-12, 1.0], [1e-12, 1.0], pen=pg.mkPen(colors.reference, width=1)
         )
         self._series = self._plot_widget.plot(
             [],
@@ -47,10 +49,11 @@ class DetectorComparisonPlot(QWidget):
             pen=None,
             symbol="o",
             symbolSize=7,
-            symbolBrush=pg.mkBrush(210, 100, 30, 200),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     # ── Public API ────────────────────────────────────────────────────────────

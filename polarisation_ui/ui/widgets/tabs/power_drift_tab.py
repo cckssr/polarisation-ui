@@ -15,6 +15,7 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget
 
 from polarisation_ui.core.models import Frame
+from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.pyqt.ui_power_drift_tab import Ui_PowerDriftTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 
@@ -30,9 +31,9 @@ class PowerDriftTab(PlotTabBase):
     required_sources: set[str] = {"ENC:BOTH", "ADC"}
     required_modules: set[str] = set()
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
         """Initialise empty ring buffers; build() constructs the widgets."""
-        super().__init__(parent)
+        super().__init__(parent, config)
         # -1 = measurement active but first frame not yet seen (sentinel)
         # None = measurement not running
         # >=0 = reference timestamp in ms from first recorded frame

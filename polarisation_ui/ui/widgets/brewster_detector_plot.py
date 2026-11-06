@@ -3,7 +3,7 @@
 Shows detector arm angle (X) vs. intensity (Y) as the user sweeps the arm.
 A rolling buffer of recent samples forms the curve; angle debouncing suppresses
 duplicate readings when the detector is stationary.  The peak intensity sample
-is highlighted with a red marker to assist in finding the optimal position.
+is highlighted with a marker to assist in finding the optimal position.
 """
 
 from collections import deque
@@ -13,6 +13,8 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
+
 
 class BrewsterDetectorPlot(QWidget):
     """Live rolling scatter: detector angle vs. intensity.
@@ -20,7 +22,7 @@ class BrewsterDetectorPlot(QWidget):
     Accepts samples at the incoming poll rate but only appends a new point when
     the angle has moved by at least MIN_ANGLE_DELTA degrees, suppressing noise
     when the detector arm is stationary.  Keeps the last MAX_POINTS samples and
-    highlights the maximum-intensity point with a red star and a vertical line.
+    highlights the maximum-intensity point with a star and a vertical line.
     """
 
     MAX_POINTS: int = 300
@@ -58,41 +60,42 @@ class BrewsterDetectorPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Detektorwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="V")
 
-        # All buffered points: small blue dots
+        # All buffered points: small dots
         self._curve = self._plot_widget.plot(
             [],
             [],
             pen=None,
             symbol="o",
             symbolSize=4,
-            symbolBrush=pg.mkBrush(0, 100, 200, 180),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
-        # Peak marker: red star
+        # Peak marker: star
         self._peak = self._plot_widget.plot(
             [],
             [],
             pen=None,
             symbol="star",
             symbolSize=14,
-            symbolBrush=pg.mkBrush(200, 30, 30, 220),
+            symbolBrush=pg.mkBrush(*colors.marker, colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
         # Vertical line at peak angle
         self._peak_line = pg.InfiniteLine(
             angle=90,
             movable=False,
-            pen=pg.mkPen(color=(200, 30, 30), width=1.5, style=Qt.PenStyle.DashLine),
+            pen=pg.mkPen(color=colors.marker, width=1.5, style=Qt.PenStyle.DashLine),
         )
         self._peak_line.setVisible(False)
         self._plot_widget.addItem(self._peak_line)
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     @Slot(float, float)

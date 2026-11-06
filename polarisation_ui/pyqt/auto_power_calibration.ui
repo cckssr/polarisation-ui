@@ -1790,257 +1790,257 @@
               <property name="verticalSpacing">
                <number>3</number>
               </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="lblNDLinStart">
-               <property name="text">
-                <string>Start (°):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="spinNDLinStart">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>-360</double>
-               </property>
-               <property name="maximum">
-                <double>360</double>
-               </property>
-               <property name="value">
-                <double>0</double>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="lblNDLinScans">
-               <property name="text">
-                <string>Anzahl Scans:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QSpinBox" name="spinNDLinScans">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Wie viele Scans nacheinander gemessen werden.</string>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>50</number>
-               </property>
-               <property name="value">
-                <number>3</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="lblNDLinEnd">
-               <property name="text">
-                <string>Ende (°):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="spinNDLinEnd">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>-360</double>
-               </property>
-               <property name="maximum">
-                <double>360</double>
-               </property>
-               <property name="value">
-                <double>360</double>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2" colspan="2">
-              <widget class="QCheckBox" name="checkNDLinAlternate">
-               <property name="toolTip">
-                <string>Jeder zweite Scan läuft rückwärts. Der Versatz zwischen vorwärts und rückwärts misst Hysterese / Getriebespiel.</string>
-               </property>
-               <property name="text">
-                <string>Richtung abwechseln (Hysterese)</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="lblNDLinPoints">
-               <property name="text">
-                <string>Punkte:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QSpinBox" name="spinNDLinPoints">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimum">
-                <number>3</number>
-               </property>
-               <property name="maximum">
-                <number>500</number>
-               </property>
-               <property name="value">
-                <number>37</number>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QLabel" name="lblNDLinFloor">
-               <property name="text">
-                <string>Rausch-Schwelle (µW):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="3">
-              <widget class="QDoubleSpinBox" name="spinNDLinFloorUW">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Messpunkte mit Leistung unterhalb dieser Schwelle werden nicht in den Fit einbezogen. 0 = nur Leistung &gt; 0.</string>
-               </property>
-               <property name="decimals">
-                <number>4</number>
-               </property>
-               <property name="minimum">
-                <double>0</double>
-               </property>
-               <property name="maximum">
-                <double>1000</double>
-               </property>
-               <property name="value">
-                <double>0</double>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="lblNDLinSettle">
-               <property name="text">
-                <string>Wartezeit (s):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="spinNDLinSettle">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>2</number>
-               </property>
-               <property name="minimum">
-                <double>0</double>
-               </property>
-               <property name="maximum">
-                <double>10</double>
-               </property>
-               <property name="singleStep">
-                <double>0.05</double>
-               </property>
-               <property name="value">
-                <double>0.2</double>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QLabel" name="lblNDLinTol">
-               <property name="text">
-                <string>Toleranz max. Abw. (OD):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="3">
-              <widget class="QDoubleSpinBox" name="spinNDLinTol">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Ein Scan gilt als linear, wenn die größte Abweichung vom Geraden-Fit des OD diese Schwelle nicht überschreitet. 0,05 OD ≈ 12 % Transmission.</string>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>0.001</double>
-               </property>
-               <property name="maximum">
-                <double>5</double>
-               </property>
-               <property name="singleStep">
-                <double>0.005</double>
-               </property>
-               <property name="value">
-                <double>0.05</double>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="lblNDLinSamples">
-               <property name="text">
-                <string>Mittelungen/Punkt:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QSpinBox" name="spinNDLinSamples">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>50</number>
-               </property>
-               <property name="value">
-                <number>1</number>
-               </property>
-              </widget>
-             </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblNDLinStart">
+                <property name="text">
+                 <string>Start (°):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="spinNDLinStart">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>-360</double>
+                </property>
+                <property name="maximum">
+                 <double>360</double>
+                </property>
+                <property name="value">
+                 <double>0</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="lblNDLinScans">
+                <property name="text">
+                 <string>Anzahl Scans:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QSpinBox" name="spinNDLinScans">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Wie viele Scans nacheinander gemessen werden.</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>50</number>
+                </property>
+                <property name="value">
+                 <number>3</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblNDLinEnd">
+                <property name="text">
+                 <string>Ende (°):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="spinNDLinEnd">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>-360</double>
+                </property>
+                <property name="maximum">
+                 <double>360</double>
+                </property>
+                <property name="value">
+                 <double>360</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2" colspan="2">
+               <widget class="QCheckBox" name="checkNDLinAlternate">
+                <property name="toolTip">
+                 <string>Jeder zweite Scan läuft rückwärts. Der Versatz zwischen vorwärts und rückwärts misst Hysterese / Getriebespiel.</string>
+                </property>
+                <property name="text">
+                 <string>Richtung abwechseln (Hysterese)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lblNDLinPoints">
+                <property name="text">
+                 <string>Punkte:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="spinNDLinPoints">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimum">
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <number>500</number>
+                </property>
+                <property name="value">
+                 <number>37</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QLabel" name="lblNDLinFloor">
+                <property name="text">
+                 <string>Rausch-Schwelle (µW):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QDoubleSpinBox" name="spinNDLinFloorUW">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Messpunkte mit Leistung unterhalb dieser Schwelle werden nicht in den Fit einbezogen. 0 = nur Leistung &gt; 0.</string>
+                </property>
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="minimum">
+                 <double>0</double>
+                </property>
+                <property name="maximum">
+                 <double>1000</double>
+                </property>
+                <property name="value">
+                 <double>0</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="lblNDLinSettle">
+                <property name="text">
+                 <string>Wartezeit (s):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="spinNDLinSettle">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="minimum">
+                 <double>0</double>
+                </property>
+                <property name="maximum">
+                 <double>10</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.05</double>
+                </property>
+                <property name="value">
+                 <double>0.2</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QLabel" name="lblNDLinTol">
+                <property name="text">
+                 <string>Toleranz max. Abw. (OD):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="3">
+               <widget class="QDoubleSpinBox" name="spinNDLinTol">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Ein Scan gilt als linear, wenn die größte Abweichung vom Geraden-Fit des OD diese Schwelle nicht überschreitet. 0,05 OD ≈ 12 % Transmission.</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>0.001</double>
+                </property>
+                <property name="maximum">
+                 <double>5</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.005</double>
+                </property>
+                <property name="value">
+                 <double>0.05</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="lblNDLinSamples">
+                <property name="text">
+                 <string>Mittelungen/Punkt:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QSpinBox" name="spinNDLinSamples">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>50</number>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>

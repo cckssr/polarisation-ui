@@ -1,22 +1,39 @@
 #!/bin/bash
+# Regenerate the ui_<form>.py modules from the Qt Designer .ui files.
+#
+#   polarisation_ui/pyqt/pyuic.sh                    # every form
+#   polarisation_ui/pyqt/pyuic.sh malus_tab brewster_tab   # only these forms (stems without .ui)
+#
+# First copies the German strings from config.json into the .ui files (see sync_texts.py), then
+# runs pyside6-uic and formats the generated modules with ruff. Exits non-zero on any failure.
+set -euo pipefail
+cd "$(dirname "$0")/../.."
 
-# Convert UI files to Python using pyside6-uic
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/mainwindow.ui -o ./polarisation_ui/pyqt/ui_mainwindow.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/acq_settings.ui -o ./polarisation_ui/pyqt/ui_acq_settings.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/encoder_debug.ui -o ./polarisation_ui/pyqt/ui_encoder_debug.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/log_window.ui -o ./polarisation_ui/pyqt/ui_log_window.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/auto_power_calibration.ui -o ./polarisation_ui/pyqt/ui_auto_power_calibration.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/event_log_panel.ui -o ./polarisation_ui/pyqt/ui_event_log_panel.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/malus_tab.ui -o ./polarisation_ui/pyqt/ui_malus_tab.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/brewster_tab.ui -o ./polarisation_ui/pyqt/ui_brewster_tab.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/waveplate_tab.ui -o ./polarisation_ui/pyqt/ui_waveplate_tab.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/power_drift_tab.ui -o ./polarisation_ui/pyqt/ui_power_drift_tab.py
-.venv/bin/pyside6-uic ./polarisation_ui/pyqt/ellipsometry_tab.ui -o ./polarisation_ui/pyqt/ui_ellipsometry_tab.py
+PYQT_DIR=polarisation_ui/pyqt
 
-.venv/bin/ruff format ./polarisation_ui/pyqt/ui_*.py
+.venv/bin/python -m polarisation_ui.pyqt.sync_texts
 
-if [ $? -ne 0 ]; then
-    echo "Error converting UI files"
-    exit 1
+if [ "$#" -gt 0 ]; then
+    stems=("$@")
+else
+    stems=()
+    for f in "$PYQT_DIR"/*.ui; do
+        stems+=("$(basename "${f%.ui}")")
+    done
 fi
+
+outputs=()
+for stem in "${stems[@]}"; do
+    src="$PYQT_DIR/$stem.ui"
+    out="$PYQT_DIR/ui_$stem.py"
+    if [ ! -f "$src" ]; then
+        echo "Error: $src does not exist" >&2
+        exit 1
+    fi
+    .venv/bin/pyside6-uic "$src" -o "$out"
+    outputs+=("$out")
+    echo "generated $out"
+done
+
+.venv/bin/ruff format "${outputs[@]}"
 echo "UI files converted successfully"

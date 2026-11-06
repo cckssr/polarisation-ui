@@ -22,17 +22,7 @@ from PySide6.QtGui import QPen
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.nd_linearity import BACKWARD
-
-_PALETTE: tuple[tuple[int, int, int], ...] = (
-    (31, 119, 180),
-    (214, 39, 40),
-    (44, 160, 44),
-    (255, 127, 14),
-    (148, 103, 189),
-    (140, 86, 75),
-    (227, 119, 194),
-    (23, 190, 207),
-)
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class NDLinearityPlot(QWidget):
@@ -50,33 +40,34 @@ class NDLinearityPlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._power_plot = pg.PlotWidget()
-        self._power_plot.setBackground("w")
         self._power_plot.showGrid(x=True, y=True, alpha=0.3)
         self._power_plot.setLabel("left", "Optische Leistung", units="W")
         self._power_plot.setLogMode(y=True)
         self._power_plot.addLegend(offset=(-10, 10))
 
         self._resid_plot = pg.PlotWidget()
-        self._resid_plot.setBackground("w")
         self._resid_plot.showGrid(x=True, y=True, alpha=0.3)
         self._resid_plot.setLabel("bottom", "Winkel", units="°")
         self._resid_plot.setLabel("left", "Abweichung vom linearen OD-Fit", units="OD")
         self._resid_plot.setXLink(self._power_plot)
 
-        band_pen = pg.mkPen((120, 120, 120), width=1, style=Qt.PenStyle.DashLine)
+        band_pen = pg.mkPen(colors.reference, width=1, style=Qt.PenStyle.DashLine)
         self._tol_upper = self._resid_plot.addLine(y=0.0, pen=band_pen)
         self._tol_lower = self._resid_plot.addLine(y=0.0, pen=band_pen)
         self._tol_upper.setVisible(False)
         self._tol_lower.setVisible(False)
-        self._resid_plot.addLine(y=0.0, pen=pg.mkPen((0, 0, 0), width=1))
+        self._resid_plot.addLine(y=0.0, pen=pg.mkPen(colors.reference, width=1))
 
+        style_plot(self._power_plot)
+        style_plot(self._resid_plot)
         layout.addWidget(self._power_plot, 3)
         layout.addWidget(self._resid_plot, 2)
 
     @staticmethod
     def _pen(index: int, direction: str) -> QPen:
-        colour = _PALETTE[index % len(_PALETTE)]
+        colour = plot_colors().series_color(index)
         style = Qt.PenStyle.DashLine if direction == BACKWARD else Qt.PenStyle.SolidLine
         return pg.mkPen(colour, width=1.5, style=style)
 
@@ -85,7 +76,8 @@ class NDLinearityPlot(QWidget):
     def begin_scan(self, index: int, direction: str) -> None:
         """Start a new power curve for scan *index* (zero-based)."""
         label = f"Scan {index + 1} ({'rückwärts' if direction == BACKWARD else 'vorwärts'})"
-        colour = _PALETTE[index % len(_PALETTE)]
+        colors = plot_colors()
+        colour = colors.series_color(index)
         self._power_data[index] = ([], [])
         self._power_curves[index] = self._power_plot.plot(
             [],
@@ -93,7 +85,7 @@ class NDLinearityPlot(QWidget):
             pen=self._pen(index, direction),
             symbol="o",
             symbolSize=5,
-            symbolBrush=pg.mkBrush(*colour, 200),
+            symbolBrush=pg.mkBrush(*colour, colors.point_alpha),
             symbolPen=pg.mkPen(None),
             name=label,
         )
@@ -120,7 +112,8 @@ class NDLinearityPlot(QWidget):
             curve = self._resid_plot.plot(
                 [], [], pen=self._pen(index, direction), symbol="o", symbolSize=4
             )
-            curve.setSymbolBrush(pg.mkBrush(*_PALETTE[index % len(_PALETTE)], 200))
+            colors = plot_colors()
+            curve.setSymbolBrush(pg.mkBrush(*colors.series_color(index), colors.point_alpha))
             self._resid_curves[index] = curve
         curve.setData(list(positions_deg), list(residuals_od))
 

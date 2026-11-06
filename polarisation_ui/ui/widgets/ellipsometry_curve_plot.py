@@ -14,16 +14,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.models import EllipsometrySeriesPoint
-
-_PSI_COLOR = (30, 100, 200)
-_DELTA_COLOR = (200, 80, 30)
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class EllipsometryCurvePlot(QWidget):
     """Psi(theta) / Delta(theta) series scatter with twin Y axes and an optional model overlay.
 
-    X axis: angle of incidence (degrees). Left Y axis: Psi (blue, degrees).
-    Right Y axis: Delta (orange, degrees). set_model() overlays a dashed
+    X axis: angle of incidence (degrees). Left Y axis: Psi (first series colour, degrees).
+    Right Y axis: Delta (second series colour, degrees). set_model() overlays a dashed
     curve pair from a fitted optical model; clear_model() removes it without
     touching the measured series.
     """
@@ -38,8 +36,10 @@ class EllipsometryCurvePlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
+        psi_color = colors.series_color(0)
+        delta_color = colors.series_color(1)
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Einfallswinkel θ", units="°")
         self._plot_widget.setLabel("left", "Ψ", units="°")
@@ -65,22 +65,23 @@ class EllipsometryCurvePlot(QWidget):
             pen=None,
             symbol="o",
             symbolSize=8,
-            symbolBrush=pg.mkBrush(*_PSI_COLOR, 200),
+            symbolBrush=pg.mkBrush(*psi_color, colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
         self._delta_scatter = pg.ScatterPlotItem(
-            size=8, brush=pg.mkBrush(*_DELTA_COLOR, 200), pen=pg.mkPen(None)
+            size=8, brush=pg.mkBrush(*delta_color, colors.point_alpha), pen=pg.mkPen(None)
         )
         self._delta_viewbox.addItem(self._delta_scatter)
 
         self._psi_model = self._plot_widget.plot(
-            [], [], pen=pg.mkPen(_PSI_COLOR, width=2, style=Qt.PenStyle.DashLine)
+            [], [], pen=pg.mkPen(psi_color, width=2, style=Qt.PenStyle.DashLine)
         )
         self._delta_model = pg.PlotDataItem(
-            [], [], pen=pg.mkPen(_DELTA_COLOR, width=2, style=Qt.PenStyle.DashLine)
+            [], [], pen=pg.mkPen(delta_color, width=2, style=Qt.PenStyle.DashLine)
         )
         self._delta_viewbox.addItem(self._delta_model)
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     def set_series(self, points: list[EllipsometrySeriesPoint]) -> None:

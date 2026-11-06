@@ -55,6 +55,7 @@ from polarisation_ui.core.power_calibration import (
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.ui.common.pm400_combo import populate_pm400_combo
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 _GAIN_STAGES = (1, 2, 3, 4)
 
@@ -134,8 +135,8 @@ class _GainCalTab(QWidget):
         layout.addWidget(btn_remove)
 
         # Plot: voltage vs power
+        colors = plot_colors()
         self._plot = pg.PlotWidget()
-        self._plot.setBackground("w")
         self._plot.showGrid(x=True, y=True, alpha=0.3)
         self._plot.setLabel("bottom", "Spannung", units="V")
         self._plot.setLabel("left", "Leistung", units="W")
@@ -145,10 +146,11 @@ class _GainCalTab(QWidget):
             pen=None,
             symbol="o",
             symbolSize=8,
-            symbolBrush=pg.mkBrush(0, 100, 200, 200),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
-        self._fit_line = self._plot.plot([], [], pen=pg.mkPen("r", width=1.5))
+        self._fit_line = self._plot.plot([], [], pen=pg.mkPen(colors.fit, width=1.5))
+        style_plot(self._plot)
         layout.addWidget(self._plot, 1)
 
         self._btn_live.clicked.connect(self._fill_live_voltage)

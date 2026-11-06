@@ -162,7 +162,7 @@ Profiles carry optional `intensity_control` and `gain_crosscheck` metadata block
 
 ## Configuration
 
-The application is configured via `polarisation_ui/config.json`. Language-specific strings and all tunable parameters live under the `"de"` key. The `"version"` key at the root is managed automatically by CI.
+The application is configured via `polarisation_ui/config.json`. German UI strings (`ui`, `messages`), profiles, plot colours and all tunable parameters are top-level sections. The `"version"` key at the root is managed automatically by CI.
 
 ### Key Configuration Parameters
 
@@ -304,7 +304,7 @@ Version is kept in sync across three files automatically:
 
 - `pyproject.toml` — `version = "X.Y.Z"`
 - `polarisation_ui/__init__.py` — `__version__ = "X.Y.Z"`
-- `polarisation_ui/config.json` — `{"version": "X.Y.Z", "de": {...}}`
+- `polarisation_ui/config.json` — `{"version": "X.Y.Z", ...sections...}`
 
 ---
 

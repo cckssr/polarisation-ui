@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.ellipsometry import RaeFit
 from polarisation_ui.core.models import EllipsometryPoint
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class EllipsometryFitPlot(QWidget):
@@ -23,9 +24,9 @@ class EllipsometryFitPlot(QWidget):
     X axis: analyser azimuth (degrees, offset-corrected relative to the plane
     of incidence). Y axis: detector power (mW).
 
-    All saved points are shown as green circles.  The most recently saved
-    point is additionally outlined with a red ring.  The fitted harmonic is
-    drawn as a blue curve once set_fit() is called with a valid RaeFit.
+    All saved points are shown as filled circles.  The most recently saved
+    point is additionally outlined with a marker-coloured ring.  The fitted harmonic is
+    drawn as a curve in the fit colour once set_fit() is called with a valid RaeFit.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -40,23 +41,23 @@ class EllipsometryFitPlot(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Analysatorazimut", units="°")
         self._plot_widget.setLabel("left", "Leistung", units="mW")
 
-        # All saved points: filled green circles
+        # All saved points: filled circles
         self._scatter = self._plot_widget.plot(
             [],
             [],
             pen=None,
             symbol="o",
             symbolSize=7,
-            symbolBrush=pg.mkBrush(30, 160, 50, 200),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
-        # Last saved point: red outline ring (no fill) drawn on top
+        # Last saved point: marker-coloured outline ring (no fill) drawn on top
         self._last_marker = self._plot_widget.plot(
             [],
             [],
@@ -64,12 +65,11 @@ class EllipsometryFitPlot(QWidget):
             symbol="o",
             symbolSize=13,
             symbolBrush=pg.mkBrush(0, 0, 0, 0),
-            symbolPen=pg.mkPen("r", width=2),
+            symbolPen=pg.mkPen(colors.marker, width=2),
         )
-        self._fit_curve = self._plot_widget.plot([], [], pen=pg.mkPen("b", width=2))
+        self._fit_curve = self._plot_widget.plot([], [], pen=pg.mkPen(colors.fit, width=2))
 
         self._residual_widget = pg.PlotWidget()
-        self._residual_widget.setBackground("w")
         self._residual_widget.showGrid(x=True, y=True, alpha=0.3)
         self._residual_widget.setLabel("bottom", "Analysatorazimut", units="°")
         self._residual_widget.setLabel("left", "Residuum", units="mW")
@@ -81,10 +81,12 @@ class EllipsometryFitPlot(QWidget):
             pen=None,
             symbol="o",
             symbolSize=5,
-            symbolBrush=pg.mkBrush(200, 60, 60, 180),
+            symbolBrush=pg.mkBrush(*colors.fit, colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
 
+        style_plot(self._plot_widget)
+        style_plot(self._residual_widget)
         layout.addWidget(self._plot_widget, 3)
         layout.addWidget(self._residual_widget, 1)
 

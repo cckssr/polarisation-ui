@@ -13,6 +13,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget
 
 from polarisation_ui.core.models import Frame
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 
 
 class ConnState(Enum):
@@ -39,9 +40,13 @@ class PlotTabBase(QWidget):
     status_message = Signal(str, str)  # (level, message) — "info"/"warning"/"error"
     filename_hint_changed = Signal()  # emitted when filename_hint or tokens change
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Construct the bare QWidget; subclasses build their layout in build()."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Construct the bare QWidget; subclasses build their layout in build().
+
+        ``config`` provides the configured texts and tunables (default: ``default_config()``).
+        """
         super().__init__(parent)
+        self.config: AppConfig = config if config is not None else default_config()
 
     # --- lifecycle hooks (override in subclass) ------------------------------
 

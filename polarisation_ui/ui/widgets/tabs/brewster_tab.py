@@ -29,6 +29,7 @@ from polarisation_ui.core.formatting import (
     fmt_stat,
 )
 from polarisation_ui.core.models import BrewsterPoint, Frame, TabExport
+from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.pyqt.ui_brewster_tab import Ui_BrewsterTab
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 
@@ -43,9 +44,9 @@ class BrewsterTab(PlotTabBase):
 
     points_changed = Signal(int)  # emits current point count after every add/remove/clear
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
         """Initialise empty buffers; build() constructs the widgets."""
-        super().__init__(parent)
+        super().__init__(parent, config)
         self._latest_frame: Frame | None = None
         self._peak_intensity: float = float("nan")
         self._peak_angle: float = float("nan")

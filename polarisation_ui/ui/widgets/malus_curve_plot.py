@@ -9,6 +9,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.models import MalusPoint
+from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class MalusCurvePlot(QWidget):
@@ -17,8 +18,8 @@ class MalusCurvePlot(QWidget):
     X axis: analyser angle (degrees, user-entered)
     Y axis: detector intensity (V, averaged over ~0.5 s window)
 
-    All saved points are shown as green circles.  The most recently saved point
-    is additionally outlined with a red ring so the user can see the last entry.
+    All saved points are shown as filled circles.  The most recently saved point
+    is additionally outlined with a marker-coloured ring so the user can see the last entry.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -31,23 +32,23 @@ class MalusCurvePlot(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self._plot_widget.setLabel("bottom", "Analysatorwinkel", units="°")
         self._plot_widget.setLabel("left", "Intensität", units="V")
 
-        # All saved points: filled green circles
+        # All saved points: filled circles
         self._scatter = self._plot_widget.plot(
             [],
             [],
             pen=None,
             symbol="o",
             symbolSize=8,
-            symbolBrush=pg.mkBrush(30, 160, 50, 200),
+            symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
-        # Last saved point: red outline ring (no fill) drawn on top
+        # Last saved point: marker-coloured outline ring (no fill) drawn on top
         self._last_marker = self._plot_widget.plot(
             [],
             [],
@@ -55,9 +56,10 @@ class MalusCurvePlot(QWidget):
             symbol="o",
             symbolSize=14,
             symbolBrush=pg.mkBrush(0, 0, 0, 0),  # transparent fill
-            symbolPen=pg.mkPen("r", width=2),
+            symbolPen=pg.mkPen(colors.marker, width=2),
         )
 
+        style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
 
     def add_point(

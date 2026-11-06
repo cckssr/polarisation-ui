@@ -1,111 +1,166 @@
 {
   "version": "1.1.6",
-  "de": {
-    "description": "Zentrale Konfigurationsdatei für die Polarisation-Anwendung. Stellt Konstanten und Standardwerte für die gesamte Anwendung bereit.",
-    "application": {
-      "name": "Polarisation UI",
-      "author": "C. Kessler, K. Brandt"
-    },
-    "debug": {
-      "level_default": "info"
-    },
-    "connection": {
-      "max_retry_attempts": 10,
-      "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
-    },
-    "pdtia": {
-      "device_ids": ["E20057", "E83569"],
-      "gain_auto_switch_power_W": {
-        "1": { "min": 8.0e-5, "max": 1.0 },
-        "2": { "min": 8.0e-6, "max": 1.2e-4 },
-        "3": { "min": 8.0e-7, "max": 1.2e-5 },
-        "4": { "min": 0.0, "max": 1.2e-6 }
-      }
-    },
-    "plot": {
-      "max_points": 300,
-      "x_label": "Ereignis k",
-      "y_label": "Zeit / µs"
-    },
-    "histogram": {
-      "bin_size": 10,
-      "x_label": "Zeit / µs",
-      "y_label": "Anzahl Ereignisse"
-    },
-    "timers": {
-      "control_update_interval": 1000,
-      "statistics_update_interval": 2000,
-      "acquisition_timer_interval": 100,
-      "gui_update_interval": 200,
-      "diag_interval_ms": 5000
-    },
-    "acquisition": {
-      "det_average_on": true,
-      "det_averages": 5,
-      "samp_average_on": true,
-      "samp_averages": 5,
-      "sample_stage_inverted": true,
-      "spike_filter_enabled": false,
-      "spike_max_delta_deg": 10.0,
-      "spike_reset_after": 5
-    },
-    "data_controller": {
-      "max_history_size": 1000,
-      "high_speed_mode": {
-        "batch_threshold": 100,
-        "batch_history": 5
-      }
-    },
-    "save": {
-      "tk_designation": "TK41",
-      "base_folder": "Polarisation"
-    },
-    "display_format": {
-      "angle_dp": 2,
-      "voltage_dp": 4,
-      "intensity_dp": 4,
-      "stats_dp": 2,
-      "angle_unit": "°",
-      "voltage_unit": "V",
-      "intensity_unit": "a.u."
-    },
-    "export_format": {
-      "angle_dp": 4,
-      "voltage_dp": 6,
-      "intensity_dp": 6
-    },
-    "ui": {
-      "theme": "dark",
-      "status_led": {
-        "connected": "#00ff00",
-        "disconnected": "#ff0b03",
-        "connecting": "#ffc800",
-        "inactive": "#808080"
-      }
-    },
-    "colors": {
-      "green": "green",
-      "red": "red",
-      "orange": "orange",
-      "blue": "blue"
-    },
-    "messages": {
-      "app_init": "Anwendung wird initialisiert...",
-      "device_not_connected": "Nicht verbunden..",
-      "device_please_connect": "Bitte Gerät anschließen.",
-      "device_ports_missing": "Keine Ports gefunden.",
-      "connected": "Verbunden mit {}. Bereit für Messungen.",
-      "measurement_running": "Messung läuft...",
-      "measurement_stopped": "Messung gestoppt.",
-      "measurement_ended": "Messung beendet. Bereit zum Speichern oder für eine neue Messung.",
-      "settings_applied": "Einstellungen erfolgreich angewendet.",
-      "data_saved": "Daten gespeichert in {}",
-      "no_data": "Es sind keine Messdaten zum Speichern verfügbar.",
-      "unsaved_data": "Sie haben ungespeicherte Messdaten. Möchten Sie diese verwerfen und eine neue Messung starten?",
-      "unsaved_data_end": "Sie haben ungespeicherte Messdaten. Möchten Sie diese verwerfen, bevor Sie die Applikation beenden?",
-      "connection_failed": "Verbindung zum Gerät fehlgeschlagen. Anwendung wird beendet.",
-      "auto_save_enabled": "Automatisches Speichern ist aktiviert. Messdaten werden automatisch gespeichert, wenn die Messung endet.",
-      "auto_save_disabled": "Automatisches Speichern ist deaktiviert. Sie müssen die Messdaten manuell speichern."
+  "description": "Zentrale Konfigurationsdatei für die Polarisation-Anwendung. Stellt Konstanten und Standardwerte für die gesamte Anwendung bereit.",
+  "application": {
+    "name": "Polarisation UI",
+    "author": "C. Kessler, K. Brandt",
+    "profile": "expert",
+    "window_mode": "maximized"
+  },
+  "debug": {
+    "level_default": "info"
+  },
+  "connection": {
+    "max_retry_attempts": 10,
+    "backoff_delays_ms": [1000, 2000, 4000, 8000, 15000]
+  },
+  "pdtia": {
+    "device_ids": ["E20057", "E83569"],
+    "gain_auto_switch_power_W": {
+      "1": { "min": 8.0e-5, "max": 1.0 },
+      "2": { "min": 8.0e-6, "max": 1.2e-4 },
+      "3": { "min": 8.0e-7, "max": 1.2e-5 },
+      "4": { "min": 0.0, "max": 1.2e-6 }
     }
+  },
+  "plot": {
+    "max_points": 300,
+    "x_label": "Ereignis k",
+    "y_label": "Zeit / µs"
+  },
+  "histogram": {
+    "bin_size": 10,
+    "x_label": "Zeit / µs",
+    "y_label": "Anzahl Ereignisse"
+  },
+  "timers": {
+    "control_update_interval": 1000,
+    "statistics_update_interval": 2000,
+    "acquisition_timer_interval": 100,
+    "gui_update_interval": 200,
+    "diag_interval_ms": 5000
+  },
+  "acquisition": {
+    "det_average_on": true,
+    "det_averages": 5,
+    "samp_average_on": true,
+    "samp_averages": 5,
+    "sample_stage_inverted": true,
+    "spike_filter_enabled": false,
+    "spike_max_delta_deg": 10.0,
+    "spike_reset_after": 5
+  },
+  "data_controller": {
+    "max_history_size": 1000,
+    "high_speed_mode": {
+      "batch_threshold": 100,
+      "batch_history": 5
+    }
+  },
+  "save": {
+    "tk_designation": "TK41",
+    "base_folder": "Polarisation"
+  },
+  "display_format": {
+    "angle_dp": 2,
+    "voltage_dp": 4,
+    "intensity_dp": 4,
+    "stats_dp": 2,
+    "angle_unit": "°",
+    "voltage_unit": "V",
+    "intensity_unit": "a.u."
+  },
+  "export_format": {
+    "angle_dp": 4,
+    "voltage_dp": 6,
+    "intensity_dp": 6
+  },
+  "ui": {
+    "theme": "dark",
+    "status_led": {
+      "connected": "#00ff00",
+      "disconnected": "#ff0b03",
+      "connecting": "#ffc800",
+      "inactive": "#808080"
+    },
+    "acq_settings": {},
+    "auto_power_calibration": {},
+    "brewster_tab": {},
+    "ellipsometry_tab": {},
+    "encoder_debug": {},
+    "event_log_panel": {},
+    "log_window": {},
+    "mainwindow": {},
+    "malus_tab": {},
+    "power_drift_tab": {},
+    "waveplate_tab": {},
+    "power_calibration": {},
+    "plots": {},
+    "common": {},
+    "tabs": {}
+  },
+  "colors": {
+    "green": "green",
+    "red": "red",
+    "orange": "orange",
+    "blue": "blue"
+  },
+  "messages": {
+    "app_init": "Anwendung wird initialisiert...",
+    "device_not_connected": "Nicht verbunden..",
+    "device_please_connect": "Bitte Gerät anschließen.",
+    "device_ports_missing": "Keine Ports gefunden.",
+    "connected": "Verbunden mit {}. Bereit für Messungen.",
+    "measurement_running": "Messung läuft...",
+    "measurement_stopped": "Messung gestoppt.",
+    "measurement_ended": "Messung beendet. Bereit zum Speichern oder für eine neue Messung.",
+    "settings_applied": "Einstellungen erfolgreich angewendet.",
+    "data_saved": "Daten gespeichert in {}",
+    "no_data": "Es sind keine Messdaten zum Speichern verfügbar.",
+    "unsaved_data": "Sie haben ungespeicherte Messdaten. Möchten Sie diese verwerfen und eine neue Messung starten?",
+    "unsaved_data_end": "Sie haben ungespeicherte Messdaten. Möchten Sie diese verwerfen, bevor Sie die Applikation beenden?",
+    "connection_failed": "Verbindung zum Gerät fehlgeschlagen. Anwendung wird beendet.",
+    "auto_save_enabled": "Automatisches Speichern ist aktiviert. Messdaten werden automatisch gespeichert, wenn die Messung endet.",
+    "auto_save_disabled": "Automatisches Speichern ist deaktiviert. Sie müssen die Messdaten manuell speichern.",
+    "connection": {},
+    "kdc": {},
+    "pm400": {},
+    "detector": {},
+    "measurement": {},
+    "save": {},
+    "session": {},
+    "encoder_debug": {},
+    "power_calibration": {},
+    "auto_power_calibration": {},
+    "tabs": {},
+    "dialogs": {}
+  },
+  "profiles": {
+    "expert": { "name": "Experte" },
+    "student": {
+      "name": "Praktikum",
+      "hidden_tabs": [],
+      "hidden_widgets": {},
+      "overrides": {}
+    }
+  },
+  "plot_colors": {
+    "series": [
+      "tab:blue",
+      "tab:orange",
+      "tab:green",
+      "tab:red",
+      "tab:purple",
+      "tab:brown",
+      "tab:pink",
+      "tab:gray",
+      "tab:olive",
+      "tab:cyan"
+    ],
+    "fit": "tab:red",
+    "reference": "tab:gray",
+    "marker": "tab:orange",
+    "band_alpha": 50,
+    "point_alpha": 200
   }
 }
