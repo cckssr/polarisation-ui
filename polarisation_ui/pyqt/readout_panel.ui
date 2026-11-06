@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ReadoutPanel</class>
+ <widget class="QGroupBox" name="ReadoutPanel">
+  <property name="title">
+   <string>Messwerte</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelSampleAngle">
+     <property name="text">
+      <string>Proben-Rotationswinkel (°)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLCDNumber" name="lcdSampleAngle">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="smallDecimalPoint">
+      <bool>false</bool>
+     </property>
+     <property name="digitCount">
+      <number>8</number>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::SegmentStyle::Filled</enum>
+     </property>
+     <property name="toolTip">
+      <string>Aktueller Winkel der Proben-Rotationsstage (°)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelDetectorAngle">
+     <property name="text">
+      <string>Detektor-Rotationswinkel (°)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLCDNumber" name="lcdDetectorAngle">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="smallDecimalPoint">
+      <bool>false</bool>
+     </property>
+     <property name="digitCount">
+      <number>8</number>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::SegmentStyle::Filled</enum>
+     </property>
+     <property name="toolTip">
+      <string>Aktueller Winkel der Detektor-Rotationsstage (°)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelVoltage">
+     <property name="text">
+      <string>Detektor-Spannung (mV)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLCDNumber" name="lcdVoltage">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="smallDecimalPoint">
+      <bool>false</bool>
+     </property>
+     <property name="digitCount">
+      <number>8</number>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::SegmentStyle::Filled</enum>
+     </property>
+     <property name="toolTip">
+      <string>Detektorspannung in Millivolt (mV)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelPower">
+     <property name="text">
+      <string>Detektor-Leistung (µW)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLCDNumber" name="lcdPower">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="smallDecimalPoint">
+      <bool>false</bool>
+     </property>
+     <property name="digitCount">
+      <number>8</number>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::SegmentStyle::Filled</enum>
+     </property>
+     <property name="toolTip">
+      <string>Berechnete Laserleistung in Mikrowatt (µW) — nur mit geladenem Kalibrierungsprofil oder PM400</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelGain">
+     <property name="text">
+      <string>Detektor-Gainstufe</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="gainLayout">
+     <property name="spacing">
+      <number>4</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="buttonGain1">
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>28</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+       <property name="toolTip">
+        <string>PD-TIA Verstärkungsstufe 1 (niedrigste Empfindlichkeit)</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroupGain</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonGain2">
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>28</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>2</string>
+       </property>
+       <property name="toolTip">
+        <string>PD-TIA Verstärkungsstufe 2</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroupGain</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonGain3">
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>28</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>3</string>
+       </property>
+       <property name="toolTip">
+        <string>PD-TIA Verstärkungsstufe 3</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroupGain</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonGain4">
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>28</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>4</string>
+       </property>
+       <property name="toolTip">
+        <string>PD-TIA Verstärkungsstufe 4 (höchste Empfindlichkeit)</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroupGain</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonGainAuto">
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>28</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>AUTO</string>
+       </property>
+       <property name="toolTip">
+        <string>Automatische Wahl der PD-TIA Verstärkungsstufe</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroupGain"/>
+ </buttongroups>
+</ui>

@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowTitle">
+   <string>Polarisation-UI</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="documentMode">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Werkzeugleiste</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionAcquisitionSettings"/>
+   <addaction name="actionPowerCalibration"/>
+   <addaction name="actionAutoPowerCalibration"/>
+   <addaction name="actionEncoderDebug"/>
+   <addaction name="actionLogWindow"/>
+   <addaction name="separator"/>
+   <addaction name="actionAutoSaveEnabled"/>
+   <addaction name="separator"/>
+   <addaction name="actionToggleControls"/>
+   <addaction name="actionToggleMeasurement"/>
+   <addaction name="actionToggleEventLog"/>
+   <addaction name="actionFullScreen"/>
+  </widget>
+  <widget class="QDockWidget" name="dockControls">
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetClosable|QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Steuerung</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockControlsContents">
+    <layout class="QVBoxLayout" name="dockControlsLayout">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QScrollArea" name="scrollControls">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="contentControls">
+        <layout class="QVBoxLayout" name="contentControlsLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="ArduinoPanel" name="arduinoPanel"/>
+         </item>
+         <item>
+          <widget class="StagePanel" name="sampleStagePanel"/>
+         </item>
+         <item>
+          <widget class="StagePanel" name="detectorStagePanel"/>
+         </item>
+         <item>
+          <widget class="KdcPanel" name="kdcPanel"/>
+         </item>
+         <item>
+          <widget class="DetectorPanel" name="detectorPanel"/>
+         </item>
+         <item>
+          <spacer name="spacerControls">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockMeasurement">
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetClosable|QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Messdaten</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockMeasurementContents">
+    <layout class="QVBoxLayout" name="dockMeasurementLayout">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QScrollArea" name="scrollMeasurement">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="contentMeasurement">
+        <layout class="QVBoxLayout" name="contentMeasurementLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <widget class="ReadoutPanel" name="readoutPanel"/>
+         </item>
+         <item>
+          <widget class="MeasurementPanel" name="measurementPanel"/>
+         </item>
+         <item>
+          <widget class="SavePanel" name="savePanel"/>
+         </item>
+         <item>
+          <spacer name="spacerMeasurement">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockEventLog">
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetClosable|QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Ereignisprotokoll</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="EventLogPanel" name="eventLogPanel"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionAcquisitionSettings">
+   <property name="text">
+    <string>Akquisition…</string>
+   </property>
+   <property name="toolTip">
+    <string>Akquisitions-Einstellungen (Spike-Filter, Probenstage-Inversion)</string>
+   </property>
+  </action>
+  <action name="actionPowerCalibration">
+   <property name="text">
+    <string>Leistungskalibrierung…</string>
+   </property>
+   <property name="toolTip">
+    <string>Leistungskalibrierung (manuell) öffnen</string>
+   </property>
+  </action>
+  <action name="actionAutoPowerCalibration">
+   <property name="text">
+    <string>Auto-Kalibrierung…</string>
+   </property>
+   <property name="toolTip">
+    <string>Automatische Leistungskalibrierung öffnen</string>
+   </property>
+  </action>
+  <action name="actionEncoderDebug">
+   <property name="text">
+    <string>Encoder-Debug</string>
+   </property>
+   <property name="toolTip">
+    <string>Encoder-Debugging mit SCPI-Terminal und Diagnose öffnen</string>
+   </property>
+  </action>
+  <action name="actionLogWindow">
+   <property name="text">
+    <string>Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Log-Ausgabe anzeigen</string>
+   </property>
+  </action>
+  <action name="actionAutoSaveEnabled">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Suffix-Feld</string>
+   </property>
+   <property name="toolTip">
+    <string>Eingabefeld für das eigene Dateinamen-Suffix ein- oder ausblenden</string>
+   </property>
+  </action>
+  <action name="actionToggleControls">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Steuerung</string>
+   </property>
+   <property name="toolTip">
+    <string>Seitenleiste mit Geräten und Detektor ein- oder ausblenden</string>
+   </property>
+  </action>
+  <action name="actionToggleMeasurement">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Messdaten</string>
+   </property>
+   <property name="toolTip">
+    <string>Seitenleiste mit Messwerten, Messung und Speicherung ein- oder ausblenden</string>
+   </property>
+  </action>
+  <action name="actionToggleEventLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Ereignisprotokoll</string>
+   </property>
+   <property name="toolTip">
+    <string>Ereignisprotokoll ein- oder ausblenden</string>
+   </property>
+  </action>
+  <action name="actionFullScreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="shortcut">
+    <string>F11</string>
+   </property>
+   <property name="text">
+    <string>Vollbild</string>
+   </property>
+   <property name="toolTip">
+    <string>Zwischen Vollbild und Fenster wechseln (F11)</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ArduinoPanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.arduino_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>StagePanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.stage_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KdcPanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.kdc_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DetectorPanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.detector_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ReadoutPanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.readout_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MeasurementPanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.measurement_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SavePanel</class>
+   <extends>QGroupBox</extends>
+   <header>polarisation_ui.ui.widgets.panels.save_panel</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>EventLogPanel</class>
+   <extends>QWidget</extends>
+   <header>polarisation_ui.ui.widgets.event_log_panel</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -35,3 +35,21 @@ def set_connection_status(led: QLabel, label: QLabel, text: str, style: str) -> 
     """
     led.setStyleSheet(style)
     label.setText(text)
+
+
+# LED states of the controllers' ``(led, text)`` signals (``ui.controllers.status.LED_*``).
+LED_STATE_STYLES = {
+    "ok": LED_GREEN,
+    "busy": LED_YELLOW,
+    "warn": LED_YELLOW,
+    "error": LED_RED,
+    "off": LED_RED,
+}
+
+
+def set_led_state(led: QLabel, label: QLabel, text: str, state: str) -> None:
+    """Like :func:`set_connection_status`, but with a controller LED state (``ok``, ``off``, ...).
+
+    An unknown ``state`` shows the red LED.
+    """
+    set_connection_status(led, label, text, LED_STATE_STYLES.get(state, LED_RED))

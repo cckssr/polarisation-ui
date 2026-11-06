@@ -3,7 +3,7 @@
 ``TabHost`` adds the tabs the ``TabRegistry`` offers for the registered host modules, keeps them in
 sync with module changes (e.g. WaveplateTab once the KDC101 connects), gates them on the group
 selection and forwards the measurement and connection events to every tab. The tab widget itself
-(and its first "Konfiguration" page) is declared in the main window's Designer form.
+is declared in the main window's Designer form and holds only the experiment tabs.
 """
 
 from __future__ import annotations
@@ -19,9 +19,6 @@ from polarisation_ui.infrastructure.modules import ModuleRegistry
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
 from polarisation_ui.ui.widgets.tab_registry import TabRegistry
-
-# Page 0 of the tab widget is the configuration page; only the pages after it are experiments.
-CONFIG_PAGE_COUNT = 1
 
 
 class TabHost(QObject):
@@ -117,15 +114,15 @@ class TabHost(QObject):
     def set_group_selected(self, selected: bool) -> None:
         """Enable or disable the experiment tabs depending on whether a group is selected."""
         self._group_selected = selected
-        for i in range(CONFIG_PAGE_COUNT, self._tabs_widget.count()):
+        current = self._tabs_widget.currentIndex()
+        for i in range(self._tabs_widget.count()):
             self._apply_group_gating(i)
-        if not selected and self._tabs_widget.currentIndex() >= CONFIG_PAGE_COUNT:
-            self._tabs_widget.setCurrentIndex(0)
+        # Disabling every tab makes Qt jump to another page: keep the visible one in place.
+        if current >= 0 and self._tabs_widget.currentIndex() != current:
+            self._tabs_widget.setCurrentIndex(current)
 
     def _apply_group_gating(self, tab_index: int) -> None:
-        if tab_index < CONFIG_PAGE_COUNT:
-            return  # the configuration page is always accessible
-        tooltip = "" if self._group_selected else self._cfg.text("mainwindow.tab_group_required")
+        tooltip = "" if self._group_selected else self._cfg.text("main_window.tab_group_required")
         self._tabs_widget.setTabEnabled(tab_index, self._group_selected)
         self._tabs_widget.setTabToolTip(tab_index, tooltip)
 

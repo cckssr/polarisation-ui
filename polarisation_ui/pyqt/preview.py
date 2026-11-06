@@ -5,8 +5,8 @@ The ``.ui`` file is compiled on the fly (no ``pyuic.sh`` run needed) and the Ger
 combo boxes, tables and plots that the code fills stay empty.
 
     .venv/bin/python -m polarisation_ui.pyqt.preview                 # list the forms
-    .venv/bin/python -m polarisation_ui.pyqt.preview mainwindow     # show one form
-    .venv/bin/python -m polarisation_ui.pyqt.preview mainwindow --watch   # reload on save
+    .venv/bin/python -m polarisation_ui.pyqt.preview main_window    # show one form
+    .venv/bin/python -m polarisation_ui.pyqt.preview main_window --watch   # reload on save
 """
 
 from __future__ import annotations

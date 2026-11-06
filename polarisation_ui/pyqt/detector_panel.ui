@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DetectorPanel</class>
+ <widget class="QGroupBox" name="DetectorPanel">
+  <property name="title">
+   <string>Detektor</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabDetector">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tabPdtia">
+      <attribute name="title">
+       <string>PD-TIA</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridPdtia" columnstretch="0,1,0">
+       <property name="horizontalSpacing">
+        <number>6</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>6</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="labelPdtiaStatus">
+         <property name="text">
+          <string>Status</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="pdtiaStatusLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="ElidedLabel" name="valuePdtiaStatus">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="ledPdtiaStatus">
+           <property name="styleSheet">
+            <string>background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="labelPdtiaId">
+         <property name="text">
+          <string>Photodetektor</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QComboBox" name="comboPdtiaId">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+         </property>
+         <property name="minimumContentsLength">
+          <number>8</number>
+         </property>
+         <property name="toolTip">
+          <string>Photodetektor (PD-TIA-Gerät) auswählen</string>
+         </property>
+         <property name="placeholderText">
+          <string>— Kein Photodetektor ausgewählt! —</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="labelProfile">
+         <property name="text">
+          <string>Kalibrierung</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="comboProfile">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+         </property>
+         <property name="minimumContentsLength">
+          <number>8</number>
+         </property>
+         <property name="toolTip">
+          <string>Leistungskalibrierungsprofil auswählen (optional — schaltet µW-Anzeige frei)</string>
+         </property>
+         <property name="placeholderText">
+          <string>— Kein Profil geladen —</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="buttonReloadProfiles">
+         <property name="text">
+          <string>Aktualisieren</string>
+         </property>
+         <property name="toolTip">
+          <string>Profil-Liste aus dem Verzeichnis neu einlesen</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <widget class="QPushButton" name="buttonOpenCalibration">
+         <property name="text">
+          <string>Kalibrierungstool…</string>
+         </property>
+         <property name="toolTip">
+          <string>Leistungskalibrierungstool öffnen</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="pdtiaAverageLayout">
+         <item>
+          <widget class="QCheckBox" name="checkPdtiaAverage">
+           <property name="text">
+            <string>Mittelung aktivieren</string>
+           </property>
+           <property name="toolTip">
+            <string>Aktiviert die kontinuierliche Mittelung der PD-TIA-Spannungswerte</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinPdtiaAverages">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>5</number>
+           </property>
+           <property name="toolTip">
+            <string>Anzahl der Messwerte für die gleitende Mittelung (2–100)</string>
+           </property>
+           <property name="suffix">
+            <string> Werte</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="5" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="darkLayout">
+         <item>
+          <widget class="QPushButton" name="buttonDarkTare">
+           <property name="text">
+            <string>Dunkelstrom nullen</string>
+           </property>
+           <property name="toolTip">
+            <string>Detektor vollständig abdecken, dann Dunkelstrom-Offset über 2 s messen</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonDarkReset">
+           <property name="text">
+            <string>Offset zurücksetzen</string>
+           </property>
+           <property name="toolTip">
+            <string>Dunkelstrom-Offset auf 0 zurücksetzen</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0" colspan="3">
+        <widget class="ElidedLabel" name="valueDarkOffset">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+           <horstretch>1</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Aktuell abgezogener Dunkelstrom-Offset in Millivolt</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabPm400">
+      <attribute name="title">
+       <string>PM400</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridPm400" columnstretch="0,1,0">
+       <property name="horizontalSpacing">
+        <number>6</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>6</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="labelPm400Status">
+         <property name="text">
+          <string>Status</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="pm400StatusLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="ElidedLabel" name="valuePm400Status">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="ledPm400Status">
+           <property name="styleSheet">
+            <string>background-color: rgb(255, 11, 3); border: 0px; padding: 4px; border-radius: 10px</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="labelResource">
+         <property name="text">
+          <string>VISA-Adresse</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="comboPm400Resource">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+         </property>
+         <property name="minimumContentsLength">
+          <number>8</number>
+         </property>
+         <property name="toolTip">
+          <string>Automatisch erkannte USB/VISA-Ressourcen des PM400 (Aktualisieren zum erneuten Suchen)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="buttonPm400Refresh">
+         <property name="text">
+          <string>Aktualisieren</string>
+         </property>
+         <property name="toolTip">
+          <string>VISA-Ressourcenliste neu einlesen</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="labelWavelength">
+         <property name="text">
+          <string>Wellenlänge</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="2">
+        <widget class="QDoubleSpinBox" name="spinWavelength">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>200.0</double>
+         </property>
+         <property name="maximum">
+          <double>2000.0</double>
+         </property>
+         <property name="value">
+          <double>633.0</double>
+         </property>
+         <property name="toolTip">
+          <string>Betriebswellenlänge für die spektrale Empfindlichkeitskorrektur des PM400</string>
+         </property>
+         <property name="suffix">
+          <string> nm</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="pm400ButtonLayout">
+         <item>
+          <widget class="QPushButton" name="buttonPm400Connect">
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+           <property name="toolTip">
+            <string>PM400 verbinden oder trennen</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonPm400Zero">
+           <property name="text">
+            <string>Nullabgleich (Zero)</string>
+           </property>
+           <property name="toolTip">
+            <string>Dunkelstrom-Nullabgleich des PM400 starten</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ElidedLabel</class>
+   <extends>QLabel</extends>
+   <header>polarisation_ui.ui.widgets.elided_label</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

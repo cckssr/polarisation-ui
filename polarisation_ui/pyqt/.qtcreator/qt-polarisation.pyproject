@@ -1,6 +1,13 @@
 {
     "files": [
-        "../mainwindow.ui",
+        "../main_window.ui",
+        "../arduino_panel.ui",
+        "../stage_panel.ui",
+        "../kdc_panel.ui",
+        "../detector_panel.ui",
+        "../readout_panel.ui",
+        "../measurement_panel.ui",
+        "../save_panel.ui",
         "../acq_settings.ui",
         "../encoder_debug.ui",
         "../log_window.ui",
@@ -10,7 +17,6 @@
         "../brewster_tab.ui",
         "../waveplate_tab.ui",
         "../power_drift_tab.ui",
-        "../mock_mainwindow.py",
         "../ellipsometry_tab.ui"
     ]
 }

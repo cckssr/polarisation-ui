@@ -39,7 +39,7 @@ from polarisation_ui.ui.windows.auto_power_calibration_window import (
     AutoPowerCalibrationWindow,
 )
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
-from polarisation_ui.ui.windows.mainwindow import MainWindow
+from polarisation_ui.ui.windows.main_window import MainWindow
 
 
 def main():
@@ -119,7 +119,7 @@ def main():
 def _run_main(app: "QApplication", config: AppConfig, simulate: bool = False) -> None:
     """Launch the full main window (on simulated devices with ``simulate``)."""
     main_window = MainWindow(config, simulate=simulate)
-    main_window.show()
+    main_window.show_initial(config.get("application.window_mode", "maximized"))
     Debug.info("Main window displayed")
     sys.exit(app.exec())
 

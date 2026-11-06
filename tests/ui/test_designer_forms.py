@@ -18,9 +18,7 @@ FORMS = sorted(path.stem for path in PYQT_DIR.glob("*.ui"))
 
 # Forms that still carry untranslated texts in their .ui (or lack a config section); the
 # migration phases remove a form from this set once all its texts come from config.json.
-NOT_YET_MIGRATED: set[str] = {
-    "mainwindow",
-}  # one entry per line: each migration removes its own line
+NOT_YET_MIGRATED: set[str] = set()  # one entry per line: each migration removes its own line
 
 # .ui property -> key suffix of ``apply_strings`` (``""``: the plain ``name`` key).
 _TEXT_PROPERTIES = {

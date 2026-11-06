@@ -2,7 +2,7 @@
 
 Mirrors every message written to StatusBarManager so the user has
 persistent scrollback beyond the status bar's 1-line display.
-Hosted as a QDockWidget; toggle via the Einstellungen menu action.
+Hosted as a QDockWidget; toggle via the *Ereignisprotokoll* toolbar action.
 """
 
 from __future__ import annotations

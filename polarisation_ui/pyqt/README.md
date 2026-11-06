@@ -5,7 +5,8 @@ The `.ui` files are converted to Python code using the `pyside6-uic` tool, alter
 
 ## Files
 
-- `mainwindow.ui` → `ui_mainwindow.py` — main window: connection panel, encoder/ADC readouts, tab widget.
+- `main_window.ui` → `ui_main_window.py` — main window: toolbar, left dock (device panels), right dock (readout / measurement / save), bottom event-log dock and the central experiment tab widget.
+- `arduino_panel.ui`, `stage_panel.ui` (used for the sample and the detector stage), `kdc_panel.ui`, `detector_panel.ui` (PD-TIA | PM400 pages), `readout_panel.ui`, `measurement_panel.ui`, `save_panel.ui` → `ui_<form>.py` — the dock panels, promoted in `main_window.ui` (classes in `polarisation_ui/ui/widgets/panels/`).
 - `acq_settings.ui` → `ui_acq_settings.py` — acquisition averaging settings dialog.
 - `auto_power_calibration.ui` → `ui_auto_power_calibration.py` — automated power-calibration wizard dialog.
 - `brewster_tab.ui` → `ui_brewster_tab.py` — Brewster-angle experiment tab.

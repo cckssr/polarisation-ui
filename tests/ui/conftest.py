@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
+from PySide6.QtCore import QSettings
 
 from polarisation_ui.infrastructure.config import AppConfig, load_config, reset_default_config
 from polarisation_ui.infrastructure.modules import ModuleRegistry
 from polarisation_ui.ui.plot_style import set_plot_colors
-from polarisation_ui.ui.windows.mainwindow import MainWindow
+from polarisation_ui.ui.windows import main_window as main_window_module
+from polarisation_ui.ui.windows.main_window import MainWindow
 
 # Fast timings so simulated frames arrive quickly and a lost link is declared within a second.
 FAST_SIM = {
@@ -22,6 +25,18 @@ FAST_SIM = {
 def config() -> AppConfig:
     """The packaged configuration (expert profile) with fast simulation timings."""
     return load_config(overrides=FAST_SIM)
+
+
+@pytest.fixture(autouse=True)
+def layout_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Keep the window layout of every test out of the user's real settings."""
+    path = tmp_path / "layout.ini"
+    monkeypatch.setattr(
+        main_window_module,
+        "layout_settings",
+        lambda: QSettings(str(path), QSettings.Format.IniFormat),
+    )
+    return path
 
 
 @pytest.fixture(autouse=True)
@@ -50,6 +65,6 @@ def window(qtbot, config: AppConfig) -> Iterator[MainWindow]:
 def connected(qtbot, window: MainWindow) -> MainWindow:
     """The window after the simulated Arduino connected and the first frame arrived."""
     with qtbot.waitSignal(window.ctx.data.frame_ready, timeout=5000):
-        window.ui.btnArduinoConnect.click()
+        window.ui.arduinoPanel.ui.buttonConnect.click()
     assert window.ctx.connection.is_connected
     return window

@@ -62,7 +62,7 @@ class PM400Controller(QObject):
 
     # ---- helpers -------------------------------------------------------------------------
     def _t(self, key: str, **fmt: object) -> str:
-        return self._cfg.text(f"mainwindow.{key}", **fmt)
+        return self._cfg.text(f"main_window.{key}", **fmt)
 
     def _m(self, key: str, **fmt: object) -> str:
         return self._cfg.message(f"pm400.{key}", **fmt)

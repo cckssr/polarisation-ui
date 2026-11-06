@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SavePanel</class>
+ <widget class="QGroupBox" name="SavePanel">
+  <property name="title">
+   <string>Speicherung</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="0,1">
+   <property name="horizontalSpacing">
+    <number>6</number>
+   </property>
+   <property name="verticalSpacing">
+    <number>6</number>
+   </property>
+   <item row="0" column="0" colspan="2">
+    <widget class="QLabel" name="labelHint">
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Bitte vor Beginn der Messungen Gruppe auswählen und ggf. individuelle Team-Bezeichnung hinzufügen</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="labelGroup">
+     <property name="text">
+      <string>Buchstabe*</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="comboGroup">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Auswahl der GP Praktikumsgruppe (Pflichtfeld)</string>
+     </property>
+     <item>
+      <property name="text">
+       <string notr="true">A</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">B</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">C</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">D</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">E</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">F</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">G</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">H</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">I</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">J</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">K</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">L</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">M</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">N</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">O</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">P</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">Q</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">R</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">S</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">T</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">U</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">V</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">W</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string notr="true">Z</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="labelTeam">
+     <property name="text">
+      <string>Team-Bezeichnung</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLineEdit" name="editTeam">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+       <horstretch>1</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
+     </property>
+     <property name="placeholderText">
+      <string>Bspw. TimStruppi</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="labelSuffix">
+     <property name="text">
+      <string>Eigenes Suffix</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLineEdit" name="editSuffix">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+       <horstretch>1</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maxLength">
+      <number>20</number>
+     </property>
+     <property name="toolTip">
+      <string>Ein benutzerdefiniertes Suffix mit maximal 20 Zeichen</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="labelFilename">
+     <property name="text">
+      <string>Aktueller Dateiname</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="ElidedLabel" name="valueFilename">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+       <horstretch>1</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QLabel" name="labelDropbox">
+     <property name="textFormat">
+      <enum>Qt::TextFormat::RichText</enum>
+     </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>&lt;a href=&quot;https://openbis.physik.tu-berlin.de/doku/students/gp/automatic_upload.html&quot;&gt;GP-Dropbox&lt;/a&gt;</string>
+     </property>
+     <property name="toolTip">
+      <string>Die Dateien werden in einem speziell generierten Ordner abgelegt, welcher die Nutzung der GP-Dropbox für den automatischen Upload erleichtert.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QPushButton" name="buttonSave">
+     <property name="text">
+      <string>Speichern</string>
+     </property>
+     <property name="toolTip">
+      <string>Messung speichern (Dateidialog)</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ElidedLabel</class>
+   <extends>QLabel</extends>
+   <header>polarisation_ui.ui.widgets.elided_label</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
