@@ -20,6 +20,15 @@ if TYPE_CHECKING:
 DETECTOR_PDTIA = "pdtia"
 DETECTOR_PM400 = "pm400"
 
+# ADC saturation thresholds (ADS1220, PGA=1, Vref=2.048 V)
+ADC_SAT_LOW_V = 0.02  # near GND
+ADC_SAT_HIGH_V = 2.0  # near the rail
+
+
+def is_adc_saturated(voltage_V: float) -> bool:
+    """True when the PD-TIA voltage sits at the ADC's lower or upper rail."""
+    return voltage_V < ADC_SAT_LOW_V or voltage_V > ADC_SAT_HIGH_V
+
 
 def point_power(frame: Frame | None, intensity_V: float) -> tuple[float | None, float | None]:
     """Return ``(power_W, conv_factor_W_per_V)`` for a point measured at *intensity_V*.

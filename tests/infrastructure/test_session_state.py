@@ -96,3 +96,28 @@ class TestIsFromToday:
 
     def test_malformed_date_is_false(self):
         assert is_from_today(_make_state(saved_date="not-a-date")) is False
+
+
+def test_has_restorable_data_ignores_an_empty_session() -> None:
+    from polarisation_ui.infrastructure.session_state import has_restorable_data
+
+    empty = SessionState(saved_date=date.today().isoformat(), saved_at="2026-06-05T14:30:00")
+    assert not has_restorable_data(empty)
+    assert not has_restorable_data(SessionState(**{**empty.__dict__, "tab_points": {"malus": []}}))
+
+
+def test_has_restorable_data_accepts_any_meaningful_field() -> None:
+    from polarisation_ui.infrastructure.session_state import has_restorable_data
+
+    base = {"saved_date": date.today().isoformat(), "saved_at": "2026-06-05T14:30:00"}
+    for change in (
+        {"group_letter": "A"},
+        {"team_name": "t"},
+        {"suffix": "s"},
+        {"profile_name": "p"},
+        {"gain_stage": 2},
+        {"kdc_zero_offset_deg": 4.0},
+        {"tab_points": {"malus": [{"angle": 1.0}]}},
+    ):
+        assert has_restorable_data(SessionState(**base, **change)), change
+    assert not has_restorable_data(SessionState(**base, gain_stage=9))

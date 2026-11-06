@@ -289,3 +289,16 @@ class TestCrashResilience:
         out = tmp_path / "crash_recovery.csv"
         rows = SessionJournal.export_orphan(orphans[0], out)
         assert rows == 10
+
+
+def test_a_journal_can_live_in_an_explicit_base_directory(tmp_path, tmp_journal_base):
+    base = tmp_path / "elsewhere"
+    journal = SessionJournal(base=base)
+    journal.start()
+    journal.append_frame(_make_frame())
+
+    assert base in journal.journal_path.parents
+    assert not tmp_journal_base.exists()
+    assert SessionJournal.find_orphans(base) == [journal.session_dir]
+    assert SessionJournal.find_orphans() == []  # the default base is untouched
+    journal.close()

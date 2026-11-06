@@ -9,6 +9,8 @@ Flags:
     --debug-only    Skip the main window and open only the encoder debug dialog.
                     Useful for hardware diagnostics without the full measurement UI.
     --power-cal     Launch the automatic power calibration window as a standalone
+    --simulate      Run the main window on simulated devices (mock Arduino, KDC101, PM400);
+                    no hardware needed.
 """
 
 import argparse
@@ -30,7 +32,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from polarisation_ui.core.formatting import init_from_config
-from polarisation_ui.infrastructure.config import import_config
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.ui.windows.auto_power_calibration_window import (
@@ -63,6 +65,11 @@ def main():
             "The Arduino connection is managed inside the window itself."
         ),
     )
+    parser.add_argument(
+        "--simulate",
+        action="store_true",
+        help="Run the main window on simulated devices (no hardware needed)",
+    )
     args, qt_argv = parser.parse_known_args()
     # Qt expects the program name as argv[0]
     qt_argv = [sys.argv[0]] + qt_argv
@@ -73,9 +80,9 @@ def main():
     )
 
     # Load configuration
-    config = import_config()
-    init_from_config(config)
-    version = config.get("application", {}).get("version", "unknown")
+    config = default_config()
+    init_from_config(config.data)
+    version = config.get("application.version", "unknown")
 
     # Initialize debug system
     debug_level_map = {
@@ -84,10 +91,10 @@ def main():
         "error": Debug.DEBUG_ERROR,
         "off": Debug.DEBUG_OFF,
     }
-    debug_level_str = config.get("debug", {}).get("level_default", "info")
+    debug_level_str = config.get("debug.level_default", "info")
     debug_level = debug_level_map.get(debug_level_str, Debug.DEBUG_INFO)
 
-    app_name = config.get("application", {}).get("name", "Goniometer Control")
+    app_name = config.get("application.name", "Goniometer Control")
     Debug.init(debug_level=debug_level, app_name=app_name)
 
     # Register global exception handler
@@ -100,20 +107,18 @@ def main():
     app.setApplicationName(app_name)
     app.setQuitOnLastWindowClosed(True)
 
-    # Initialize device manager (not yet connected — connection happens in the window)
-    device_manager = GoniometerDeviceManager(use_mock=False)
-
     if args.debug_only:
-        _run_debug_only(app, device_manager)
+        # Not yet connected — the connection is made inside the dialog
+        _run_debug_only(app, GoniometerDeviceManager(use_mock=False))
     elif args.power_cal:
         _run_power_cal(app)
     else:
-        _run_main(app, device_manager)
+        _run_main(app, config, simulate=args.simulate)
 
 
-def _run_main(app: "QApplication", device_manager: GoniometerDeviceManager) -> None:
-    """Launch the full main window."""
-    main_window = MainWindow(device_manager)
+def _run_main(app: "QApplication", config: AppConfig, simulate: bool = False) -> None:
+    """Launch the full main window (on simulated devices with ``simulate``)."""
+    main_window = MainWindow(config, simulate=simulate)
     main_window.show()
     Debug.info("Main window displayed")
     sys.exit(app.exec())

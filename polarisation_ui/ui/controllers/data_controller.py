@@ -17,16 +17,16 @@ from polarisation_ui.core.formatting import export_angle, export_intensity
 from polarisation_ui.core.models import AcquisitionSettings, Frame
 from polarisation_ui.core.power_calibration import PowerCalibrationProfile
 from polarisation_ui.core.utils import circular_mean_deg
-from polarisation_ui.infrastructure.config import import_config
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.infrastructure.qt_threads import PM400PollWorker, ReconnectWorker
 from polarisation_ui.infrastructure.session_journal import SessionJournal
 
 if TYPE_CHECKING:
-    from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
+    from pathlib import Path
 
-CONFIG = import_config()
+    from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 # A cached PM400 reading older than this counts as absent for the current
 # poll — a defensive fallback in case PM400PollWorker stalls or dies without
@@ -35,23 +35,24 @@ CONFIG = import_config()
 _PM400_STALE_S = 1.0
 
 
-def _evaluate_encoder(diag: dict | None, label: str) -> tuple[bool, str]:
+def _evaluate_encoder(diag: dict | None, label: str, config: AppConfig) -> tuple[bool, str]:
     """Evaluate one encoder's SYST:DIAG? dict.
 
     Returns (ok, description) — description is "<label>: OK" when healthy or
-    "<label>: <fault list>" when one or more flags are set.
+    "<label>: <fault list>" when one or more flags are set. The fault texts come
+    from ``messages.connection`` of *config*.
     """
     if diag is None:
-        return False, f"{label}: keine Antwort"
+        return False, config.message("connection.diag_no_response", label=label)
     faults: list[str] = []
     if diag.get("compHigh"):
-        faults.append("Magnet zu weit (COMP_H)")
+        faults.append(config.message("connection.diag_comp_high"))
     if diag.get("compLow"):
-        faults.append("Magnet zu nah (COMP_L)")
+        faults.append(config.message("connection.diag_comp_low"))
     if diag.get("cof"):
-        faults.append("CORDIC-Überlauf (COF)")
+        faults.append(config.message("connection.diag_cof"))
     if not diag.get("ocf", True):
-        faults.append("Kalibrierung ausstehend (OCF)")
+        faults.append(config.message("connection.diag_ocf"))
     ok = len(faults) == 0
     return ok, f"{label}: {'; '.join(faults) if faults else 'OK'}"
 
@@ -134,6 +135,8 @@ class DataController(QObject):
         device_manager: GoniometerDeviceManager,
         parent: QObject | None = None,
         use_mock_intensity: bool = False,
+        config: AppConfig | None = None,
+        journal_base: "Path | None" = None,
     ):
         """Initialize data controller.
 
@@ -142,15 +145,19 @@ class DataController(QObject):
             parent: Parent QObject
             use_mock_intensity: If True, _read_intensity() returns a simulated value
                 instead of querying the device. Set to True in unit tests without hardware.
+            config: Application configuration (default: ``default_config()``).
+            journal_base: Session-journal directory (default ``~/.polarisation-ui/sessions``).
         """
         super().__init__(parent)
 
         self.device_manager = device_manager
+        self.config: AppConfig = config if config is not None else default_config()
+        self._journal_base = journal_base
 
         # Load tunable parameters from config so nothing is hardcoded here.
-        _timers = CONFIG.get("timers", {})
-        _conn = CONFIG.get("connection", {})
-        _acq_cfg = CONFIG.get("acquisition", {})
+        _timers = self.config.section("timers")
+        _conn = self.config.section("connection")
+        _acq_cfg = self.config.section("acquisition")
 
         # Polling timer
         self.poll_timer = QTimer(self)
@@ -886,8 +893,8 @@ class DataController(QObject):
         if result is None:
             return  # not connected — nothing to report
 
-        a_ok, a_desc = _evaluate_encoder(result[0], "Enc A")
-        b_ok, b_desc = _evaluate_encoder(result[1], "Enc B")
+        a_ok, a_desc = _evaluate_encoder(result[0], "Enc A", self.config)
+        b_ok, b_desc = _evaluate_encoder(result[1], "Enc B", self.config)
         self.diagnostics_updated.emit(a_ok, a_desc, b_ok, b_desc)
         if not a_ok or not b_ok:
             Debug.warning(f"Sensor diagnostics: {a_desc} | {b_desc}")
@@ -900,7 +907,9 @@ class DataController(QObject):
         """Create and start a new session journal for the current measurement."""
         firmware = self.device_manager.get_firmware_version()
         config = self.device_manager.get_desired_state().as_config_snapshot()
-        self._journal = SessionJournal(firmware_version=firmware, config_snapshot=config)
+        self._journal = SessionJournal(
+            firmware_version=firmware, config_snapshot=config, base=self._journal_base
+        )
         try:
             self._journal.start()
         except OSError as e:

@@ -9,7 +9,10 @@ from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 
 def populate_pm400_combo(
-    combo: QComboBox, preferred: str = "", config: AppConfig | None = None
+    combo: QComboBox,
+    preferred: str = "",
+    config: AppConfig | None = None,
+    resources: list[str] | None = None,
 ) -> list[str]:
     """Fill *combo* with the VISA resources found right now and return them.
 
@@ -18,10 +21,12 @@ def populate_pm400_combo(
     by accident. Selection order: the current entry, then *preferred* (the
     last-used resource), then the first device. When nothing is found the
     placeholder ``ui.common.pm400_none_found`` of *config* (default:
-    ``default_config()``) is shown.
+    ``default_config()``) is shown. *resources* replaces the live VISA scan
+    (a controller or a simulation supplies its own list).
     """
     wanted = combo.currentText() or preferred
-    resources = PM400PowerMeter.list_resources()
+    if resources is None:
+        resources = PM400PowerMeter.list_resources()
     combo.clear()
     combo.addItems(resources)
     if not resources:

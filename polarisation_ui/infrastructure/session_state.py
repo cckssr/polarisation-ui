@@ -71,3 +71,16 @@ def is_from_today(state: SessionState) -> bool:
         return date.fromisoformat(state.saved_date) == date.today()
     except ValueError:
         return False
+
+
+def has_restorable_data(state: SessionState) -> bool:
+    """Return True iff *state* carries anything worth offering to restore."""
+    return bool(
+        state.group_letter
+        or state.team_name
+        or state.suffix
+        or state.profile_name
+        or (1 <= state.gain_stage <= 4)
+        or state.kdc_zero_offset_deg
+        or any(v for v in state.tab_points.values())
+    )

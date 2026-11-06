@@ -45,10 +45,11 @@ class SessionJournal:
         self,
         firmware_version: str = "unknown",
         config_snapshot: dict | None = None,
+        base: Path | None = None,
     ) -> None:
-        """Assign this session a timestamped directory under JOURNAL_BASE; start() opens it."""
+        """Assign this session a timestamped directory under ``base`` (default JOURNAL_BASE)."""
         ts = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
-        self._session_dir = JOURNAL_BASE / ts
+        self._session_dir = (base if base is not None else JOURNAL_BASE) / ts
         self._journal_path = self._session_dir / "journal.csv"
         self._firmware_version = firmware_version
         self._config_snapshot: dict = config_snapshot or {}
@@ -183,12 +184,13 @@ class SessionJournal:
     # ── class-level helpers ────────────────────────────────────────────────────
 
     @classmethod
-    def find_orphans(cls) -> list[Path]:
-        """Return a sorted list of session directories that are not finalized."""
-        if not JOURNAL_BASE.exists():
+    def find_orphans(cls, base: Path | None = None) -> list[Path]:
+        """Return a sorted list of session directories under ``base`` that are not finalized."""
+        root = base if base is not None else JOURNAL_BASE
+        if not root.exists():
             return []
         orphans: list[Path] = []
-        for d in sorted(JOURNAL_BASE.iterdir()):
+        for d in sorted(root.iterdir()):
             if not d.is_dir():
                 continue
             if (d / "journal.csv").exists() and not (d / _FINALIZED).exists():
