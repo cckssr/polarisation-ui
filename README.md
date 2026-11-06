@@ -126,11 +126,17 @@ The `dev` extras install `ruff`, `pytest`, `pytest-qt`, and `build`. The mock Ar
 # Launch full measurement UI (connects to real hardware on first run)
 polarisation-ui
 
+# Launch the reduced lab-course interface ("Praktikum": no encoder debug, no calibration windows)
+polarisation-ui --profile student
+
+# Run without hardware on simulated devices (Arduino, KDC101, PM400)
+polarisation-ui --simulate
+
 # Launch encoder debug window only (SCPI terminal, diagnostics)
 polarisation-ui --debug-only
 ```
 
-On first launch the application shows a connection dialog — select the serial port of the Arduino Nano ESP32 and click Connect. The default baud rate is 115200.
+The main window has the device panels (Arduino, sample and detector stage, KDC101, detector PD-TIA/PM400) in the left dock, the live readouts with the gain buttons, measurement control and saving in the right dock, the experiment tabs in the centre and the event log at the bottom. Docks can be collapsed from the toolbar; the layout is remembered per profile, F11 toggles full screen. The toolbar switches between the `Experte` and `Praktikum` profiles at run time (devices are reconnected). Select the serial port of the Arduino Nano ESP32 in the Arduino panel and click Verbinden; the default baud rate is 115200.
 
 ### Hardware-Free Testing (Developer Mode)
 
@@ -141,7 +147,7 @@ python -m polarisation_ui.infrastructure.mocks.mock_arduino
 # Prints: PTY Slave Path: /dev/ttys005
 ```
 
-Then launch the UI — the mock PTY path appears automatically in the port list (registered via temp file). The simulator generates Malus-law-correct intensity curves.
+Then launch the UI — the mock PTY path appears automatically in the port list (registered via temp file). The simulator generates Malus-law-correct intensity curves. `polarisation-ui --simulate` does the same in one step and also simulates the KDC101 and the PM400.
 
 ### Power Calibration
 
@@ -168,7 +174,9 @@ The application is configured via `polarisation_ui/config.json`. German UI strin
 
 | Key path                            | Type   | Default                           | Description                                             |
 | ----------------------------------- | ------ | --------------------------------- | ------------------------------------------------------- |
-| `application.name`                  | string | `"Polarisation UI"`               | Window title                                            |
+| `application.name`                  | string | `"Polarisation UI"`               | Application name (log files, Qt application name)       |
+| `application.profile`               | string | `"expert"`                        | Start profile: `expert` or `student` (Praktikum)        |
+| `application.window_mode`           | string | `"maximized"`                     | Start mode: `maximized`, `fullscreen` or `normal`       |
 | `debug.level_default`               | string | `"info"`                          | Log level: `verbose`, `info`, `error`, `off`            |
 | `connection.max_retry_attempts`     | int    | `10`                              | Serial reconnect attempts before giving up              |
 | `connection.backoff_delays_ms`      | list   | `[1000, 2000, 4000, 8000, 15000]` | Exponential backoff sequence                            |
@@ -179,7 +187,8 @@ The application is configured via `polarisation_ui/config.json`. German UI strin
 | `acquisition.sample_stage_inverted` | bool   | `true`                            | Invert Encoder A direction                              |
 | `acquisition.spike_filter_enabled`  | bool   | `false`                           | Drop readings that jump more than `spike_max_delta_deg` |
 | `save.base_folder`                  | string | `"Polarisation"`                  | Root export folder name                                 |
-| `ui.theme`                          | string | `"dark"`                          | UI theme: `dark` or `light`                             |
+
+Further sections: `ui.<form>` holds the German texts of every Designer form by object name, `messages.<area>` the status and error texts, `profiles.<name>` the tabs and widgets a profile hides (`hidden_tabs`, `hidden_widgets`) plus text `overrides`, and `plot_colors` the curve colours (plot backgrounds follow the system light/dark palette). After editing texts, run `polarisation_ui/pyqt/pyuic.sh` so the Designer forms show them too.
 
 Override the config at runtime by placing a custom `config.json` in the current working directory — it takes priority over the bundled one.
 
@@ -233,7 +242,7 @@ Qt signals: angles_updated, intensity_updated, diagnostics_updated,
             error_occurred, retry_connecting, reconnect_succeeded,
             connection_lost, measurement_started/stopped
   ↓
-MainWindow, PlotTabBase subclasses (MalusTab, BrewsterTab, WaveplateTab, EllipsometryTab)
+Controllers → MainWindow panels, PlotTabBase subclasses (MalusTab, BrewsterTab, WaveplateTab, EllipsometryTab, PowerDriftTab)
 ```
 
 ### Testing
@@ -271,8 +280,11 @@ polarisation-ui/
 │   │   ├── devices/          # Encoder, ADC, and optional-module adapters
 │   │   ├── mocks/            # MockArduino + mock devices + port registry (dev/test)
 │   │   └── modules/          # HostModule protocol + ModuleRegistry singleton
-│   └── ui/                   # PySide6 widgets, windows, controllers
-│       └── widgets/tabs/     # Experiment tabs: malus_tab, brewster_tab, waveplate_tab
+│   ├── pyqt/                 # Qt Designer forms (*.ui), generated ui_*.py, pyuic.sh, preview
+│   └── ui/                   # PySide6 windows, controllers, panels, tabs, profiles
+│       ├── controllers/      # Connection, KDC101, PM400, detector, measurement, session
+│       ├── widgets/panels/   # Dock panels (one Designer form each)
+│       └── widgets/tabs/     # Experiment tabs: malus, brewster, waveplate, ellipsometry, power drift
 ├── calibration_tool/         # Sibling app — KDC101 encoder calibration
 ├── src_arduino/              # PlatformIO firmware (Arduino Nano ESP32)
 ├── tests/                    # pytest suite

@@ -34,31 +34,19 @@ ui/  →  core/                 (direct when needed)
 
 **Forbidden**: `core/ → ui/`, `core/ → infrastructure/`, `infrastructure/ → ui/`.
 
-### UI / Qt Designer separation rule — MANDATORY
+### UI rules (oct-ui style) — MANDATORY
 
-**Every visual element in a window or dialog must be declared in its `.ui` file. Python code must never construct Qt widgets, layouts, or dialogs.**
+The UI follows the cross-project skill **`pyside-designer-ui`** (`~/.claude/skills/pyside-designer-ui/SKILL.md`); load it before any UI work. Project specifics:
 
-Rules:
-
-- All `QWidget`, `QLabel`, `QPushButton`, `QLayout`, `QGroupBox`, `QLCDNumber`, `QComboBox`, `QTableWidget`, `QAction` (menus), etc. go in `.ui` → regenerate with `pyuic.sh`.
-- Python files (`mainwindow.py`, `encoder_debug_window.py`, `acq_settings.py`, `log_window.py`, …) contain **only signal connections, slot logic, and state manipulation** — no widget construction.
-- Qt imports in those files are restricted to: base classes (`QMainWindow`, `QDialog`), modal helpers (`QFileDialog`, `QMessageBox`), event types (`QCloseEvent`), and `@Slot` / `QTimer`.
-- `QButtonGroup` may be constructed in Python because it is a non-visual logical helper; its buttons must still be declared in the `.ui` file.
-
-**Exceptions (explicitly permitted to build widgets in Python):**
-
-| File                                                                                                           | Reason                                                                                                                                                                                                        |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `power_calibration_window.py`                                                                                  | User-approved exception — no `.ui` counterpart by design                                                                                                                                                      |
-| `brewster_curve_plot.py`, `brewster_detector_plot.py`, `malus_curve_plot.py`, `multi_gain_calibration_plot.py` | pyqtgraph custom widgets — Qt Designer cannot host third-party custom widgets                                                                                                                                 |
-| `PlotTabBase` subclasses (`brewster_tab.py`, `malus_tab.py`, …)                                                | Not an exception — these load a `Ui_*Tab` from a `.ui` file inside `build()` and promote pyqtgraph plots via `<customwidget>`; `build()` is the wiring hook, not a licence to construct widgets               |
-| `log_window.py`                                                                                                | Sanctioned exception: imports `QObject, Qt, Signal, QTextCursor` beyond the usual whitelist for a cross-thread logging bridge (log records arrive off the Qt main thread and must be marshalled via a signal) |
-
-`auto_power_calibration_window.py` now has a `.ui` counterpart (`ui_auto_power_calibration.py`) and is **not** an exception — it follows the normal Designer-first rule.
-
-**Known pre-existing violation** (to be migrated, do not extend further):
-
-- `encoder_debug_window.py` — builds several programmatic tabs/panels on top of `encoder_debug.ui`; scope is large, tracked as tech-debt.
+- **Designer only.** Every widget, layout, dock, toolbar action and tab page is declared in a `.ui` file under `polarisation_ui/pyqt/`; Python only loads the form, applies strings, wires signals and updates state. Allowed in Python: base classes, `QFileDialog`/`QMessageBox`, event types, `QTimer`, `QSettings`, `QButtonGroup` (buttons in the `.ui`), adding items into Designer-declared containers (tabs, table rows, combo items, plot curves). There are **no exceptions** any more — the former ones (power calibration window, encoder debug dialog) are Designer forms now. pyqtgraph plot wrappers (`widgets/*_plot.py`) build only pyqtgraph content.
+- **Object names** use the oct prefixes (`button`, `label` (caption), `value` (live value), `spin`, `combo`, `check`, `radio`, `edit`, `group`, `table`, `scroll`, `dock`, `action`, `led`, `lcd`, `tab`, `*Plot`).
+- **Strings.** All user-visible German strings live in `polarisation_ui/config.json`: `ui.<form>.<objectName>[@tooltip|suffix|prefix|placeholder|title|tab]` (applied by `ui/i18n.py::apply_strings`), code-read texts as `ui.<form>.<snake_key>` via `config.text(...)`, status/warning/error texts as `messages.<area>.<key>` via `config.message(...)`, tab titles as `ui.tabs.<tab_id>`, plot labels as `ui.plots.*`. No German literal in Python (tests check this per module); code, logs and tests stay English.
+- **Workflow for a form change:** edit the `.ui` → add strings to `config.json` → `polarisation_ui/pyqt/pyuic.sh <form>` (syncs the config texts into the `.ui`, regenerates `ui_<form>.py`) → wire signals. `.venv/bin/python -m polarisation_ui.pyqt.preview <form> --watch` shows a form without logic. `tests/ui/test_designer_forms.py` fails when a form and the config drift apart.
+- **Config access:** `infrastructure/config.py` — `load_config(path=None, overrides=None, profile=None) -> AppConfig`, `default_config()` (cached); widgets and dialogs take `config: AppConfig | None = None`. `import_config()` is a deprecated shim.
+- **Plots** take background/foreground from the window palette (`ui/plot_style.py::style_plot`) and series colours from `plot_colors`; never hard-code `setBackground("w")`.
+- **Profiles** (`profiles` in `config.json`): `expert` (default, full UI) and `student` ("Praktikum", hides the encoder debug window and every entry to the calibration windows). `profiles.<p>.hidden_widgets` names Designer objects per root (`main_window`, panel names, tab ids); typos are reported by `ui/profile.py::apply_profile` and the tests. Code never checks the profile name.
+- **Screens:** the main window must fit 1920×1080 with both docks and 1366×768 with the right dock collapsed (`tests/ui/test_small_screens.py`).
+- `log_window.py` keeps its cross-thread logging bridge (`QObject`, `Signal`, `QTextCursor` imports).
 
 ### `polarisation_ui/core/`
 
@@ -93,22 +81,19 @@ Device adapters, serial I/O, Qt threading helpers, config, logging. No business 
 
 ### `polarisation_ui/ui/`
 
-PySide6 widgets. Thin event handlers — delegate all logic to core/infrastructure.
+PySide6 widgets and controllers. Thin event handlers — logic lives in controllers, core and infrastructure.
 
-- `windows/mainwindow.py` — `MainWindow`.
-- `windows/encoder_debug_window.py` — `EncoderDebugDialog` (SCPI terminal, diagnostics).
-- `windows/auto_power_calibration_window.py` — automated power-calibration wizard.
-- `controllers/data_controller.py` — `DataController` polls at 10 Hz via `QTimer`, emits Qt signals (`angles_updated`, `intensity_updated`, `diagnostics_updated`, `error_occurred`, `retry_connecting`, `reconnect_succeeded`, `connection_lost`, `measurement_started/stopped`).
-- `widgets/brewster_curve_plot.py`, `widgets/brewster_detector_plot.py`, `widgets/malus_curve_plot.py`, `widgets/ellipsometry_fit_plot.py`, `widgets/ellipsometry_curve_plot.py` — pyqtgraph plots.
-- `widgets/event_log_panel.py` — collapsible event-log panel.
-- `widgets/plot_tab_base.py` — `PlotTabBase` abstract base class for experiment tabs.
-- `widgets/tab_registry.py` — `TabRegistry` singleton; hides tabs whose `required_modules` are absent.
-- `widgets/tabs/brewster_tab.py` — Brewster-angle tab (sample scan + peak finding).
-- `widgets/tabs/malus_tab.py` — Malus-law tab (manual analyser-angle entry, averaged intensity).
-- `widgets/tabs/waveplate_tab.py` — Wave plate tab (λ/4, λ/2); requires `kdc101` module; drives `KDCSweepWorker` for automated angle sweep.
-- `widgets/tabs/ellipsometry_tab.py` — Rotating-analyser ellipsometry tab (manual or `KDCSweepWorker`-driven analyser sweep at a hand-set angle of incidence); requires calibrated power, `kdc101` optional. Physics in `core/ellipsometry.py`.
-- `dialogs/`, `common/`.
-- Qt Designer files live under `polarisation_ui/pyqt/` (`*.ui` sources, `ui_*.py` generated by `pyuic.sh`).
+- `windows/main_window.py` — `MainWindow(config, simulate, persist)`: toolbar, left dock `dockControls` (Arduino, sample/detector stage, KDC101, detector panels), right dock `dockMeasurement` (readouts + gain, measurement, save panels), central experiment tabs, bottom `dockEventLog`; layout persisted per profile in `QSettings`. `windows/auxiliary_windows.py` opens the dialogs below.
+- `launcher.py` — `Launcher` builds the window for a profile and rebuilds it on a profile switch (reconnects devices). `profile.py` — `apply_profile`, `profile_roots`.
+- `context.py` — `AppContext` (config + all controllers), `create(config, simulate, persist)`; `simulate=True` runs on `infrastructure/simulation.py::SimulatedBench` (mocks), also via `main.py --simulate`.
+- `controllers/` — `connection_controller.py` (Arduino), `kdc_controller.py`, `pm400_controller.py`, `detector_controller.py` (PD-TIA gain + auto-switch, calibration profile, dark tare), `measurement_controller.py` (start/stop/reset, file name, save), `session_controller.py` (session state, orphan journals), `status.py` (`StatusHub`), `data_controller.py` (`DataController`, 10 Hz poll, Qt signals `frame_ready`, `angles_updated`, `intensity_updated`, `power_updated`, `error_occurred`, `retry_connecting`, `reconnect_succeeded`, `connection_lost`, …). Controllers never touch widgets.
+- `widgets/panels/` — one Designer form + thin `QGroupBox` class per dock panel (signals + setters, no device access).
+- `widgets/tab_host.py` — tab creation, module gating, `hidden_tabs`, required stream sources, event fan-out. `widgets/plot_tab_base.py`, `widgets/tab_registry.py`, `widgets/tab_title.py` (`TabTitle` descriptor → `ui.tabs.<tab_id>`).
+- `widgets/tabs/` — `brewster_tab.py`, `malus_tab.py`, `waveplate_tab.py` (requires `kdc101`), `ellipsometry_tab.py` (physics in `core/ellipsometry.py`), `power_drift_tab.py`.
+- `widgets/*_plot.py` — pyqtgraph plots (labels from `ui.plots`); `widgets/event_log_panel.py`, `elided_label.py`, `vscroll.py` (`lock_vertical_scroll`).
+- `windows/encoder_debug_window.py` (SCPI terminal, diagnostics), `power_calibration_window.py`, `auto_power_calibration_window.py`, `log_window.py`; `dialogs/acq_settings.py`; `common/` (status LED, status bar, dialogs, PM400 combo, busy check, session prompts).
+- `i18n.py` (`apply_strings`), `plot_style.py` (`style_plot`, `plot_colors`).
+- Qt Designer files live under `polarisation_ui/pyqt/` (`*.ui` sources, `ui_*.py` generated by `pyuic.sh`, plus `sync_texts.py` and `preview.py`).
 
 ### Data flow
 
@@ -118,7 +103,8 @@ Arduino (SCPI 2.0.x over serial)
   → GoniometerDeviceManager (lifecycle, reconnect)
   → DataController (QTimer 10 Hz, circular averaging)
   → Qt signals
-  → MainWindow / plot widgets / PlotTabBase subclasses
+  → controllers (connection, detector, measurement, …) / TabHost
+  → MainWindow panels / plot widgets / PlotTabBase subclasses
 ```
 
 ## Build & Run
@@ -129,11 +115,16 @@ Arduino (SCPI 2.0.x over serial)
 # Install (dev extras include ruff, pytest-cov)
 .venv/bin/pip install -e ".[dev]"
 
-# Run the app
+# Run the app (--simulate: mock devices, --profile expert|student)
 .venv/bin/python main.py
+.venv/bin/python main.py --simulate --profile student
 
-# Run all tests
-.venv/bin/pytest tests/
+# Regenerate Designer modules (all forms or the named ones) / preview a form
+polarisation_ui/pyqt/pyuic.sh [form ...]
+.venv/bin/python -m polarisation_ui.pyqt.preview main_window --watch
+
+# Run all tests (Qt tests headless)
+QT_QPA_PLATFORM=offscreen .venv/bin/pytest tests/
 
 # Single test file
 .venv/bin/pytest tests/infrastructure/test_dual_encoder_with_mock.py
@@ -183,12 +174,12 @@ Experiment tabs will each own their controls + plots and subscribe to the data s
 # polarisation_ui/ui/widgets/tabs/my_experiment.py
 class MyExperimentTab(PlotTabBase):
     tab_id = "my_experiment"
-    tab_title = "My Experiment"
+    tab_title = TabTitle()               # German title from config.json ui.tabs.my_experiment
     required_sources = {"ENC:BOTH", "ADC"}
     required_modules: set[str] = set()   # e.g. {"kdc101"} when KDC is required
 
     def build(self) -> None:
-        # construct layout, plots, controls
+        # load Ui_MyExperimentTab from my_experiment_tab.ui, apply_strings, wire signals
         ...
 
     def on_frame(self, frame: Frame) -> None:
@@ -202,7 +193,7 @@ Register once in `widgets/tabs/__init__.py`:
 TabRegistry.register(MyExperimentTab)
 ```
 
-Registry hides tabs whose `required_modules` are not currently injected. Malus and Brewster tabs are already registered; `MainWindow` drives tab instantiation through the registry.
+`TabHost` instantiates registered tabs, hides those whose `required_modules` are not injected or that the active profile lists in `hidden_tabs`; `MainWindow` never names a concrete tab. Add the tab's form strings under `ui.my_experiment_tab` and its title under `ui.tabs.my_experiment`.
 
 ## Connection Resilience Policy
 
@@ -246,6 +237,8 @@ Keep main context lean so Pro-plan rate limits go further:
 - **Mock hardware via `MockArduino`** (PTY-based SCPI simulator at `polarisation_ui/infrastructure/mocks/mock_arduino.py`) — do not invent new mock transports.
 - **Every resilience change gets a disconnection-path test.** Use `MockArduino.kill_pty()` to tear down the PTY mid-stream and simulate a sudden disconnect.
 - Type hints required on new code; no unqualified `Any`.
+- UI tests use the `window` / `connected` fixtures of `tests/ui/conftest.py` (`MainWindow(config, simulate=True, persist=False)`, QSettings redirected) — hardware is never required. Controller tests live in `tests/ui/controllers/`, panel tests in `tests/ui/panels/`.
+- Required UI guards: `test_designer_forms.py` (forms ↔ config), string-key resolution per form, `test_small_screens.py`, `test_profile.py`.
 
 ## Troubleshooting
 
