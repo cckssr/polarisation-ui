@@ -71,85 +71,85 @@ class Ui_Dialog(object):
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setSpacing(30)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.detRot_box = QGroupBox(Dialog)
-        self.detRot_box.setObjectName("detRot_box")
-        self.formLayout = QFormLayout(self.detRot_box)
+        self.groupDetRot = QGroupBox(Dialog)
+        self.groupDetRot.setObjectName("groupDetRot")
+        self.formLayout = QFormLayout(self.groupDetRot)
         self.formLayout.setObjectName("formLayout")
-        self.label = QLabel(self.detRot_box)
-        self.label.setObjectName("label")
+        self.labelDetAverages = QLabel(self.groupDetRot)
+        self.labelDetAverages.setObjectName("labelDetAverages")
 
-        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelDetAverages)
 
-        self.det_averages = QSpinBox(self.detRot_box)
-        self.det_averages.setObjectName("det_averages")
+        self.spinDetAverages = QSpinBox(self.groupDetRot)
+        self.spinDetAverages.setObjectName("spinDetAverages")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.det_averages.sizePolicy().hasHeightForWidth())
-        self.det_averages.setSizePolicy(sizePolicy1)
-        self.det_averages.setMinimum(2)
-        self.det_averages.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.det_averages.setValue(2)
+        sizePolicy1.setHeightForWidth(self.spinDetAverages.sizePolicy().hasHeightForWidth())
+        self.spinDetAverages.setSizePolicy(sizePolicy1)
+        self.spinDetAverages.setMinimum(2)
+        self.spinDetAverages.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
+        self.spinDetAverages.setValue(2)
 
-        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.det_averages)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinDetAverages)
 
-        self.det_averageOn = QCheckBox(self.detRot_box)
-        self.det_averageOn.setObjectName("det_averageOn")
-        self.det_averageOn.setChecked(True)
+        self.checkDetAverage = QCheckBox(self.groupDetRot)
+        self.checkDetAverage.setObjectName("checkDetAverage")
+        self.checkDetAverage.setChecked(True)
 
-        self.formLayout.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.det_averageOn)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.checkDetAverage)
 
-        self.verticalLayout.addWidget(self.detRot_box)
+        self.verticalLayout.addWidget(self.groupDetRot)
 
-        self.sampRot_box = QGroupBox(Dialog)
-        self.sampRot_box.setObjectName("sampRot_box")
-        self.formLayout_2 = QFormLayout(self.sampRot_box)
+        self.groupSampRot = QGroupBox(Dialog)
+        self.groupSampRot.setObjectName("groupSampRot")
+        self.formLayout_2 = QFormLayout(self.groupSampRot)
         self.formLayout_2.setObjectName("formLayout_2")
-        self.label_2 = QLabel(self.sampRot_box)
-        self.label_2.setObjectName("label_2")
+        self.labelSampAverages = QLabel(self.groupSampRot)
+        self.labelSampAverages.setObjectName("labelSampAverages")
 
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_2)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelSampAverages)
 
-        self.samp_averages = QSpinBox(self.sampRot_box)
-        self.samp_averages.setObjectName("samp_averages")
-        sizePolicy1.setHeightForWidth(self.samp_averages.sizePolicy().hasHeightForWidth())
-        self.samp_averages.setSizePolicy(sizePolicy1)
-        self.samp_averages.setMinimum(2)
+        self.spinSampAverages = QSpinBox(self.groupSampRot)
+        self.spinSampAverages.setObjectName("spinSampAverages")
+        sizePolicy1.setHeightForWidth(self.spinSampAverages.sizePolicy().hasHeightForWidth())
+        self.spinSampAverages.setSizePolicy(sizePolicy1)
+        self.spinSampAverages.setMinimum(2)
 
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.samp_averages)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSampAverages)
 
-        self.samp_averageOn = QCheckBox(self.sampRot_box)
-        self.samp_averageOn.setObjectName("samp_averageOn")
-        self.samp_averageOn.setChecked(True)
+        self.checkSampAverage = QCheckBox(self.groupSampRot)
+        self.checkSampAverage.setObjectName("checkSampAverage")
+        self.checkSampAverage.setChecked(True)
 
-        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.samp_averageOn)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.checkSampAverage)
 
-        self.verticalLayout.addWidget(self.sampRot_box)
+        self.verticalLayout.addWidget(self.groupSampRot)
 
-        self.gbSpikeFilter = QGroupBox(Dialog)
-        self.gbSpikeFilter.setObjectName("gbSpikeFilter")
-        self.formSpikeFilter = QFormLayout(self.gbSpikeFilter)
+        self.groupSpikeFilter = QGroupBox(Dialog)
+        self.groupSpikeFilter.setObjectName("groupSpikeFilter")
+        self.formSpikeFilter = QFormLayout(self.groupSpikeFilter)
         self.formSpikeFilter.setObjectName("formSpikeFilter")
-        self.spikeEnabled = QCheckBox(self.gbSpikeFilter)
-        self.spikeEnabled.setObjectName("spikeEnabled")
+        self.checkSpikeFilter = QCheckBox(self.groupSpikeFilter)
+        self.checkSpikeFilter.setObjectName("checkSpikeFilter")
 
-        self.formSpikeFilter.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.spikeEnabled)
+        self.formSpikeFilter.setWidget(0, QFormLayout.ItemRole.SpanningRole, self.checkSpikeFilter)
 
-        self.lblSpikeMaxDelta = QLabel(self.gbSpikeFilter)
-        self.lblSpikeMaxDelta.setObjectName("lblSpikeMaxDelta")
+        self.labelSpikeMaxDelta = QLabel(self.groupSpikeFilter)
+        self.labelSpikeMaxDelta.setObjectName("labelSpikeMaxDelta")
 
-        self.formSpikeFilter.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblSpikeMaxDelta)
+        self.formSpikeFilter.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelSpikeMaxDelta)
 
-        self.spikeMaxDelta = QDoubleSpinBox(self.gbSpikeFilter)
-        self.spikeMaxDelta.setObjectName("spikeMaxDelta")
-        self.spikeMaxDelta.setMinimum(1.000000000000000)
-        self.spikeMaxDelta.setMaximum(180.000000000000000)
-        self.spikeMaxDelta.setSingleStep(1.000000000000000)
-        self.spikeMaxDelta.setDecimals(1)
+        self.spinSpikeMaxDelta = QDoubleSpinBox(self.groupSpikeFilter)
+        self.spinSpikeMaxDelta.setObjectName("spinSpikeMaxDelta")
+        self.spinSpikeMaxDelta.setMinimum(1.000000000000000)
+        self.spinSpikeMaxDelta.setMaximum(180.000000000000000)
+        self.spinSpikeMaxDelta.setSingleStep(1.000000000000000)
+        self.spinSpikeMaxDelta.setDecimals(1)
 
-        self.formSpikeFilter.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spikeMaxDelta)
+        self.formSpikeFilter.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSpikeMaxDelta)
 
-        self.verticalLayout.addWidget(self.gbSpikeFilter)
+        self.verticalLayout.addWidget(self.groupSpikeFilter)
 
         self.buttonBox = QDialogButtonBox(Dialog)
         self.buttonBox.setObjectName("buttonBox")
@@ -173,30 +173,36 @@ class Ui_Dialog(object):
     # setupUi
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", "Dialog", None))
-        self.detRot_box.setTitle(
+        Dialog.setWindowTitle(
+            QCoreApplication.translate("Dialog", "Akquisitions-Einstellungen", None)
+        )
+        self.groupDetRot.setTitle(
             QCoreApplication.translate("Dialog", "Detektor-Rotationsstage", None)
         )
-        self.label.setText(QCoreApplication.translate("Dialog", "Anzahl Mittelwerte", None))
-        self.det_averageOn.setText(
+        self.labelDetAverages.setText(
+            QCoreApplication.translate("Dialog", "Anzahl Mittelwerte", None)
+        )
+        self.checkDetAverage.setText(
             QCoreApplication.translate("Dialog", "Mittelung aktiviert", None)
         )
-        self.sampRot_box.setTitle(
+        self.groupSampRot.setTitle(
             QCoreApplication.translate("Dialog", "Sample-Rotationsstage", None)
         )
-        self.label_2.setText(QCoreApplication.translate("Dialog", "Anzahl Mittelwerte", None))
-        self.samp_averageOn.setText(
+        self.labelSampAverages.setText(
+            QCoreApplication.translate("Dialog", "Anzahl Mittelwerte", None)
+        )
+        self.checkSampAverage.setText(
             QCoreApplication.translate("Dialog", "Mittelung aktiviert", None)
         )
-        self.gbSpikeFilter.setTitle(QCoreApplication.translate("Dialog", "Spike-Filter", None))
-        self.spikeEnabled.setText(
+        self.groupSpikeFilter.setTitle(QCoreApplication.translate("Dialog", "Spike-Filter", None))
+        self.checkSpikeFilter.setText(
             QCoreApplication.translate("Dialog", "Spike-Filter aktivieren", None)
         )
-        self.lblSpikeMaxDelta.setText(
+        self.labelSpikeMaxDelta.setText(
             QCoreApplication.translate("Dialog", "Max. Winkelsprung", None)
         )
         # if QT_CONFIG(tooltip)
-        self.spikeMaxDelta.setToolTip(
+        self.spinSpikeMaxDelta.setToolTip(
             QCoreApplication.translate(
                 "Dialog",
                 "Maximale erlaubte Winkel\u00e4nderung pro Abtastung (100 ms). Messungen mit gr\u00f6\u00dferer \u00c4nderung werden verworfen.",
@@ -204,6 +210,6 @@ class Ui_Dialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spikeMaxDelta.setSuffix(QCoreApplication.translate("Dialog", " \u00b0/Poll", None))
+        self.spinSpikeMaxDelta.setSuffix(QCoreApplication.translate("Dialog", " \u00b0/Poll", None))
 
     # retranslateUi

@@ -44,68 +44,68 @@ def tab_with_kdc(tab):
 
 
 def _make_ready(tab) -> None:
-    """Satisfy every gate for btnStartSweep except the one under test."""
+    """Satisfy every gate for buttonStartSweep except the one under test."""
     tab.on_measurement_started()
     tab.on_frame(_make_frame(1000, power_W=1e-6, conv_factor_W_per_V=2e-6))
-    tab._ui.cbAnalyserPlaced.setChecked(True)
+    tab._ui.checkAnalyserPlaced.setChecked(True)
 
 
 def test_sweep_group_disabled_without_kdc(tab):
-    assert not tab._ui.gbSweep.isEnabled()
+    assert not tab._ui.groupSweep.isEnabled()
 
 
 def test_sweep_group_enabled_after_kdc_inject(tab_with_kdc):
     tab, _ = tab_with_kdc
-    assert tab._ui.gbSweep.isEnabled()
+    assert tab._ui.groupSweep.isEnabled()
 
 
 def test_inject_empty_modules_disables_sweep_group(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.inject_modules({})
-    assert not tab._ui.gbSweep.isEnabled()
+    assert not tab._ui.groupSweep.isEnabled()
     assert tab._kdc is None
 
 
 def test_start_sweep_button_disabled_without_measurement(tab_with_kdc):
     tab, _ = tab_with_kdc
-    tab._ui.cbAnalyserPlaced.setChecked(True)
-    assert not tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkAnalyserPlaced.setChecked(True)
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_button_disabled_without_power_calibration(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.on_measurement_started()
-    tab._ui.cbAnalyserPlaced.setChecked(True)
+    tab._ui.checkAnalyserPlaced.setChecked(True)
     tab.on_frame(_make_frame(1000, conv_factor_W_per_V=None))
-    assert not tab._ui.btnStartSweep.isEnabled()
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_button_disabled_without_analyser_placed(tab_with_kdc):
     tab, _ = tab_with_kdc
     _make_ready(tab)
-    tab._ui.cbAnalyserPlaced.setChecked(False)
-    assert not tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkAnalyserPlaced.setChecked(False)
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_button_enabled_when_ready(tab_with_kdc):
     tab, _ = tab_with_kdc
     _make_ready(tab)
-    assert tab._ui.btnStartSweep.isEnabled()
+    assert tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_tooltip_explains_missing_gates(tab_with_kdc):
     tab, _ = tab_with_kdc
-    assert tab._ui.btnStartSweep.toolTip() != "Scan starten"
-    tooltip = tab._ui.btnStartSweep.toolTip()
+    assert tab._ui.buttonStartSweep.toolTip() != "Scan starten"
+    tooltip = tab._ui.buttonStartSweep.toolTip()
     assert "Messung" in tooltip or "kalibrierung" in tooltip
 
 
 def test_measurement_stop_disables_sweep_controls(tab_with_kdc):
     tab, _ = tab_with_kdc
     _make_ready(tab)
-    assert tab._ui.btnStartSweep.isEnabled()
+    assert tab._ui.buttonStartSweep.isEnabled()
     tab.on_measurement_stopped()
-    assert not tab._ui.btnStartSweep.isEnabled()
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_sweep_point_carries_gain_and_power(tab_with_kdc):

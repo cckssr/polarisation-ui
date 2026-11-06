@@ -9,12 +9,15 @@ residual strip below the main plot shows point-by-point deviation from the
 fit.
 """
 
+from __future__ import annotations
+
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.ellipsometry import RaeFit
 from polarisation_ui.core.models import EllipsometryPoint
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -29,9 +32,14 @@ class EllipsometryFitPlot(QWidget):
     drawn as a curve in the fit colour once set_fit() is called with a valid RaeFit.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widgets with an empty point buffer."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widgets with an empty point buffer.
+
+        The axis labels come from ``ui.plots`` in the configuration (default: ``default_config()``);
+        an owning tab passes its own configuration through :meth:`apply_config`.
+        """
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._points: list[EllipsometryPoint] = []
         self._fit: RaeFit | None = None
         self._setup_plot()
@@ -44,8 +52,6 @@ class EllipsometryFitPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Analysatorazimut", units="°")
-        self._plot_widget.setLabel("left", "Leistung", units="mW")
 
         # All saved points: filled circles
         self._scatter = self._plot_widget.plot(
@@ -71,8 +77,7 @@ class EllipsometryFitPlot(QWidget):
 
         self._residual_widget = pg.PlotWidget()
         self._residual_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._residual_widget.setLabel("bottom", "Analysatorazimut", units="°")
-        self._residual_widget.setLabel("left", "Residuum", units="mW")
+        self._apply_axis_labels()
         self._residual_widget.setMaximumHeight(90)
         self._residual_widget.setXLink(self._plot_widget)
         self._residual_scatter = self._residual_widget.plot(
@@ -89,6 +94,28 @@ class EllipsometryFitPlot(QWidget):
         style_plot(self._residual_widget)
         layout.addWidget(self._plot_widget, 3)
         layout.addWidget(self._residual_widget, 1)
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Take the axis labels from ``config``."""
+        self._config = config
+        self._apply_axis_labels()
+
+    def _apply_axis_labels(self) -> None:
+        text = self._config.text
+        x_label = text("plots.ellipsometry_fit_x_label")
+        x_units = text("plots.ellipsometry_fit_x_units")
+        self._plot_widget.setLabel("bottom", x_label, units=x_units)
+        self._plot_widget.setLabel(
+            "left",
+            text("plots.ellipsometry_fit_power_label"),
+            units=text("plots.ellipsometry_fit_power_units"),
+        )
+        self._residual_widget.setLabel("bottom", x_label, units=x_units)
+        self._residual_widget.setLabel(
+            "left",
+            text("plots.ellipsometry_fit_residual_label"),
+            units=text("plots.ellipsometry_fit_residual_units"),
+        )
 
     def add_point(
         self,

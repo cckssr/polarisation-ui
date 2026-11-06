@@ -48,22 +48,22 @@ def test_build_creates_widgets(tab):
     assert tab._ui.intensityPlot is not None
     assert tab._ui.anglesPlot is not None
     assert tab._ui.progressBar is not None
-    assert tab._ui.btnClear is not None
+    assert tab._ui.buttonClear is not None
 
 
 def test_clear_button_disabled_before_measurement(tab):
-    assert not tab._ui.btnClear.isEnabled()
+    assert not tab._ui.buttonClear.isEnabled()
 
 
 def test_clear_button_enabled_after_start(tab):
     tab.on_measurement_started()
-    assert tab._ui.btnClear.isEnabled()
+    assert tab._ui.buttonClear.isEnabled()
 
 
 def test_clear_button_disabled_after_stop(tab):
     tab.on_measurement_started()
     tab.on_measurement_stopped()
-    assert not tab._ui.btnClear.isEnabled()
+    assert not tab._ui.buttonClear.isEnabled()
 
 
 # ---------------------------------------------------------------------------
@@ -132,25 +132,25 @@ def test_intensity_stats_labels_updated(tab):
     tab.on_frame(_make_frame(ts_ms=1000, intensity=0.2))
     tab.on_frame(_make_frame(ts_ms=1100, intensity=0.4))
     tab.on_frame(_make_frame(ts_ms=1200, intensity=0.6))
-    assert tab._ui.lblICurrent.text() == "0.60000 V"
-    assert tab._ui.lblIMin.text() == "0.20000 V"
-    assert tab._ui.lblIMax.text() == "0.60000 V"
-    assert tab._ui.lblIMean.text() == "0.40000 V"
+    assert tab._ui.valueIntensityCurrent.text() == "0.60000 V"
+    assert tab._ui.valueIntensityMin.text() == "0.20000 V"
+    assert tab._ui.valueIntensityMax.text() == "0.60000 V"
+    assert tab._ui.valueIntensityMean.text() == "0.40000 V"
 
 
 def test_angle_delta_labels_updated(tab):
     tab.on_measurement_started()
     tab.on_frame(_make_frame(ts_ms=1000, sample_angle=10.0, detector_angle=20.0))
     tab.on_frame(_make_frame(ts_ms=1100, sample_angle=10.5, detector_angle=19.5))
-    assert tab._ui.lblDeltaSample.text() == "+0.500°"
-    assert tab._ui.lblDeltaDetector.text() == "-0.500°"
+    assert tab._ui.valueDeltaSample.text() == "+0.500°"
+    assert tab._ui.valueDeltaDetector.text() == "-0.500°"
 
 
 def test_elapsed_label_and_progress_bar_updated(tab):
     tab.on_measurement_started()
     tab.on_frame(_make_frame(ts_ms=0))
     tab.on_frame(_make_frame(ts_ms=65_000))
-    assert tab._ui.lblElapsed.text() == "00:01:05"
+    assert tab._ui.valueElapsed.text() == "00:01:05"
     assert tab._ui.progressBar.value() == 65
 
 
@@ -173,9 +173,9 @@ def test_on_reset_clears_buffers_and_labels(tab):
     assert len(tab._detector_angle) == 0
     assert tab._first_sample_angle is None
     assert tab._first_detector_angle is None
-    assert tab._ui.lblICurrent.text() == "—"
-    assert tab._ui.lblDeltaSample.text() == "—"
-    assert tab._ui.lblElapsed.text() == "00:00:00"
+    assert tab._ui.valueIntensityCurrent.text() == "—"
+    assert tab._ui.valueDeltaSample.text() == "—"
+    assert tab._ui.valueElapsed.text() == "00:00:00"
     assert tab._ui.progressBar.value() == 0
 
 

@@ -5,7 +5,18 @@ from unittest.mock import patch
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox
 
+from polarisation_ui.infrastructure.config import default_config
+from polarisation_ui.ui.common import status_led
 from polarisation_ui.ui.common.dialogs import show_error
+
+
+def test_the_led_colours_come_from_the_ui_status_led_config():
+    colours = default_config().section("ui")["status_led"]
+
+    assert colours["connected"] in status_led.LED_GREEN
+    assert colours["disconnected"] in status_led.LED_RED
+    assert colours["connecting"] in status_led.LED_YELLOW
+    assert colours["inactive"] in status_led.LED_GRAY
 
 
 def test_show_error_sets_delete_on_close(qtbot):

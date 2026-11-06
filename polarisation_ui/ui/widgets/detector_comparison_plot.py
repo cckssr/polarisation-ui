@@ -8,9 +8,12 @@ This is a pyqtgraph custom widget — constructing Qt objects in Python is an
 explicit exception per CLAUDE.md for pyqtgraph widgets.
 """
 
+from __future__ import annotations
+
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -22,9 +25,10 @@ class DetectorComparisonPlot(QWidget):
     arrives.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with an empty point buffer."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widget with an empty point buffer; texts from ``config``."""
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._xs: list[float] = []
         self._ys: list[float] = []
         self._setup_plot()
@@ -36,8 +40,6 @@ class DetectorComparisonPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "PM400 A (Referenz)", units="W")
-        self._plot_widget.setLabel("left", "PM400 B (Prüfling)", units="W")
         self._plot_widget.setLogMode(x=True, y=True)
 
         self._unity_line = self._plot_widget.plot(
@@ -55,6 +57,20 @@ class DetectorComparisonPlot(QWidget):
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+        self._apply_labels()
+
+    def _apply_labels(self) -> None:
+        self._plot_widget.setLabel(
+            "bottom", self._config.text("plots.detector_comparison_reference_label"), units="W"
+        )
+        self._plot_widget.setLabel(
+            "left", self._config.text("plots.detector_comparison_test_label"), units="W"
+        )
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Use the axis texts of ``config``."""
+        self._config = config
+        self._apply_labels()
 
     # ── Public API ────────────────────────────────────────────────────────────
 

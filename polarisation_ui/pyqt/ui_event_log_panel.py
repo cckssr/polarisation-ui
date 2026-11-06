@@ -51,16 +51,16 @@ class Ui_EventLogPanel(object):
         self.verticalLayout = QVBoxLayout(EventLogPanel)
         self.verticalLayout.setObjectName("verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.textLog = QPlainTextEdit(EventLogPanel)
-        self.textLog.setObjectName("textLog")
-        self.textLog.setReadOnly(True)
-        self.textLog.setMaximumBlockCount(500)
+        self.editLog = QPlainTextEdit(EventLogPanel)
+        self.editLog.setObjectName("editLog")
+        self.editLog.setReadOnly(True)
+        self.editLog.setMaximumBlockCount(500)
         font = QFont()
         font.setFamilies(["Courier New"])
         font.setStyleStrategy(QFont.PreferDefault)
-        self.textLog.setFont(font)
+        self.editLog.setFont(font)
 
-        self.verticalLayout.addWidget(self.textLog)
+        self.verticalLayout.addWidget(self.editLog)
 
         self.retranslateUi(EventLogPanel)
 

@@ -35,21 +35,21 @@ def test_metadata():
 
 
 def test_sweep_button_disabled_without_kdc(tab):
-    assert not tab._ui.btnStartSweep.isEnabled()
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_sweep_button_disabled_without_waveplate_placed(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.on_measurement_started()
-    tab._ui.cbWaveplatePlaced.setChecked(False)
-    assert not tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkWaveplatePlaced.setChecked(False)
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_sweep_button_enabled_when_ready(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.on_measurement_started()
-    tab._ui.cbWaveplatePlaced.setChecked(True)
-    assert tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkWaveplatePlaced.setChecked(True)
+    assert tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_on_frame_populates_buffer(tab):
@@ -58,14 +58,14 @@ def test_on_frame_populates_buffer(tab):
 
 
 def test_build_export_qwp_filename_tokens(tab):
-    tab._ui.cmbWaveplateType.setCurrentIndex(0)  # λ/4
+    tab._ui.comboWaveplateType.setCurrentIndex(0)  # λ/4
     exp = tab.build_export()
     assert exp.filename_tokens == ["qwp"]
     assert exp.metadata["waveplate_type"] == "lambda/4"
 
 
 def test_build_export_hwp_filename_tokens(tab):
-    tab._ui.cmbWaveplateType.setCurrentIndex(1)  # λ/2
+    tab._ui.comboWaveplateType.setCurrentIndex(1)  # λ/2
     exp = tab.build_export()
     assert exp.filename_tokens == ["hwp"]
     assert exp.metadata["waveplate_type"] == "lambda/2"

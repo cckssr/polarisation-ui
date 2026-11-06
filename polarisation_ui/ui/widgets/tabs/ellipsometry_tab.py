@@ -5,14 +5,14 @@ rotating analyser (KDC101, optional — manual rotation also supported) ->
 PD-TIA detector. See ``polarisation_ui.core.ellipsometry`` for the physics.
 
 Workflow, mirroring MalusTab's manual-entry + optional-KDC-sweep pattern:
-  1. Set AOI by hand, then "AOI-Nullpunkt setzen" to reference it.
+  1. Set AOI by hand, then "set AOI zero" to reference it.
   2. Collect analyser-azimuth samples for the current AOI, either manually
-     ("Punkt hinzufügen", analyser rotated by hand) or via a KDC101 sweep.
+     ("add point", analyser rotated by hand) or via a KDC101 sweep.
      Each new sample re-fits I(A) = I0*(1 + alpha*cos(2A) + beta*sin(2A))
      live, converting a valid fit to (Psi, Delta) and a pseudo (n, k).
-  3. "In Serie übernehmen" commits the current AOI's fit as one row of the
+  3. "Accept into series" commits the current AOI's fit as one row of the
      (theta, Psi, Delta) series and clears the sample buffer for the next AOI.
-  4. "Modell fitten" fits either a bare-substrate (2-phase, reports mean
+  4. "Fit model" fits either a bare-substrate (2-phase, reports mean
      pseudo n/k) or film-on-substrate (3-phase, reports thickness/n/k) model
      to the whole series.
 
@@ -52,7 +52,10 @@ from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.infrastructure.qt_threads import KDCSweepWorker
 from polarisation_ui.pyqt.ui_ellipsometry_tab import Ui_EllipsometryTab
+from polarisation_ui.ui.i18n import apply_strings
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
+from polarisation_ui.ui.widgets.tab_title import TabTitle
+from polarisation_ui.ui.widgets.vscroll import lock_vertical_scroll
 
 if TYPE_CHECKING:
     from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
@@ -67,9 +70,9 @@ class EllipsometryTab(PlotTabBase):
     """Rotating-analyser ellipsometry tab: manual/KDC101 analyser sweep + AOI series."""
 
     tab_id = "ellipsometry"
-    tab_title = "Ellipsometrie"
+    tab_title = TabTitle()  # ui.tabs.ellipsometry
     required_sources: set[str] = {"ENC:BOTH", "ADC"}
-    required_modules: set[str] = set()  # KDC101 optional — gbSweep is the module gate
+    required_modules: set[str] = set()  # KDC101 optional — groupSweep is the module gate
 
     points_changed = Signal(int)  # emits len(series) after every accept/delete/clear
 
@@ -97,23 +100,39 @@ class EllipsometryTab(PlotTabBase):
         """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_EllipsometryTab()
         self._ui.setupUi(self)
-        self._ui.seriesTable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self._ui.btnSetAoiZero.clicked.connect(self._set_aoi_zero)
+        apply_strings(self, self.config.section("ui").get("ellipsometry_tab", {}))
+        self._ui.fitPlot.apply_config(self.config)
+        self._ui.ellipsoCurvePlot.apply_config(self.config)
+        self._ui.comboModel.addItems(
+            [self.config.text(f"ellipsometry_tab.model_{kind}") for kind in ("substrate", "film")]
+        )
+        self._ui.tableSeries.setHorizontalHeaderLabels(
+            [
+                self.config.text(f"ellipsometry_tab.column_{key}")
+                for key in ("aoi", "psi", "delta", "n", "k", "samples", "rms", "modulation")
+            ]
+        )
+        self._ui.tableSeries.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self._ui.buttonSetAoiZero.clicked.connect(self._set_aoi_zero)
         self._ui.spinPolariser.valueChanged.connect(self._on_polariser_changed)
         self._ui.spinAnalyserOffset.valueChanged.connect(self._on_analyser_offset_changed)
         self._ui.spinAnalyserManual.lineEdit().returnPressed.connect(self._add_point)
-        self._ui.btnAddPoint.clicked.connect(self._add_point)
-        self._ui.btnClearSweep.clicked.connect(self._clear_sweep_buffer)
-        self._ui.cbAnalyserPlaced.toggled.connect(lambda _checked: self._update_gates())
-        self._ui.btnStartSweep.clicked.connect(self._start_sweep)
-        self._ui.btnAbortSweep.clicked.connect(self._abort_sweep)
-        self._ui.btnAcceptPoint.clicked.connect(self._accept_point)
-        self._ui.btnFitModel.clicked.connect(self._fit_model)
-        self._ui.cmbModel.currentIndexChanged.connect(self._on_model_changed)
-        self._ui.seriesTable.itemSelectionChanged.connect(self._on_table_selection_changed)
-        self._ui.btnDeleteSelected.clicked.connect(self._delete_selected_series_point)
-        self._ui.btnDeleteLast.clicked.connect(self._delete_last_series_point)
-        self._ui.btnClear.clicked.connect(self._clear_series)
+        self._ui.buttonAddPoint.clicked.connect(self._add_point)
+        self._ui.buttonClearSweep.clicked.connect(self._clear_sweep_buffer)
+        self._ui.checkAnalyserPlaced.toggled.connect(lambda _checked: self._update_gates())
+        self._ui.buttonStartSweep.clicked.connect(self._start_sweep)
+        self._ui.buttonAbortSweep.clicked.connect(self._abort_sweep)
+        self._ui.buttonAcceptPoint.clicked.connect(self._accept_point)
+        self._ui.buttonFitModel.clicked.connect(self._fit_model)
+        self._ui.comboModel.currentIndexChanged.connect(self._on_model_changed)
+        self._ui.tableSeries.itemSelectionChanged.connect(self._on_table_selection_changed)
+        self._ui.buttonDeleteSelected.clicked.connect(self._delete_selected_series_point)
+        self._ui.buttonDeleteLast.clicked.connect(self._delete_last_series_point)
+        self._ui.buttonClear.clicked.connect(self._clear_series)
+        # the side column never scrolls horizontally; the width set in the form is its floor
+        form_min_width = self._ui.scrollSide.minimumWidth()
+        width = lock_vertical_scroll(self._ui.scrollSide)
+        self._ui.scrollSide.setMinimumWidth(max(width, form_min_width))
 
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
@@ -130,7 +149,7 @@ class EllipsometryTab(PlotTabBase):
             self._power_calibrated = calibrated
             if not calibrated:
                 self.status_message.emit(
-                    "warning", "Leistungsmessung erforderlich — Ellipsometrie deaktiviert"
+                    "warning", self.config.message("tabs.ellipsometry_power_required")
                 )
             self._update_gates()
         self._update_live_labels(frame)
@@ -148,7 +167,7 @@ class EllipsometryTab(PlotTabBase):
         self._clear_result_labels()
         self._clear_model_labels()
         self._refresh_series_table()
-        self._ui.btnFitModel.setEnabled(False)
+        self._ui.buttonFitModel.setEnabled(False)
         self._update_delete_buttons()
         self.points_changed.emit(0)
         self._update_live_labels(None)
@@ -175,7 +194,7 @@ class EllipsometryTab(PlotTabBase):
         self._is_measuring = False
         if self._sweep_worker is not None:
             self._sweep_worker.abort()
-        self._ui.btnAcceptPoint.setEnabled(False)
+        self._ui.buttonAcceptPoint.setEnabled(False)
         self._update_gates()
         self._update_delete_buttons()
 
@@ -183,7 +202,7 @@ class EllipsometryTab(PlotTabBase):
         """Store the injected kdc101 module (or clear it) and refresh sweep gating."""
         kdc = modules.get("kdc101")
         self._kdc = kdc if kdc is not None else None  # type: ignore[assignment]
-        self._ui.gbSweep.setEnabled(self._kdc is not None)
+        self._ui.groupSweep.setEnabled(self._kdc is not None)
         self._update_gates()
 
     # ── Export contract ───────────────────────────────────────────────────────
@@ -241,7 +260,7 @@ class EllipsometryTab(PlotTabBase):
                         f"{sp.k_pseudo:.6f}",
                     ]
                 )
-        model_idx = self._ui.cmbModel.currentIndex()
+        model_idx = self._ui.comboModel.currentIndex()
         metadata: dict = {
             "wavelength_nm": self._ui.spinWavelength.value(),
             "polariser_azimuth_deg": self._ui.spinPolariser.value(),
@@ -328,12 +347,16 @@ class EllipsometryTab(PlotTabBase):
     @Slot()
     def _set_aoi_zero(self) -> None:
         if self._latest_frame is None:
-            self.status_message.emit("warning", "Kein aktueller Messwert vorhanden")
+            self.status_message.emit("warning", self.config.message("tabs.ellipsometry_no_frame"))
             return
         self._aoi_zero_sample = self._latest_frame.sample_angle
         self._aoi_zero_detector = self._latest_frame.detector_angle
-        self.status_message.emit("info", "AOI-Nullpunkt gesetzt")
+        self.status_message.emit("info", self.config.message("tabs.ellipsometry_aoi_zero_set"))
         self._update_live_labels(self._latest_frame)
+
+    def _fmt(self, kind: str, value: str) -> str:
+        """``value`` inside the configured template ``ui.ellipsometry_tab.fmt_<kind>`` (unit)."""
+        return self.config.text(f"ellipsometry_tab.fmt_{kind}", value=value)
 
     def _aoi_from_frame(self, frame: Frame | None) -> float:
         if frame is None or self._aoi_zero_sample is None:
@@ -342,36 +365,38 @@ class EllipsometryTab(PlotTabBase):
 
     def _update_live_labels(self, frame: Frame | None) -> None:
         if frame is None or math.isnan(frame.intensity):
-            self._ui.lblLiveIntensity.setText("—")
-            self._ui.lblLivePower.setText("—")
-            self._ui.lblLiveAoi.setText("—")
-            self._ui.lblLiveDetector.setText("—")
-            self._ui.lblSpecularError.setText("—")
+            self._ui.valueLiveIntensity.setText("—")
+            self._ui.valueLivePower.setText("—")
+            self._ui.valueLiveAoi.setText("—")
+            self._ui.valueLiveDetector.setText("—")
+            self._ui.valueSpecularError.setText("—")
         else:
-            self._ui.lblLiveIntensity.setText(f"{fmt_intensity(frame.intensity)} V")
+            self._ui.valueLiveIntensity.setText(
+                self._fmt("voltage", fmt_intensity(frame.intensity))
+            )
             if frame.power_W is not None:
-                self._ui.lblLivePower.setText(f"{frame.power_W * 1e3:.3f} mW")
+                self._ui.valueLivePower.setText(self._fmt("power_mw", f"{frame.power_W * 1e3:.3f}"))
             else:
-                self._ui.lblLivePower.setText("—")
-            self._ui.lblLiveDetector.setText(f"{fmt_angle(frame.detector_angle)}°")
+                self._ui.valueLivePower.setText("—")
+            self._ui.valueLiveDetector.setText(self._fmt("angle", fmt_angle(frame.detector_angle)))
 
             aoi = self._aoi_from_frame(frame)
             if math.isnan(aoi):
-                self._ui.lblLiveAoi.setText("—")
-                self._ui.lblSpecularError.setText("—")
+                self._ui.valueLiveAoi.setText("—")
+                self._ui.valueSpecularError.setText("—")
             else:
-                self._ui.lblLiveAoi.setText(f"{fmt_angle(aoi)}°")
+                self._ui.valueLiveAoi.setText(self._fmt("angle", fmt_angle(aoi)))
                 if self._aoi_zero_detector is not None:
                     err = (frame.detector_angle - self._aoi_zero_detector) - 2 * aoi
-                    self._ui.lblSpecularError.setText(f"{err:+.2f}°")
+                    self._ui.valueSpecularError.setText(self._fmt("angle", f"{err:+.2f}"))
                 else:
-                    self._ui.lblSpecularError.setText("—")
+                    self._ui.valueSpecularError.setText("—")
         self._update_kdc_position_label()
         self._update_kdc_zero_label()
 
     def _update_kdc_position_label(self) -> None:
         if self._kdc is None or not self._kdc.is_connected():
-            self._ui.lblKDCPosition.setText("—")
+            self._ui.valueKdcPosition.setText("—")
             return
         now = time.monotonic()
         if now - self._kdc_last_poll_ts >= _KDC_POLL_INTERVAL_S:
@@ -383,15 +408,17 @@ class EllipsometryTab(PlotTabBase):
 
                 Debug.warning(f"EllipsometryTab: KDC position read failed: {exc}")
         if self._kdc_pos_cache is not None:
-            self._ui.lblKDCPosition.setText(f"{fmt_angle(self._kdc_pos_cache)}°")
+            self._ui.valueKdcPosition.setText(self._fmt("angle", fmt_angle(self._kdc_pos_cache)))
         else:
-            self._ui.lblKDCPosition.setText("—")
+            self._ui.valueKdcPosition.setText("—")
 
     def _update_kdc_zero_label(self) -> None:
         if self._kdc is None:
-            self._ui.lblKdcZeroOffset.setText("—")
+            self._ui.valueKdcZeroOffset.setText("—")
             return
-        self._ui.lblKdcZeroOffset.setText(f"{fmt_angle(self._kdc.zero_offset_deg)}°")
+        self._ui.valueKdcZeroOffset.setText(
+            self._fmt("angle", fmt_angle(self._kdc.zero_offset_deg))
+        )
 
     # ── Polariser / analyser-offset auto-default ────────────────────────────────
 
@@ -413,23 +440,27 @@ class EllipsometryTab(PlotTabBase):
     # ── Gating ─────────────────────────────────────────────────────────────────
 
     def _update_gates(self) -> None:
-        self._ui.gbManual.setEnabled(self._is_measuring and self._power_calibrated)
+        self._ui.groupManual.setEnabled(self._is_measuring and self._power_calibrated)
 
         reasons: list[str] = []
         if not self._power_calibrated:
-            reasons.append("Leistungsmessung erforderlich (Kalibrierung oder PM400)")
+            reasons.append(self.config.text("ellipsometry_tab.reason_power_required"))
         if not self._is_measuring:
-            reasons.append("Messung nicht gestartet")
+            reasons.append(self.config.text("ellipsometry_tab.reason_not_measuring"))
         if self._kdc is None or not self._kdc.is_connected():
-            reasons.append("KDC101 nicht verbunden")
-        if not self._ui.cbAnalyserPlaced.isChecked():
-            reasons.append("Analysator nicht eingesetzt")
+            reasons.append(self.config.text("ellipsometry_tab.reason_kdc_missing"))
+        if not self._ui.checkAnalyserPlaced.isChecked():
+            reasons.append(self.config.text("ellipsometry_tab.reason_analyser_missing"))
         if self._sweep_worker is not None:
-            reasons.append("Scan läuft bereits")
+            reasons.append(self.config.text("ellipsometry_tab.reason_sweep_running"))
         can_start = not reasons
-        self._ui.btnStartSweep.setEnabled(can_start)
-        self._ui.btnStartSweep.setToolTip("Scan starten" if can_start else " / ".join(reasons))
-        self._ui.btnAbortSweep.setEnabled(
+        self._ui.buttonStartSweep.setEnabled(can_start)
+        self._ui.buttonStartSweep.setToolTip(
+            self.config.text("ellipsometry_tab.tooltip_start_sweep")
+            if can_start
+            else " / ".join(reasons)
+        )
+        self._ui.buttonAbortSweep.setEnabled(
             self._sweep_worker is not None and self._sweep_worker.isRunning()
         )
 
@@ -444,7 +475,9 @@ class EllipsometryTab(PlotTabBase):
     def _add_point(self) -> None:
         avg_intensity, latest_frame = self._compute_average()
         if math.isnan(avg_intensity):
-            self.status_message.emit("warning", "Keine gültige Intensität im Puffer")
+            self.status_message.emit(
+                "warning", self.config.message("tabs.ellipsometry_no_valid_intensity")
+            )
             return
         self._add_sample(self._ui.spinAnalyserManual.value(), avg_intensity, latest_frame)
 
@@ -481,7 +514,7 @@ class EllipsometryTab(PlotTabBase):
         self._last_fit = None
         self._last_psi_delta = None
         self._clear_result_labels()
-        self._ui.btnAcceptPoint.setEnabled(False)
+        self._ui.buttonAcceptPoint.setEnabled(False)
 
     # ── Live RAE fit ───────────────────────────────────────────────────────────
 
@@ -492,7 +525,7 @@ class EllipsometryTab(PlotTabBase):
             self._last_psi_delta = None
             self._ui.fitPlot.set_fit(None)
             self._clear_result_labels()
-            self._ui.btnAcceptPoint.setEnabled(False)
+            self._ui.buttonAcceptPoint.setEnabled(False)
             return
         fit = fit_rae([p.azimuth_deg for p in points], [p.power_W for p in points])
         self._last_fit = fit
@@ -501,31 +534,33 @@ class EllipsometryTab(PlotTabBase):
 
     def _clear_result_labels(self) -> None:
         for lbl in (
-            self._ui.lblAlpha,
-            self._ui.lblBeta,
-            self._ui.lblI0,
-            self._ui.lblResidual,
-            self._ui.lblModulation,
-            self._ui.lblPsi,
-            self._ui.lblDelta,
-            self._ui.lblNPseudo,
-            self._ui.lblKPseudo,
+            self._ui.valueAlpha,
+            self._ui.valueBeta,
+            self._ui.valueI0,
+            self._ui.valueResidual,
+            self._ui.valueModulation,
+            self._ui.valuePsi,
+            self._ui.valueDelta,
+            self._ui.valueNPseudo,
+            self._ui.valueKPseudo,
         ):
             lbl.setText("—")
 
     def _update_result_labels(self, fit: RaeFit, aoi_deg: float) -> None:
-        self._ui.lblAlpha.setText(f"{fit.alpha:.4f}" if math.isfinite(fit.alpha) else "—")
-        self._ui.lblBeta.setText(f"{fit.beta:.4f}" if math.isfinite(fit.beta) else "—")
-        self._ui.lblI0.setText(f"{fit.i0 * 1e6:.3f} µW" if math.isfinite(fit.i0) else "—")
-        self._ui.lblResidual.setText(f"{fit.residual_rms * 1e6:.3f} µW")
+        self._ui.valueAlpha.setText(f"{fit.alpha:.4f}" if math.isfinite(fit.alpha) else "—")
+        self._ui.valueBeta.setText(f"{fit.beta:.4f}" if math.isfinite(fit.beta) else "—")
+        self._ui.valueI0.setText(
+            self._fmt("power_uw", f"{fit.i0 * 1e6:.3f}") if math.isfinite(fit.i0) else "—"
+        )
+        self._ui.valueResidual.setText(self._fmt("power_uw", f"{fit.residual_rms * 1e6:.3f}"))
         mod_text = f"{fit.modulation:.4f}" if math.isfinite(fit.modulation) else "—"
-        self._ui.lblModulation.setText(mod_text)
+        self._ui.valueModulation.setText(mod_text)
 
         self._last_psi_delta = None
-        self._ui.lblPsi.setText("—")
-        self._ui.lblDelta.setText("—")
-        self._ui.lblNPseudo.setText("—")
-        self._ui.lblKPseudo.setText("—")
+        self._ui.valuePsi.setText("—")
+        self._ui.valueDelta.setText("—")
+        self._ui.valueNPseudo.setText("—")
+        self._ui.valueKPseudo.setText("—")
         can_accept = False
         if fit.valid and not math.isnan(aoi_deg):
             try:
@@ -533,15 +568,17 @@ class EllipsometryTab(PlotTabBase):
                 rho = rho_from_psi_delta(psi, delta)
                 n, k = n_k_two_phase(rho, aoi_deg, self._ui.spinAmbientIndex.value())
             except ValueError as exc:
-                self.status_message.emit("warning", f"Ψ/Δ nicht berechenbar: {exc}")
+                self.status_message.emit(
+                    "warning", self.config.message("tabs.ellipsometry_psi_delta_failed", error=exc)
+                )
             else:
-                self._ui.lblPsi.setText(f"{fmt_angle(psi)}°")
-                self._ui.lblDelta.setText(f"{fmt_angle(delta)}°")
-                self._ui.lblNPseudo.setText(f"{n:.4f}")
-                self._ui.lblKPseudo.setText(f"{k:.4f}")
+                self._ui.valuePsi.setText(self._fmt("angle", fmt_angle(psi)))
+                self._ui.valueDelta.setText(self._fmt("angle", fmt_angle(delta)))
+                self._ui.valueNPseudo.setText(f"{n:.4f}")
+                self._ui.valueKPseudo.setText(f"{k:.4f}")
                 self._last_psi_delta = (psi, delta, n, k)
                 can_accept = True
-        self._ui.btnAcceptPoint.setEnabled(can_accept and self._is_measuring)
+        self._ui.buttonAcceptPoint.setEnabled(can_accept and self._is_measuring)
 
     @Slot()
     def _accept_point(self) -> None:
@@ -552,7 +589,9 @@ class EllipsometryTab(PlotTabBase):
             return
         aoi_deg = points[-1].aoi_deg
         if math.isnan(aoi_deg):
-            self.status_message.emit("warning", "AOI-Nullpunkt nicht gesetzt")
+            self.status_message.emit(
+                "warning", self.config.message("tabs.ellipsometry_aoi_zero_missing")
+            )
             return
         psi, delta, n, k = self._last_psi_delta
         self._series.append(
@@ -576,57 +615,62 @@ class EllipsometryTab(PlotTabBase):
         self._last_fit = None
         self._last_psi_delta = None
         self._clear_result_labels()
-        self._ui.btnAcceptPoint.setEnabled(False)
+        self._ui.buttonAcceptPoint.setEnabled(False)
         self._after_series_mutated()
-        self.status_message.emit("info", f"AOI-Punkt bei θ={fmt_angle(aoi_deg)}° übernommen")
+        self.status_message.emit(
+            "info",
+            self.config.message("tabs.ellipsometry_point_accepted", aoi=fmt_angle(aoi_deg)),
+        )
 
     # ── AOI series table / delete ────────────────────────────────────────────
 
     def _after_series_mutated(self) -> None:
         self._refresh_series_table()
         self._ui.ellipsoCurvePlot.set_series(self._series)
-        self._ui.btnFitModel.setEnabled(len(self._series) >= 1)
+        self._ui.buttonFitModel.setEnabled(len(self._series) >= 1)
         self._update_delete_buttons()
         self.points_changed.emit(len(self._series))
 
     def _refresh_series_table(self) -> None:
-        self._ui.seriesTable.setRowCount(len(self._series))
+        self._ui.tableSeries.setRowCount(len(self._series))
         for row, p in enumerate(self._series):
-            self._ui.seriesTable.setItem(row, 0, QTableWidgetItem(f"{p.aoi_deg:.2f}"))
-            self._ui.seriesTable.setItem(row, 1, QTableWidgetItem(f"{p.psi_deg:.3f}"))
-            self._ui.seriesTable.setItem(row, 2, QTableWidgetItem(f"{p.delta_deg:.3f}"))
-            self._ui.seriesTable.setItem(row, 3, QTableWidgetItem(f"{p.n_pseudo:.4f}"))
-            self._ui.seriesTable.setItem(row, 4, QTableWidgetItem(f"{p.k_pseudo:.4f}"))
-            self._ui.seriesTable.setItem(row, 5, QTableWidgetItem(str(len(p.samples))))
-            self._ui.seriesTable.setItem(row, 6, QTableWidgetItem(f"{p.residual_rms * 1e6:.3f}"))
-            self._ui.seriesTable.setItem(row, 7, QTableWidgetItem(f"{p.modulation:.4f}"))
+            self._ui.tableSeries.setItem(row, 0, QTableWidgetItem(f"{p.aoi_deg:.2f}"))
+            self._ui.tableSeries.setItem(row, 1, QTableWidgetItem(f"{p.psi_deg:.3f}"))
+            self._ui.tableSeries.setItem(row, 2, QTableWidgetItem(f"{p.delta_deg:.3f}"))
+            self._ui.tableSeries.setItem(row, 3, QTableWidgetItem(f"{p.n_pseudo:.4f}"))
+            self._ui.tableSeries.setItem(row, 4, QTableWidgetItem(f"{p.k_pseudo:.4f}"))
+            self._ui.tableSeries.setItem(row, 5, QTableWidgetItem(str(len(p.samples))))
+            self._ui.tableSeries.setItem(row, 6, QTableWidgetItem(f"{p.residual_rms * 1e6:.3f}"))
+            self._ui.tableSeries.setItem(row, 7, QTableWidgetItem(f"{p.modulation:.4f}"))
         self._on_table_selection_changed()
 
     def _update_delete_buttons(self) -> None:
         has_points = bool(self._series)
-        self._ui.btnDeleteLast.setEnabled(self._is_measuring and has_points)
-        self._ui.btnClear.setEnabled(self._is_measuring and has_points)
+        self._ui.buttonDeleteLast.setEnabled(self._is_measuring and has_points)
+        self._ui.buttonClear.setEnabled(self._is_measuring and has_points)
         self._on_table_selection_changed()
 
     @Slot()
     def _on_table_selection_changed(self) -> None:
-        has_selection = bool(self._ui.seriesTable.selectedItems())
-        self._ui.btnDeleteSelected.setEnabled(self._is_measuring and has_selection)
+        has_selection = bool(self._ui.tableSeries.selectedItems())
+        self._ui.buttonDeleteSelected.setEnabled(self._is_measuring and has_selection)
 
     @Slot()
     def _delete_last_series_point(self) -> None:
         if not self._series:
-            self.status_message.emit("warning", "Keine AOI-Punkte zum Löschen")
+            self.status_message.emit(
+                "warning", self.config.message("tabs.ellipsometry_no_points_to_delete")
+            )
             return
         self._series.pop()
         self._after_series_mutated()
 
     @Slot()
     def _delete_selected_series_point(self) -> None:
-        selected = self._ui.seriesTable.selectedItems()
+        selected = self._ui.tableSeries.selectedItems()
         if not selected:
             return
-        row = self._ui.seriesTable.currentRow()
+        row = self._ui.tableSeries.currentRow()
         if 0 <= row < len(self._series):
             del self._series[row]
             self._after_series_mutated()
@@ -666,28 +710,33 @@ class EllipsometryTab(PlotTabBase):
 
     @Slot(int, int)
     def _on_sweep_progress(self, current: int, total: int) -> None:
-        self.status_message.emit("info", f"Scan: {current}/{total}")
+        self.status_message.emit(
+            "info",
+            self.config.message("tabs.ellipsometry_sweep_progress", current=current, total=total),
+        )
 
     @Slot()
     def _on_sweep_finished(self) -> None:
         self._sweep_worker = None
         self._update_gates()
-        self.status_message.emit("info", "Scan abgeschlossen")
+        self.status_message.emit("info", self.config.message("tabs.ellipsometry_sweep_finished"))
 
     @Slot(str)
     def _on_sweep_failed(self, msg: str) -> None:
         self._sweep_worker = None
         self._update_gates()
-        self.status_message.emit("error", f"Scan fehlgeschlagen: {msg}")
+        self.status_message.emit(
+            "error", self.config.message("tabs.ellipsometry_sweep_failed", error=msg)
+        )
 
     # ── Optical model fit ─────────────────────────────────────────────────────
 
     def _clear_model_labels(self) -> None:
-        self._ui.lblThickness.setText("—")
-        self._ui.lblNFilm.setText("—")
-        self._ui.lblKFilm.setText("—")
-        self._ui.lblMSE.setText("—")
-        self._ui.lblBranches.setText("")
+        self._ui.valueThickness.setText("—")
+        self._ui.valueNFilm.setText("—")
+        self._ui.valueKFilm.setText("—")
+        self._ui.valueMSE.setText("—")
+        self._ui.valueBranches.setText("")
 
     @Slot()
     def _fit_model(self) -> None:
@@ -702,7 +751,7 @@ class EllipsometryTab(PlotTabBase):
         k_sub = self._ui.spinSubstrateK.value()
         aoi_dense = np.linspace(min(aoi), max(aoi), 100) if len(aoi) > 1 else np.array(aoi)
 
-        if self._ui.cmbModel.currentIndex() == 0:
+        if self._ui.comboModel.currentIndex() == 0:
             model = self._fit_bare_substrate(aoi_dense, wavelength, n_ambient)
         else:
             model = self._fit_film_on_substrate(
@@ -726,15 +775,15 @@ class EllipsometryTab(PlotTabBase):
         n_mean = float(np.mean(n_vals))
         k_mean = float(np.mean(k_vals))
         self._model_fit = None
-        self._ui.lblThickness.setText("—")
-        self._ui.lblNFilm.setText(f"{n_mean:.4f} (Mittelwert)")
-        self._ui.lblKFilm.setText(f"{k_mean:.4f} (Mittelwert)")
+        self._ui.valueThickness.setText("—")
+        self._ui.valueNFilm.setText(self._fmt("mean", f"{n_mean:.4f}"))
+        self._ui.valueKFilm.setText(self._fmt("mean", f"{k_mean:.4f}"))
         n_std = float(np.std(n_vals)) if len(n_vals) > 1 else 0.0
-        self._ui.lblMSE.setText(f"σ(n) = {n_std:.4f}")
-        self._ui.lblBranches.setText("")
+        self._ui.valueMSE.setText(self._fmt("sigma_n", f"{n_std:.4f}"))
+        self._ui.valueBranches.setText("")
         if n_mean <= 0.0 or not math.isfinite(n_mean):
             self.status_message.emit(
-                "warning", "Mittlerer Pseudo-Index n ≤ 0 — Modellkurve nicht darstellbar"
+                "warning", self.config.message("tabs.ellipsometry_mean_index_invalid")
             )
             return None
         # thickness=0 makes the film irrelevant — this is exactly the bare
@@ -764,21 +813,23 @@ class EllipsometryTab(PlotTabBase):
             n_ambient=n_ambient,
             d_range=(self._ui.spinDMin.value(), self._ui.spinDMax.value()),
             n_range=(self._ui.spinNfMin.value(), self._ui.spinNfMax.value()),
-            fit_k=self._ui.cbFitK.isChecked(),
+            fit_k=self._ui.checkFitK.isChecked(),
         )
         self._model_fit = result
-        self._ui.lblThickness.setText(f"{result.thickness_nm:.1f} nm")
-        self._ui.lblNFilm.setText(f"{result.n_film:.4f}")
-        if self._ui.cbFitK.isChecked():
-            self._ui.lblKFilm.setText(f"{result.k_film:.4f}")
+        self._ui.valueThickness.setText(self._fmt("thickness", f"{result.thickness_nm:.1f}"))
+        self._ui.valueNFilm.setText(f"{result.n_film:.4f}")
+        if self._ui.checkFitK.isChecked():
+            self._ui.valueKFilm.setText(f"{result.k_film:.4f}")
         else:
-            self._ui.lblKFilm.setText("0 (fest)")
-        self._ui.lblMSE.setText(f"{result.mse:.3f}°")
+            self._ui.valueKFilm.setText(self.config.text("ellipsometry_tab.text_k_fixed"))
+        self._ui.valueMSE.setText(self._fmt("mse", f"{result.mse:.3f}"))
         if len(result.branches) > 1:
-            alt = ", ".join(f"{d:.0f} nm" for d, _, _ in result.branches[1:4])
-            self._ui.lblBranches.setText(f"Alternative Dicken: {alt} …")
+            alt = ", ".join(self._fmt("thickness", f"{d:.0f}") for d, _, _ in result.branches[1:4])
+            self._ui.valueBranches.setText(
+                self.config.text("ellipsometry_tab.fmt_alternative_thicknesses", thicknesses=alt)
+            )
         else:
-            self._ui.lblBranches.setText("")
+            self._ui.valueBranches.setText("")
         return psi_delta_three_phase(
             aoi_dense,
             wavelength,

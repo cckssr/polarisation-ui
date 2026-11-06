@@ -14,6 +14,8 @@ This is a pyqtgraph custom widget — constructing Qt objects in Python is an
 explicit exception per CLAUDE.md for pyqtgraph widgets.
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 
 import pyqtgraph as pg
@@ -22,15 +24,17 @@ from PySide6.QtGui import QPen
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.nd_linearity import BACKWARD
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
 class NDLinearityPlot(QWidget):
     """Live power curves plus residual curves for repeated ND-wheel scans."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build both plots with no data."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build both plots with no data; axis and legend texts come from ``config``."""
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._power_curves: dict[int, pg.PlotDataItem] = {}
         self._power_data: dict[int, tuple[list[float], list[float]]] = {}
         self._resid_curves: dict[int, pg.PlotDataItem] = {}
@@ -43,14 +47,11 @@ class NDLinearityPlot(QWidget):
         colors = plot_colors()
         self._power_plot = pg.PlotWidget()
         self._power_plot.showGrid(x=True, y=True, alpha=0.3)
-        self._power_plot.setLabel("left", "Optische Leistung", units="W")
         self._power_plot.setLogMode(y=True)
         self._power_plot.addLegend(offset=(-10, 10))
 
         self._resid_plot = pg.PlotWidget()
         self._resid_plot.showGrid(x=True, y=True, alpha=0.3)
-        self._resid_plot.setLabel("bottom", "Winkel", units="°")
-        self._resid_plot.setLabel("left", "Abweichung vom linearen OD-Fit", units="OD")
         self._resid_plot.setXLink(self._power_plot)
 
         band_pen = pg.mkPen(colors.reference, width=1, style=Qt.PenStyle.DashLine)
@@ -64,6 +65,23 @@ class NDLinearityPlot(QWidget):
         style_plot(self._resid_plot)
         layout.addWidget(self._power_plot, 3)
         layout.addWidget(self._resid_plot, 2)
+        self._apply_labels()
+
+    def _apply_labels(self) -> None:
+        self._power_plot.setLabel(
+            "left", self._config.text("plots.nd_linearity_power_label"), units="W"
+        )
+        self._resid_plot.setLabel(
+            "bottom", self._config.text("plots.nd_linearity_angle_label"), units="°"
+        )
+        self._resid_plot.setLabel(
+            "left", self._config.text("plots.nd_linearity_residual_label"), units="OD"
+        )
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Use the texts of ``config`` from now on (axis labels now, scan names for new scans)."""
+        self._config = config
+        self._apply_labels()
 
     @staticmethod
     def _pen(index: int, direction: str) -> QPen:
@@ -75,7 +93,8 @@ class NDLinearityPlot(QWidget):
 
     def begin_scan(self, index: int, direction: str) -> None:
         """Start a new power curve for scan *index* (zero-based)."""
-        label = f"Scan {index + 1} ({'rückwärts' if direction == BACKWARD else 'vorwärts'})"
+        key = "nd_linearity_scan_backward" if direction == BACKWARD else "nd_linearity_scan_forward"
+        label = self._config.text(f"plots.{key}", number=index + 1)
         colors = plot_colors()
         colour = colors.series_color(index)
         self._power_data[index] = ([], [])

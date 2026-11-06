@@ -10,7 +10,7 @@
     <height>839</height>
    </rect>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="1,0">
+  <layout class="QGridLayout" name="layoutMain" rowstretch="1,0" columnstretch="1,0">
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -24,7 +24,7 @@
     <number>0</number>
    </property>
    <item row="1" column="0">
-    <widget class="QTableWidget" name="pointsTable">
+    <widget class="QTableWidget" name="tablePoints">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -55,238 +55,237 @@
      <attribute name="verticalHeaderVisible">
       <bool>false</bool>
      </attribute>
-     <column>
-      <property name="text">
-       <string>θ_S (°)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>θ_D (°)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>I (mV)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>P (µW)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Gain</string>
-      </property>
-     </column>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
     </widget>
    </item>
-   <item row="1" column="1">
-    <layout class="QVBoxLayout" name="rightLayout">
-     <property name="spacing">
-      <number>10</number>
+   <item row="0" column="1" rowspan="2">
+    <widget class="QScrollArea" name="scrollSide">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="leftMargin">
-      <number>4</number>
+     <property name="frameShape">
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
-     <property name="topMargin">
-      <number>0</number>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
      </property>
-     <property name="rightMargin">
-      <number>0</number>
+     <property name="widgetResizable">
+      <bool>true</bool>
      </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QPushButton" name="btnClearDetector">
-       <property name="enabled">
-        <bool>false</bool>
+     <widget class="QWidget" name="contentSide">
+      <layout class="QVBoxLayout" name="layoutSide">
+       <property name="spacing">
+        <number>10</number>
        </property>
-       <property name="toolTip">
-        <string>Löscht alle Punkte im oberen Detektorwinkel-Intensitäts-Graphen</string>
+       <property name="leftMargin">
+        <number>4</number>
        </property>
-       <property name="text">
-        <string>Detektorgraph löschen</string>
+       <property name="topMargin">
+        <number>0</number>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="gbMax">
-       <property name="title">
-        <string>Maximum</string>
+       <property name="rightMargin">
+        <number>0</number>
        </property>
-       <layout class="QFormLayout" name="formMax">
-        <property name="verticalSpacing">
-         <number>2</number>
-        </property>
-        <property name="leftMargin">
-         <number>6</number>
-        </property>
-        <property name="topMargin">
-         <number>4</number>
-        </property>
-        <property name="rightMargin">
-         <number>6</number>
-        </property>
-        <property name="bottomMargin">
-         <number>4</number>
-        </property>
-        <item row="0" column="0">
-         <widget class="QLabel" name="lblMaxIntensityLabel">
-          <property name="text">
-           <string>I:</string>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="buttonClearDetector">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Löscht alle Punkte im oberen Detektorwinkel-Intensitäts-Graphen</string>
+         </property>
+         <property name="text">
+          <string>Detektorgraph löschen</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupMax">
+         <property name="title">
+          <string>Maximum</string>
+         </property>
+         <layout class="QFormLayout" name="layoutMax">
+          <property name="verticalSpacing">
+           <number>2</number>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="lblMaxIntensity">
-          <property name="text">
-           <string>—</string>
+          <property name="leftMargin">
+           <number>6</number>
           </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="lblMaxAngleLabel">
-          <property name="text">
-           <string>θ:</string>
+          <property name="topMargin">
+           <number>4</number>
           </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLabel" name="lblMaxAngle">
-          <property name="text">
-           <string>—</string>
+          <property name="rightMargin">
+           <number>6</number>
           </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Expanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>10</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnDeleteSelected">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string>Markierten Punkt aus der Kurve löschen</string>
-       </property>
-       <property name="text">
-        <string>Ausgewählten löschen</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnDeleteLast">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string>Letzten gespeicherten Messpunkt entfernen</string>
-       </property>
-       <property name="text">
-        <string>Letzten Punkt löschen</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="gbPolarisation">
-       <property name="title">
-        <string>Polarisation</string>
-       </property>
-       <layout class="QHBoxLayout" name="hlPolarisation">
-        <property name="leftMargin">
-         <number>6</number>
-        </property>
-        <property name="topMargin">
-         <number>4</number>
-        </property>
-        <property name="rightMargin">
-         <number>6</number>
-        </property>
-        <property name="bottomMargin">
-         <number>4</number>
-        </property>
-        <item>
-         <widget class="QRadioButton" name="rbPolP">
-          <property name="toolTip">
-           <string>p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)</string>
+          <property name="bottomMargin">
+           <number>4</number>
           </property>
-          <property name="text">
-           <string>p</string>
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelMaxIntensity">
+            <property name="text">
+             <string>I:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="valueMaxIntensity">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelMaxAngle">
+            <property name="text">
+             <string>θ:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="valueMaxAngle">
+            <property name="text">
+             <string>—</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Policy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonDeleteSelected">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Markierten Punkt aus der Kurve löschen</string>
+         </property>
+         <property name="text">
+          <string>Ausgewählten löschen</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonDeleteLast">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Letzten gespeicherten Messpunkt entfernen</string>
+         </property>
+         <property name="text">
+          <string>Letzten Punkt löschen</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="lineSeparator">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupPolarisation">
+         <property name="title">
+          <string>Polarisation</string>
+         </property>
+         <layout class="QHBoxLayout" name="layoutPolarisation">
+          <property name="leftMargin">
+           <number>6</number>
           </property>
-          <property name="checked">
-           <bool>true</bool>
+          <property name="topMargin">
+           <number>4</number>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="rbPolS">
-          <property name="toolTip">
-           <string>s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)</string>
+          <property name="rightMargin">
+           <number>6</number>
           </property>
-          <property name="text">
-           <string>s</string>
+          <property name="bottomMargin">
+           <number>4</number>
           </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnSaveCurrent">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string>Aktuellen Messwert (live) als Punkt in der Brewster-Kurve speichern</string>
-       </property>
-       <property name="text">
-        <string>Aktuell speichern</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnSaveMax">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string>Maximum des Detektorscans als Punkt speichern und Scan zurücksetzen</string>
-       </property>
-       <property name="text">
-        <string>Maximum speichern</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
+          <item>
+           <widget class="QRadioButton" name="radioPolP">
+            <property name="toolTip">
+             <string>p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)</string>
+            </property>
+            <property name="text">
+             <string>p</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioPolS">
+            <property name="toolTip">
+             <string>s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)</string>
+            </property>
+            <property name="text">
+             <string>s</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonSaveCurrent">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Aktuellen Messwert (live) als Punkt in der Brewster-Kurve speichern</string>
+         </property>
+         <property name="text">
+          <string>Aktuell speichern</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonSaveMax">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Maximum des Detektorscans als Punkt speichern und Scan zurücksetzen</string>
+         </property>
+         <property name="text">
+          <string>Maximum speichern</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QSplitter" name="splitter">
+   <item row="0" column="0">
+    <widget class="QSplitter" name="splitterPlots">
      <property name="orientation">
       <enum>Qt::Orientation::Vertical</enum>
      </property>

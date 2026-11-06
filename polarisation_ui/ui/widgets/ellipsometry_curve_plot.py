@@ -9,11 +9,14 @@ this, so it is built from the documented "MultiplePlotAxes" recipe: a second
 X only, with its own right-hand AxisItem.
 """
 
+from __future__ import annotations
+
 import pyqtgraph as pg
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.models import EllipsometrySeriesPoint
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -26,9 +29,14 @@ class EllipsometryCurvePlot(QWidget):
     touching the measured series.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the twin-axis pyqtgraph plot with an empty point buffer."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the twin-axis pyqtgraph plot with an empty point buffer.
+
+        The axis labels come from ``ui.plots`` in the configuration (default: ``default_config()``);
+        an owning tab passes its own configuration through :meth:`apply_config`.
+        """
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._points: list[EllipsometrySeriesPoint] = []
         self._setup_plot()
 
@@ -41,15 +49,13 @@ class EllipsometryCurvePlot(QWidget):
         delta_color = colors.series_color(1)
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Einfallswinkel θ", units="°")
-        self._plot_widget.setLabel("left", "Ψ", units="°")
 
         self._plot_widget.showAxis("right")
         self._delta_viewbox = pg.ViewBox()
         self._plot_widget.scene().addItem(self._delta_viewbox)
         self._plot_widget.getAxis("right").linkToView(self._delta_viewbox)
         self._delta_viewbox.setXLink(self._plot_widget)
-        self._plot_widget.getAxis("right").setLabel("Δ", units="°")
+        self._apply_axis_labels()
 
         def _sync_delta_view() -> None:
             main_vb = self._plot_widget.getViewBox()
@@ -83,6 +89,28 @@ class EllipsometryCurvePlot(QWidget):
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Take the axis labels from ``config``."""
+        self._config = config
+        self._apply_axis_labels()
+
+    def _apply_axis_labels(self) -> None:
+        text = self._config.text
+        self._plot_widget.setLabel(
+            "bottom",
+            text("plots.ellipsometry_curve_x_label"),
+            units=text("plots.ellipsometry_curve_x_units"),
+        )
+        self._plot_widget.setLabel(
+            "left",
+            text("plots.ellipsometry_curve_psi_label"),
+            units=text("plots.ellipsometry_curve_psi_units"),
+        )
+        self._plot_widget.getAxis("right").setLabel(
+            text("plots.ellipsometry_curve_delta_label"),
+            units=text("plots.ellipsometry_curve_delta_units"),
+        )
 
     def set_series(self, points: list[EllipsometrySeriesPoint]) -> None:
         """Replace the displayed (theta, Psi, Delta) series and refresh both scatters."""

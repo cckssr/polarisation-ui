@@ -3,12 +3,12 @@
 Usage workflow:
   1. Set up the bench: calibrated power meter + constant laser + ND filters.
   2. Select a PDTIA gain stage (1–4) in the tab bar.
-  3. Read the optical power from your meter → enter it in the "Leistung" field.
-  4. Read the sensor voltage (live button fills it automatically) → enter in "Spannung".
-  5. Click "Punkt hinzufügen" to add the (voltage, power) pair.
+  3. Read the optical power from your meter → enter it in the power field.
+  4. Read the sensor voltage (live button fills it automatically) → enter it in the voltage field.
+  5. Click the add button to add the (voltage, power) pair.
   6. Repeat with different ND filters / power levels for this gain.
   7. Switch to the next gain stage and repeat.
-  8. Enter a profile name and click "Kalibrierung speichern".
+  8. Enter a profile name and click the save button.
 
 The computed W/V conversion factor (mean of P/V across all points per stage) is
 shown in real time and is used by the main window for the live wattage display.
@@ -18,29 +18,18 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyqtgraph as pg
 from PySide6.QtCore import QTimer, Signal, Slot
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
-    QAbstractItemView,
-    QComboBox,
     QDialog,
     QDialogButtonBox,
-    QDoubleSpinBox,
-    QFormLayout,
-    QFrame,
-    QGroupBox,
-    QHBoxLayout,
+    QFileDialog,
     QHeaderView,
-    QLabel,
-    QLineEdit,
     QMessageBox,
-    QPushButton,
-    QScrollArea,
-    QTableWidget,
     QTableWidgetItem,
-    QTabWidget,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -52,95 +41,75 @@ from polarisation_ui.core.power_calibration import (
     GainCalibration,
     PowerCalibrationProfile,
 )
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.pyqt.ui_power_calibration import Ui_PowerCalibrationWindow
+from polarisation_ui.pyqt.ui_power_calibration_gain_tab import Ui_PowerCalibrationGainTab
 from polarisation_ui.ui.common.pm400_combo import populate_pm400_combo
+from polarisation_ui.ui.i18n import apply_strings
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
+
+if TYPE_CHECKING:
+    from polarisation_ui.ui.controllers.data_controller import DataController
 
 _GAIN_STAGES = (1, 2, 3, 4)
 
 # PM400 live-power poll period while connected.
 _PM400_POLL_MS = 250
 
+_DEFAULT_WAVELENGTH_NM = 633.0
 
-class _GainCalTab(QWidget):
+
+class GainCalibrationTab(QWidget):
     """One tab per PDTIA gain stage — shows the (V, W) point table and a plot."""
 
     points_changed = Signal()
 
-    def __init__(self, gain_stage: int, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        gain_stage: int,
+        parent: QWidget | None = None,
+        config: AppConfig | None = None,
+    ) -> None:
+        """Load the Designer form for ``gain_stage`` and wire the point table and plot."""
         super().__init__(parent)
+        self.config = config or default_config()
         self._gain_stage = gain_stage
         self._cal = GainCalibration(gain_stage=gain_stage)
-        self._setup_ui()
+        self._live_voltage: float | None = None
 
-    def _setup_ui(self) -> None:
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        self.ui = Ui_PowerCalibrationGainTab()
+        self.ui.setupUi(self)
+        apply_strings(self, self.config.section("ui").get("power_calibration_gain_tab", {}))
+        self.ui.groupEntry.setTitle(self._text("text_entry_title", stage=gain_stage))
+        self.ui.valueFactor.setText(self._text("text_factor_none"))
 
-        # Entry row
-        entry_group = QGroupBox(f"Messpunkt hinzufügen — Gain {self._gain_stage}")
-        entry_form = QFormLayout(entry_group)
-        entry_form.setContentsMargins(8, 6, 8, 6)
-        entry_form.setVerticalSpacing(4)
+        self.ui.tablePoints.setHorizontalHeaderLabels(
+            [
+                self._text("header_voltage"),
+                self._text("header_power"),
+                self._text("header_ratio"),
+            ]
+        )
+        self.ui.tablePoints.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self._setup_plot()
 
-        self._spin_voltage = QDoubleSpinBox()
-        self._spin_voltage.setRange(0.0, 10.0)
-        self._spin_voltage.setDecimals(6)
-        self._spin_voltage.setSuffix(" V")
-        self._spin_voltage.setSingleStep(0.001)
+        self.ui.buttonAdd.clicked.connect(self._add_point)
+        self.ui.buttonRemove.clicked.connect(self._remove_selected)
+        self.ui.buttonLive.clicked.connect(self._fill_live_voltage)
 
-        self._btn_live = QPushButton("Live")
-        self._btn_live.setToolTip("Aktuelle Sensorspannung übernehmen")
-        self._btn_live.setMaximumWidth(55)
-        self._btn_live.setEnabled(False)
+    def _text(self, key: str, **fmt: object) -> str:
+        return self.config.text(f"power_calibration_gain_tab.{key}", **fmt)
 
-        v_row = QHBoxLayout()
-        v_row.addWidget(self._spin_voltage)
-        v_row.addWidget(self._btn_live)
-        entry_form.addRow("Spannung (V):", v_row)
-
-        self._spin_power = QDoubleSpinBox()
-        self._spin_power.setRange(0.0, 1.0)
-        self._spin_power.setDecimals(9)
-        self._spin_power.setSuffix(" W")
-        self._spin_power.setSingleStep(1e-7)
-        entry_form.addRow("Leistung (W):", self._spin_power)
-
-        btn_add = QPushButton("Punkt hinzufügen")
-        btn_add.clicked.connect(self._add_point)
-        entry_form.addRow(btn_add)
-
-        layout.addWidget(entry_group)
-
-        # Conversion factor readout
-        self._lbl_factor = QLabel("Konversionsfaktor: —")
-        layout.addWidget(self._lbl_factor)
-
-        # Point table
-        self._table = QTableWidget(0, 3)
-        self._table.setHorizontalHeaderLabels(["Spannung (V)", "Leistung (W)", "W/V"])
-        self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self._table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self._table.setMinimumHeight(100)
-        self._table.setMaximumHeight(180)
-        self._table.verticalHeader().setVisible(False)
-        layout.addWidget(self._table)
-
-        btn_remove = QPushButton("Ausgewählten Punkt löschen")
-        btn_remove.clicked.connect(self._remove_selected)
-        layout.addWidget(btn_remove)
-
-        # Plot: voltage vs power
+    def _setup_plot(self) -> None:
+        """Axis labels, grid and the data/fit curves of the promoted plot widget."""
         colors = plot_colors()
-        self._plot = pg.PlotWidget()
-        self._plot.showGrid(x=True, y=True, alpha=0.3)
-        self._plot.setLabel("bottom", "Spannung", units="V")
-        self._plot.setLabel("left", "Leistung", units="W")
-        self._scatter = self._plot.plot(
+        plot = self.ui.calibrationPlot
+        plot.showGrid(x=True, y=True, alpha=0.3)
+        plot.setLabel("bottom", self._text("plot_x_label"), units=self._text("plot_x_units"))
+        plot.setLabel("left", self._text("plot_y_label"), units=self._text("plot_y_units"))
+        self._scatter = plot.plot(
             [],
             [],
             pen=None,
@@ -149,30 +118,32 @@ class _GainCalTab(QWidget):
             symbolBrush=pg.mkBrush(*colors.series_color(0), colors.point_alpha),
             symbolPen=pg.mkPen(None),
         )
-        self._fit_line = self._plot.plot([], [], pen=pg.mkPen(colors.fit, width=1.5))
-        style_plot(self._plot)
-        layout.addWidget(self._plot, 1)
-
-        self._btn_live.clicked.connect(self._fill_live_voltage)
+        self._fit_line = plot.plot([], [], pen=pg.mkPen(colors.fit, width=1.5))
+        style_plot(plot)
 
     def set_live_voltage(self, voltage: float) -> None:
         """Called by parent to update the cached live voltage for the "Live" button."""
         self._live_voltage = voltage
-        self._btn_live.setEnabled(True)
+        self.ui.buttonLive.setEnabled(True)
 
     def _fill_live_voltage(self) -> None:
-        if hasattr(self, "_live_voltage"):
-            self._spin_voltage.setValue(self._live_voltage)
+        if self._live_voltage is not None:
+            self.ui.spinVoltage.setValue(self._live_voltage)
 
     @Slot()
     def _add_point(self) -> None:
-        v = self._spin_voltage.value()
-        p = self._spin_power.value()
+        v = self.ui.spinVoltage.value()
+        p = self.ui.spinPower.value()
+        title = self._text("title_invalid_input")
         if v <= 0.0:
-            QMessageBox.warning(self, "Ungültige Eingabe", "Spannung muss größer als 0 sein.")
+            QMessageBox.warning(
+                self, title, self.config.message("power_calibration.voltage_not_positive")
+            )
             return
         if p <= 0.0:
-            QMessageBox.warning(self, "Ungültige Eingabe", "Leistung muss größer als 0 sein.")
+            QMessageBox.warning(
+                self, title, self.config.message("power_calibration.power_not_positive")
+            )
             return
         self._cal.add_point(v, p)
         self._refresh()
@@ -180,7 +151,7 @@ class _GainCalTab(QWidget):
 
     @Slot()
     def _remove_selected(self) -> None:
-        row = self._table.currentRow()
+        row = self.ui.tablePoints.currentRow()
         if row < 0:
             return
         self._cal.remove_point(row)
@@ -188,25 +159,24 @@ class _GainCalTab(QWidget):
         self.points_changed.emit()
 
     def _refresh(self) -> None:
+        table = self.ui.tablePoints
         pts = self._cal.points
-        self._table.setRowCount(len(pts))
+        table.setRowCount(len(pts))
         for i, (v, p) in enumerate(pts):
             ratio = p / v if v > 0 else float("nan")
-            self._table.setItem(i, 0, QTableWidgetItem(export_voltage(v)))
+            table.setItem(i, 0, QTableWidgetItem(export_voltage(v)))
             # NOTE: power (p) here uses 9 dp — no power_dp bucket exists in
             # DisplayFormat/ExportFormat, so this stays a hardcoded outlier
             # rather than changing visible precision.
-            self._table.setItem(i, 1, QTableWidgetItem(f"{p:.9f}"))
-            self._table.setItem(
-                i, 2, QTableWidgetItem(f"{ratio:.4e}" if not math.isnan(ratio) else "—")
-            )
+            table.setItem(i, 1, QTableWidgetItem(f"{p:.9f}"))
+            table.setItem(i, 2, QTableWidgetItem(f"{ratio:.4e}" if not math.isnan(ratio) else "—"))
 
         factor = self._cal.conversion_factor_W_per_V()
         if factor is None:
-            self._lbl_factor.setText("Konversionsfaktor: —")
+            self.ui.valueFactor.setText(self._text("text_factor_none"))
         else:
-            self._lbl_factor.setText(
-                f"Konversionsfaktor: {factor:.4e} W/V  (Gain {self._gain_stage})"
+            self.ui.valueFactor.setText(
+                self._text("text_factor", factor=f"{factor:.4e}", stage=self._gain_stage)
             )
 
         # Update scatter plot
@@ -225,9 +195,11 @@ class _GainCalTab(QWidget):
             self._fit_line.setData([], [])
 
     def get_calibration(self) -> GainCalibration:
+        """The calibration points entered so far for this gain stage."""
         return self._cal
 
     def load_calibration(self, cal: GainCalibration) -> None:
+        """Replace the calibration shown by this tab (e.g. from a loaded profile)."""
         self._cal = cal
         self._refresh()
 
@@ -243,16 +215,16 @@ class PowerCalibrationWindow(QDialog):
 
     def __init__(
         self,
-        data_controller=None,
+        data_controller: DataController | None = None,
         pm400: PM400PowerMeter | None = None,
         parent: QWidget | None = None,
+        config: AppConfig | None = None,
     ) -> None:
-        """Build the dialog's widgets in Python (no .ui counterpart by design)."""
+        """Load the Designer form, add one tab per gain stage and wire the signals."""
         super().__init__(parent)
-        self.setWindowTitle("Leistungskalibrierung — PD-TIA Detektor")
-        self.resize(700, 700)
+        self.config = config or default_config()
         self._data_controller = data_controller
-        self._gain_tabs: dict[int, _GainCalTab] = {}
+        self._gain_tabs: dict[int, GainCalibrationTab] = {}
         self._live_voltage: float = 0.0
         self._live_pm400_power_W: float | None = None
         # Reuse MainWindow's PM400 session when given (one VISA session only).
@@ -260,132 +232,37 @@ class PowerCalibrationWindow(QDialog):
         self._pm = pm400 if pm400 is not None else PM400PowerMeter()
         self._pm_poll_timer = QTimer(self)
         self._pm_poll_timer.timeout.connect(self._on_pm400_power_poll)
-        self._setup_ui()
-        self._connect_live_updates()
 
-    def _setup_ui(self) -> None:
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
+        self.ui = Ui_PowerCalibrationWindow()
+        self.ui.setupUi(self)
+        apply_strings(self, self.config.section("ui").get("power_calibration", {}))
+        close_button = self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Close)
+        close_button.setText(self._text("text_close"))
+        self.ui.valuePm400Status.setText(self._message("pm400_not_connected"))
 
-        # Content grows with the number of group boxes below (PM400, live
-        # values, …) and can exceed the dialog's default height on smaller
-        # screens — scroll instead of silently clipping widgets off-screen.
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
-
-        # Gain stage tabs
-        self._tab_widget = QTabWidget()
         for stage in _GAIN_STAGES:
-            tab = _GainCalTab(gain_stage=stage)
-            self._tab_widget.addTab(tab, f"Gain {stage}")
+            tab = GainCalibrationTab(gain_stage=stage, config=self.config)
+            self.ui.tabGains.addTab(tab, self._text("text_gain_tab", stage=stage))
             self._gain_tabs[stage] = tab
-        layout.addWidget(self._tab_widget, 1)
-
-        # Profile name + save/load row
-        profile_group = QGroupBox("Profil")
-        profile_form = QFormLayout(profile_group)
-        profile_form.setContentsMargins(8, 6, 8, 6)
-        profile_form.setVerticalSpacing(4)
-
-        self._le_profile_name = QLineEdit()
-        self._le_profile_name.setPlaceholderText("z.B. Det-A")
-        profile_form.addRow("Profilname:", self._le_profile_name)
-
-        self._spin_wavelength = QDoubleSpinBox()
-        self._spin_wavelength.setRange(1.0, 10000.0)
-        self._spin_wavelength.setDecimals(1)
-        self._spin_wavelength.setSuffix(" nm")
-        self._spin_wavelength.setValue(633.0)
-        self._spin_wavelength.setToolTip(
-            "Laserwellenlänge — die Responsivität des Detektors ist wellenlängenabhängig."
-        )
-        profile_form.addRow("Wellenlänge:", self._spin_wavelength)
-
-        btn_row = QHBoxLayout()
-        self._btn_save = QPushButton("Kalibrierung speichern")
-        self._btn_save.clicked.connect(self._save_profile)
-        btn_load = QPushButton("Kalibrierung laden…")
-        btn_load.clicked.connect(self._load_profile)
-        btn_row.addWidget(self._btn_save)
-        btn_row.addWidget(btn_load)
-        profile_form.addRow(btn_row)
-
-        layout.addWidget(profile_group)
-
-        layout.addWidget(self._build_pm400_group())
-        layout.addWidget(self._build_live_values_group())
-
-        scroll.setWidget(content)
-        outer.addWidget(scroll, 1)
-
-        # Close button (kept outside the scroll area so it's always reachable)
-        close_btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        close_btn_box.rejected.connect(self.close)
-        outer.addWidget(close_btn_box)
-
-    def _build_pm400_group(self) -> QGroupBox:
-        """PM400 connection + beamsplitter-attenuation control."""
-        group = QGroupBox("PM400 Leistungsmesser")
-        form = QFormLayout(group)
-        form.setContentsMargins(8, 6, 8, 6)
-        form.setVerticalSpacing(4)
 
         settings = AutoCalibrationConnectionSettings.load()
-
-        self._cb_pm400 = QComboBox()
         self._pm400_preferred = settings.pm400_visa_resource
-        btn_refresh = QPushButton("Aktualisieren")
-        btn_refresh.clicked.connect(self._refresh_pm400_list)
-        self._btn_connect_pm400 = QPushButton("Verbinden")
-        self._btn_connect_pm400.clicked.connect(self._toggle_pm400)
+        self.ui.spinAttenuation.setValue(settings.beamsplitter_attenuation_dB)
 
-        conn_row = QHBoxLayout()
-        conn_row.addWidget(self._cb_pm400, 1)
-        conn_row.addWidget(btn_refresh)
-        conn_row.addWidget(self._btn_connect_pm400)
-        form.addRow("VISA-Ressource:", conn_row)
-
-        self._lbl_pm400_status = QLabel("Nicht verbunden")
-        form.addRow(self._lbl_pm400_status)
-
-        self._spin_attenuation = QDoubleSpinBox()
-        self._spin_attenuation.setRange(0.0, 60.0)
-        self._spin_attenuation.setDecimals(2)
-        self._spin_attenuation.setSuffix(" dB")
-        self._spin_attenuation.setValue(settings.beamsplitter_attenuation_dB)
-
-        self._btn_toggle_attenuation = QPushButton("Abschwächung setzen")
-        self._btn_toggle_attenuation.setToolTip(
-            "Setzt die PM400-Abschwächung auf den nebenstehenden Wert, "
-            "bzw. schaltet sie aus, falls bereits aktiv."
-        )
-        self._btn_toggle_attenuation.setEnabled(False)
-        self._btn_toggle_attenuation.clicked.connect(self._toggle_attenuation)
-
-        att_row = QHBoxLayout()
-        att_row.addWidget(self._spin_attenuation)
-        att_row.addWidget(self._btn_toggle_attenuation)
-        form.addRow("Abschwächung:", att_row)
+        self.ui.buttonSave.clicked.connect(self._save_profile)
+        self.ui.buttonLoad.clicked.connect(self._load_profile)
+        self.ui.buttonRefresh.clicked.connect(self._refresh_pm400_list)
+        self.ui.buttonConnect.clicked.connect(self._toggle_pm400)
+        self.ui.buttonToggleAttenuation.clicked.connect(self._toggle_attenuation)
 
         self._refresh_pm400_list()
-        return group
+        self._connect_live_updates()
 
-    def _build_live_values_group(self) -> QGroupBox:
-        group = QGroupBox("Live-Werte")
-        form = QFormLayout(group)
-        form.setContentsMargins(8, 6, 8, 6)
-        form.setVerticalSpacing(4)
-        self._lbl_live = QLabel("—")
-        form.addRow("Detektorspannung:", self._lbl_live)
-        self._lbl_live_power = QLabel("—")
-        form.addRow("PM400-Leistung:", self._lbl_live_power)
-        return group
+    def _text(self, key: str, **fmt: object) -> str:
+        return self.config.text(f"power_calibration.{key}", **fmt)
+
+    def _message(self, key: str, **fmt: object) -> str:
+        return self.config.message(f"power_calibration.{key}", **fmt)
 
     def _connect_live_updates(self) -> None:
         if self._data_controller is None:
@@ -395,7 +272,9 @@ class PowerCalibrationWindow(QDialog):
     @Slot(float)
     def _on_live_voltage(self, voltage: float) -> None:
         self._live_voltage = voltage
-        self._lbl_live.setText(f"{export_voltage(voltage)} V")
+        self.ui.valueDetectorVoltage.setText(
+            self._text("text_voltage_value", voltage=export_voltage(voltage))
+        )
         for tab in self._gain_tabs.values():
             tab.set_live_voltage(voltage)
 
@@ -404,53 +283,55 @@ class PowerCalibrationWindow(QDialog):
     @Slot()
     def _refresh_pm400_list(self) -> None:
         if not self._pm_shared:
-            populate_pm400_combo(self._cb_pm400, self._pm400_preferred)
+            populate_pm400_combo(self.ui.comboPm400, self._pm400_preferred)
             return
         # Shared session: connecting/disconnecting happens in MainWindow.
-        self._cb_pm400.setEnabled(False)
-        self._btn_connect_pm400.setEnabled(False)
+        self.ui.comboPm400.setEnabled(False)
+        self.ui.buttonConnect.setEnabled(False)
         if self._pm.is_connected():
             info = self._pm.sensor_info()
             sensor_str = " | ".join(str(x) for x in info[:3]) if info else "–"
-            self._lbl_pm400_status.setText(f"Verbunden (Hauptfenster): {sensor_str}")
-            self._btn_toggle_attenuation.setEnabled(True)
+            self.ui.valuePm400Status.setText(
+                self._message("pm400_connected_main", sensor=sensor_str)
+            )
+            self.ui.buttonToggleAttenuation.setEnabled(True)
             self._pm_poll_timer.start(_PM400_POLL_MS)
         else:
-            self._lbl_pm400_status.setText("Nicht verbunden — PM400 im Hauptfenster verbinden")
+            self.ui.valuePm400Status.setText(self._message("pm400_not_connected_main"))
 
     @Slot()
     def _toggle_pm400(self) -> None:
         if self._pm.is_connected():
             self._pm_poll_timer.stop()
             self._pm.disconnect()
-            self._lbl_pm400_status.setText("Nicht verbunden")
-            self._btn_connect_pm400.setText("Verbinden")
-            self._btn_toggle_attenuation.setEnabled(False)
+            self.ui.valuePm400Status.setText(self._message("pm400_not_connected"))
+            self.ui.buttonConnect.setText(self._text("text_connect"))
+            self.ui.buttonToggleAttenuation.setEnabled(False)
             self._live_pm400_power_W = None
-            self._lbl_live_power.setText("—")
+            self.ui.valuePm400Power.setText("—")
             return
 
-        resource = self._cb_pm400.currentText().strip()
+        resource = self.ui.comboPm400.currentText().strip()
         if not resource:
-            QMessageBox.warning(self, "PM400", "Keine VISA-Ressource angegeben.")
+            QMessageBox.warning(self, self._text("title_pm400"), self._message("no_resource"))
             return
         try:
             self._pm.connect(resource)
             info = self._pm.sensor_info()
             sensor_str = " | ".join(str(x) for x in info[:3]) if info else "–"
-            self._lbl_pm400_status.setText(f"Verbunden: {sensor_str}")
-            self._btn_connect_pm400.setText("Trennen")
-            self._btn_toggle_attenuation.setEnabled(True)
+            self.ui.valuePm400Status.setText(self._message("pm400_connected", sensor=sensor_str))
+            self.ui.buttonConnect.setText(self._text("text_disconnect"))
+            self.ui.buttonToggleAttenuation.setEnabled(True)
             try:
                 att_dB = self._pm.get_attenuation_dB()
-                self._btn_toggle_attenuation.setText(
-                    "Abschwächung ausschalten" if att_dB > 0.0 else "Abschwächung setzen"
+                self.ui.buttonToggleAttenuation.setText(
+                    self._text("text_attenuation_off" if att_dB > 0.0 else "text_attenuation_set")
                 )
             except PM400Error:
                 pass
             self._pm_poll_timer.start(_PM400_POLL_MS)
         except PM400Error as exc:
-            QMessageBox.critical(self, "PM400 Fehler", str(exc))
+            QMessageBox.critical(self, self._text("title_pm400_error"), str(exc))
 
     @Slot()
     def _on_pm400_power_poll(self) -> None:
@@ -462,7 +343,7 @@ class PowerCalibrationWindow(QDialog):
             Debug.warning(f"PM400 read failed: {exc}")
             return
         self._live_pm400_power_W = power_W
-        self._lbl_live_power.setText(f"{power_W:.3e} W")
+        self.ui.valuePm400Power.setText(self._text("text_power_value", power=f"{power_W:.3e}"))
 
     @Slot()
     def _toggle_attenuation(self) -> None:
@@ -472,21 +353,21 @@ class PowerCalibrationWindow(QDialog):
             current_dB = self._pm.get_attenuation_dB()
             if current_dB > 0.0:
                 self._pm.set_attenuation_dB(0.0)
-                self._btn_toggle_attenuation.setText("Abschwächung setzen")
+                self.ui.buttonToggleAttenuation.setText(self._text("text_attenuation_set"))
             else:
-                self._pm.set_attenuation_dB(self._spin_attenuation.value())
-                self._btn_toggle_attenuation.setText("Abschwächung ausschalten")
+                self._pm.set_attenuation_dB(self.ui.spinAttenuation.value())
+                self.ui.buttonToggleAttenuation.setText(self._text("text_attenuation_off"))
         except PM400Error as exc:
-            QMessageBox.critical(self, "PM400 Fehler", str(exc))
+            QMessageBox.critical(self, self._text("title_pm400_error"), str(exc))
 
     @Slot()
     def _save_profile(self) -> None:
-        name = self._le_profile_name.text().strip()
+        name = self.ui.editProfileName.text().strip()
         if not name:
-            QMessageBox.warning(self, "Kein Name", "Bitte einen Profilnamen eingeben.")
+            QMessageBox.warning(self, self._text("title_no_name"), self._message("no_profile_name"))
             return
 
-        profile = PowerCalibrationProfile(name=name, wavelength_nm=self._spin_wavelength.value())
+        profile = PowerCalibrationProfile(name=name, wavelength_nm=self.ui.spinWavelength.value())
         for stage, tab in self._gain_tabs.items():
             profile.gains[stage] = tab.get_calibration()
 
@@ -496,18 +377,18 @@ class PowerCalibrationWindow(QDialog):
             Debug.info(f"Power calibration profile saved: {path}")
             QMessageBox.information(
                 self,
-                "Gespeichert",
-                f"Kalibrierungsprofil '{name}' wurde gespeichert:\n{path}",
+                self._text("title_saved"),
+                self._message("profile_saved", name=name, path=path),
             )
             self.profile_saved.emit()
         except Exception as exc:
             Debug.error(f"Failed to save calibration profile: {exc}")
-            QMessageBox.critical(self, "Fehler", f"Speichern fehlgeschlagen:\n{exc}")
+            QMessageBox.critical(
+                self, self._text("title_error"), self._message("save_failed", error=exc)
+            )
 
     @Slot()
     def _load_profile(self) -> None:
-        from PySide6.QtWidgets import QFileDialog
-
         profiles = PowerCalibrationProfile.list_profiles()
         if profiles:
             start_dir = str(PROFILES_DIR)
@@ -516,17 +397,19 @@ class PowerCalibrationWindow(QDialog):
 
         path_str, _ = QFileDialog.getOpenFileName(
             self,
-            "Kalibrierungsprofil laden",
+            self._text("title_load_profile"),
             start_dir,
-            "JSON-Dateien (*.json);;Alle Dateien (*)",
+            self._text("file_filter_profile"),
         )
         if not path_str:
             return
         try:
             profile = PowerCalibrationProfile.load(Path(path_str))
-            self._le_profile_name.setText(profile.name)
-            self._spin_wavelength.setValue(
-                profile.wavelength_nm if profile.wavelength_nm is not None else 633.0
+            self.ui.editProfileName.setText(profile.name)
+            self.ui.spinWavelength.setValue(
+                profile.wavelength_nm
+                if profile.wavelength_nm is not None
+                else _DEFAULT_WAVELENGTH_NM
             )
             for stage in _GAIN_STAGES:
                 cal = profile.gains.get(stage)
@@ -535,9 +418,11 @@ class PowerCalibrationWindow(QDialog):
             Debug.info(f"Loaded calibration profile from {path_str}")
         except Exception as exc:
             Debug.error(f"Failed to load calibration profile: {exc}")
-            QMessageBox.critical(self, "Fehler", f"Laden fehlgeschlagen:\n{exc}")
+            QMessageBox.critical(
+                self, self._text("title_error"), self._message("load_failed", error=exc)
+            )
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Detach from DataController's live-voltage signal and disconnect the PM400."""
         if self._data_controller is not None:
             try:

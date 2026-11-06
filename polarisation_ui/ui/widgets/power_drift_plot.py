@@ -12,12 +12,13 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 _ONE_HOUR_MIN: float = 60.0
 
 
-def _hour_marker() -> pg.InfiniteLine:
+def _hour_marker(config: AppConfig) -> pg.InfiniteLine:
     """Build a vertical dashed reference line at the 60-minute mark."""
     colour = plot_colors().reference
     return pg.InfiniteLine(
@@ -25,7 +26,7 @@ def _hour_marker() -> pg.InfiniteLine:
         angle=90,
         movable=False,
         pen=pg.mkPen(color=colour, width=1, style=Qt.PenStyle.DashLine),
-        label="1 h",
+        label=config.text("plots.power_drift_hour_marker"),
         labelOpts={"color": colour, "position": 0.97},
     )
 
@@ -33,9 +34,13 @@ def _hour_marker() -> pg.InfiniteLine:
 class PowerDriftIntensityPlot(QWidget):
     """Rolling intensity-vs-elapsed-time plot with a 60 min reference marker."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with an empty intensity curve."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widget with an empty intensity curve.
+
+        Axis labels and legend names come from ``ui.plots`` (default: ``default_config()``).
+        """
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._setup_plot()
 
     def _setup_plot(self) -> None:
@@ -45,20 +50,42 @@ class PowerDriftIntensityPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Zeit", units="min")
-        self._plot_widget.setLabel("left", "Intensität", units="V")
         self._plot_widget.addLegend(offset=(-10, 10))
 
         self._curve = self._plot_widget.plot(
             [],
             [],
             pen=pg.mkPen(color=colors.series_color(0), width=2),
-            name="Intensität",
+            name=self._config.text("plots.power_drift_legend_intensity"),
         )
-        self._plot_widget.addItem(_hour_marker())
+        self._marker = _hour_marker(self._config)
+        self._plot_widget.addItem(self._marker)
+        self._apply_labels()
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Take axis labels and legend names from ``config``."""
+        self._config = config
+        self._apply_labels()
+
+    def _apply_labels(self) -> None:
+        text = self._config.text
+        self._marker.label.setText(text("plots.power_drift_hour_marker"))
+        self._plot_widget.setLabel(
+            "bottom",
+            text("plots.power_drift_time_label"),
+            units=text("plots.power_drift_time_units"),
+        )
+        self._plot_widget.setLabel(
+            "left",
+            text("plots.power_drift_intensity_label"),
+            units=text("plots.power_drift_intensity_units"),
+        )
+        self._plot_widget.plotItem.legend.getLabel(self._curve).setText(
+            text("plots.power_drift_legend_intensity")
+        )
 
     def set_data(self, t_min: list[float], intensity: list[float]) -> None:
         """Replace the plotted intensity curve with new (time, intensity) samples."""
@@ -72,9 +99,13 @@ class PowerDriftIntensityPlot(QWidget):
 class PowerDriftAnglesPlot(QWidget):
     """Rolling sample/detector-angle-vs-elapsed-time plot with a 60 min marker."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with empty angle curves."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widget with empty angle curves.
+
+        Axis labels and legend names come from ``ui.plots`` (default: ``default_config()``).
+        """
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._setup_plot()
 
     def _setup_plot(self) -> None:
@@ -84,26 +115,48 @@ class PowerDriftAnglesPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Zeit", units="min")
-        self._plot_widget.setLabel("left", "Winkel", units="°")
         self._plot_widget.addLegend(offset=(-10, 10))
 
         self._curve_sample = self._plot_widget.plot(
             [],
             [],
             pen=pg.mkPen(color=colors.series_color(1), width=1.5, style=Qt.PenStyle.DashLine),
-            name="Probenwinkel (θS)",
+            name=self._config.text("plots.power_drift_legend_sample"),
         )
         self._curve_detector = self._plot_widget.plot(
             [],
             [],
             pen=pg.mkPen(color=colors.series_color(2), width=1.5, style=Qt.PenStyle.DotLine),
-            name="Detektorwinkel (θD)",
+            name=self._config.text("plots.power_drift_legend_detector"),
         )
-        self._plot_widget.addItem(_hour_marker())
+        self._marker = _hour_marker(self._config)
+        self._plot_widget.addItem(self._marker)
+        self._apply_labels()
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Take axis labels and legend names from ``config``."""
+        self._config = config
+        self._apply_labels()
+
+    def _apply_labels(self) -> None:
+        text = self._config.text
+        self._marker.label.setText(text("plots.power_drift_hour_marker"))
+        self._plot_widget.setLabel(
+            "bottom",
+            text("plots.power_drift_time_label"),
+            units=text("plots.power_drift_time_units"),
+        )
+        self._plot_widget.setLabel(
+            "left",
+            text("plots.power_drift_angle_label"),
+            units=text("plots.power_drift_angle_units"),
+        )
+        legend = self._plot_widget.plotItem.legend
+        legend.getLabel(self._curve_sample).setText(text("plots.power_drift_legend_sample"))
+        legend.getLabel(self._curve_detector).setText(text("plots.power_drift_legend_detector"))
 
     def set_data(
         self,

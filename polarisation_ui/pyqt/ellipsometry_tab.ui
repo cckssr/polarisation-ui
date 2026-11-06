@@ -10,7 +10,7 @@
     <height>1072</height>
    </rect>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="2,0" columnstretch="2,0">
+  <layout class="QGridLayout" name="layoutMain" rowstretch="2,0" columnstretch="2,0">
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -24,7 +24,7 @@
     <number>0</number>
    </property>
    <item row="0" column="0">
-    <widget class="QSplitter" name="plotSplitter">
+    <widget class="QSplitter" name="splitterPlots">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
@@ -33,7 +33,7 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QTableWidget" name="seriesTable">
+    <widget class="QTableWidget" name="tableSeries">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -52,50 +52,18 @@
      <attribute name="verticalHeaderVisible">
       <bool>false</bool>
      </attribute>
-     <column>
-      <property name="text">
-       <string>θ (°)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Ψ (°)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Δ (°)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>n</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>k</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>N</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>RMS (µW)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>m</string>
-      </property>
-     </column>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
     </widget>
    </item>
    <item row="0" column="1" rowspan="2">
-    <widget class="QScrollArea" name="rightScroll">
+    <widget class="QScrollArea" name="scrollSide">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -120,7 +88,7 @@
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="rightScrollContents">
+     <widget class="QWidget" name="contentSide">
       <property name="geometry">
        <rect>
         <x>0</x>
@@ -135,7 +103,7 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <layout class="QVBoxLayout" name="rightLayout">
+      <layout class="QVBoxLayout" name="layoutSide">
        <property name="spacing">
         <number>6</number>
        </property>
@@ -152,7 +120,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QGroupBox" name="gbLive">
+        <widget class="QGroupBox" name="groupLive">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -162,7 +130,7 @@
          <property name="title">
           <string>Aktuell</string>
          </property>
-         <layout class="QFormLayout" name="formLive">
+         <layout class="QFormLayout" name="layoutLive">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
           </property>
@@ -182,70 +150,70 @@
            <number>4</number>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblLiveIntensityLabel">
+           <widget class="QLabel" name="labelLiveIntensity">
             <property name="text">
              <string>I:</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLabel" name="lblLiveIntensity">
+           <widget class="QLabel" name="valueLiveIntensity">
             <property name="text">
              <string>—</string>
             </property>
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="lblLivePowerLabel">
+           <widget class="QLabel" name="labelLivePower">
             <property name="text">
              <string>P:</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLabel" name="lblLivePower">
+           <widget class="QLabel" name="valueLivePower">
             <property name="text">
              <string>—</string>
             </property>
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="lblLiveAoiLabel">
+           <widget class="QLabel" name="labelLiveAoi">
             <property name="text">
              <string>AOI θ:</string>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLabel" name="lblLiveAoi">
+           <widget class="QLabel" name="valueLiveAoi">
             <property name="text">
              <string>—</string>
             </property>
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="lblLiveDetectorLabel">
+           <widget class="QLabel" name="labelLiveDetector">
             <property name="text">
              <string>Detektorarm:</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLabel" name="lblLiveDetector">
+           <widget class="QLabel" name="valueLiveDetector">
             <property name="text">
              <string>—</string>
             </property>
            </widget>
           </item>
           <item row="4" column="0">
-           <widget class="QLabel" name="lblSpecularErrorLabel">
+           <widget class="QLabel" name="labelSpecularError">
             <property name="text">
              <string>Spiegel-Fehler:</string>
             </property>
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLabel" name="lblSpecularError">
+           <widget class="QLabel" name="valueSpecularError">
             <property name="toolTip">
              <string>Abweichung des Detektorarms von 2·θ (Spiegelbedingung) — großer Wert deutet auf eine Fehljustage hin</string>
             </property>
@@ -255,14 +223,14 @@
            </widget>
           </item>
           <item row="5" column="0">
-           <widget class="QLabel" name="lblKDCPositionLabel">
+           <widget class="QLabel" name="labelKdcPosition">
             <property name="text">
              <string>Analysator-Position:</string>
             </property>
            </widget>
           </item>
           <item row="5" column="1">
-           <widget class="QLabel" name="lblKDCPosition">
+           <widget class="QLabel" name="valueKdcPosition">
             <property name="text">
              <string>—</string>
             </property>
@@ -272,7 +240,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbSetup">
+        <widget class="QGroupBox" name="groupSetup">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -282,7 +250,7 @@
          <property name="title">
           <string>Konfiguration</string>
          </property>
-         <layout class="QFormLayout" name="formSetup">
+         <layout class="QFormLayout" name="layoutSetup">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
           </property>
@@ -302,7 +270,7 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblWavelength">
+           <widget class="QLabel" name="labelWavelength">
             <property name="text">
              <string>Wellenlänge λ:</string>
             </property>
@@ -337,7 +305,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="lblPolariser">
+           <widget class="QLabel" name="labelPolariser">
             <property name="text">
              <string>Polarisator P:</string>
             </property>
@@ -369,7 +337,7 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="lblAnalyserOffset">
+           <widget class="QLabel" name="labelAnalyserOffset">
             <property name="text">
              <string>Analysator-Offset A₀:</string>
             </property>
@@ -401,7 +369,7 @@
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="lblAmbientIndex">
+           <widget class="QLabel" name="labelAmbientIndex">
             <property name="text">
              <string>Umgebung n₀:</string>
             </property>
@@ -430,14 +398,14 @@
            </widget>
           </item>
           <item row="4" column="0">
-           <widget class="QLabel" name="lblKdcZeroOffsetLabel">
+           <widget class="QLabel" name="labelKdcZeroOffset">
             <property name="text">
              <string>KDC-Nullpunkt:</string>
             </property>
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLabel" name="lblKdcZeroOffset">
+           <widget class="QLabel" name="valueKdcZeroOffset">
             <property name="toolTip">
              <string>Aktueller kdc.zero_offset_deg aus der Konfiguration (Referenzierung auf den Polarisator)</string>
             </property>
@@ -447,7 +415,7 @@
            </widget>
           </item>
           <item row="5" column="0" colspan="2">
-           <widget class="QPushButton" name="btnSetAoiZero">
+           <widget class="QPushButton" name="buttonSetAoiZero">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -466,14 +434,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbSweep">
+        <widget class="QGroupBox" name="groupSweep">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="title">
           <string>Automatischer Scan (KDC101)</string>
          </property>
-         <layout class="QVBoxLayout" name="vboxSweep">
+         <layout class="QVBoxLayout" name="layoutSweep">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -487,7 +455,7 @@
            <number>6</number>
           </property>
           <item>
-           <widget class="QCheckBox" name="cbAnalyserPlaced">
+           <widget class="QCheckBox" name="checkAnalyserPlaced">
             <property name="toolTip">
              <string>Bestätigen, dass der Analysator im Strahlengang eingesetzt ist</string>
             </property>
@@ -497,7 +465,7 @@
            </widget>
           </item>
           <item>
-           <layout class="QFormLayout" name="formSweepParams">
+           <layout class="QFormLayout" name="layoutSweepParams">
             <property name="fieldGrowthPolicy">
              <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
             </property>
@@ -505,7 +473,7 @@
              <number>3</number>
             </property>
             <item row="0" column="0">
-             <widget class="QLabel" name="lblSweepStart">
+             <widget class="QLabel" name="labelSweepStart">
               <property name="text">
                <string>Von (°):</string>
               </property>
@@ -534,7 +502,7 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="lblSweepEnd">
+             <widget class="QLabel" name="labelSweepEnd">
               <property name="text">
                <string>Bis (°):</string>
               </property>
@@ -563,7 +531,7 @@
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QLabel" name="lblSweepStep">
+             <widget class="QLabel" name="labelSweepStep">
               <property name="text">
                <string>Schritt (°):</string>
               </property>
@@ -595,7 +563,7 @@
              </widget>
             </item>
             <item row="3" column="0">
-             <widget class="QLabel" name="lblSettleMs">
+             <widget class="QLabel" name="labelSettleMs">
               <property name="text">
                <string>Einschwingzeit:</string>
               </property>
@@ -626,7 +594,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="btnStartSweep">
+           <widget class="QPushButton" name="buttonStartSweep">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -639,7 +607,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnAbortSweep">
+           <widget class="QPushButton" name="buttonAbortSweep">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -655,14 +623,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbManual">
+        <widget class="QGroupBox" name="groupManual">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="title">
           <string>Manueller Analysatorpunkt</string>
          </property>
-         <layout class="QVBoxLayout" name="vboxManual">
+         <layout class="QVBoxLayout" name="layoutManual">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -676,12 +644,12 @@
            <number>6</number>
           </property>
           <item>
-           <layout class="QFormLayout" name="formManual">
+           <layout class="QFormLayout" name="layoutManualEntry">
             <property name="fieldGrowthPolicy">
              <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
             </property>
             <item row="0" column="0">
-             <widget class="QLabel" name="lblAnalyserManual">
+             <widget class="QLabel" name="labelAnalyserManual">
               <property name="text">
                <string>Analysator (logisch):</string>
               </property>
@@ -715,7 +683,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="btnAddPoint">
+           <widget class="QPushButton" name="buttonAddPoint">
             <property name="toolTip">
              <string>Aktuellen Analysatorwinkel mit gemittelter Leistung zum Sweep-Puffer hinzufügen</string>
             </property>
@@ -725,7 +693,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnClearSweep">
+           <widget class="QPushButton" name="buttonClearSweep">
             <property name="toolTip">
              <string>Sweep-Puffer der aktuellen AOI-Messung leeren (ohne die Serie zu verändern)</string>
             </property>
@@ -738,11 +706,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbResult">
+        <widget class="QGroupBox" name="groupResult">
          <property name="title">
           <string>Fit-Ergebnis (aktuelle AOI)</string>
          </property>
-         <layout class="QVBoxLayout" name="vboxResult">
+         <layout class="QVBoxLayout" name="layoutResult">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -756,12 +724,12 @@
            <number>6</number>
           </property>
           <item>
-           <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1,0,0,1">
+           <layout class="QGridLayout" name="layoutResultValues" columnstretch="0,1,0,0,1">
             <property name="verticalSpacing">
              <number>2</number>
             </property>
             <item row="1" column="0">
-             <widget class="QLabel" name="lblI0Label">
+             <widget class="QLabel" name="labelI0">
               <property name="text">
                <string>I₀:</string>
               </property>
@@ -771,21 +739,21 @@
              </widget>
             </item>
             <item row="0" column="4">
-             <widget class="QLabel" name="lblBeta">
+             <widget class="QLabel" name="valueBeta">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="1" column="4">
-             <widget class="QLabel" name="lblResidual">
+             <widget class="QLabel" name="valueResidual">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QLabel" name="lblDelta">
+             <widget class="QLabel" name="valueDelta">
               <property name="toolTip">
                <string>Nur cos(Δ) wird gemessen — das Vorzeichen von Δ ist prinzipiell unbestimmt</string>
               </property>
@@ -795,7 +763,7 @@
              </widget>
             </item>
             <item row="4" column="3">
-             <widget class="QLabel" name="lblKPseudoLabel">
+             <widget class="QLabel" name="labelKPseudo">
               <property name="text">
                <string>k (pseudo):</string>
               </property>
@@ -805,7 +773,7 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QLabel" name="lblBetaLabel">
+             <widget class="QLabel" name="labelBeta">
               <property name="text">
                <string>β:</string>
               </property>
@@ -815,7 +783,7 @@
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QLabel" name="lblModulationLabel">
+             <widget class="QLabel" name="labelModulation">
               <property name="text">
                <string>Modulation m:</string>
               </property>
@@ -825,21 +793,21 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLabel" name="lblI0">
+             <widget class="QLabel" name="valueI0">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLabel" name="lblAlpha">
+             <widget class="QLabel" name="valueAlpha">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="0" column="0">
-             <widget class="QLabel" name="lblAlphaLabel">
+             <widget class="QLabel" name="labelAlpha">
               <property name="text">
                <string>α:</string>
               </property>
@@ -849,14 +817,14 @@
              </widget>
             </item>
             <item row="4" column="4">
-             <widget class="QLabel" name="lblKPseudo">
+             <widget class="QLabel" name="valueKPseudo">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="3" column="0">
-             <widget class="QLabel" name="lblDeltaLabel">
+             <widget class="QLabel" name="labelDelta">
               <property name="text">
                <string>Δ:</string>
               </property>
@@ -866,14 +834,14 @@
              </widget>
             </item>
             <item row="2" column="4">
-             <widget class="QLabel" name="lblPsi">
+             <widget class="QLabel" name="valuePsi">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QLabel" name="lblModulation">
+             <widget class="QLabel" name="valueModulation">
               <property name="toolTip">
                <string>sqrt(α²+β²) — muss &lt; 1 sein, sonst ist der Fit unphysikalisch</string>
               </property>
@@ -883,7 +851,7 @@
              </widget>
             </item>
             <item row="2" column="3">
-             <widget class="QLabel" name="lblPsiLabel">
+             <widget class="QLabel" name="labelPsi">
               <property name="text">
                <string>Ψ:</string>
               </property>
@@ -893,14 +861,14 @@
              </widget>
             </item>
             <item row="4" column="1">
-             <widget class="QLabel" name="lblNPseudo">
+             <widget class="QLabel" name="valueNPseudo">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="4" column="0">
-             <widget class="QLabel" name="lblNPseudoLabel">
+             <widget class="QLabel" name="labelNPseudo">
               <property name="text">
                <string>n (pseudo):</string>
               </property>
@@ -910,7 +878,7 @@
              </widget>
             </item>
             <item row="1" column="3">
-             <widget class="QLabel" name="lblResidualLabel">
+             <widget class="QLabel" name="labelResidual">
               <property name="text">
                <string>Residuum:</string>
               </property>
@@ -920,7 +888,7 @@
              </widget>
             </item>
             <item row="0" column="2" rowspan="5">
-             <widget class="Line" name="line_2">
+             <widget class="Line" name="lineResult">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -929,7 +897,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="btnAcceptPoint">
+           <widget class="QPushButton" name="buttonAcceptPoint">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -945,11 +913,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbModel">
+        <widget class="QGroupBox" name="groupModel">
          <property name="title">
           <string>Optisches Modell</string>
          </property>
-         <layout class="QVBoxLayout" name="vboxModel">
+         <layout class="QVBoxLayout" name="layoutModel">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -963,7 +931,7 @@
            <number>6</number>
           </property>
           <item>
-           <layout class="QFormLayout" name="formModel">
+           <layout class="QFormLayout" name="layoutModelParams">
             <property name="fieldGrowthPolicy">
              <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
             </property>
@@ -971,14 +939,14 @@
              <number>3</number>
             </property>
             <item row="0" column="0">
-             <widget class="QLabel" name="lblModelType">
+             <widget class="QLabel" name="labelModelType">
               <property name="text">
                <string>Modell:</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="cmbModel">
+             <widget class="QComboBox" name="comboModel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -988,20 +956,10 @@
               <property name="toolTip">
                <string>2-Phasen: Probe als Substrat behandeln (Pseudo-n,k). 3-Phasen: Schichtdicke und -index auf bekanntem Substrat fitten</string>
               </property>
-              <item>
-               <property name="text">
-                <string>Substrat (2-Phasen)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Schicht auf Substrat (3-Ph.)</string>
-               </property>
-              </item>
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="lblSubstrateN">
+             <widget class="QLabel" name="labelSubstrateN">
               <property name="text">
                <string>Substrat n:</string>
               </property>
@@ -1030,7 +988,7 @@
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QLabel" name="lblSubstrateK">
+             <widget class="QLabel" name="labelSubstrateK">
               <property name="text">
                <string>Substrat k:</string>
               </property>
@@ -1059,15 +1017,15 @@
              </widget>
             </item>
             <item row="3" column="0">
-             <widget class="QLabel" name="lblDMin">
+             <widget class="QLabel" name="labelDMin">
               <property name="text">
                <string>d-Suchbereich:</string>
               </property>
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QWidget" name="wDRange" native="true">
-              <layout class="QHBoxLayout" name="hboxDRange">
+             <widget class="QWidget" name="containerDRange" native="true">
+              <layout class="QHBoxLayout" name="layoutDRange">
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -1134,15 +1092,15 @@
              </widget>
             </item>
             <item row="4" column="0">
-             <widget class="QLabel" name="lblNfMin">
+             <widget class="QLabel" name="labelNfMin">
               <property name="text">
                <string>n-Suchbereich:</string>
               </property>
              </widget>
             </item>
             <item row="4" column="1">
-             <widget class="QWidget" name="wNRange" native="true">
-              <layout class="QHBoxLayout" name="hboxNRange">
+             <widget class="QWidget" name="containerNRange" native="true">
+              <layout class="QHBoxLayout" name="layoutNRange">
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -1205,7 +1163,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QCheckBox" name="cbFitK">
+           <widget class="QCheckBox" name="checkFitK">
             <property name="toolTip">
              <string>Absorption k der Schicht mitfitten (grobes festes Raster, 0…2) — für transparente Schichten (k=0) deaktiviert lassen, sonst ist das Problem unterbestimmt</string>
             </property>
@@ -1215,7 +1173,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnFitModel">
+           <widget class="QPushButton" name="buttonFitModel">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -1228,12 +1186,12 @@
            </widget>
           </item>
           <item>
-           <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1,0,0,1">
+           <layout class="QGridLayout" name="layoutModelValues" columnstretch="0,1,0,0,1">
             <property name="verticalSpacing">
              <number>2</number>
             </property>
             <item row="1" column="3">
-             <widget class="QLabel" name="lblMSELabel">
+             <widget class="QLabel" name="labelMSE">
               <property name="text">
                <string>MSE:</string>
               </property>
@@ -1243,35 +1201,35 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLabel" name="lblThickness">
+             <widget class="QLabel" name="valueThickness">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="1" column="4">
-             <widget class="QLabel" name="lblMSE">
+             <widget class="QLabel" name="valueMSE">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLabel" name="lblKFilm">
+             <widget class="QLabel" name="valueKFilm">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="0" column="4">
-             <widget class="QLabel" name="lblNFilm">
+             <widget class="QLabel" name="valueNFilm">
               <property name="text">
                <string>—</string>
               </property>
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QLabel" name="lblNFilmLabel">
+             <widget class="QLabel" name="labelNFilm">
               <property name="text">
                <string>n (Schicht):</string>
               </property>
@@ -1281,7 +1239,7 @@
              </widget>
             </item>
             <item row="0" column="0">
-             <widget class="QLabel" name="lblThicknessLabel">
+             <widget class="QLabel" name="labelThickness">
               <property name="text">
                <string>Dicke d:</string>
               </property>
@@ -1291,7 +1249,7 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="lblKFilmLabel">
+             <widget class="QLabel" name="labelKFilm">
               <property name="text">
                <string>k (Schicht):</string>
               </property>
@@ -1301,7 +1259,7 @@
              </widget>
             </item>
             <item row="0" column="2" rowspan="2">
-             <widget class="Line" name="line">
+             <widget class="Line" name="lineModel">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1310,7 +1268,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QLabel" name="lblBranches">
+           <widget class="QLabel" name="valueBranches">
             <property name="toolTip">
              <string>Alternative Schichtdicken-Lösungen (Perioden-Mehrdeutigkeit bei einer Wellenlänge) — durch weitere AOI-Punkte auflösbar</string>
             </property>
@@ -1326,7 +1284,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btnDeleteSelected">
+        <widget class="QPushButton" name="buttonDeleteSelected">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1339,7 +1297,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btnDeleteLast">
+        <widget class="QPushButton" name="buttonDeleteLast">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1352,7 +1310,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btnClear">
+        <widget class="QPushButton" name="buttonClear">
          <property name="enabled">
           <bool>false</bool>
          </property>

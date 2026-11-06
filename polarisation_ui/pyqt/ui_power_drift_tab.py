@@ -43,11 +43,13 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSpacerItem,
     QVBoxLayout,
@@ -90,25 +92,32 @@ class Ui_PowerDriftTab(object):
 
         self.horizontalLayout.addWidget(self.plotsContainer)
 
-        self.controlsPanel = QWidget(PowerDriftTab)
-        self.controlsPanel.setObjectName("controlsPanel")
-        self.controlsLayout = QVBoxLayout(self.controlsPanel)
-        self.controlsLayout.setSpacing(8)
-        self.controlsLayout.setObjectName("controlsLayout")
-        self.controlsLayout.setContentsMargins(4, 0, 0, 0)
-        self.gbRuntime = QGroupBox(self.controlsPanel)
-        self.gbRuntime.setObjectName("gbRuntime")
-        self.runtimeLayout = QVBoxLayout(self.gbRuntime)
+        self.scrollSide = QScrollArea(PowerDriftTab)
+        self.scrollSide.setObjectName("scrollSide")
+        self.scrollSide.setFrameShape(QFrame.Shape.NoFrame)
+        self.scrollSide.setWidgetResizable(True)
+        self.contentSide = QWidget()
+        self.contentSide.setObjectName("contentSide")
+        self.layoutSide = QVBoxLayout(self.contentSide)
+        self.layoutSide.setSpacing(8)
+        self.layoutSide.setObjectName("layoutSide")
+        self.layoutSide.setContentsMargins(4, 0, 0, 0)
+        self.groupRuntime = QGroupBox(self.contentSide)
+        self.groupRuntime.setObjectName("groupRuntime")
+        self.runtimeLayout = QVBoxLayout(self.groupRuntime)
         self.runtimeLayout.setObjectName("runtimeLayout")
         self.runtimeLayout.setContentsMargins(6, 6, 6, 6)
-        self.lblElapsed = QLabel(self.gbRuntime)
-        self.lblElapsed.setObjectName("lblElapsed")
-        self.lblElapsed.setStyleSheet("font-size: 22px; font-weight: bold;")
-        self.lblElapsed.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.valueElapsed = QLabel(self.groupRuntime)
+        self.valueElapsed.setObjectName("valueElapsed")
+        font = QFont()
+        font.setPointSize(16)
+        font.setBold(True)
+        self.valueElapsed.setFont(font)
+        self.valueElapsed.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.runtimeLayout.addWidget(self.lblElapsed)
+        self.runtimeLayout.addWidget(self.valueElapsed)
 
-        self.progressBar = QProgressBar(self.gbRuntime)
+        self.progressBar = QProgressBar(self.groupRuntime)
         self.progressBar.setObjectName("progressBar")
         self.progressBar.setMaximumSize(QSize(16777215, 8))
         self.progressBar.setMinimum(0)
@@ -118,112 +127,140 @@ class Ui_PowerDriftTab(object):
 
         self.runtimeLayout.addWidget(self.progressBar)
 
-        self.lblScale = QLabel(self.gbRuntime)
-        self.lblScale.setObjectName("lblScale")
-        self.lblScale.setStyleSheet("font-size: 9px; color: #888;")
-        self.lblScale.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.layoutScale = QHBoxLayout()
+        self.layoutScale.setObjectName("layoutScale")
+        self.labelScaleStart = QLabel(self.groupRuntime)
+        self.labelScaleStart.setObjectName("labelScaleStart")
+        font1 = QFont()
+        font1.setPointSize(7)
+        self.labelScaleStart.setFont(font1)
+        self.labelScaleStart.setStyleSheet("color: palette(placeholder-text);")
+        self.labelScaleStart.setAlignment(
+            Qt.AlignmentFlag.AlignLeading
+            | Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.runtimeLayout.addWidget(self.lblScale)
+        self.layoutScale.addWidget(self.labelScaleStart)
 
-        self.controlsLayout.addWidget(self.gbRuntime)
+        self.labelScaleEnd = QLabel(self.groupRuntime)
+        self.labelScaleEnd.setObjectName("labelScaleEnd")
+        self.labelScaleEnd.setFont(font1)
+        self.labelScaleEnd.setStyleSheet("color: palette(placeholder-text);")
+        self.labelScaleEnd.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTrailing
+            | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        self.gbIntensity = QGroupBox(self.controlsPanel)
-        self.gbIntensity.setObjectName("gbIntensity")
-        self.intensityForm = QFormLayout(self.gbIntensity)
+        self.layoutScale.addWidget(self.labelScaleEnd)
+
+        self.runtimeLayout.addLayout(self.layoutScale)
+
+        self.layoutSide.addWidget(self.groupRuntime)
+
+        self.groupIntensity = QGroupBox(self.contentSide)
+        self.groupIntensity.setObjectName("groupIntensity")
+        self.intensityForm = QFormLayout(self.groupIntensity)
         self.intensityForm.setObjectName("intensityForm")
         self.intensityForm.setVerticalSpacing(2)
         self.intensityForm.setContentsMargins(6, 4, 6, 6)
-        self.lblICurrentLabel = QLabel(self.gbIntensity)
-        self.lblICurrentLabel.setObjectName("lblICurrentLabel")
+        self.labelIntensityCurrent = QLabel(self.groupIntensity)
+        self.labelIntensityCurrent.setObjectName("labelIntensityCurrent")
 
-        self.intensityForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblICurrentLabel)
+        self.intensityForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelIntensityCurrent)
 
-        self.lblICurrent = QLabel(self.gbIntensity)
-        self.lblICurrent.setObjectName("lblICurrent")
+        self.valueIntensityCurrent = QLabel(self.groupIntensity)
+        self.valueIntensityCurrent.setObjectName("valueIntensityCurrent")
 
-        self.intensityForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblICurrent)
+        self.intensityForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.valueIntensityCurrent)
 
-        self.lblIMeanLabel = QLabel(self.gbIntensity)
-        self.lblIMeanLabel.setObjectName("lblIMeanLabel")
+        self.labelIntensityMean = QLabel(self.groupIntensity)
+        self.labelIntensityMean.setObjectName("labelIntensityMean")
 
-        self.intensityForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblIMeanLabel)
+        self.intensityForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelIntensityMean)
 
-        self.lblIMean = QLabel(self.gbIntensity)
-        self.lblIMean.setObjectName("lblIMean")
+        self.valueIntensityMean = QLabel(self.groupIntensity)
+        self.valueIntensityMean.setObjectName("valueIntensityMean")
 
-        self.intensityForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblIMean)
+        self.intensityForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.valueIntensityMean)
 
-        self.lblIMinLabel = QLabel(self.gbIntensity)
-        self.lblIMinLabel.setObjectName("lblIMinLabel")
+        self.labelIntensityMin = QLabel(self.groupIntensity)
+        self.labelIntensityMin.setObjectName("labelIntensityMin")
 
-        self.intensityForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblIMinLabel)
+        self.intensityForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelIntensityMin)
 
-        self.lblIMin = QLabel(self.gbIntensity)
-        self.lblIMin.setObjectName("lblIMin")
+        self.valueIntensityMin = QLabel(self.groupIntensity)
+        self.valueIntensityMin.setObjectName("valueIntensityMin")
 
-        self.intensityForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lblIMin)
+        self.intensityForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.valueIntensityMin)
 
-        self.lblIMaxLabel = QLabel(self.gbIntensity)
-        self.lblIMaxLabel.setObjectName("lblIMaxLabel")
+        self.labelIntensityMax = QLabel(self.groupIntensity)
+        self.labelIntensityMax.setObjectName("labelIntensityMax")
 
-        self.intensityForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblIMaxLabel)
+        self.intensityForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelIntensityMax)
 
-        self.lblIMax = QLabel(self.gbIntensity)
-        self.lblIMax.setObjectName("lblIMax")
+        self.valueIntensityMax = QLabel(self.groupIntensity)
+        self.valueIntensityMax.setObjectName("valueIntensityMax")
 
-        self.intensityForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lblIMax)
+        self.intensityForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.valueIntensityMax)
 
-        self.controlsLayout.addWidget(self.gbIntensity)
+        self.layoutSide.addWidget(self.groupIntensity)
 
-        self.gbAngleStability = QGroupBox(self.controlsPanel)
-        self.gbAngleStability.setObjectName("gbAngleStability")
-        self.angleForm = QFormLayout(self.gbAngleStability)
+        self.groupAngleStability = QGroupBox(self.contentSide)
+        self.groupAngleStability.setObjectName("groupAngleStability")
+        self.angleForm = QFormLayout(self.groupAngleStability)
         self.angleForm.setObjectName("angleForm")
         self.angleForm.setVerticalSpacing(2)
         self.angleForm.setContentsMargins(6, 4, 6, 6)
-        self.lblDeltaSampleLabel = QLabel(self.gbAngleStability)
-        self.lblDeltaSampleLabel.setObjectName("lblDeltaSampleLabel")
+        self.labelDeltaSample = QLabel(self.groupAngleStability)
+        self.labelDeltaSample.setObjectName("labelDeltaSample")
 
-        self.angleForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblDeltaSampleLabel)
+        self.angleForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelDeltaSample)
 
-        self.lblDeltaSample = QLabel(self.gbAngleStability)
-        self.lblDeltaSample.setObjectName("lblDeltaSample")
+        self.valueDeltaSample = QLabel(self.groupAngleStability)
+        self.valueDeltaSample.setObjectName("valueDeltaSample")
 
-        self.angleForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblDeltaSample)
+        self.angleForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.valueDeltaSample)
 
-        self.lblDeltaDetectorLabel = QLabel(self.gbAngleStability)
-        self.lblDeltaDetectorLabel.setObjectName("lblDeltaDetectorLabel")
+        self.labelDeltaDetector = QLabel(self.groupAngleStability)
+        self.labelDeltaDetector.setObjectName("labelDeltaDetector")
 
-        self.angleForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblDeltaDetectorLabel)
+        self.angleForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelDeltaDetector)
 
-        self.lblDeltaDetector = QLabel(self.gbAngleStability)
-        self.lblDeltaDetector.setObjectName("lblDeltaDetector")
+        self.valueDeltaDetector = QLabel(self.groupAngleStability)
+        self.valueDeltaDetector.setObjectName("valueDeltaDetector")
 
-        self.angleForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblDeltaDetector)
+        self.angleForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.valueDeltaDetector)
 
-        self.controlsLayout.addWidget(self.gbAngleStability)
+        self.layoutSide.addWidget(self.groupAngleStability)
 
-        self.lblHint = QLabel(self.controlsPanel)
-        self.lblHint.setObjectName("lblHint")
-        self.lblHint.setStyleSheet("color: #555; font-size: 10px;")
-        self.lblHint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblHint.setWordWrap(True)
+        self.labelHint = QLabel(self.contentSide)
+        self.labelHint.setObjectName("labelHint")
+        font2 = QFont()
+        font2.setPointSize(8)
+        self.labelHint.setFont(font2)
+        self.labelHint.setStyleSheet("color: palette(placeholder-text);")
+        self.labelHint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.labelHint.setWordWrap(True)
 
-        self.controlsLayout.addWidget(self.lblHint)
+        self.layoutSide.addWidget(self.labelHint)
 
         self.verticalSpacer = QSpacerItem(
             20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
 
-        self.controlsLayout.addItem(self.verticalSpacer)
+        self.layoutSide.addItem(self.verticalSpacer)
 
-        self.btnClear = QPushButton(self.controlsPanel)
-        self.btnClear.setObjectName("btnClear")
-        self.btnClear.setEnabled(False)
+        self.buttonClear = QPushButton(self.contentSide)
+        self.buttonClear.setObjectName("buttonClear")
+        self.buttonClear.setEnabled(False)
 
-        self.controlsLayout.addWidget(self.btnClear)
+        self.layoutSide.addWidget(self.buttonClear)
 
-        self.horizontalLayout.addWidget(self.controlsPanel)
+        self.scrollSide.setWidget(self.contentSide)
+
+        self.horizontalLayout.addWidget(self.scrollSide)
 
         self.horizontalLayout.setStretch(0, 1)
 
@@ -234,34 +271,39 @@ class Ui_PowerDriftTab(object):
     # setupUi
 
     def retranslateUi(self, PowerDriftTab):
-        self.gbRuntime.setTitle(QCoreApplication.translate("PowerDriftTab", "Laufzeit", None))
-        self.lblElapsed.setText(QCoreApplication.translate("PowerDriftTab", "00:00:00", None))
-        self.lblScale.setText(
-            QCoreApplication.translate("PowerDriftTab", "0 min                        60 min", None)
-        )
-        self.gbIntensity.setTitle(
+        self.groupRuntime.setTitle(QCoreApplication.translate("PowerDriftTab", "Laufzeit", None))
+        self.valueElapsed.setText(QCoreApplication.translate("PowerDriftTab", "00:00:00", None))
+        self.labelScaleStart.setText(QCoreApplication.translate("PowerDriftTab", "0 min", None))
+        self.labelScaleEnd.setText(QCoreApplication.translate("PowerDriftTab", "60 min", None))
+        self.groupIntensity.setTitle(
             QCoreApplication.translate("PowerDriftTab", "Intensit\u00e4t", None)
         )
-        self.lblICurrentLabel.setText(QCoreApplication.translate("PowerDriftTab", "Aktuell:", None))
-        self.lblICurrent.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.lblIMeanLabel.setText(QCoreApplication.translate("PowerDriftTab", "Mittel:", None))
-        self.lblIMean.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.lblIMinLabel.setText(QCoreApplication.translate("PowerDriftTab", "Min:", None))
-        self.lblIMin.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.lblIMaxLabel.setText(QCoreApplication.translate("PowerDriftTab", "Max:", None))
-        self.lblIMax.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.gbAngleStability.setTitle(
+        self.labelIntensityCurrent.setText(
+            QCoreApplication.translate("PowerDriftTab", "Aktuell:", None)
+        )
+        self.valueIntensityCurrent.setText(
+            QCoreApplication.translate("PowerDriftTab", "\u2014", None)
+        )
+        self.labelIntensityMean.setText(
+            QCoreApplication.translate("PowerDriftTab", "Mittel:", None)
+        )
+        self.valueIntensityMean.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
+        self.labelIntensityMin.setText(QCoreApplication.translate("PowerDriftTab", "Min:", None))
+        self.valueIntensityMin.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
+        self.labelIntensityMax.setText(QCoreApplication.translate("PowerDriftTab", "Max:", None))
+        self.valueIntensityMax.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
+        self.groupAngleStability.setTitle(
             QCoreApplication.translate("PowerDriftTab", "Winkelstabilit\u00e4t", None)
         )
-        self.lblDeltaSampleLabel.setText(
+        self.labelDeltaSample.setText(
             QCoreApplication.translate("PowerDriftTab", "\u0394\u03b8S:", None)
         )
-        self.lblDeltaSample.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.lblDeltaDetectorLabel.setText(
+        self.valueDeltaSample.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
+        self.labelDeltaDetector.setText(
             QCoreApplication.translate("PowerDriftTab", "\u0394\u03b8D:", None)
         )
-        self.lblDeltaDetector.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
-        self.lblHint.setText(
+        self.valueDeltaDetector.setText(QCoreApplication.translate("PowerDriftTab", "\u2014", None))
+        self.labelHint.setText(
             QCoreApplication.translate(
                 "PowerDriftTab",
                 "<i>Laser mindestens<br><b>30 Minuten</b> vor der<br>Messung einschalten,<br>damit er thermisch<br>stabil wird.</i>",
@@ -269,7 +311,7 @@ class Ui_PowerDriftTab(object):
             )
         )
         # if QT_CONFIG(tooltip)
-        self.btnClear.setToolTip(
+        self.buttonClear.setToolTip(
             QCoreApplication.translate(
                 "PowerDriftTab",
                 "Alle gesammelten Drift-Daten l\u00f6schen und die Zeitmessung neu starten",
@@ -277,7 +319,7 @@ class Ui_PowerDriftTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClear.setText(
+        self.buttonClear.setText(
             QCoreApplication.translate("PowerDriftTab", "Drift-Daten l\u00f6schen", None)
         )
         pass

@@ -13,25 +13,97 @@
   <property name="windowTitle">
    <string>Encoder Debug</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_root">
+  <layout class="QVBoxLayout" name="layoutRoot">
    <property name="spacing">
     <number>6</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="gbControl">
+    <widget class="QGroupBox" name="groupConnection">
+     <property name="title">
+      <string>Arduino-Verbindung</string>
+     </property>
+     <layout class="QHBoxLayout" name="layoutConnection">
+      <item>
+       <widget class="QLabel" name="labelPort">
+        <property name="text">
+         <string>Port:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboPort">
+        <property name="minimumSize">
+         <size>
+          <width>160</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="buttonRefreshPorts">
+        <property name="text">
+         <string>↻</string>
+        </property>
+        <property name="icon">
+         <iconset theme="view-refresh"/>
+        </property>
+        <property name="toolTip">
+         <string>Ports neu laden</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonConnect">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Verbinden</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="valueConnectionStatus">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="spacerConnection">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupControl">
      <property name="title">
       <string>Steuerung</string>
      </property>
      <layout class="QHBoxLayout" name="hlControl">
       <item>
-       <widget class="QLabel" name="lblEncoderSel">
+       <widget class="QLabel" name="labelEncoderSelect">
         <property name="text">
          <string>Encoder:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="cbEncoderSelect">
+       <widget class="QComboBox" name="comboEncoderSelect">
         <property name="minimumSize">
          <size>
           <width>180</width>
@@ -56,7 +128,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="cbAutoRefresh">
+       <widget class="QCheckBox" name="checkAutoRefresh">
         <property name="text">
          <string>Auto-Refresh</string>
         </property>
@@ -66,7 +138,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spbRefreshInterval">
+       <widget class="QSpinBox" name="spinRefreshInterval">
         <property name="toolTip">
          <string>Refresh-Intervall in Millisekunden</string>
         </property>
@@ -88,7 +160,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnRefresh">
+       <widget class="QPushButton" name="buttonRefresh">
         <property name="toolTip">
          <string>Alle Werte einmalig abrufen</string>
         </property>
@@ -114,7 +186,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="btnZeroEncoder">
+       <widget class="QPushButton" name="buttonZeroEncoder">
         <property name="toolTip">
          <string>Aktuelle Position als Nullpunkt setzen (CONF:ZERO)</string>
         </property>
@@ -124,7 +196,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnClearErrorFlag">
+       <widget class="QPushButton" name="buttonClearErrorFlag">
         <property name="toolTip">
          <string>Hardware Error-Flag löschen (CONF:ERR)</string>
         </property>
@@ -147,7 +219,7 @@
       </attribute>
       <layout class="QHBoxLayout" name="hlMeasurements">
        <item>
-        <widget class="QGroupBox" name="gbMeasA">
+        <widget class="QGroupBox" name="groupMeasA">
          <property name="title">
           <string>Encoder A – Sample</string>
          </property>
@@ -156,7 +228,7 @@
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblConnA">
+           <widget class="QLabel" name="labelConnA">
             <property name="text">
              <string>Verbunden</string>
             </property>
@@ -185,7 +257,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="lblAngleA">
+           <widget class="QLabel" name="labelAngleA">
             <property name="text">
              <string>Winkel (°)</string>
             </property>
@@ -214,7 +286,7 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="lblMagnitudeA">
+           <widget class="QLabel" name="labelMagnitudeA">
             <property name="text">
              <string>Magnitude (raw)</string>
             </property>
@@ -229,7 +301,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Winkel in Grad (MEAS:ANGL? A)</string>
+             <string>Magnitude des Magnetfelds (MEAS:ENC:MAGN? A)</string>
             </property>
             <property name="smallDecimalPoint">
              <bool>true</bool>
@@ -243,14 +315,14 @@
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="lblMagBarA">
+           <widget class="QLabel" name="labelFieldStrengthA">
             <property name="text">
              <string>Feldstärke</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QProgressBar" name="pbarMagnitudeA">
+           <widget class="QProgressBar" name="progressMagnitudeA">
             <property name="toolTip">
              <string>Visuelle Darstellung der Magnet-Amplitude</string>
             </property>
@@ -266,7 +338,7 @@
            </widget>
           </item>
           <item row="4" column="0" colspan="2">
-           <widget class="Line" name="line">
+           <widget class="Line" name="lineSeparatorA">
             <property name="minimumSize">
              <size>
               <width>50</width>
@@ -279,7 +351,7 @@
            </widget>
           </item>
           <item row="5" column="0">
-           <widget class="QLabel" name="lblCofA">
+           <widget class="QLabel" name="labelCofA">
             <property name="text">
              <string>COF – CORDIC Overflow</string>
             </property>
@@ -308,7 +380,7 @@
            </widget>
           </item>
           <item row="6" column="0">
-           <widget class="QLabel" name="lblCompHA">
+           <widget class="QLabel" name="labelCompHA">
             <property name="text">
              <string>COMP_H – Feld zu schwach</string>
             </property>
@@ -337,7 +409,7 @@
            </widget>
           </item>
           <item row="7" column="0">
-           <widget class="QLabel" name="lblCompLA">
+           <widget class="QLabel" name="labelCompLA">
             <property name="text">
              <string>COMP_L – Feld zu stark</string>
             </property>
@@ -366,7 +438,7 @@
            </widget>
           </item>
           <item row="8" column="0">
-           <widget class="QLabel" name="lblOcfA">
+           <widget class="QLabel" name="labelOcfA">
             <property name="text">
              <string>OCF – Sensor bereit</string>
             </property>
@@ -395,7 +467,7 @@
            </widget>
           </item>
           <item row="9" column="0">
-           <widget class="QLabel" name="lblErrorA">
+           <widget class="QLabel" name="labelErrorA">
             <property name="text">
              <string>Error Flag</string>
             </property>
@@ -424,19 +496,19 @@
            </widget>
           </item>
           <item row="10" column="0">
-           <widget class="QLabel" name="lblAgcA_lbl">
+           <widget class="QLabel" name="labelAgcA">
             <property name="text">
              <string>AGC - Automatic Gain Control</string>
             </property>
            </widget>
           </item>
           <item row="10" column="1">
-           <layout class="QHBoxLayout" name="horizontalLayout">
+           <layout class="QHBoxLayout" name="layoutAgcA">
             <property name="rightMargin">
              <number>0</number>
             </property>
             <item>
-             <widget class="QProgressBar" name="pbarAgcA">
+             <widget class="QProgressBar" name="progressAgcA">
               <property name="toolTip">
                <string>AGC: 0 = max Verstärkung (schwaches Feld), 255 = min Verstärkung (starkes Feld)</string>
               </property>
@@ -449,7 +521,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spbAgcA">
+             <widget class="QSpinBox" name="spinAgcA">
               <property name="toolTip">
                <string>Automatic Gain Control 0–255 (niedrig = starkes Feld)</string>
               </property>
@@ -470,7 +542,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbMeasB">
+        <widget class="QGroupBox" name="groupMeasB">
          <property name="title">
           <string>Encoder B – Detektor</string>
          </property>
@@ -479,7 +551,7 @@
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblConnB">
+           <widget class="QLabel" name="labelConnB">
             <property name="text">
              <string>Verbunden</string>
             </property>
@@ -508,7 +580,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="lblAngleB">
+           <widget class="QLabel" name="labelAngleB">
             <property name="text">
              <string>Winkel (°)</string>
             </property>
@@ -537,7 +609,7 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="lblMagnitudeB">
+           <widget class="QLabel" name="labelMagnitudeB">
             <property name="text">
              <string>Magnitude (raw)</string>
             </property>
@@ -552,7 +624,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Winkel in Grad (MEAS:ANGL? A)</string>
+             <string>Magnitude des Magnetfelds (MEAS:ENC:MAGN? B)</string>
             </property>
             <property name="smallDecimalPoint">
              <bool>true</bool>
@@ -566,14 +638,14 @@
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="lblMagBarB">
+           <widget class="QLabel" name="labelFieldStrengthB">
             <property name="text">
              <string>Feldstärke</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QProgressBar" name="pbarMagnitudeB">
+           <widget class="QProgressBar" name="progressMagnitudeB">
             <property name="toolTip">
              <string>Visuelle Darstellung der Magnet-Amplitude</string>
             </property>
@@ -589,7 +661,7 @@
            </widget>
           </item>
           <item row="4" column="0" colspan="2">
-           <widget class="Line" name="line_2">
+           <widget class="Line" name="lineSeparatorB">
             <property name="minimumSize">
              <size>
               <width>50</width>
@@ -602,7 +674,7 @@
            </widget>
           </item>
           <item row="5" column="0">
-           <widget class="QLabel" name="lblCofB">
+           <widget class="QLabel" name="labelCofB">
             <property name="text">
              <string>COF – CORDIC Overflow</string>
             </property>
@@ -631,7 +703,7 @@
            </widget>
           </item>
           <item row="6" column="0">
-           <widget class="QLabel" name="lblCompHB">
+           <widget class="QLabel" name="labelCompHB">
             <property name="text">
              <string>COMP_H – Feld zu schwach</string>
             </property>
@@ -660,7 +732,7 @@
            </widget>
           </item>
           <item row="7" column="0">
-           <widget class="QLabel" name="lblCompLB">
+           <widget class="QLabel" name="labelCompLB">
             <property name="text">
              <string>COMP_L – Feld zu stark</string>
             </property>
@@ -689,7 +761,7 @@
            </widget>
           </item>
           <item row="8" column="0">
-           <widget class="QLabel" name="lblOcfB">
+           <widget class="QLabel" name="labelOcfB">
             <property name="text">
              <string>OCF – Sensor bereit</string>
             </property>
@@ -718,7 +790,7 @@
            </widget>
           </item>
           <item row="9" column="0">
-           <widget class="QLabel" name="lblErrorB">
+           <widget class="QLabel" name="labelErrorB">
             <property name="text">
              <string>Error Flag</string>
             </property>
@@ -747,19 +819,19 @@
            </widget>
           </item>
           <item row="10" column="0">
-           <widget class="QLabel" name="lblAgcB_lbl">
+           <widget class="QLabel" name="labelAgcB">
             <property name="text">
              <string>AGC - Automatic Gain Control</string>
             </property>
            </widget>
           </item>
           <item row="10" column="1">
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <layout class="QHBoxLayout" name="layoutAgcB">
             <property name="rightMargin">
              <number>0</number>
             </property>
             <item>
-             <widget class="QProgressBar" name="pbarAgcB">
+             <widget class="QProgressBar" name="progressAgcB">
               <property name="toolTip">
                <string>AGC: 0 = max Verstärkung, 255 = min Verstärkung</string>
               </property>
@@ -772,7 +844,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spbAgcB">
+             <widget class="QSpinBox" name="spinAgcB">
               <property name="toolTip">
                <string>Automatic Gain Control 0–255</string>
               </property>
@@ -800,7 +872,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="vlSystem">
        <item>
-        <widget class="QGroupBox" name="gbSysInfo">
+        <widget class="QGroupBox" name="groupSysInfo">
          <property name="title">
           <string>Geräteinformationen</string>
          </property>
@@ -809,14 +881,14 @@
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblIdn_lbl">
+           <widget class="QLabel" name="labelIdn">
             <property name="text">
              <string>IDN (*IDN?)</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLineEdit" name="leIdn">
+           <widget class="QLineEdit" name="editIdn">
             <property name="toolTip">
              <string>Geräteidentifikation (*IDN?)</string>
             </property>
@@ -829,14 +901,14 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="lblPollInt_lbl">
+           <widget class="QLabel" name="labelPollInterval">
             <property name="text">
              <string>Poll-Intervall (SENS:INT?)</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QSpinBox" name="spbPollInterval">
+           <widget class="QSpinBox" name="spinPollInterval">
             <property name="toolTip">
              <string>Aktuelles Abfrageintervall des Arduino in ms (SENS:INT?)</string>
             </property>
@@ -855,14 +927,14 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="lblDebugMode_lbl">
+           <widget class="QLabel" name="labelDebugMode">
             <property name="text">
              <string>Debug-Modus (SYST:DEB?)</string>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QCheckBox" name="cbDebugMode">
+           <widget class="QCheckBox" name="checkDebugMode">
             <property name="toolTip">
              <string>Arduino Debug-Ausgabe aktiv (SYST:DEB ON/OFF)</string>
             </property>
@@ -871,17 +943,31 @@
             </property>
            </widget>
           </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelSampleInverted">
+            <property name="text">
+             <string>Probe invertiert:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="checkSampleInverted">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gbScpiErrors">
+        <widget class="QGroupBox" name="groupScpiErrors">
          <property name="title">
           <string>SCPI Fehler-Queue (SYST:ERR?)</string>
          </property>
          <layout class="QVBoxLayout" name="vlScpiErrors">
           <item>
-           <widget class="QTextEdit" name="teScpiErrors">
+           <widget class="QTextEdit" name="editScpiErrors">
             <property name="toolTip">
              <string>Inhalt der SCPI Fehler-Queue (SYST:ERR?)</string>
             </property>
@@ -909,7 +995,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="btnReadScpiErrors">
+             <widget class="QPushButton" name="buttonReadScpiErrors">
               <property name="toolTip">
                <string>Alle Einträge aus der SCPI Fehler-Queue lesen</string>
               </property>
@@ -919,7 +1005,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="btnClearScpiErrors">
+             <widget class="QPushButton" name="buttonClearScpiErrors">
               <property name="toolTip">
                <string>SCPI Error Queue löschen (*CLS)</string>
               </property>
@@ -954,7 +1040,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="vlTerminal">
        <item>
-        <widget class="QTextEdit" name="teTerminalLog">
+        <widget class="QTextEdit" name="editTerminalLog">
          <property name="toolTip">
           <string>SCPI Kommunikationslog</string>
          </property>
@@ -969,7 +1055,7 @@
        <item>
         <layout class="QHBoxLayout" name="hlTerminalInput">
          <item>
-          <widget class="QLineEdit" name="leCommandInput">
+          <widget class="QLineEdit" name="editCommandInput">
            <property name="toolTip">
             <string>SCPI-Befehl eingeben, z.B.  MEAS:ANGL? A  oder  *IDN?</string>
            </property>
@@ -979,7 +1065,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnSendCommand">
+          <widget class="QPushButton" name="buttonSendCommand">
            <property name="toolTip">
             <string>Befehl senden (auch Enter)</string>
            </property>
@@ -989,7 +1075,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnClearLog">
+          <widget class="QPushButton" name="buttonClearLog">
            <property name="toolTip">
             <string>Terminal-Log leeren</string>
            </property>
@@ -999,6 +1085,478 @@
           </widget>
          </item>
         </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabAds">
+      <attribute name="title">
+       <string>ADS1220</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vlAds">
+       <item>
+        <widget class="QGroupBox" name="groupAdcLive">
+         <property name="title">
+          <string>Live-Messwerte</string>
+         </property>
+         <layout class="QFormLayout" name="formAdcLive">
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelAdcPresent">
+            <property name="text">
+             <string>ADS1220 vorhanden:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QFrame" name="ledAdcPresent">
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>ADS1220 antwortet auf DIAG:ADC?</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::Box</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelAdcVoltage">
+            <property name="text">
+             <string>Spannung (V):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLCDNumber" name="lcdAdcVoltage">
+            <property name="minimumSize">
+             <size>
+              <width>180</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>MEAS:ADC:VOLT? (V)</string>
+            </property>
+            <property name="smallDecimalPoint">
+             <bool>true</bool>
+            </property>
+            <property name="digitCount">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelAdcDrdy">
+            <property name="text">
+             <string>Bereit (zeitbasiert):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QFrame" name="ledAdcDrdy">
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::Box</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="hlAdsMid">
+         <item>
+          <widget class="QGroupBox" name="groupAdcRegisters">
+           <property name="title">
+            <string>Register (DIAG:ADC?)</string>
+           </property>
+           <layout class="QFormLayout" name="formAdcRegisters">
+            <item row="0" column="0">
+             <widget class="QLabel" name="labelReg0">
+              <property name="text">
+               <string>REG0:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="editReg0">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="labelReg1">
+              <property name="text">
+               <string>REG1:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="editReg1">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="labelReg2">
+              <property name="text">
+               <string>REG2:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="editReg2">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="labelReg3">
+              <property name="text">
+               <string>REG3:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="editReg3">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="labelLastRaw">
+              <property name="text">
+               <string>Last Raw:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="editLastRaw">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupAdcConfig">
+           <property name="title">
+            <string>Konfiguration (CONF:ADC:*?)</string>
+           </property>
+           <layout class="QFormLayout" name="formAdcConfig">
+            <item row="0" column="0">
+             <widget class="QLabel" name="labelMux">
+              <property name="text">
+               <string>MUX:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="editMux">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="labelGain">
+              <property name="text">
+               <string>Gain:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="editGain">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="labelRate">
+              <property name="text">
+               <string>Rate (SPS):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="editRate">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="labelMode">
+              <property name="text">
+               <string>Mode:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="editMode">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="labelFir">
+              <property name="text">
+               <string>FIR Filter:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="editFir">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="labelVref">
+              <property name="text">
+               <string>Spannungsref.:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLineEdit" name="editVref">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>–</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0" colspan="2">
+             <widget class="QPushButton" name="buttonReadAdcConfig">
+              <property name="text">
+               <string>Konfiguration lesen</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupPdtia">
+         <property name="title">
+          <string>PD-TIA Verstärkung (DIAG:PDTIA?)</string>
+         </property>
+         <layout class="QFormLayout" name="formPdtia">
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelPdtiaStage">
+            <property name="text">
+             <string>Stufe:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="editPdtiaStage">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="placeholderText">
+             <string>–</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelPdtiaPattern">
+            <property name="text">
+             <string>GPIO Muster:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="editPdtiaPattern">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="placeholderText">
+             <string>–</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="vspacerAds">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabRawStream">
+      <attribute name="title">
+       <string>Raw Stream</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vlRawStream">
+       <item>
+        <widget class="QLabel" name="labelRawStreamNotice">
+         <property name="text">
+          <string>Kein DataController verfügbar.
+Öffne den Debug-Dialog über das Hauptfenster (Strg+D).</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="editRawStream">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="font">
+          <font>
+           <family>Monospace</family>
+          </font>
+         </property>
+         <property name="placeholderText">
+          <string>Warte auf Frames …</string>
+         </property>
+         <property name="maximumBlockCount">
+          <number>500</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="hlRawStreamButtons">
+         <item>
+          <widget class="QPushButton" name="buttonClearRawStream">
+           <property name="text">
+            <string>Löschen</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="hspacerRawStream">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabSelfTest">
+      <attribute name="title">
+       <string>Selbsttest</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="vlSelfTest">
+       <item>
+        <widget class="QLabel" name="labelSelfTestInfo">
+         <property name="text">
+          <string>Führt DIAG:SELF? aus — überprüft alle Subsysteme (Encoder A/B, ADC, PD-TIA).
+Jedes Subsystem meldet PASS oder FAIL.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonRunSelfTest">
+         <property name="text">
+          <string>Selbsttest ausführen  (DIAG:SELF?)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="editSelfTest">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="font">
+          <font>
+           <family>Monospace</family>
+          </font>
+         </property>
+         <property name="placeholderText">
+          <string>Noch kein Test durchgeführt.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

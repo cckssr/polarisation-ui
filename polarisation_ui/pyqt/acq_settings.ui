@@ -17,27 +17,27 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Akquisitions-Einstellungen</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,1,0">
    <property name="spacing">
     <number>30</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="detRot_box">
+    <widget class="QGroupBox" name="groupDetRot">
      <property name="title">
       <string>Detektor-Rotationsstage</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="1" column="0">
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="labelDetAverages">
         <property name="text">
          <string>Anzahl Mittelwerte</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="det_averages">
+       <widget class="QSpinBox" name="spinDetAverages">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -56,7 +56,7 @@
        </widget>
       </item>
       <item row="0" column="0" colspan="2">
-       <widget class="QCheckBox" name="det_averageOn">
+       <widget class="QCheckBox" name="checkDetAverage">
         <property name="text">
          <string>Mittelung aktiviert</string>
         </property>
@@ -69,20 +69,20 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="sampRot_box">
+    <widget class="QGroupBox" name="groupSampRot">
      <property name="title">
       <string>Sample-Rotationsstage</string>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
       <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="labelSampAverages">
         <property name="text">
          <string>Anzahl Mittelwerte</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="samp_averages">
+       <widget class="QSpinBox" name="spinSampAverages">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -95,7 +95,7 @@
        </widget>
       </item>
       <item row="0" column="0" colspan="2">
-       <widget class="QCheckBox" name="samp_averageOn">
+       <widget class="QCheckBox" name="checkSampAverage">
         <property name="text">
          <string>Mittelung aktiviert</string>
         </property>
@@ -108,27 +108,27 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="gbSpikeFilter">
+    <widget class="QGroupBox" name="groupSpikeFilter">
      <property name="title">
       <string>Spike-Filter</string>
      </property>
      <layout class="QFormLayout" name="formSpikeFilter">
       <item row="0" column="0" colspan="2">
-       <widget class="QCheckBox" name="spikeEnabled">
+       <widget class="QCheckBox" name="checkSpikeFilter">
         <property name="text">
          <string>Spike-Filter aktivieren</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="lblSpikeMaxDelta">
+       <widget class="QLabel" name="labelSpikeMaxDelta">
         <property name="text">
          <string>Max. Winkelsprung</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="spikeMaxDelta">
+       <widget class="QDoubleSpinBox" name="spinSpikeMaxDelta">
         <property name="toolTip">
          <string>Maximale erlaubte Winkeländerung pro Abtastung (100 ms). Messungen mit größerer Änderung werden verworfen.</string>
         </property>

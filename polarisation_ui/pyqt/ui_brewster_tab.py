@@ -52,6 +52,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QSizePolicy,
     QSpacerItem,
     QSplitter,
@@ -70,143 +71,148 @@ class Ui_BrewsterTab(object):
         if not BrewsterTab.objectName():
             BrewsterTab.setObjectName("BrewsterTab")
         BrewsterTab.resize(959, 839)
-        self.gridLayout = QGridLayout(BrewsterTab)
-        self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setContentsMargins(0, 10, 0, 0)
-        self.pointsTable = QTableWidget(BrewsterTab)
-        if self.pointsTable.columnCount() < 5:
-            self.pointsTable.setColumnCount(5)
-        __qtablewidgetitem = QTableWidgetItem()
-        self.pointsTable.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.pointsTable.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.pointsTable.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.pointsTable.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.pointsTable.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        self.pointsTable.setObjectName("pointsTable")
-        self.pointsTable.setMinimumSize(QSize(0, 80))
-        self.pointsTable.setMaximumSize(QSize(16777215, 400))
-        self.pointsTable.setAutoScroll(True)
-        self.pointsTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.pointsTable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.pointsTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.pointsTable.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
-        self.pointsTable.verticalHeader().setVisible(False)
+        self.layoutMain = QGridLayout(BrewsterTab)
+        self.layoutMain.setObjectName("layoutMain")
+        self.layoutMain.setContentsMargins(0, 10, 0, 0)
+        self.tablePoints = QTableWidget(BrewsterTab)
+        if self.tablePoints.columnCount() < 5:
+            self.tablePoints.setColumnCount(5)
+        self.tablePoints.setObjectName("tablePoints")
+        self.tablePoints.setMinimumSize(QSize(0, 80))
+        self.tablePoints.setMaximumSize(QSize(16777215, 400))
+        self.tablePoints.setAutoScroll(True)
+        self.tablePoints.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.tablePoints.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.tablePoints.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tablePoints.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
+        self.tablePoints.verticalHeader().setVisible(False)
 
-        self.gridLayout.addWidget(self.pointsTable, 1, 0, 1, 1)
+        self.layoutMain.addWidget(self.tablePoints, 1, 0, 1, 1)
 
-        self.rightLayout = QVBoxLayout()
-        self.rightLayout.setSpacing(10)
-        self.rightLayout.setObjectName("rightLayout")
-        self.rightLayout.setContentsMargins(4, 0, 0, 0)
-        self.btnClearDetector = QPushButton(BrewsterTab)
-        self.btnClearDetector.setObjectName("btnClearDetector")
-        self.btnClearDetector.setEnabled(False)
+        self.scrollSide = QScrollArea(BrewsterTab)
+        self.scrollSide.setObjectName("scrollSide")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.scrollSide.sizePolicy().hasHeightForWidth())
+        self.scrollSide.setSizePolicy(sizePolicy)
+        self.scrollSide.setFrameShape(QFrame.Shape.NoFrame)
+        self.scrollSide.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scrollSide.setWidgetResizable(True)
+        self.contentSide = QWidget()
+        self.contentSide.setObjectName("contentSide")
+        self.layoutSide = QVBoxLayout(self.contentSide)
+        self.layoutSide.setSpacing(10)
+        self.layoutSide.setObjectName("layoutSide")
+        self.layoutSide.setContentsMargins(4, 0, 0, 0)
+        self.buttonClearDetector = QPushButton(self.contentSide)
+        self.buttonClearDetector.setObjectName("buttonClearDetector")
+        self.buttonClearDetector.setEnabled(False)
 
-        self.rightLayout.addWidget(self.btnClearDetector)
+        self.layoutSide.addWidget(self.buttonClearDetector)
 
-        self.gbMax = QGroupBox(BrewsterTab)
-        self.gbMax.setObjectName("gbMax")
-        self.formMax = QFormLayout(self.gbMax)
-        self.formMax.setObjectName("formMax")
-        self.formMax.setVerticalSpacing(2)
-        self.formMax.setContentsMargins(6, 4, 6, 4)
-        self.lblMaxIntensityLabel = QLabel(self.gbMax)
-        self.lblMaxIntensityLabel.setObjectName("lblMaxIntensityLabel")
+        self.groupMax = QGroupBox(self.contentSide)
+        self.groupMax.setObjectName("groupMax")
+        self.layoutMax = QFormLayout(self.groupMax)
+        self.layoutMax.setObjectName("layoutMax")
+        self.layoutMax.setVerticalSpacing(2)
+        self.layoutMax.setContentsMargins(6, 4, 6, 4)
+        self.labelMaxIntensity = QLabel(self.groupMax)
+        self.labelMaxIntensity.setObjectName("labelMaxIntensity")
 
-        self.formMax.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblMaxIntensityLabel)
+        self.layoutMax.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelMaxIntensity)
 
-        self.lblMaxIntensity = QLabel(self.gbMax)
-        self.lblMaxIntensity.setObjectName("lblMaxIntensity")
+        self.valueMaxIntensity = QLabel(self.groupMax)
+        self.valueMaxIntensity.setObjectName("valueMaxIntensity")
 
-        self.formMax.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lblMaxIntensity)
+        self.layoutMax.setWidget(0, QFormLayout.ItemRole.FieldRole, self.valueMaxIntensity)
 
-        self.lblMaxAngleLabel = QLabel(self.gbMax)
-        self.lblMaxAngleLabel.setObjectName("lblMaxAngleLabel")
+        self.labelMaxAngle = QLabel(self.groupMax)
+        self.labelMaxAngle.setObjectName("labelMaxAngle")
 
-        self.formMax.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblMaxAngleLabel)
+        self.layoutMax.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelMaxAngle)
 
-        self.lblMaxAngle = QLabel(self.gbMax)
-        self.lblMaxAngle.setObjectName("lblMaxAngle")
+        self.valueMaxAngle = QLabel(self.groupMax)
+        self.valueMaxAngle.setObjectName("valueMaxAngle")
 
-        self.formMax.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lblMaxAngle)
+        self.layoutMax.setWidget(1, QFormLayout.ItemRole.FieldRole, self.valueMaxAngle)
 
-        self.rightLayout.addWidget(self.gbMax)
+        self.layoutSide.addWidget(self.groupMax)
 
         self.verticalSpacer = QSpacerItem(
             20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
 
-        self.rightLayout.addItem(self.verticalSpacer)
+        self.layoutSide.addItem(self.verticalSpacer)
 
-        self.btnDeleteSelected = QPushButton(BrewsterTab)
-        self.btnDeleteSelected.setObjectName("btnDeleteSelected")
-        self.btnDeleteSelected.setEnabled(False)
+        self.buttonDeleteSelected = QPushButton(self.contentSide)
+        self.buttonDeleteSelected.setObjectName("buttonDeleteSelected")
+        self.buttonDeleteSelected.setEnabled(False)
 
-        self.rightLayout.addWidget(self.btnDeleteSelected)
+        self.layoutSide.addWidget(self.buttonDeleteSelected)
 
-        self.btnDeleteLast = QPushButton(BrewsterTab)
-        self.btnDeleteLast.setObjectName("btnDeleteLast")
-        self.btnDeleteLast.setEnabled(False)
+        self.buttonDeleteLast = QPushButton(self.contentSide)
+        self.buttonDeleteLast.setObjectName("buttonDeleteLast")
+        self.buttonDeleteLast.setEnabled(False)
 
-        self.rightLayout.addWidget(self.btnDeleteLast)
+        self.layoutSide.addWidget(self.buttonDeleteLast)
 
-        self.line = QFrame(BrewsterTab)
-        self.line.setObjectName("line")
-        self.line.setFrameShape(QFrame.Shape.HLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+        self.lineSeparator = QFrame(self.contentSide)
+        self.lineSeparator.setObjectName("lineSeparator")
+        self.lineSeparator.setFrameShape(QFrame.Shape.HLine)
+        self.lineSeparator.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.rightLayout.addWidget(self.line)
+        self.layoutSide.addWidget(self.lineSeparator)
 
-        self.gbPolarisation = QGroupBox(BrewsterTab)
-        self.gbPolarisation.setObjectName("gbPolarisation")
-        self.hlPolarisation = QHBoxLayout(self.gbPolarisation)
-        self.hlPolarisation.setObjectName("hlPolarisation")
-        self.hlPolarisation.setContentsMargins(6, 4, 6, 4)
-        self.rbPolP = QRadioButton(self.gbPolarisation)
-        self.rbPolP.setObjectName("rbPolP")
-        self.rbPolP.setChecked(True)
+        self.groupPolarisation = QGroupBox(self.contentSide)
+        self.groupPolarisation.setObjectName("groupPolarisation")
+        self.layoutPolarisation = QHBoxLayout(self.groupPolarisation)
+        self.layoutPolarisation.setObjectName("layoutPolarisation")
+        self.layoutPolarisation.setContentsMargins(6, 4, 6, 4)
+        self.radioPolP = QRadioButton(self.groupPolarisation)
+        self.radioPolP.setObjectName("radioPolP")
+        self.radioPolP.setChecked(True)
 
-        self.hlPolarisation.addWidget(self.rbPolP)
+        self.layoutPolarisation.addWidget(self.radioPolP)
 
-        self.rbPolS = QRadioButton(self.gbPolarisation)
-        self.rbPolS.setObjectName("rbPolS")
+        self.radioPolS = QRadioButton(self.groupPolarisation)
+        self.radioPolS.setObjectName("radioPolS")
 
-        self.hlPolarisation.addWidget(self.rbPolS)
+        self.layoutPolarisation.addWidget(self.radioPolS)
 
-        self.rightLayout.addWidget(self.gbPolarisation)
+        self.layoutSide.addWidget(self.groupPolarisation)
 
-        self.btnSaveCurrent = QPushButton(BrewsterTab)
-        self.btnSaveCurrent.setObjectName("btnSaveCurrent")
-        self.btnSaveCurrent.setEnabled(False)
+        self.buttonSaveCurrent = QPushButton(self.contentSide)
+        self.buttonSaveCurrent.setObjectName("buttonSaveCurrent")
+        self.buttonSaveCurrent.setEnabled(False)
 
-        self.rightLayout.addWidget(self.btnSaveCurrent)
+        self.layoutSide.addWidget(self.buttonSaveCurrent)
 
-        self.btnSaveMax = QPushButton(BrewsterTab)
-        self.btnSaveMax.setObjectName("btnSaveMax")
-        self.btnSaveMax.setEnabled(False)
+        self.buttonSaveMax = QPushButton(self.contentSide)
+        self.buttonSaveMax.setObjectName("buttonSaveMax")
+        self.buttonSaveMax.setEnabled(False)
 
-        self.rightLayout.addWidget(self.btnSaveMax)
+        self.layoutSide.addWidget(self.buttonSaveMax)
 
-        self.gridLayout.addLayout(self.rightLayout, 1, 1, 1, 1)
+        self.scrollSide.setWidget(self.contentSide)
 
-        self.splitter = QSplitter(BrewsterTab)
-        self.splitter.setObjectName("splitter")
-        self.splitter.setOrientation(Qt.Orientation.Vertical)
-        self.detectorPlot = BrewsterDetectorPlot(self.splitter)
+        self.layoutMain.addWidget(self.scrollSide, 0, 1, 2, 1)
+
+        self.splitterPlots = QSplitter(BrewsterTab)
+        self.splitterPlots.setObjectName("splitterPlots")
+        self.splitterPlots.setOrientation(Qt.Orientation.Vertical)
+        self.detectorPlot = BrewsterDetectorPlot(self.splitterPlots)
         self.detectorPlot.setObjectName("detectorPlot")
-        self.splitter.addWidget(self.detectorPlot)
-        self.brewsterCurvePlot = BrewsterCurvePlot(self.splitter)
+        self.splitterPlots.addWidget(self.detectorPlot)
+        self.brewsterCurvePlot = BrewsterCurvePlot(self.splitterPlots)
         self.brewsterCurvePlot.setObjectName("brewsterCurvePlot")
         self.brewsterCurvePlot.setMinimumSize(QSize(0, 100))
-        self.splitter.addWidget(self.brewsterCurvePlot)
+        self.splitterPlots.addWidget(self.brewsterCurvePlot)
 
-        self.gridLayout.addWidget(self.splitter, 0, 0, 1, 2)
+        self.layoutMain.addWidget(self.splitterPlots, 0, 0, 1, 1)
 
-        self.gridLayout.setColumnStretch(0, 1)
+        self.layoutMain.setRowStretch(0, 1)
+        self.layoutMain.setColumnStretch(0, 1)
 
         self.retranslateUi(BrewsterTab)
 
@@ -215,22 +221,8 @@ class Ui_BrewsterTab(object):
     # setupUi
 
     def retranslateUi(self, BrewsterTab):
-        ___qtablewidgetitem = self.pointsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(
-            QCoreApplication.translate("BrewsterTab", "\u03b8_S (\u00b0)", None)
-        )
-        ___qtablewidgetitem1 = self.pointsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(
-            QCoreApplication.translate("BrewsterTab", "\u03b8_D (\u00b0)", None)
-        )
-        ___qtablewidgetitem2 = self.pointsTable.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("BrewsterTab", "I (mV)", None))
-        ___qtablewidgetitem3 = self.pointsTable.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("BrewsterTab", "P (\u00b5W)", None))
-        ___qtablewidgetitem4 = self.pointsTable.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("BrewsterTab", "Gain", None))
         # if QT_CONFIG(tooltip)
-        self.btnClearDetector.setToolTip(
+        self.buttonClearDetector.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab",
                 "L\u00f6scht alle Punkte im oberen Detektorwinkel-Intensit\u00e4ts-Graphen",
@@ -238,39 +230,39 @@ class Ui_BrewsterTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClearDetector.setText(
+        self.buttonClearDetector.setText(
             QCoreApplication.translate("BrewsterTab", "Detektorgraph l\u00f6schen", None)
         )
-        self.gbMax.setTitle(QCoreApplication.translate("BrewsterTab", "Maximum", None))
-        self.lblMaxIntensityLabel.setText(QCoreApplication.translate("BrewsterTab", "I:", None))
-        self.lblMaxIntensity.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
-        self.lblMaxAngleLabel.setText(QCoreApplication.translate("BrewsterTab", "\u03b8:", None))
-        self.lblMaxAngle.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
+        self.groupMax.setTitle(QCoreApplication.translate("BrewsterTab", "Maximum", None))
+        self.labelMaxIntensity.setText(QCoreApplication.translate("BrewsterTab", "I:", None))
+        self.valueMaxIntensity.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
+        self.labelMaxAngle.setText(QCoreApplication.translate("BrewsterTab", "\u03b8:", None))
+        self.valueMaxAngle.setText(QCoreApplication.translate("BrewsterTab", "\u2014", None))
         # if QT_CONFIG(tooltip)
-        self.btnDeleteSelected.setToolTip(
+        self.buttonDeleteSelected.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab", "Markierten Punkt aus der Kurve l\u00f6schen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnDeleteSelected.setText(
+        self.buttonDeleteSelected.setText(
             QCoreApplication.translate("BrewsterTab", "Ausgew\u00e4hlten l\u00f6schen", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnDeleteLast.setToolTip(
+        self.buttonDeleteLast.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab", "Letzten gespeicherten Messpunkt entfernen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnDeleteLast.setText(
+        self.buttonDeleteLast.setText(
             QCoreApplication.translate("BrewsterTab", "Letzten Punkt l\u00f6schen", None)
         )
-        self.gbPolarisation.setTitle(
+        self.groupPolarisation.setTitle(
             QCoreApplication.translate("BrewsterTab", "Polarisation", None)
         )
         # if QT_CONFIG(tooltip)
-        self.rbPolP.setToolTip(
+        self.radioPolP.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab",
                 "p-Polarisation (transversal-magnetisch, parallel zur Einfallsebene)",
@@ -278,9 +270,9 @@ class Ui_BrewsterTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.rbPolP.setText(QCoreApplication.translate("BrewsterTab", "p", None))
+        self.radioPolP.setText(QCoreApplication.translate("BrewsterTab", "p", None))
         # if QT_CONFIG(tooltip)
-        self.rbPolS.setToolTip(
+        self.radioPolS.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab",
                 "s-Polarisation (transversal-elektrisch, senkrecht zur Einfallsebene)",
@@ -288,9 +280,9 @@ class Ui_BrewsterTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.rbPolS.setText(QCoreApplication.translate("BrewsterTab", "s", None))
+        self.radioPolS.setText(QCoreApplication.translate("BrewsterTab", "s", None))
         # if QT_CONFIG(tooltip)
-        self.btnSaveCurrent.setToolTip(
+        self.buttonSaveCurrent.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab",
                 "Aktuellen Messwert (live) als Punkt in der Brewster-Kurve speichern",
@@ -298,11 +290,11 @@ class Ui_BrewsterTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnSaveCurrent.setText(
+        self.buttonSaveCurrent.setText(
             QCoreApplication.translate("BrewsterTab", "Aktuell speichern", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnSaveMax.setToolTip(
+        self.buttonSaveMax.setToolTip(
             QCoreApplication.translate(
                 "BrewsterTab",
                 "Maximum des Detektorscans als Punkt speichern und Scan zur\u00fccksetzen",
@@ -310,7 +302,7 @@ class Ui_BrewsterTab(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnSaveMax.setText(
+        self.buttonSaveMax.setText(
             QCoreApplication.translate("BrewsterTab", "Maximum speichern", None)
         )
         pass

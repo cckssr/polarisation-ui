@@ -44,39 +44,39 @@ def tab_with_kdc(tab):
 
 
 def test_sweep_group_disabled_without_kdc(tab):
-    assert not tab._ui.gbSweep.isEnabled()
+    assert not tab._ui.groupSweep.isEnabled()
 
 
 def test_sweep_group_enabled_after_kdc_inject(tab_with_kdc):
     tab, _ = tab_with_kdc
-    assert tab._ui.gbSweep.isEnabled()
+    assert tab._ui.groupSweep.isEnabled()
 
 
 def test_start_sweep_button_disabled_without_measurement(tab_with_kdc):
     tab, _ = tab_with_kdc
-    tab._ui.cbPolariserPlaced.setChecked(True)
+    tab._ui.checkPolariserPlaced.setChecked(True)
     # measurement not started → should not be enabled
-    assert not tab._ui.btnStartSweep.isEnabled()
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_button_enabled_when_ready(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.on_measurement_started()
-    tab._ui.cbPolariserPlaced.setChecked(True)
-    assert tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkPolariserPlaced.setChecked(True)
+    assert tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_start_sweep_button_disabled_without_polariser_placed(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.on_measurement_started()
-    tab._ui.cbPolariserPlaced.setChecked(False)
-    assert not tab._ui.btnStartSweep.isEnabled()
+    tab._ui.checkPolariserPlaced.setChecked(False)
+    assert not tab._ui.buttonStartSweep.isEnabled()
 
 
 def test_inject_empty_modules_disables_sweep_group(tab_with_kdc):
     tab, _ = tab_with_kdc
     tab.inject_modules({})
-    assert not tab._ui.gbSweep.isEnabled()
+    assert not tab._ui.groupSweep.isEnabled()
     assert tab._kdc is None
 
 

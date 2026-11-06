@@ -4,7 +4,7 @@ Requires the KDC101 rotation stage (required_modules = {"kdc101"}).
 
 Workflow:
   1. User selects waveplate type (λ/4 or λ/2) and checks the
-     "Verzögerungsplatte eingesetzt" checkbox.
+     "waveplate inserted" checkbox.
   2. On "Scan starten": KDC101 re-homes only if it isn't already homed, then
      sweeps from start to end (relative to the polariser zero offset found on
      the Configuration tab) in the configured step size.
@@ -37,13 +37,17 @@ from polarisation_ui.core.utils import windowed_average_intensity
 from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.infrastructure.qt_threads import KDCSweepWorker
 from polarisation_ui.pyqt.ui_waveplate_tab import Ui_WaveplateTab
+from polarisation_ui.ui.i18n import apply_strings
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
+from polarisation_ui.ui.widgets.tab_title import TabTitle
+from polarisation_ui.ui.widgets.vscroll import lock_vertical_scroll
 
 if TYPE_CHECKING:
     from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 
 _BUFFER_MAXLEN = 20
 _AVERAGE_WINDOW_MS = 500
+_DASH = "—"  # placeholder for an unavailable value
 
 _WAVEPLATE_TOKENS = ["qwp", "hwp"]
 _WAVEPLATE_LABELS = ["lambda/4", "lambda/2"]
@@ -53,7 +57,7 @@ class WaveplateTab(PlotTabBase):
     """Wave plate (λ/4, λ/2) experiment tab: KDC101-driven automated angle sweep."""
 
     tab_id = "waveplate"
-    tab_title = "Verzögerungsplatte"
+    tab_title = TabTitle()  # type: ignore[assignment]  # config: ui.tabs.waveplate
     required_sources: set[str] = {"ADC"}
     required_modules: set[str] = {"kdc101"}
 
@@ -76,15 +80,26 @@ class WaveplateTab(PlotTabBase):
         """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_WaveplateTab()
         self._ui.setupUi(self)
-        self._ui.pointsTable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self._ui.cbWaveplatePlaced.toggled.connect(self._update_sweep_button_state)
-        self._ui.cmbWaveplateType.currentIndexChanged.connect(self._on_waveplate_type_changed)
-        self._ui.btnStartSweep.clicked.connect(self._start_sweep)
-        self._ui.btnAbortSweep.clicked.connect(self._abort_sweep)
-        self._ui.btnDeleteLast.clicked.connect(self._delete_last_point)
-        self._ui.btnDeleteSelected.clicked.connect(self._delete_selected_point)
-        self._ui.btnClear.clicked.connect(self._clear_all_points)
-        self._ui.pointsTable.itemSelectionChanged.connect(self._on_table_selection_changed)
+        apply_strings(self, self.config.section("ui").get("waveplate_tab", {}))
+        text = self.config.text
+        self._ui.intensityCurvePlot.apply_config(self.config, "waveplate_curve_x_label")
+        self._ui.tablePoints.setHorizontalHeaderLabels(
+            [text(f"waveplate_tab.header_{key}") for key in ("angle", "intensity", "power", "gain")]
+        )
+        self._ui.comboWaveplateType.setItemText(
+            0, text("waveplate_tab.combo_waveplate_type_quarter")
+        )
+        self._ui.comboWaveplateType.setItemText(1, text("waveplate_tab.combo_waveplate_type_half"))
+        lock_vertical_scroll(self._ui.scrollSide)
+        self._ui.tablePoints.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self._ui.checkWaveplatePlaced.toggled.connect(self._update_sweep_button_state)
+        self._ui.comboWaveplateType.currentIndexChanged.connect(self._on_waveplate_type_changed)
+        self._ui.buttonStartSweep.clicked.connect(self._start_sweep)
+        self._ui.buttonAbortSweep.clicked.connect(self._abort_sweep)
+        self._ui.buttonDeleteLast.clicked.connect(self._delete_last_point)
+        self._ui.buttonDeleteSelected.clicked.connect(self._delete_selected_point)
+        self._ui.buttonClear.clicked.connect(self._clear_all_points)
+        self._ui.tablePoints.itemSelectionChanged.connect(self._on_table_selection_changed)
 
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
@@ -117,8 +132,8 @@ class WaveplateTab(PlotTabBase):
         self._is_measuring = True
         with QMutexLocker(self._buffer_mutex):
             self._buffer.clear()
-        self._ui.btnDeleteLast.setEnabled(True)
-        self._ui.btnClear.setEnabled(True)
+        self._ui.buttonDeleteLast.setEnabled(True)
+        self._ui.buttonClear.setEnabled(True)
         self._on_table_selection_changed()
         self._update_sweep_button_state()
 
@@ -127,9 +142,9 @@ class WaveplateTab(PlotTabBase):
         self._is_measuring = False
         if self._sweep_worker is not None:
             self._sweep_worker.abort()
-        self._ui.btnDeleteLast.setEnabled(False)
-        self._ui.btnDeleteSelected.setEnabled(False)
-        self._ui.btnClear.setEnabled(False)
+        self._ui.buttonDeleteLast.setEnabled(False)
+        self._ui.buttonDeleteSelected.setEnabled(False)
+        self._ui.buttonClear.setEnabled(False)
         self._update_sweep_button_state()
 
     def inject_modules(self, modules: dict[str, object]) -> None:
@@ -150,7 +165,7 @@ class WaveplateTab(PlotTabBase):
     def build_export(self) -> TabExport:
         """Build the CSV-ready export of all saved wave-plate points."""
         points = self.get_saved_points()
-        waveplate_idx = self._ui.cmbWaveplateType.currentIndex()
+        waveplate_idx = self._ui.comboWaveplateType.currentIndex()
         waveplate_token = _WAVEPLATE_TOKENS[waveplate_idx]
         waveplate_label = _WAVEPLATE_LABELS[waveplate_idx]
         columns = [
@@ -220,10 +235,12 @@ class WaveplateTab(PlotTabBase):
 
     def _update_live_labels(self, frame: Frame | None) -> None:
         if frame is None or math.isnan(frame.intensity):
-            self._ui.lblLiveIntensity.setText("—")
-            self._ui.lblKDCPosition.setText("—")
+            self._ui.valueLiveIntensity.setText(_DASH)
+            self._ui.valueKdcPosition.setText(_DASH)
             return
-        self._ui.lblLiveIntensity.setText(f"{fmt_intensity(frame.intensity)} V")
+        self._ui.valueLiveIntensity.setText(
+            self.config.text("waveplate_tab.live_intensity", value=fmt_intensity(frame.intensity))
+        )
         # Refresh the KDC position at most every _KDC_POLL_INTERVAL_S seconds to avoid
         # a blocking hardware read on every ~10 Hz frame.
         if self._kdc is not None and self._kdc.is_connected():
@@ -238,20 +255,24 @@ class WaveplateTab(PlotTabBase):
 
                     Debug.warning(f"WaveplateTab: KDC position read failed: {exc}")
             if self._kdc_pos_cache is not None:
-                self._ui.lblKDCPosition.setText(f"{fmt_angle(self._kdc_pos_cache)}°")
+                self._ui.valueKdcPosition.setText(
+                    self.config.text(
+                        "waveplate_tab.live_position", value=fmt_angle(self._kdc_pos_cache)
+                    )
+                )
             else:
-                self._ui.lblKDCPosition.setText("—")
+                self._ui.valueKdcPosition.setText(_DASH)
 
     def _update_sweep_button_state(self) -> None:
         can_start = (
             self._kdc is not None
             and self._kdc.is_connected()
-            and self._ui.cbWaveplatePlaced.isChecked()
+            and self._ui.checkWaveplatePlaced.isChecked()
             and self._is_measuring
             and self._sweep_worker is None
         )
-        self._ui.btnStartSweep.setEnabled(can_start)
-        self._ui.btnAbortSweep.setEnabled(
+        self._ui.buttonStartSweep.setEnabled(can_start)
+        self._ui.buttonAbortSweep.setEnabled(
             self._sweep_worker is not None and self._sweep_worker.isRunning()
         )
 
@@ -276,8 +297,8 @@ class WaveplateTab(PlotTabBase):
         self._sweep_worker.finished.connect(self._on_sweep_finished)
         self._sweep_worker.failed.connect(self._on_sweep_failed)
         self._sweep_worker.log.connect(lambda msg: self.status_message.emit("info", msg))
-        self._ui.btnStartSweep.setEnabled(False)
-        self._ui.btnAbortSweep.setEnabled(True)
+        self._ui.buttonStartSweep.setEnabled(False)
+        self._ui.buttonAbortSweep.setEnabled(True)
         self._sweep_worker.start()
 
     @Slot()
@@ -306,36 +327,43 @@ class WaveplateTab(PlotTabBase):
 
     @Slot(int, int)
     def _on_sweep_progress(self, current: int, total: int) -> None:
-        self.status_message.emit("info", f"Scan: {current}/{total}")
+        self.status_message.emit(
+            "info",
+            self.config.message("tabs.waveplate_scan_progress", current=current, total=total),
+        )
 
     @Slot()
     def _on_sweep_finished(self) -> None:
         self._sweep_worker = None
         self._update_sweep_button_state()
-        self.status_message.emit("info", "Scan abgeschlossen")
+        self.status_message.emit("info", self.config.message("tabs.waveplate_scan_finished"))
 
     @Slot(str)
     def _on_sweep_failed(self, msg: str) -> None:
         self._sweep_worker = None
         self._update_sweep_button_state()
-        self.status_message.emit("error", f"Scan fehlgeschlagen: {msg}")
+        self.status_message.emit(
+            "error", self.config.message("tabs.waveplate_scan_failed", error=msg)
+        )
 
     @Slot()
     def _delete_last_point(self) -> None:
         if not self._ui.intensityCurvePlot.remove_last_point():
-            self.status_message.emit("warning", "Keine Punkte zum Löschen")
+            self.status_message.emit(
+                "warning", self.config.message("tabs.waveplate_no_points_to_delete")
+            )
         else:
             self._refresh_table()
             self.points_changed.emit(len(self._ui.intensityCurvePlot.get_points()))
 
     @Slot()
     def _delete_selected_point(self) -> None:
-        selected = self._ui.pointsTable.selectedItems()
+        selected = self._ui.tablePoints.selectedItems()
         if not selected:
             return
-        row = self._ui.pointsTable.currentRow()
+        row = self._ui.tablePoints.currentRow()
         if not self._ui.intensityCurvePlot.remove_point_at(row):
-            self.status_message.emit("warning", "Punkt konnte nicht gelöscht werden")
+            self.status_message.emit("warning", self.config.message("tabs.waveplate_delete_failed"))
         else:
             self._refresh_table()
             self.points_changed.emit(len(self._ui.intensityCurvePlot.get_points()))
@@ -348,23 +376,23 @@ class WaveplateTab(PlotTabBase):
 
     def _refresh_table(self) -> None:
         points = self._ui.intensityCurvePlot.get_points()
-        self._ui.pointsTable.setRowCount(len(points))
+        self._ui.tablePoints.setRowCount(len(points))
         for row, pt in enumerate(points):
             # NOTE: analyser angle here uses 3 dp, which matches neither
             # DisplayFormat.angle_dp (2) nor ExportFormat.angle_dp (4) — left as a
             # hardcoded outlier rather than silently changing visible precision.
-            self._ui.pointsTable.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
-            self._ui.pointsTable.setItem(row, 1, QTableWidgetItem(export_intensity(pt.intensity_V)))
+            self._ui.tablePoints.setItem(row, 0, QTableWidgetItem(f"{pt.analyser_angle:.3f}"))
+            self._ui.tablePoints.setItem(row, 1, QTableWidgetItem(export_intensity(pt.intensity_V)))
             if pt.power_W is not None:
-                self._ui.pointsTable.setItem(row, 2, QTableWidgetItem(fmt_stat(pt.power_W * 1e6)))
+                self._ui.tablePoints.setItem(row, 2, QTableWidgetItem(fmt_stat(pt.power_W * 1e6)))
             else:
-                self._ui.pointsTable.setItem(row, 2, QTableWidgetItem("—"))
-            self._ui.pointsTable.setItem(
-                row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else "—")
+                self._ui.tablePoints.setItem(row, 2, QTableWidgetItem(_DASH))
+            self._ui.tablePoints.setItem(
+                row, 3, QTableWidgetItem(str(pt.pdtia_gain) if pt.pdtia_gain else _DASH)
             )
         self._on_table_selection_changed()
 
     @Slot()
     def _on_table_selection_changed(self) -> None:
-        has_selection = bool(self._ui.pointsTable.selectedItems())
-        self._ui.btnDeleteSelected.setEnabled(self._is_measuring and has_selection)
+        has_selection = bool(self._ui.tablePoints.selectedItems())
+        self._ui.buttonDeleteSelected.setEnabled(self._is_measuring and has_selection)

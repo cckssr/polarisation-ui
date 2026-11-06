@@ -5,14 +5,18 @@ from Python's logging system via a thread-safe Qt signal, so it works correctly
 even when records originate from worker threads (e.g. ReconnectWorker).
 """
 
+from __future__ import annotations
+
 import logging
 
 from PySide6.QtCore import QObject, Qt, Signal, Slot
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QDialog
 
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.pyqt.ui_log_window import Ui_LogWindow
+from polarisation_ui.ui.i18n import apply_strings
 
 
 class _SignalEmitter(QObject):
@@ -47,11 +51,13 @@ class _LogWindowHandler(logging.Handler):
 class LogWindow(QDialog):
     """Non-modal dialog that shows the live application log."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent=None, config: AppConfig | None = None) -> None:
         """Build the dialog UI and start forwarding log records into it."""
         super().__init__(parent)
         self.ui = Ui_LogWindow()
         self.ui.setupUi(self)
+        config = config or default_config()
+        apply_strings(self, config.section("ui").get("log_window", {}))
         self.ui.buttonBox.rejected.connect(self.hide)
 
         self._handler = _LogWindowHandler()
@@ -60,10 +66,10 @@ class LogWindow(QDialog):
 
     @Slot(str)
     def _append_line(self, text: str) -> None:
-        self.ui.textLog.appendPlainText(text)
-        cursor = self.ui.textLog.textCursor()
+        self.ui.editLog.appendPlainText(text)
+        cursor = self.ui.editLog.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        self.ui.textLog.setTextCursor(cursor)
+        self.ui.editLog.setTextCursor(cursor)
 
     def closeEvent(self, event) -> None:
         """Detach the log handler before closing so it isn't kept alive needlessly."""

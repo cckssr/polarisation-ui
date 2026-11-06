@@ -19,27 +19,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QTimer, Slot
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QFormLayout,
-    QFrame,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLCDNumber,
-    QLineEdit,
-    QPlainTextEdit,
-    QPushButton,
-    QSizePolicy,
-    QSpacerItem,
-    QToolButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QDialog, QLineEdit
 
 from polarisation_ui.core.models import Frame
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.devices.dual_encoder import (
     DualEncoderArduino,
@@ -53,8 +36,10 @@ from polarisation_ui.ui.common.status_led import (
     LED_RED,
     LED_YELLOW,
 )
+from polarisation_ui.ui.i18n import apply_strings
 
 if TYPE_CHECKING:
+    from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
     from polarisation_ui.ui.controllers.data_controller import DataController
 
 
@@ -84,38 +69,50 @@ class EncoderDebugDialog(QDialog):
         data_controller: DataController | None = None,
         parent=None,
         standalone: bool = False,
+        pm400: PM400PowerMeter | None = None,
+        config: AppConfig | None = None,
     ) -> None:
-        """Build the dialog UI and wire up polling against the shared device manager."""
+        """Wire up the Designer form and polling against the shared device manager.
+
+        ``pm400`` is accepted because the main window passes it along; the dialog has no
+        power-meter diagnostics yet, so it is only stored.
+        """
         super().__init__(parent)
+        self.config = config or default_config()
         self.ui = Ui_EncoderDebugDialog()
         self.ui.setupUi(self)
+        apply_strings(self, self.config.section("ui").get("encoder_debug", {}))
 
         self._dm = device_manager
         self._sample_inverted = sample_inverted
         self._data_controller = data_controller
         self._standalone = standalone
+        self._pm400 = pm400
+        self._adc_reg_edits: tuple[QLineEdit, ...] = (
+            self.ui.editReg0,
+            self.ui.editReg1,
+            self.ui.editReg2,
+            self.ui.editReg3,
+        )
 
         self._refresh_timer = QTimer(self)
         self._refresh_timer.timeout.connect(self._refresh)
 
-        if standalone:
-            self._build_connection_panel()
+        self._apply_code_texts()
+        self._setup_connection_group()
+        self._setup_raw_stream_tab()
+        self.ui.checkSampleInverted.setChecked(sample_inverted)
 
         self._connect_signals()
         self._init_leds()
-        self._init_sys_info_static_rows()  # add build-once rows before first data load
 
         if device_manager.is_encoder_connected():
             self._load_system_info()
         else:
             self._set_tabs_enabled(False)
 
-        self._build_ads_tab()
-        self._build_raw_stream_tab()
-        self._build_self_test_tab()
-
-        if not standalone and self.ui.cbAutoRefresh.isChecked():
-            self._refresh_timer.start(self.ui.spbRefreshInterval.value())
+        if not standalone and self.ui.checkAutoRefresh.isChecked():
+            self._refresh_timer.start(self.ui.spinRefreshInterval.value())
 
         # Speed up DataController diagnostic polling while this dialog is open.
         if self._data_controller is not None:
@@ -123,48 +120,57 @@ class EncoderDebugDialog(QDialog):
 
     # ==================== Setup ====================
 
-    def _build_connection_panel(self) -> None:
-        """Prepend a port-selector bar for standalone (--debug-only) mode."""
-        from PySide6.QtGui import QIcon
+    def _msg(self, key: str, **fmt: object) -> str:
+        """Message text ``messages.encoder_debug.<key>``."""
+        return self.config.message(f"encoder_debug.{key}", **fmt)
 
-        panel = QGroupBox("Arduino-Verbindung")
-        hl = QHBoxLayout(panel)
+    def _apply_code_texts(self) -> None:
+        """Set the texts that are not plain object-name keys: tab titles and combo items."""
+        tabs = self.ui.tabWidget
+        for page, key in (
+            (self.ui.tabMeasurements, "tab_title_measurements"),
+            (self.ui.tabSystem, "tab_title_system"),
+            (self.ui.tabTerminal, "tab_title_terminal"),
+            (self.ui.tabAds, "tab_title_ads"),
+            (self.ui.tabRawStream, "tab_title_raw_stream"),
+            (self.ui.tabSelfTest, "tab_title_self_test"),
+        ):
+            tabs.setTabText(tabs.indexOf(page), self.config.text(f"encoder_debug.{key}"))
+        items = self.config.get("ui.encoder_debug.combo_encoder_items", [])
+        combo = self.ui.comboEncoderSelect
+        for index, text in enumerate(items[: combo.count()]):
+            combo.setItemText(index, str(text))
 
-        hl.addWidget(QLabel("Port:"))
-
-        self._standalone_port_cb = QComboBox()
-        self._standalone_port_cb.setMinimumWidth(160)
+    def _setup_connection_group(self) -> None:
+        """Show the port-selector bar in standalone (--debug-only) mode, hide it otherwise."""
+        self.ui.groupConnection.setVisible(self._standalone)
+        if not self._standalone:
+            return
+        self.setWindowTitle(self.config.text("encoder_debug.title_standalone"))
+        self.ui.valueConnectionStatus.setText(self._msg("not_connected"))
         self._populate_standalone_ports()
-        hl.addWidget(self._standalone_port_cb)
 
-        refresh_btn = QToolButton()
-        refresh_btn.setIcon(QIcon.fromTheme("view-refresh"))
-        refresh_btn.setToolTip("Ports neu laden")
-        refresh_btn.clicked.connect(self._populate_standalone_ports)
-        hl.addWidget(refresh_btn)
-
-        self._standalone_connect_btn = QPushButton("Verbinden")
-        self._standalone_connect_btn.setMinimumWidth(100)
-        self._standalone_connect_btn.clicked.connect(self._standalone_connect)
-        hl.addWidget(self._standalone_connect_btn)
-
-        self._standalone_status_lbl = QLabel("Nicht verbunden")
-        hl.addWidget(self._standalone_status_lbl)
-        hl.addStretch(1)
-
-        # Insert above all existing content
-        self.ui.verticalLayout_root.insertWidget(0, panel)
-        self.setWindowTitle("Encoder Debug (Standalone)")
+    def _setup_raw_stream_tab(self) -> None:
+        """Show the DATA:FRAME log when a DataController feeds it, else the notice label."""
+        has_controller = self._data_controller is not None
+        self.ui.labelRawStreamNotice.setVisible(not has_controller)
+        self.ui.editRawStream.setVisible(has_controller)
+        self.ui.buttonClearRawStream.setVisible(has_controller)
+        if self._data_controller is None:
+            return
+        # Enable the signal when the dialog opens, disable it again on close (see closeEvent).
+        self._data_controller.raw_frame.connect(self._on_raw_frame)
+        self._data_controller.enable_raw_frame_signal(True)
+        Debug.debug("Raw Stream tab connected to DataController.raw_frame")
 
     def _populate_standalone_ports(self) -> None:
         """Refresh the port combo from the device manager's port list."""
         ports = self._dm.list_available_ports()
-        self._standalone_port_cb.clear()
+        self.ui.comboPort.clear()
         if ports:
-            for p in ports:
-                self._standalone_port_cb.addItem(p)
+            self.ui.comboPort.addItems(ports)
         else:
-            self._standalone_port_cb.addItem("Keine Ports gefunden")
+            self.ui.comboPort.addItem(self._msg("no_ports"))
 
     @Slot()
     def _standalone_connect(self) -> None:
@@ -172,55 +178,60 @@ class EncoderDebugDialog(QDialog):
         if self._dm.is_encoder_connected():
             self._refresh_timer.stop()
             self._dm.disconnect_all()
-            self._standalone_connect_btn.setText("Verbinden")
-            self._standalone_status_lbl.setText("Getrennt")
+            self.ui.buttonConnect.setText(self.config.text("encoder_debug.text_connect"))
+            self.ui.valueConnectionStatus.setText(self._msg("standalone_disconnected"))
             self._set_tabs_enabled(False)
             return
 
-        port = self._standalone_port_cb.currentText()
-        self._standalone_status_lbl.setText("Verbinde...")
-        self._standalone_connect_btn.setEnabled(False)
+        port = self.ui.comboPort.currentText()
+        self.ui.valueConnectionStatus.setText(self._msg("standalone_connecting"))
+        self.ui.buttonConnect.setEnabled(False)
 
         success = self._dm.connect_encoders(port=port)
-        self._standalone_connect_btn.setEnabled(True)
+        self.ui.buttonConnect.setEnabled(True)
 
         if success:
-            self._standalone_status_lbl.setText(f"Verbunden: {port}")
-            self._standalone_connect_btn.setText("Trennen")
+            self.ui.valueConnectionStatus.setText(self._msg("standalone_connected", port=port))
+            self.ui.buttonConnect.setText(self.config.text("encoder_debug.text_disconnect"))
             self._set_tabs_enabled(True)
             self._load_system_info()
-            if self.ui.cbAutoRefresh.isChecked():
-                self._refresh_timer.start(self.ui.spbRefreshInterval.value())
+            if self.ui.checkAutoRefresh.isChecked():
+                self._refresh_timer.start(self.ui.spinRefreshInterval.value())
             Debug.info(f"Standalone debug: connected to {port}")
         else:
-            self._standalone_status_lbl.setText("Verbindung fehlgeschlagen")
+            self.ui.valueConnectionStatus.setText(self._msg("standalone_failed"))
             Debug.error(f"Standalone debug: connection to {port} failed")
 
     def _set_tabs_enabled(self, enabled: bool) -> None:
-        """Enable or disable the diagnostic tabs (tab widget in the UI)."""
-        if hasattr(self.ui, "tabWidget"):
-            self.ui.tabWidget.setEnabled(enabled)
-        # Also disable the refresh controls
-        self.ui.gbControl.setEnabled(enabled)
+        """Enable or disable the diagnostic tabs and the refresh controls."""
+        self.ui.tabWidget.setEnabled(enabled)
+        self.ui.groupControl.setEnabled(enabled)
 
     def _connect_signals(self) -> None:
-        self.ui.btnRefresh.clicked.connect(self._refresh)
-        self.ui.cbAutoRefresh.toggled.connect(self._on_auto_refresh_toggled)
-        self.ui.spbRefreshInterval.valueChanged.connect(self._on_interval_changed)
+        self.ui.buttonRefreshPorts.clicked.connect(self._populate_standalone_ports)
+        self.ui.buttonConnect.clicked.connect(self._standalone_connect)
 
-        self.ui.btnZeroEncoder.clicked.connect(self._zero_encoder)
-        self.ui.btnClearErrorFlag.clicked.connect(self._clear_error_flag)
+        self.ui.buttonRefresh.clicked.connect(self._refresh)
+        self.ui.checkAutoRefresh.toggled.connect(self._on_auto_refresh_toggled)
+        self.ui.spinRefreshInterval.valueChanged.connect(self._on_interval_changed)
 
-        self.ui.btnSendCommand.clicked.connect(self._send_terminal_command)
-        self.ui.leCommandInput.returnPressed.connect(self._send_terminal_command)
-        self.ui.btnClearLog.clicked.connect(self.ui.teTerminalLog.clear)
+        self.ui.buttonZeroEncoder.clicked.connect(self._zero_encoder)
+        self.ui.buttonClearErrorFlag.clicked.connect(self._clear_error_flag)
 
-        self.ui.btnReadScpiErrors.clicked.connect(self._read_scpi_error_queue)
-        self.ui.btnClearScpiErrors.clicked.connect(self._clear_scpi_error_queue)
+        self.ui.buttonSendCommand.clicked.connect(self._send_terminal_command)
+        self.ui.editCommandInput.returnPressed.connect(self._send_terminal_command)
+        self.ui.buttonClearLog.clicked.connect(self.ui.editTerminalLog.clear)
 
-        self.ui.cbDebugMode.toggled.connect(self._on_debug_mode_toggled)
+        self.ui.buttonReadScpiErrors.clicked.connect(self._read_scpi_error_queue)
+        self.ui.buttonClearScpiErrors.clicked.connect(self._clear_scpi_error_queue)
 
-        self.ui.buttonBox.rejected.connect(self.reject)
+        self.ui.checkDebugMode.toggled.connect(self._on_debug_mode_toggled)
+
+        self.ui.buttonReadAdcConfig.clicked.connect(self._read_adc_config)
+        self.ui.buttonClearRawStream.clicked.connect(self.ui.editRawStream.clear)
+        self.ui.buttonRunSelfTest.clicked.connect(self._run_self_test)
+
+        # The button box's rejected() -> reject() connection is declared in the .ui file.
 
         # When DataController is available, subscribe to its signals for live
         # angles, intensity, and stat bitmask so we display the same processed
@@ -233,8 +244,9 @@ class EncoderDebugDialog(QDialog):
 
     def _init_leds(self) -> None:
         """Reset all LEDs to gray until the first successful read."""
-        _conn_leds = ["ledConnA", "ledConnB"]
-        _diag_leds = [
+        for name in (
+            "ledConnA",
+            "ledConnB",
             "ledCompHA",
             "ledCompLA",
             "ledCofA",
@@ -245,23 +257,10 @@ class EncoderDebugDialog(QDialog):
             "ledCofB",
             "ledOcfB",
             "ledErrorB",
-        ]
-        for name in _conn_leds + _diag_leds:
+            "ledAdcPresent",
+            "ledAdcDrdy",
+        ):
             getattr(self.ui, name).setStyleSheet(LED_GRAY)
-        # ADS LEDs are instance vars created in _build_ads_tab — set after that call.
-
-    def _init_sys_info_static_rows(self) -> None:
-        """Add static form rows to the System Info group (call once on construction).
-
-        Avoids appending new widgets on every reconnect, which would create
-        duplicate rows.  The 'Probe invertiert' row uses a runtime value that
-        is fixed for the lifetime of the dialog.
-        """
-        lbl = QLabel("Probe invertiert:", self.ui.gbSysInfo)
-        cb = QCheckBox(self.ui.gbSysInfo)
-        cb.setChecked(self._sample_inverted)
-        cb.setEnabled(False)
-        self.ui.formSysInfo.addRow(lbl, cb)
 
     # ==================== DataController Signal Receivers ====================
 
@@ -276,7 +275,7 @@ class EncoderDebugDialog(QDialog):
     @Slot(float)
     def _on_intensity_updated(self, intensity: float) -> None:
         """Update ADC voltage display at 10 Hz from DataController."""
-        self._lcd_adc_voltage.display(intensity)
+        self.ui.lcdAdcVoltage.display(intensity)
 
     @Slot(object)
     def _on_frame_ready(self, frame: Frame) -> None:
@@ -299,7 +298,7 @@ class EncoderDebugDialog(QDialog):
 
     def _selected_encoder_id(self) -> str:
         """Return 'A', 'B', or 'BOTH' from the encoder selector combo."""
-        return _ENCODER_LABELS[self.ui.cbEncoderSelect.currentIndex()]
+        return _ENCODER_LABELS[self.ui.comboEncoderSelect.currentIndex()]
 
     # ==================== Refresh ====================
 
@@ -331,11 +330,11 @@ class EncoderDebugDialog(QDialog):
             mag_a = device.read_magnitude(EncoderID.A)
             if mag_a is not None:
                 self.ui.lcdMagnitudeA.display(mag_a)
-                self.ui.pbarMagnitudeA.setValue(mag_a)
+                self.ui.progressMagnitudeA.setValue(mag_a)
             mag_b = device.read_magnitude(EncoderID.B)
             if mag_b is not None:
                 self.ui.lcdMagnitudeB.display(mag_b)
-                self.ui.pbarMagnitudeB.setValue(mag_b)
+                self.ui.progressMagnitudeB.setValue(mag_b)
 
             diag_a, diag_b = device.query_diagnostics("BOTH")
             if diag_a:
@@ -343,23 +342,7 @@ class EncoderDebugDialog(QDialog):
             if diag_b:
                 self._apply_diagnostics(diag_b, "B")
 
-            adc_diag = device.query_adc_diagnostics()
-            if adc_diag is not None:
-                if adc_diag.get("absent"):
-                    self._led_adc_present.setStyleSheet(LED_RED)
-                    self._led_adc_drdy.setStyleSheet(LED_GRAY)
-                else:
-                    self._led_adc_present.setStyleSheet(LED_GREEN)
-                    drdy = bool(adc_diag.get("drdy", False))
-                    self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
-                    for i in range(4):
-                        self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
-                    self._le_adc_last_raw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
-
-            pdtia = device.query_pdtia_diagnostics()
-            if pdtia is not None:
-                self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
-                self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
+            self._update_adc_diagnostics(device)
         finally:
             if was_active:
                 poll_timer.start(self._data_controller.poll_interval)
@@ -370,9 +353,8 @@ class EncoderDebugDialog(QDialog):
         for suffix in ("A", "B"):
             for led in ("ledCompH", "ledCompL", "ledCof", "ledOcf", "ledError"):
                 getattr(self.ui, f"{led}{suffix}").setStyleSheet(LED_GRAY)
-        if hasattr(self, "_led_adc_present"):
-            self._led_adc_present.setStyleSheet(LED_RED)
-            self._led_adc_drdy.setStyleSheet(LED_GRAY)
+        self.ui.ledAdcPresent.setStyleSheet(LED_RED)
+        self.ui.ledAdcDrdy.setStyleSheet(LED_GRAY)
 
     # ──── Measurements (Angle + Magnitude) ──────────────────────────────────
 
@@ -397,13 +379,13 @@ class EncoderDebugDialog(QDialog):
         mag_a = device.read_magnitude(EncoderID.A)
         if mag_a is not None:
             self.ui.lcdMagnitudeA.display(mag_a)
-            self.ui.pbarMagnitudeA.setValue(mag_a)
+            self.ui.progressMagnitudeA.setValue(mag_a)
 
         # Encoder B — magnitude
         mag_b = device.read_magnitude(EncoderID.B)
         if mag_b is not None:
             self.ui.lcdMagnitudeB.display(mag_b)
-            self.ui.pbarMagnitudeB.setValue(mag_b)
+            self.ui.progressMagnitudeB.setValue(mag_b)
 
     # ──── Diagnostics ────────────────────────────────────────────────────────
 
@@ -436,8 +418,8 @@ class EncoderDebugDialog(QDialog):
 
         # AGC — always an int (0–255) after the bug-fix in dual_encoder.py
         agc = int(diag.get("agc", 0))
-        getattr(self.ui, f"spbAgc{suffix}").setValue(agc)
-        getattr(self.ui, f"pbarAgc{suffix}").setValue(agc)
+        getattr(self.ui, f"spinAgc{suffix}").setValue(agc)
+        getattr(self.ui, f"progressAgc{suffix}").setValue(agc)
 
     # ==================== System Info ====================
 
@@ -445,12 +427,12 @@ class EncoderDebugDialog(QDialog):
         """Populate the System tab with static device information."""
         device = self._device()
         if device is None:
-            self.ui.leIdn.setText("Nicht verbunden")
+            self.ui.editIdn.setText(self._msg("not_connected"))
             return
 
         # *IDN?
         idn = device.query_idn()
-        self.ui.leIdn.setText(idn if idn else "–")
+        self.ui.editIdn.setText(idn if idn else "–")
 
         # CONF:RATE? returns Hz; display as ms
         raw_rate = device.send_query("CONF:RATE?")
@@ -458,16 +440,16 @@ class EncoderDebugDialog(QDialog):
             try:
                 hz = int(raw_rate.strip())
                 if hz > 0:
-                    self.ui.spbPollInterval.setValue(round(1000 / hz))
+                    self.ui.spinPollInterval.setValue(round(1000 / hz))
             except ValueError:
                 pass
 
         # SYST:DEB? — block signals to avoid triggering the toggle slot
         raw_deb = device.send_query("SYST:DEB?")
         if raw_deb is not None:
-            self.ui.cbDebugMode.blockSignals(True)
-            self.ui.cbDebugMode.setChecked(raw_deb.strip() == "1")
-            self.ui.cbDebugMode.blockSignals(False)
+            self.ui.checkDebugMode.blockSignals(True)
+            self.ui.checkDebugMode.setChecked(raw_deb.strip() == "1")
+            self.ui.checkDebugMode.blockSignals(False)
 
     # ==================== Controls ====================
 
@@ -497,7 +479,7 @@ class EncoderDebugDialog(QDialog):
     def _read_scpi_error_queue(self) -> None:
         device = self._device()
         if device is None:
-            self.ui.teScpiErrors.setPlainText("Nicht verbunden")
+            self.ui.editScpiErrors.setPlainText(self._msg("not_connected"))
             return
 
         entries: list[str] = []
@@ -509,7 +491,7 @@ class EncoderDebugDialog(QDialog):
             if entry.startswith("0,"):  # "0,No error" — queue drained
                 break
 
-        self.ui.teScpiErrors.setPlainText("\n".join(entries) if entries else "–")
+        self.ui.editScpiErrors.setPlainText("\n".join(entries) if entries else "–")
 
     @Slot()
     def _clear_scpi_error_queue(self) -> None:
@@ -517,14 +499,14 @@ class EncoderDebugDialog(QDialog):
         if device is None:
             return
         device.send_query("*CLS")
-        self.ui.teScpiErrors.clear()
+        self.ui.editScpiErrors.clear()
         Debug.info("SCPI error queue cleared (*CLS)")
 
     # ==================== SCPI Terminal ====================
 
     @Slot()
     def _send_terminal_command(self) -> None:
-        cmd = self.ui.leCommandInput.text().strip()
+        cmd = self.ui.editCommandInput.text().strip()
         if not cmd:
             return
 
@@ -533,30 +515,32 @@ class EncoderDebugDialog(QDialog):
 
         device = self._device()
         if device is None:
-            self._log("            <<< [Nicht verbunden]")
-            self.ui.leCommandInput.clear()
+            self._log(f"            <<< {self._msg('terminal_not_connected')}")
+            self.ui.editCommandInput.clear()
             return
 
         if cmd.endswith("?"):
-            # Query command — expect a response line
+            # Query command — expect a response lineSeparatorA
             response = device.send_query(cmd)
-            self._log(f"            <<< {response if response is not None else '[Timeout]'}")
+            reply = response if response is not None else self._msg("terminal_timeout")
+            self._log(f"            <<< {reply}")
         else:
             # Control command — no response from firmware
             ok = device.send_control_command(cmd)
-            self._log("            <<< OK" if ok else "            <<< [Fehler beim Senden]")
+            reply = "OK" if ok else self._msg("terminal_send_failed")
+            self._log(f"            <<< {reply}")
 
-        self.ui.leCommandInput.clear()
+        self.ui.editCommandInput.clear()
 
     def _log(self, text: str) -> None:
-        self.ui.teTerminalLog.append(text)
+        self.ui.editTerminalLog.append(text)
 
     # ==================== Auto-refresh & Interval ====================
 
     @Slot(bool)
     def _on_auto_refresh_toggled(self, enabled: bool) -> None:
         if enabled:
-            self._refresh_timer.start(self.ui.spbRefreshInterval.value())
+            self._refresh_timer.start(self.ui.spinRefreshInterval.value())
         else:
             self._refresh_timer.stop()
 
@@ -578,132 +562,31 @@ class EncoderDebugDialog(QDialog):
 
     # ==================== ADS1220 Tab ====================
 
-    def _build_ads_tab(self) -> None:
-        """Create the ADS1220 / PD-TIA diagnostic tab programmatically."""
-        tab = QWidget()
-        vl = QVBoxLayout(tab)
-
-        # ── Live readings ────────────────────────────────────────────────────
-        gb_live = QGroupBox("Live-Messwerte")
-        form_live = QFormLayout(gb_live)
-
-        self._led_adc_present = QFrame()
-        self._led_adc_present.setMinimumSize(20, 20)
-        self._led_adc_present.setMaximumSize(20, 20)
-        self._led_adc_present.setFrameShape(QFrame.Shape.Box)
-        self._led_adc_present.setStyleSheet(LED_GRAY)
-        form_live.addRow("ADS1220 vorhanden:", self._led_adc_present)
-
-        self._lcd_adc_voltage = QLCDNumber()
-        self._lcd_adc_voltage.setDigitCount(10)
-        self._lcd_adc_voltage.setSmallDecimalPoint(True)
-        self._lcd_adc_voltage.setMinimumSize(180, 50)
-        self._lcd_adc_voltage.setToolTip("MEAS:ADC:VOLT? (V)")
-        form_live.addRow("Spannung (V):", self._lcd_adc_voltage)
-
-        self._led_adc_drdy = QFrame()
-        self._led_adc_drdy.setMinimumSize(20, 20)
-        self._led_adc_drdy.setMaximumSize(20, 20)
-        self._led_adc_drdy.setFrameShape(QFrame.Shape.Box)
-        self._led_adc_drdy.setStyleSheet(LED_GRAY)
-        self._led_adc_drdy.setToolTip("Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)")
-        form_live.addRow("Bereit (zeitbasiert):", self._led_adc_drdy)
-
-        vl.addWidget(gb_live)
-
-        # ── Registers + Config side by side ──────────────────────────────────
-        hl_mid = QHBoxLayout()
-
-        gb_regs = QGroupBox("Register (DIAG:ADC?)")
-        form_regs = QFormLayout(gb_regs)
-        self._le_adc_reg: dict[int, QLineEdit] = {}
-        for i in range(4):
-            le = QLineEdit()
-            le.setReadOnly(True)
-            le.setPlaceholderText("–")
-            self._le_adc_reg[i] = le
-            form_regs.addRow(f"REG{i}:", le)
-        self._le_adc_last_raw = QLineEdit()
-        self._le_adc_last_raw.setReadOnly(True)
-        self._le_adc_last_raw.setPlaceholderText("–")
-        form_regs.addRow("Last Raw:", self._le_adc_last_raw)
-        hl_mid.addWidget(gb_regs)
-
-        gb_cfg = QGroupBox("Konfiguration (CONF:ADC:*?)")
-        form_cfg = QFormLayout(gb_cfg)
-        self._le_adc_mux = QLineEdit()
-        self._le_adc_mux.setReadOnly(True)
-        self._le_adc_mux.setPlaceholderText("–")
-        self._le_adc_gain = QLineEdit()
-        self._le_adc_gain.setReadOnly(True)
-        self._le_adc_gain.setPlaceholderText("–")
-        self._le_adc_rate = QLineEdit()
-        self._le_adc_rate.setReadOnly(True)
-        self._le_adc_rate.setPlaceholderText("–")
-        self._le_adc_mode = QLineEdit()
-        self._le_adc_mode.setReadOnly(True)
-        self._le_adc_mode.setPlaceholderText("–")
-        self._le_adc_fir = QLineEdit()
-        self._le_adc_fir.setReadOnly(True)
-        self._le_adc_fir.setPlaceholderText("–")
-        self._le_adc_vref = QLineEdit()
-        self._le_adc_vref.setReadOnly(True)
-        self._le_adc_vref.setPlaceholderText("–")
-        form_cfg.addRow("MUX:", self._le_adc_mux)
-        form_cfg.addRow("Gain:", self._le_adc_gain)
-        form_cfg.addRow("Rate (SPS):", self._le_adc_rate)
-        form_cfg.addRow("Mode:", self._le_adc_mode)
-        form_cfg.addRow("FIR Filter:", self._le_adc_fir)
-        form_cfg.addRow("Spannungsref.:", self._le_adc_vref)
-        btn_read_cfg = QPushButton("Konfiguration lesen")
-        btn_read_cfg.clicked.connect(self._read_adc_config)
-        form_cfg.addRow("", btn_read_cfg)
-        hl_mid.addWidget(gb_cfg)
-
-        vl.addLayout(hl_mid)
-
-        # ── PD-TIA ───────────────────────────────────────────────────────────
-        gb_pdtia = QGroupBox("PD-TIA Verstärkung (DIAG:PDTIA?)")
-        form_pdtia = QFormLayout(gb_pdtia)
-        self._le_pdtia_stage = QLineEdit()
-        self._le_pdtia_stage.setReadOnly(True)
-        self._le_pdtia_stage.setPlaceholderText("–")
-        self._le_pdtia_pattern = QLineEdit()
-        self._le_pdtia_pattern.setReadOnly(True)
-        self._le_pdtia_pattern.setPlaceholderText("–")
-        form_pdtia.addRow("Stufe:", self._le_pdtia_stage)
-        form_pdtia.addRow("GPIO Muster:", self._le_pdtia_pattern)
-        vl.addWidget(gb_pdtia)
-
-        vl.addItem(QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
-
-        self.ui.tabWidget.addTab(tab, "ADS1220")
-
     def _update_adc_tab(self, device: DualEncoderArduino) -> None:
-        # Live voltage
         voltage = device.adc.read_voltage()
         if voltage is not None:
-            self._lcd_adc_voltage.display(voltage)
+            self.ui.lcdAdcVoltage.display(voltage)
+        self._update_adc_diagnostics(device)
 
-        # ADC diagnostics (registers + drdy)
+    def _update_adc_diagnostics(self, device: DualEncoderArduino) -> None:
+        """ADC registers, DRDY and PD-TIA state (DIAG:ADC? / DIAG:PDTIA?)."""
         adc_diag = device.query_adc_diagnostics()
         if adc_diag is not None:
             if adc_diag.get("absent"):
-                self._led_adc_present.setStyleSheet(LED_RED)
-                self._led_adc_drdy.setStyleSheet(LED_GRAY)
+                self.ui.ledAdcPresent.setStyleSheet(LED_RED)
+                self.ui.ledAdcDrdy.setStyleSheet(LED_GRAY)
             else:
-                self._led_adc_present.setStyleSheet(LED_GREEN)
+                self.ui.ledAdcPresent.setStyleSheet(LED_GREEN)
                 drdy = bool(adc_diag.get("drdy", False))
-                self._led_adc_drdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
-                for i in range(4):
-                    self._le_adc_reg[i].setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
-                self._le_adc_last_raw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
+                self.ui.ledAdcDrdy.setStyleSheet(LED_GREEN if drdy else LED_YELLOW)
+                for i, edit in enumerate(self._adc_reg_edits):
+                    edit.setText(f"0x{adc_diag.get(f'reg{i}', 0):02X}")
+                self.ui.editLastRaw.setText(f"0x{adc_diag.get('last_raw', 0):06X}")
 
-        # PD-TIA
         pdtia = device.query_pdtia_diagnostics()
         if pdtia is not None:
-            self._le_pdtia_stage.setText(str(pdtia.get("stage", "–")))
-            self._le_pdtia_pattern.setText(pdtia.get("pattern", "–"))
+            self.ui.editPdtiaStage.setText(str(pdtia.get("stage", "–")))
+            self.ui.editPdtiaPattern.setText(pdtia.get("pattern", "–"))
 
     @Slot()
     def _read_adc_config(self) -> None:
@@ -711,113 +594,43 @@ class EncoderDebugDialog(QDialog):
         if device is None:
             return
         cfg = device.query_adc_config()
-        self._le_adc_mux.setText(cfg.get("mux", "–"))
-        self._le_adc_gain.setText(cfg.get("gain", "–"))
-        self._le_adc_rate.setText(cfg.get("rate", "–"))
-        self._le_adc_mode.setText(cfg.get("mode", "–"))
-        self._le_adc_fir.setText(cfg.get("fir", "–"))
-        self._le_adc_vref.setText(cfg.get("vref", "–"))
+        self.ui.editMux.setText(cfg.get("mux", "–"))
+        self.ui.editGain.setText(cfg.get("gain", "–"))
+        self.ui.editRate.setText(cfg.get("rate", "–"))
+        self.ui.editMode.setText(cfg.get("mode", "–"))
+        self.ui.editFir.setText(cfg.get("fir", "–"))
+        self.ui.editVref.setText(cfg.get("vref", "–"))
 
     # ==================== Raw Stream Tab ====================
-
-    def _build_raw_stream_tab(self) -> None:
-        """Create the Raw Stream tab — a scrolling log of DATA:FRAME strings.
-
-        Requires DataController with the raw_frame signal.  When no
-        DataController is provided the tab is created but shows a notice.
-        """
-        tab = QWidget()
-        vl = QVBoxLayout(tab)
-
-        if self._data_controller is None:
-            lbl = QLabel(
-                "Kein DataController verfügbar.\n"
-                "Öffne den Debug-Dialog über das Hauptfenster (Strg+D)."
-            )
-            lbl.setWordWrap(True)
-            vl.addWidget(lbl)
-            self.ui.tabWidget.addTab(tab, "Raw Stream")
-            return
-
-        # Scrolling log
-        self._te_raw_stream = QPlainTextEdit()
-        self._te_raw_stream.setReadOnly(True)
-        self._te_raw_stream.setMaximumBlockCount(500)  # keep last 500 lines
-        self._te_raw_stream.setPlaceholderText("Warte auf Frames …")
-        font = self._te_raw_stream.font()
-        font.setFamily("Monospace")
-        self._te_raw_stream.setFont(font)
-        vl.addWidget(self._te_raw_stream)
-
-        hl = QHBoxLayout()
-        btn_clear = QPushButton("Löschen")
-        btn_clear.clicked.connect(self._te_raw_stream.clear)
-        hl.addWidget(btn_clear)
-        hl.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
-        vl.addLayout(hl)
-
-        self.ui.tabWidget.addTab(tab, "Raw Stream")
-
-        # Connect DataController signal — enable signal when the dialog opens,
-        # disable it again when it closes (see closeEvent).
-        self._data_controller.raw_frame.connect(self._on_raw_frame)
-        self._data_controller.enable_raw_frame_signal(True)
-        Debug.debug("Raw Stream tab connected to DataController.raw_frame")
 
     @Slot(str)
     def _on_raw_frame(self, frame_str: str) -> None:
         """Append one DATA:FRAME line to the raw stream log."""
-        if hasattr(self, "_te_raw_stream"):
-            ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            self._te_raw_stream.appendPlainText(f"[{ts}] {frame_str}")
+        ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.ui.editRawStream.appendPlainText(f"[{ts}] {frame_str}")
 
     # ==================== Self-Test Tab ====================
-
-    def _build_self_test_tab(self) -> None:
-        """Create the Self-Test tab — runs DIAG:SELF? and displays PASS/FAIL results."""
-        tab = QWidget()
-        vl = QVBoxLayout(tab)
-
-        lbl_info = QLabel(
-            "Führt DIAG:SELF? aus — überprüft alle Subsysteme (Encoder A/B, ADC, PD-TIA).\n"
-            "Jedes Subsystem meldet PASS oder FAIL."
-        )
-        lbl_info.setWordWrap(True)
-        vl.addWidget(lbl_info)
-
-        btn_run = QPushButton("Selbsttest ausführen  (DIAG:SELF?)")
-        btn_run.clicked.connect(self._run_self_test)
-        vl.addWidget(btn_run)
-
-        self._te_self_test = QPlainTextEdit()
-        self._te_self_test.setReadOnly(True)
-        self._te_self_test.setPlaceholderText("Noch kein Test durchgeführt.")
-        font = self._te_self_test.font()
-        font.setFamily("Monospace")
-        self._te_self_test.setFont(font)
-        vl.addWidget(self._te_self_test)
-
-        self.ui.tabWidget.addTab(tab, "Selbsttest")
 
     @Slot()
     def _run_self_test(self) -> None:
         """Send DIAG:SELF? and display the multi-line result."""
         device = self._device()
         if device is None:
-            self._te_self_test.setPlainText("Fehler: Gerät nicht verbunden.")
+            self.ui.editSelfTest.setPlainText(self._msg("self_test_not_connected"))
             return
 
         ts = datetime.now().strftime("%H:%M:%S")
-        self._te_self_test.appendPlainText(f"\n[{ts}] DIAG:SELF? …")
+        self.ui.editSelfTest.appendPlainText(f"\n[{ts}] DIAG:SELF? …")
 
         lines = device.query_self_test()
         if not lines:
-            self._te_self_test.appendPlainText("  [Timeout — keine Antwort]")
+            self.ui.editSelfTest.appendPlainText(f"  {self._msg('self_test_timeout')}")
             return
 
-        for line in lines:
-            status = "✓" if "PASS" in line.upper() else ("✗" if "FAIL" in line.upper() else " ")
-            self._te_self_test.appendPlainText(f"  {status} {line}")
+        for entry in lines:
+            upper = entry.upper()
+            status = "✓" if "PASS" in upper else ("✗" if "FAIL" in upper else " ")
+            self.ui.editSelfTest.appendPlainText(f"  {status} {entry}")
 
         Debug.info(f"DIAG:SELF? response: {lines!r}")
 
@@ -829,6 +642,8 @@ class EncoderDebugDialog(QDialog):
         if self._data_controller is not None:
             self._data_controller.angles_updated.disconnect(self._on_angles_updated)
             self._data_controller.intensity_updated.disconnect(self._on_intensity_updated)
+            self._data_controller.frame_ready.disconnect(self._on_frame_ready)
+            self._data_controller.raw_frame.disconnect(self._on_raw_frame)
             self._data_controller.enable_raw_frame_signal(False)
             # Restore diagnostic polling to the background rate.
             self._data_controller.set_diag_interval(5000)

@@ -5,10 +5,13 @@ and displays them as a scatter plot.  Points are added via add_point() and
 removed via remove_last_point() or remove_point_at().
 """
 
+from __future__ import annotations
+
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from polarisation_ui.core.models import MalusPoint
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -22,10 +25,17 @@ class MalusCurvePlot(QWidget):
     is additionally outlined with a marker-coloured ring so the user can see the last entry.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with an empty point buffer."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widget with an empty point buffer.
+
+        The axis labels come from ``ui.plots`` in the configuration (default: ``default_config()``);
+        an owning tab passes its own configuration through :meth:`apply_config`.
+        """
         super().__init__(parent)
         self._points: list[MalusPoint] = []
+        self._config: AppConfig = config if config is not None else default_config()
+        self._x_label_key = "malus_curve_x_label"
+        self._y_is_power = False
         self._setup_plot()
 
     def _setup_plot(self) -> None:
@@ -35,8 +45,7 @@ class MalusCurvePlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Analysatorwinkel", units="°")
-        self._plot_widget.setLabel("left", "Intensität", units="V")
+        self._apply_axis_labels()
 
         # All saved points: filled circles
         self._scatter = self._plot_widget.plot(
@@ -61,6 +70,24 @@ class MalusCurvePlot(QWidget):
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+
+    def apply_config(self, config: AppConfig, x_label_key: str = "malus_curve_x_label") -> None:
+        """Take the axis labels from ``config``; ``x_label_key`` names the ``ui.plots`` x label."""
+        self._config = config
+        self._x_label_key = x_label_key
+        self._apply_axis_labels()
+
+    def _apply_axis_labels(self) -> None:
+        text = self._config.text
+        self._plot_widget.setLabel(
+            "bottom", text(f"plots.{self._x_label_key}"), units=text("plots.malus_curve_x_units")
+        )
+        quantity = "power" if self._y_is_power else "intensity"
+        self._plot_widget.setLabel(
+            "left",
+            text(f"plots.malus_curve_{quantity}_label"),
+            units=text(f"plots.malus_curve_{quantity}_units"),
+        )
 
     def add_point(
         self,
@@ -122,10 +149,11 @@ class MalusCurvePlot(QWidget):
         use_power = all(p.power_W is not None for p in self._points)
         if use_power:
             ys = [p.power_W * 1e3 for p in self._points]  # type: ignore[operator]
-            self._plot_widget.setLabel("left", "Leistung", units="mW")
         else:
             ys = [p.intensity_V for p in self._points]
-            self._plot_widget.setLabel("left", "Intensität", units="V")
+        if use_power != self._y_is_power:
+            self._y_is_power = use_power
+            self._apply_axis_labels()
 
         self._scatter.setData(xs, ys)
         self._scatter.setVisible(True)

@@ -24,7 +24,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPlainTextEdit" name="textLog">
+    <widget class="QPlainTextEdit" name="editLog">
      <property name="readOnly">
       <bool>true</bool>
      </property>

@@ -30,7 +30,7 @@
     <number>8</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="gbConnections">
+    <widget class="QGroupBox" name="groupConnections">
      <property name="title">
       <string>Verbindungen</string>
      </property>
@@ -51,7 +51,7 @@
        <number>6</number>
       </property>
       <item>
-       <widget class="QGroupBox" name="gbArduino">
+       <widget class="QGroupBox" name="groupArduino">
         <property name="title">
          <string>Arduino (Detektor &amp; Gain)</string>
         </property>
@@ -60,7 +60,7 @@
           <number>4</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="lblArduinoPort">
+          <widget class="QLabel" name="labelArduinoPort">
            <property name="text">
             <string>Port:</string>
            </property>
@@ -83,14 +83,14 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="btnRefreshArduino">
+          <widget class="QPushButton" name="buttonRefreshArduino">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="lblArduinoStatus">
+          <widget class="QLabel" name="valueArduinoStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -109,7 +109,7 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QPushButton" name="btnConnectArduino">
+          <widget class="QPushButton" name="buttonConnectArduino">
            <property name="text">
             <string>Verbinden</string>
            </property>
@@ -119,7 +119,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gbKDC">
+       <widget class="QGroupBox" name="groupKDC">
         <property name="title">
          <string>KDC101 Rotationsantrieb (PRM1/MZ8)</string>
         </property>
@@ -128,7 +128,7 @@
           <number>4</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="lblKDCDevice">
+          <widget class="QLabel" name="labelKDCDevice">
            <property name="text">
             <string>Gerät:</string>
            </property>
@@ -151,14 +151,14 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="btnRefreshKDC">
+          <widget class="QPushButton" name="buttonRefreshKDC">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="lblKDCStatus">
+          <widget class="QLabel" name="valueKDCStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -177,14 +177,14 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QPushButton" name="btnConnectKDC">
+          <widget class="QPushButton" name="buttonConnectKDC">
            <property name="text">
             <string>Verbinden</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="btnHomeKDC">
+          <widget class="QPushButton" name="buttonHomeKDC">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -197,7 +197,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gbNDStage">
+       <widget class="QGroupBox" name="groupNDStage">
         <property name="title">
          <string>ND-Filter Drehantrieb (Schrittmotor, ESP32 + DRV8825)</string>
         </property>
@@ -206,7 +206,7 @@
           <number>4</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="lblNDDevice">
+          <widget class="QLabel" name="labelNDDevice">
            <property name="text">
             <string>Port:</string>
            </property>
@@ -229,14 +229,14 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="btnRefreshNDStage">
+          <widget class="QPushButton" name="buttonRefreshNDStage">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="lblNDStatus">
+          <widget class="QLabel" name="valueNDStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -255,14 +255,14 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QPushButton" name="btnConnectNDStage">
+          <widget class="QPushButton" name="buttonConnectNDStage">
            <property name="text">
             <string>Verbinden</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
-          <widget class="QPushButton" name="btnHomeNDStage">
+          <widget class="QPushButton" name="buttonHomeNDStage">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -275,7 +275,7 @@
           </widget>
          </item>
          <item row="2" column="2">
-          <widget class="QPushButton" name="btnZeroNDStage">
+          <widget class="QPushButton" name="buttonZeroNDStage">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -288,7 +288,7 @@
           </widget>
          </item>
          <item row="3" column="0" colspan="3">
-          <widget class="QLabel" name="lblNDPosition">
+          <widget class="QLabel" name="valueNDPosition">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -307,7 +307,7 @@
           </widget>
          </item>
          <item row="4" column="0" colspan="2">
-          <widget class="QLabel" name="lblNDDriver">
+          <widget class="QLabel" name="valueNDDriver">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -326,7 +326,7 @@
           </widget>
          </item>
          <item row="4" column="2">
-          <widget class="QPushButton" name="btnSelfTestNDStage">
+          <widget class="QPushButton" name="buttonSelfTestNDStage">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -344,7 +344,7 @@
             <number>4</number>
            </property>
            <item>
-            <widget class="QPushButton" name="btnNDJogMinus5">
+            <widget class="QPushButton" name="buttonNDJogMinus5">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -363,7 +363,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="btnNDJogMinus1">
+            <widget class="QPushButton" name="buttonNDJogMinus1">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -382,7 +382,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="btnNDJogPlus1">
+            <widget class="QPushButton" name="buttonNDJogPlus1">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -401,7 +401,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="btnNDJogPlus5">
+            <widget class="QPushButton" name="buttonNDJogPlus5">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -433,7 +433,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="btnNDMotorOff">
+            <widget class="QPushButton" name="buttonNDMotorOff">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -457,7 +457,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gbPM400">
+       <widget class="QGroupBox" name="groupPM400">
         <property name="title">
          <string>PM400 A (Referenz, S120C)</string>
         </property>
@@ -466,7 +466,7 @@
           <number>4</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="lblPMResource">
+          <widget class="QLabel" name="labelPMResource">
            <property name="text">
             <string>VISA:</string>
            </property>
@@ -489,14 +489,14 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="btnRefreshPM400">
+          <widget class="QPushButton" name="buttonRefreshPM400">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="lblPM400Status">
+          <widget class="QLabel" name="valuePM400Status">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -515,14 +515,14 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QPushButton" name="btnConnectPM400">
+          <widget class="QPushButton" name="buttonConnectPM400">
            <property name="text">
             <string>Verbinden</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="btnZeroPM400">
+          <widget class="QPushButton" name="buttonZeroPM400">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -535,7 +535,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gbPM400B">
+       <widget class="QGroupBox" name="groupPM400B">
         <property name="title">
          <string>PM400 B (Vergleichsmessgerät)</string>
         </property>
@@ -544,7 +544,7 @@
           <number>4</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="lblPM400BResource">
+          <widget class="QLabel" name="labelPM400BResource">
            <property name="text">
             <string>VISA:</string>
            </property>
@@ -570,14 +570,14 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="btnRefreshPM400B">
+          <widget class="QPushButton" name="buttonRefreshPM400B">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="lblPM400BStatus">
+          <widget class="QLabel" name="valuePM400BStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -596,14 +596,14 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QPushButton" name="btnConnectPM400B">
+          <widget class="QPushButton" name="buttonConnectPM400B">
            <property name="text">
             <string>Verbinden</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="btnZeroPM400B">
+          <widget class="QPushButton" name="buttonZeroPM400B">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -629,7 +629,7 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="QTabWidget" name="tabsMode">
+        <widget class="QTabWidget" name="tabMode">
          <property name="currentIndex">
           <number>0</number>
          </property>
@@ -642,7 +642,7 @@
             <number>5</number>
            </property>
            <item>
-            <widget class="QGroupBox" name="gbIntensitySource">
+            <widget class="QGroupBox" name="groupIntensitySource">
              <property name="title">
               <string>Intensitätsquelle</string>
              </property>
@@ -651,7 +651,7 @@
                <number>6</number>
               </property>
               <item>
-               <widget class="QLabel" name="lblIntensitySource">
+               <widget class="QLabel" name="labelIntensitySource">
                 <property name="text">
                  <string>Quelle:</string>
                 </property>
@@ -683,7 +683,7 @@
               <number>5</number>
              </property>
              <item>
-              <widget class="QGroupBox" name="gbAlignment">
+              <widget class="QGroupBox" name="groupAlignment">
                <property name="title">
                 <string>Polarisator-Ausrichtung</string>
                </property>
@@ -697,7 +697,7 @@
                    <number>3</number>
                   </property>
                   <item row="0" column="0">
-                   <widget class="QLabel" name="lblAlignStart">
+                   <widget class="QLabel" name="labelAlignStart">
                     <property name="text">
                      <string>Scanstart (°):</string>
                     </property>
@@ -729,7 +729,7 @@
                    </widget>
                   </item>
                   <item row="1" column="0">
-                   <widget class="QLabel" name="lblAlignEnd">
+                   <widget class="QLabel" name="labelAlignEnd">
                     <property name="text">
                      <string>Scanende (°):</string>
                     </property>
@@ -761,7 +761,7 @@
                    </widget>
                   </item>
                   <item row="2" column="0">
-                   <widget class="QLabel" name="lblAlignNPoints">
+                   <widget class="QLabel" name="labelAlignNPoints">
                     <property name="text">
                      <string>Schritte:</string>
                     </property>
@@ -790,7 +790,7 @@
                    </widget>
                   </item>
                   <item row="3" column="0">
-                   <widget class="QLabel" name="lblAlignSettle">
+                   <widget class="QLabel" name="labelAlignSettle">
                     <property name="text">
                      <string>Wartezeit (s):</string>
                     </property>
@@ -829,7 +829,7 @@
                    <number>4</number>
                   </property>
                   <item>
-                   <widget class="QPushButton" name="btnAlignPolariser">
+                   <widget class="QPushButton" name="buttonAlignPolariser">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
@@ -839,7 +839,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="btnAbortAlign">
+                   <widget class="QPushButton" name="buttonAbortAlign">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
@@ -851,7 +851,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QLabel" name="lblAngleOffset">
+                 <widget class="QLabel" name="valueAngleOffset">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                     <horstretch>0</horstretch>
@@ -876,7 +876,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QGroupBox" name="gbBeam">
+              <widget class="QGroupBox" name="groupBeam">
                <property name="title">
                 <string>Licht / Leistungsmessung</string>
                </property>
@@ -885,7 +885,7 @@
                  <number>3</number>
                 </property>
                 <item row="0" column="0">
-                 <widget class="QLabel" name="lblWavelength">
+                 <widget class="QLabel" name="labelWavelength">
                   <property name="text">
                    <string>Wellenlänge (nm):</string>
                   </property>
@@ -914,7 +914,7 @@
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QLabel" name="lblAttenuation">
+                 <widget class="QLabel" name="labelAttenuation">
                   <property name="text">
                    <string>ST Dämpfung (dB):</string>
                   </property>
@@ -949,7 +949,7 @@
                  </widget>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QLabel" name="lblPmAveraging">
+                 <widget class="QLabel" name="labelPmAveraging">
                   <property name="text">
                    <string>PM400 Mittelwerte:</string>
                   </property>
@@ -980,7 +980,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QGroupBox" name="gbSweep">
+            <widget class="QGroupBox" name="groupSweep">
              <property name="title">
               <string>Sweep-Einstellungen</string>
              </property>
@@ -994,7 +994,7 @@
                  <number>3</number>
                 </property>
                 <item row="0" column="0">
-                 <widget class="QLabel" name="lblAngleStart">
+                 <widget class="QLabel" name="labelAngleStart">
                   <property name="text">
                    <string>Startwinkel (°):</string>
                   </property>
@@ -1023,7 +1023,7 @@
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QLabel" name="lblAngleEnd">
+                 <widget class="QLabel" name="labelAngleEnd">
                   <property name="text">
                    <string>Endwinkel (°):</string>
                   </property>
@@ -1052,7 +1052,7 @@
                  </widget>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QLabel" name="lblNPoints">
+                 <widget class="QLabel" name="labelNPoints">
                   <property name="text">
                    <string>Anzahl Punkte:</string>
                   </property>
@@ -1078,7 +1078,7 @@
                  </widget>
                 </item>
                 <item row="3" column="0">
-                 <widget class="QLabel" name="lblPointSettle">
+                 <widget class="QLabel" name="labelPointSettle">
                   <property name="text">
                    <string>Wartezeit / Punkt (s):</string>
                   </property>
@@ -1110,7 +1110,7 @@
                  </widget>
                 </item>
                 <item row="4" column="0">
-                 <widget class="QLabel" name="lblGainSettle">
+                 <widget class="QLabel" name="labelGainSettle">
                   <property name="text">
                    <string>Wartezeit / Gain (s):</string>
                   </property>
@@ -1142,7 +1142,7 @@
                  </widget>
                 </item>
                 <item row="5" column="0">
-                 <widget class="QLabel" name="lblDetectorSamples">
+                 <widget class="QLabel" name="labelDetectorSamples">
                   <property name="text">
                    <string>Detektor-Samples:</string>
                   </property>
@@ -1168,7 +1168,7 @@
                  </widget>
                 </item>
                 <item row="6" column="0">
-                 <widget class="QLabel" name="lblSaturationThreshold">
+                 <widget class="QLabel" name="labelSaturationThreshold">
                   <property name="text">
                    <string>Sättigungsschwelle (V):</string>
                   </property>
@@ -1210,7 +1210,7 @@
                  <number>6</number>
                 </property>
                 <item>
-                 <widget class="QLabel" name="lblGridMode">
+                 <widget class="QLabel" name="labelGridMode">
                   <property name="text">
                    <string>Winkelraster:</string>
                   </property>
@@ -1241,14 +1241,14 @@
                  <number>6</number>
                 </property>
                 <item>
-                 <widget class="QLabel" name="lblGains">
+                 <widget class="QLabel" name="labelGains">
                   <property name="text">
                    <string>Gain-Stufen:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="chkGain1">
+                 <widget class="QCheckBox" name="checkGain1">
                   <property name="text">
                    <string>1</string>
                   </property>
@@ -1258,7 +1258,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="chkGain2">
+                 <widget class="QCheckBox" name="checkGain2">
                   <property name="text">
                    <string>2</string>
                   </property>
@@ -1268,7 +1268,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="chkGain3">
+                 <widget class="QCheckBox" name="checkGain3">
                   <property name="text">
                    <string>3</string>
                   </property>
@@ -1278,7 +1278,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="chkGain4">
+                 <widget class="QCheckBox" name="checkGain4">
                   <property name="text">
                    <string>4</string>
                   </property>
@@ -1293,7 +1293,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="gbPowerGrid">
+            <widget class="QGroupBox" name="groupPowerGrid">
              <property name="title">
               <string>Leistungsraster (nur ND-Filter)</string>
              </property>
@@ -1302,7 +1302,7 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblPowerGridMode">
+               <widget class="QLabel" name="labelPowerGridMode">
                 <property name="text">
                  <string>Rastermodus:</string>
                 </property>
@@ -1333,7 +1333,7 @@
                </layout>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="lblPowerTolerancePct">
+               <widget class="QLabel" name="labelPowerTolerancePct">
                 <property name="text">
                  <string>Toleranz (%):</string>
                 </property>
@@ -1365,7 +1365,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="lblMaxRefineSteps">
+               <widget class="QLabel" name="labelMaxRefineSteps">
                 <property name="text">
                  <string>Max. Nachjustierungen:</string>
                 </property>
@@ -1391,7 +1391,7 @@
                </widget>
               </item>
               <item row="3" column="0" colspan="2">
-               <widget class="QCheckBox" name="chkPowerFromCurve">
+               <widget class="QCheckBox" name="checkPowerFromCurve">
                 <property name="toolTip">
                  <string>Die Leistung jedes Punkts wird aus der ND-Kennlinie des Bereichsscans dieser Sitzung genommen, der PM400 wird nicht gelesen und darf außerhalb des Strahls stehen. Keine Nachjustierung. Die Genauigkeit hängt von der Kennlinie ab: Bereichsscan mit vielen Punkten und Mittelung messen, Nullpunkt danach nicht mehr ändern.</string>
                 </property>
@@ -1404,7 +1404,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="gbProfile">
+            <widget class="QGroupBox" name="groupProfile">
              <property name="title">
               <string>Profil</string>
              </property>
@@ -1413,14 +1413,14 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblProfileName">
+               <widget class="QLabel" name="labelProfileName">
                 <property name="text">
                  <string>Profilname:</string>
                 </property>
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QLineEdit" name="lineProfileName">
+               <widget class="QLineEdit" name="editProfileName">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1433,7 +1433,7 @@
                </widget>
               </item>
               <item row="1" column="0" colspan="2">
-               <widget class="QLabel" name="lblOutputPath">
+               <widget class="QLabel" name="valueOutputPath">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -1463,7 +1463,7 @@
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnStart">
+              <widget class="QPushButton" name="buttonStart">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -1473,7 +1473,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnAbort">
+              <widget class="QPushButton" name="buttonAbort">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -1483,7 +1483,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnSave">
+              <widget class="QPushButton" name="buttonSave">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -1518,7 +1518,7 @@
             <number>5</number>
            </property>
            <item>
-            <widget class="QGroupBox" name="gbNDScanParams">
+            <widget class="QGroupBox" name="groupNDScanParams">
              <property name="title">
               <string>Scan-Parameter</string>
              </property>
@@ -1527,7 +1527,7 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblNDScanStart">
+               <widget class="QLabel" name="labelNDScanStart">
                 <property name="text">
                  <string>Start (°):</string>
                 </property>
@@ -1556,7 +1556,7 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="lblNDScanEnd">
+               <widget class="QLabel" name="labelNDScanEnd">
                 <property name="text">
                  <string>Ende (°):</string>
                 </property>
@@ -1585,7 +1585,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="lblNDScanPoints">
+               <widget class="QLabel" name="labelNDScanPoints">
                 <property name="text">
                  <string>Punkte:</string>
                 </property>
@@ -1611,7 +1611,7 @@
                </widget>
               </item>
               <item row="3" column="0">
-               <widget class="QLabel" name="lblNDScanSettle">
+               <widget class="QLabel" name="labelNDScanSettle">
                 <property name="text">
                  <string>Wartezeit (s):</string>
                 </property>
@@ -1643,7 +1643,7 @@
                </widget>
               </item>
               <item row="4" column="0">
-               <widget class="QLabel" name="lblNDDarkFloor">
+               <widget class="QLabel" name="labelNDDarkFloor">
                 <property name="text">
                  <string>Dunkel-Schwelle (µW):</string>
                 </property>
@@ -1675,7 +1675,7 @@
                </widget>
               </item>
               <item row="5" column="0">
-               <widget class="QLabel" name="lblNDScanSamples">
+               <widget class="QLabel" name="labelNDScanSamples">
                 <property name="text">
                  <string>Mittelungen/Punkt:</string>
                 </property>
@@ -1712,7 +1712,7 @@
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnScanNDRange">
+              <widget class="QPushButton" name="buttonScanNDRange">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -1722,7 +1722,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnAbortNDScan">
+              <widget class="QPushButton" name="buttonAbortNDScan">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -1734,7 +1734,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QLabel" name="lblNDRange">
+            <widget class="QLabel" name="valueNDRange">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -1756,7 +1756,7 @@
             </widget>
            </item>
            <item>
-            <widget class="NDTransmissionPlot" name="ndPlotWidget" native="true">
+            <widget class="NDTransmissionPlot" name="ndRangePlot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -1782,7 +1782,7 @@
             <number>5</number>
            </property>
            <item>
-            <widget class="QGroupBox" name="gbNDLinParams">
+            <widget class="QGroupBox" name="groupNDLinParams">
              <property name="title">
               <string>Scan-Parameter</string>
              </property>
@@ -1791,7 +1791,7 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblNDLinStart">
+               <widget class="QLabel" name="labelNDLinStart">
                 <property name="text">
                  <string>Start (°):</string>
                 </property>
@@ -1820,7 +1820,7 @@
                </widget>
               </item>
               <item row="0" column="2">
-               <widget class="QLabel" name="lblNDLinScans">
+               <widget class="QLabel" name="labelNDLinScans">
                 <property name="text">
                  <string>Anzahl Scans:</string>
                 </property>
@@ -1849,7 +1849,7 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="lblNDLinEnd">
+               <widget class="QLabel" name="labelNDLinEnd">
                 <property name="text">
                  <string>Ende (°):</string>
                 </property>
@@ -1891,7 +1891,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="lblNDLinPoints">
+               <widget class="QLabel" name="labelNDLinPoints">
                 <property name="text">
                  <string>Punkte:</string>
                 </property>
@@ -1917,7 +1917,7 @@
                </widget>
               </item>
               <item row="2" column="2">
-               <widget class="QLabel" name="lblNDLinFloor">
+               <widget class="QLabel" name="labelNDLinFloor">
                 <property name="text">
                  <string>Rausch-Schwelle (µW):</string>
                 </property>
@@ -1949,7 +1949,7 @@
                </widget>
               </item>
               <item row="3" column="0">
-               <widget class="QLabel" name="lblNDLinSettle">
+               <widget class="QLabel" name="labelNDLinSettle">
                 <property name="text">
                  <string>Wartezeit (s):</string>
                 </property>
@@ -1981,7 +1981,7 @@
                </widget>
               </item>
               <item row="3" column="2">
-               <widget class="QLabel" name="lblNDLinTol">
+               <widget class="QLabel" name="labelNDLinTol">
                 <property name="text">
                  <string>Toleranz max. Abw. (OD):</string>
                 </property>
@@ -2016,7 +2016,7 @@
                </widget>
               </item>
               <item row="4" column="0">
-               <widget class="QLabel" name="lblNDLinSamples">
+               <widget class="QLabel" name="labelNDLinSamples">
                 <property name="text">
                  <string>Mittelungen/Punkt:</string>
                 </property>
@@ -2050,7 +2050,7 @@
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnScanNDLin">
+              <widget class="QPushButton" name="buttonScanNDLin">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2063,7 +2063,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnAbortNDLin">
+              <widget class="QPushButton" name="buttonAbortNDLin">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2073,7 +2073,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnClearNDLin">
+              <widget class="QPushButton" name="buttonClearNDLin">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2098,7 +2098,7 @@
             </layout>
            </item>
            <item>
-            <widget class="NDLinearityPlot" name="ndLinPlotWidget" native="true">
+            <widget class="NDLinearityPlot" name="ndLinearityPlot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -2114,7 +2114,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="lblNDLinStatus">
+            <widget class="QLabel" name="valueNDLinStatus">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -2136,7 +2136,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="txtNDLinReport">
+            <widget class="QPlainTextEdit" name="editNDLinReport">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -2177,7 +2177,7 @@
             <number>5</number>
            </property>
            <item>
-            <widget class="QGroupBox" name="gbXCheckParams">
+            <widget class="QGroupBox" name="groupXCheckParams">
              <property name="title">
               <string>Vergleichs-Parameter</string>
              </property>
@@ -2186,7 +2186,7 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblXCheckPoints">
+               <widget class="QLabel" name="labelXCheckPoints">
                 <property name="text">
                  <string>Punkte:</string>
                 </property>
@@ -2212,7 +2212,7 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="lblXCheckSettle">
+               <widget class="QLabel" name="labelXCheckSettle">
                 <property name="text">
                  <string>Wartezeit (s):</string>
                 </property>
@@ -2244,7 +2244,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="lblXCheckTolerance">
+               <widget class="QLabel" name="labelXCheckTolerance">
                 <property name="text">
                  <string>Toleranz (%):</string>
                 </property>
@@ -2281,7 +2281,7 @@
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnStartXCheck">
+              <widget class="QPushButton" name="buttonStartXCheck">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2291,7 +2291,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnAbortXCheck">
+              <widget class="QPushButton" name="buttonAbortXCheck">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2301,7 +2301,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnSaveXCheck">
+              <widget class="QPushButton" name="buttonSaveXCheck">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2313,7 +2313,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QLabel" name="lblXCheckResult">
+            <widget class="QLabel" name="valueXCheckResult">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -2335,7 +2335,7 @@
             </widget>
            </item>
            <item>
-            <widget class="DetectorComparisonPlot" name="xCheckPlotWidget" native="true">
+            <widget class="DetectorComparisonPlot" name="xCheckPlot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -2361,7 +2361,7 @@
             <number>5</number>
            </property>
            <item>
-            <widget class="QGroupBox" name="gbVerifyParams">
+            <widget class="QGroupBox" name="groupVerifyParams">
              <property name="title">
               <string>Prüf-Parameter</string>
              </property>
@@ -2370,7 +2370,7 @@
                <number>3</number>
               </property>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblVerifyLevels">
+               <widget class="QLabel" name="labelVerifyLevels">
                 <property name="text">
                  <string>Pegel:</string>
                 </property>
@@ -2399,7 +2399,7 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="lblVerifySettle">
+               <widget class="QLabel" name="labelVerifySettle">
                 <property name="text">
                  <string>Wartezeit (s):</string>
                 </property>
@@ -2431,7 +2431,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="lblVerifyTolerancePct">
+               <widget class="QLabel" name="labelVerifyTolerancePct">
                 <property name="text">
                  <string>Toleranz (%):</string>
                 </property>
@@ -2468,7 +2468,7 @@
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnStartVerify">
+              <widget class="QPushButton" name="buttonStartVerify">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2478,7 +2478,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnAbortVerify">
+              <widget class="QPushButton" name="buttonAbortVerify">
                <property name="enabled">
                 <bool>false</bool>
                </property>
@@ -2533,7 +2533,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="lblVerifyResult">
+            <widget class="QLabel" name="valueVerifyResult">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -2569,7 +2569,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="lblPhase">
+        <widget class="QLabel" name="valuePhase">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -2595,7 +2595,7 @@
         <number>5</number>
        </property>
        <item>
-        <widget class="MultiGainCalibrationPlot" name="plotWidget" native="true">
+        <widget class="MultiGainCalibrationPlot" name="calibrationPlot" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -2611,7 +2611,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="plainTextLog">
+        <widget class="QPlainTextEdit" name="editLog">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>

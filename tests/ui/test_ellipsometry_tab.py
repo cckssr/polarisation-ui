@@ -121,7 +121,7 @@ def test_build_creates_plots_and_inputs(tab):
     assert tab._ui.ellipsoCurvePlot is not None
     assert tab._ui.spinPolariser is not None
     assert tab._ui.spinAnalyserOffset is not None
-    assert tab._ui.btnAddPoint is not None
+    assert tab._ui.buttonAddPoint is not None
 
 
 def test_analyser_offset_defaults_to_polariser_plus_90(tab):
@@ -142,19 +142,19 @@ def test_manual_analyser_offset_edit_stops_auto_tracking(tab):
 
 
 def test_gates_disabled_without_measurement(tab):
-    assert not tab._ui.gbManual.isEnabled()
+    assert not tab._ui.groupManual.isEnabled()
 
 
 def test_gates_stay_disabled_without_power_calibration(tab):
     tab.on_measurement_started()
     tab.on_frame(_make_frame(1000, conv_factor_W_per_V=None))
-    assert not tab._ui.gbManual.isEnabled()
+    assert not tab._ui.groupManual.isEnabled()
 
 
 def test_gates_enabled_once_measuring_and_calibrated(tab):
     tab.on_measurement_started()
     tab.on_frame(_make_frame(1000, power_W=1e-6, conv_factor_W_per_V=2e-6))
-    assert tab._ui.gbManual.isEnabled()
+    assert tab._ui.groupManual.isEnabled()
 
 
 def test_uncalibrated_transition_emits_warning_once(tab):
@@ -190,7 +190,7 @@ def test_live_aoi_label_after_zero(tab):
     tab.on_frame(_make_frame(1000, sample_angle=12.0, detector_angle=24.0))
     tab._set_aoi_zero()
     tab.on_frame(_make_frame(1100, sample_angle=77.0, detector_angle=154.0))
-    assert "65.0" in tab._ui.lblLiveAoi.text()
+    assert "65.0" in tab._ui.valueLiveAoi.text()
 
 
 def test_specular_error_near_zero_for_ideal_mirror_condition(tab):
@@ -198,7 +198,7 @@ def test_specular_error_near_zero_for_ideal_mirror_condition(tab):
     tab._set_aoi_zero()
     tab.on_frame(_make_frame(1100, sample_angle=65.0, detector_angle=130.0))
     # detector at exactly 2*aoi -> specular error ~ 0
-    assert "0.00" in tab._ui.lblSpecularError.text()
+    assert "0.00" in tab._ui.valueSpecularError.text()
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ def test_fit_invalid_with_fewer_than_three_points(tab):
     tab._ui.spinAnalyserManual.setValue(0.0)
     tab._add_point()
     assert tab._last_fit is None
-    assert not tab._ui.btnAcceptPoint.isEnabled()
+    assert not tab._ui.buttonAcceptPoint.isEnabled()
 
 
 def test_manual_points_recover_known_psi_delta(tab):
@@ -230,9 +230,9 @@ def test_manual_points_recover_known_psi_delta(tab):
 
     assert tab._last_fit is not None
     assert tab._last_fit.valid
-    assert float(tab._ui.lblPsi.text().rstrip("°")) == pytest.approx(_PSI_SAFE, abs=0.1)
-    assert float(tab._ui.lblDelta.text().rstrip("°")) == pytest.approx(_DELTA_SAFE, abs=0.1)
-    assert tab._ui.btnAcceptPoint.isEnabled()
+    assert float(tab._ui.valuePsi.text().rstrip("°")) == pytest.approx(_PSI_SAFE, abs=0.1)
+    assert float(tab._ui.valueDelta.text().rstrip("°")) == pytest.approx(_DELTA_SAFE, abs=0.1)
+    assert tab._ui.buttonAcceptPoint.isEnabled()
 
     expected_n, expected_k = n_k_two_phase(
         rho_from_psi_delta(_PSI_SAFE, _DELTA_SAFE), aoi_val, _N_AMBIENT_DEFAULT
@@ -262,7 +262,7 @@ def test_clear_sweep_buffer_resets_fit_state(tab):
     tab._clear_sweep_buffer()
     assert tab._ui.fitPlot.get_points() == []
     assert tab._last_fit is None
-    assert not tab._ui.btnAcceptPoint.isEnabled()
+    assert not tab._ui.buttonAcceptPoint.isEnabled()
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ def test_accept_point_appends_to_series_and_clears_buffer(qtbot, tab):
         rho_from_psi_delta(_PSI_SAFE, _DELTA_SAFE), 65.0, _N_AMBIENT_DEFAULT
     )
     assert tab._series[0].n_pseudo == pytest.approx(expected_n, abs=1e-3)
-    assert tab._ui.btnFitModel.isEnabled()
+    assert tab._ui.buttonFitModel.isEnabled()
 
 
 def test_accept_point_without_aoi_zero_is_rejected(tab):
@@ -317,7 +317,7 @@ def test_accept_point_without_aoi_zero_is_rejected(tab):
         tab._ui.spinAnalyserManual.setValue(a)
         tab._add_point()
 
-    assert not tab._ui.btnAcceptPoint.isEnabled()
+    assert not tab._ui.buttonAcceptPoint.isEnabled()
     tab._accept_point()
     assert tab.get_saved_points() == []
 
@@ -355,7 +355,7 @@ def test_build_export_schema_with_series(qtbot, tab):
 
 
 def test_build_export_3phase_token(tab):
-    tab._ui.cmbModel.setCurrentIndex(1)
+    tab._ui.comboModel.setCurrentIndex(1)
     exp = tab.build_export()
     assert exp.filename_tokens == ["3phase"]
     assert exp.metadata["model"] == "3phase"
@@ -424,7 +424,7 @@ def test_clear_series(tab):
     _accept_one_point(tab)
     tab._clear_series()
     assert tab.get_saved_points() == []
-    assert not tab._ui.btnFitModel.isEnabled()
+    assert not tab._ui.buttonFitModel.isEnabled()
 
 
 # ---------------------------------------------------------------------------
@@ -441,7 +441,7 @@ def test_reset_clears_series_and_buffers(qtbot, tab):
 
     assert tab.get_saved_points() == []
     assert len(tab._buffer) == 0
-    assert tab._ui.lblPsi.text() == "—"
+    assert tab._ui.valuePsi.text() == "—"
 
 
 # ---------------------------------------------------------------------------
@@ -454,9 +454,9 @@ def test_fit_model_two_phase_reports_mean_pseudo_index(tab):
     expected_n, _ = n_k_two_phase(
         rho_from_psi_delta(_PSI_SAFE, _DELTA_SAFE), 65.0, _N_AMBIENT_DEFAULT
     )
-    tab._ui.cmbModel.setCurrentIndex(0)
+    tab._ui.comboModel.setCurrentIndex(0)
     tab._fit_model()
-    reported_n = float(tab._ui.lblNFilm.text().split()[0])
+    reported_n = float(tab._ui.valueNFilm.text().split()[0])
     assert reported_n == pytest.approx(expected_n, abs=1e-3)
     assert tab._model_fit is None
 
@@ -479,12 +479,12 @@ def test_fit_model_three_phase_recovers_thickness(tab):
         )
         tab._accept_point()
 
-    tab._ui.cmbModel.setCurrentIndex(1)
+    tab._ui.comboModel.setCurrentIndex(1)
     tab._fit_model()
     assert tab._model_fit is not None
     assert tab._model_fit.thickness_nm == pytest.approx(120.0, abs=10.0)
     assert tab._model_fit.n_film == pytest.approx(1.46, abs=0.05)
-    assert "nm" in tab._ui.lblThickness.text()
+    assert "nm" in tab._ui.valueThickness.text()
 
 
 def test_fit_model_noop_without_series(tab):

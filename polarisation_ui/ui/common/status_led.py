@@ -9,19 +9,19 @@ LED style constants are built from config.json → ui.status_led.
 
 from PySide6.QtWidgets import QLabel
 
-from polarisation_ui.infrastructure.config import import_config
+from polarisation_ui.infrastructure.config import default_config
 
-_led_cfg = import_config().get("ui", {}).get("status_led", {})
+_config = default_config()
 
 
 def _style(color: str) -> str:
     return f"background-color: {color}; border: 0px; padding: 4px; border-radius: 10px"
 
 
-LED_GREEN = _style(_led_cfg.get("connected", "#00ff00"))
-LED_RED = _style(_led_cfg.get("disconnected", "#ff0b03"))
-LED_YELLOW = _style(_led_cfg.get("connecting", "#ffc800"))
-LED_GRAY = _style(_led_cfg.get("inactive", "#808080"))
+LED_GREEN = _style(_config.get("ui.status_led.connected", "#00ff00"))
+LED_RED = _style(_config.get("ui.status_led.disconnected", "#ff0b03"))
+LED_YELLOW = _style(_config.get("ui.status_led.connecting", "#ffc800"))
+LED_GRAY = _style(_config.get("ui.status_led.inactive", "#808080"))
 
 
 def set_connection_status(led: QLabel, label: QLabel, text: str, style: str) -> None:

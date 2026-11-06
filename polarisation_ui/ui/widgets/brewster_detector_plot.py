@@ -6,6 +6,8 @@ duplicate readings when the detector is stationary.  The peak intensity sample
 is highlighted with a marker to assist in finding the optimal position.
 """
 
+from __future__ import annotations
+
 from collections import deque
 
 import numpy as np
@@ -13,6 +15,7 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -32,9 +35,14 @@ class BrewsterDetectorPlot(QWidget):
     # the buffer is empty.
     peak_changed = Signal(float, float)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with empty rolling buffers."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the pyqtgraph plot widget with empty rolling buffers.
+
+        The axis labels come from ``ui.plots`` in the configuration (default: ``default_config()``);
+        an owning tab passes its own configuration through :meth:`apply_config`.
+        """
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._angles: deque[float] = deque(maxlen=self.MAX_POINTS)
         self._intensities: deque[float] = deque(maxlen=self.MAX_POINTS)
         self._last_angle: float | None = None
@@ -51,10 +59,26 @@ class BrewsterDetectorPlot(QWidget):
         if enabled == self._power_mode:
             return
         self._power_mode = enabled
-        if enabled:
-            self._plot_widget.setLabel("left", "Leistung", units="W")
-        else:
-            self._plot_widget.setLabel("left", "Intensität", units="V")
+        self._apply_axis_labels()
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Take the axis labels from ``config``."""
+        self._config = config
+        self._apply_axis_labels()
+
+    def _apply_axis_labels(self) -> None:
+        text = self._config.text
+        self._plot_widget.setLabel(
+            "bottom",
+            text("plots.brewster_detector_x_label"),
+            units=text("plots.brewster_detector_x_units"),
+        )
+        quantity = "power" if self._power_mode else "intensity"
+        self._plot_widget.setLabel(
+            "left",
+            text(f"plots.brewster_detector_{quantity}_label"),
+            units=text(f"plots.brewster_detector_{quantity}_units"),
+        )
 
     def _setup_plot(self) -> None:
         layout = QVBoxLayout(self)
@@ -63,8 +87,7 @@ class BrewsterDetectorPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Detektorwinkel", units="°")
-        self._plot_widget.setLabel("left", "Intensität", units="V")
+        self._apply_axis_labels()
 
         # All buffered points: small dots
         self._curve = self._plot_widget.plot(

@@ -48,7 +48,7 @@ def test_build_creates_plot_and_inputs(tab):
     assert tab._ui.malusCurvePlot is not None
     assert tab._ui.spinPolariser is not None
     assert tab._ui.spinAnalyser is not None
-    assert tab._ui.btnAdd is not None
+    assert tab._ui.buttonAdd is not None
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ def test_on_frame_populates_buffer(tab):
 
 def test_on_frame_updates_live_label(tab):
     tab.on_frame(_make_frame(1000, 1.2345))
-    assert "1.2345" in tab._ui.lblLiveIntensity.text()
+    assert "1.2345" in tab._ui.valueLiveIntensity.text()
 
 
 # ---------------------------------------------------------------------------
@@ -117,13 +117,13 @@ def test_compute_average_all_nan_returns_nan(tab):
 
 def test_entry_disabled_before_measurement(tab):
     assert not tab._ui.spinAnalyser.isEnabled()
-    assert not tab._ui.btnAdd.isEnabled()
+    assert not tab._ui.buttonAdd.isEnabled()
 
 
 def test_entry_enabled_after_measurement_start(tab):
     tab.on_measurement_started()
     assert tab._ui.spinAnalyser.isEnabled()
-    assert tab._ui.btnAdd.isEnabled()
+    assert tab._ui.buttonAdd.isEnabled()
 
 
 def test_polariser_locked_during_measurement(tab):
@@ -135,7 +135,7 @@ def test_entry_disabled_after_measurement_stop(tab):
     tab.on_measurement_started()
     tab.on_measurement_stopped()
     assert not tab._ui.spinAnalyser.isEnabled()
-    assert not tab._ui.btnAdd.isEnabled()
+    assert not tab._ui.buttonAdd.isEnabled()
 
 
 def test_polariser_re_enabled_after_measurement_stop(tab):

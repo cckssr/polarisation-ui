@@ -52,14 +52,14 @@ def test_tab_metadata():
 
 
 def test_save_buttons_disabled_before_measurement(tab):
-    assert not tab._ui.btnSaveCurrent.isEnabled()
-    assert not tab._ui.btnSaveMax.isEnabled()
+    assert not tab._ui.buttonSaveCurrent.isEnabled()
+    assert not tab._ui.buttonSaveMax.isEnabled()
 
 
 def test_save_buttons_enabled_after_start(tab):
     tab.on_measurement_started()
-    assert tab._ui.btnSaveCurrent.isEnabled()
-    assert tab._ui.btnSaveMax.isEnabled()
+    assert tab._ui.buttonSaveCurrent.isEnabled()
+    assert tab._ui.buttonSaveMax.isEnabled()
 
 
 # ---------------------------------------------------------------------------

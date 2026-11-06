@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PowerCalibrationWindow</class>
+ <widget class="QDialog" name="PowerCalibrationWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Leistungskalibrierung — PD-TIA Detektor</string>
+  </property>
+  <layout class="QVBoxLayout" name="layoutDialog" stretch="1,0">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QScrollArea" name="scrollMain">
+     <property name="frameShape">
+      <enum>QFrame::Shape::NoFrame</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="contentMain">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>700</width>
+        <height>660</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="layoutContent" stretch="1,0,0,0">
+       <property name="spacing">
+        <number>8</number>
+       </property>
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>10</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <widget class="QTabWidget" name="tabGains">
+         <property name="currentIndex">
+          <number>-1</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupProfile">
+         <property name="title">
+          <string>Profil</string>
+         </property>
+         <layout class="QFormLayout" name="layoutProfile">
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>4</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelProfileName">
+            <property name="text">
+             <string>Profilname:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="editProfileName">
+            <property name="placeholderText">
+             <string>z.B. Det-A</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelWavelength">
+            <property name="text">
+             <string>Wellenlänge:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="spinWavelength">
+            <property name="toolTip">
+             <string>Laserwellenlänge — die Responsivität des Detektors ist wellenlängenabhängig.</string>
+            </property>
+            <property name="suffix">
+             <string> nm</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>633.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="layoutProfileButtons">
+            <item>
+             <widget class="QPushButton" name="buttonSave">
+              <property name="text">
+               <string>Kalibrierung speichern</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="buttonLoad">
+              <property name="text">
+               <string>Kalibrierung laden…</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupPm400">
+         <property name="title">
+          <string>PM400 Leistungsmesser</string>
+         </property>
+         <layout class="QFormLayout" name="layoutPm400">
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>4</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelResource">
+            <property name="text">
+             <string>VISA-Ressource:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <layout class="QHBoxLayout" name="layoutConnection" stretch="1,0,0">
+            <item>
+             <widget class="QComboBox" name="comboPm400"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="buttonRefresh">
+              <property name="text">
+               <string>Aktualisieren</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="buttonConnect">
+              <property name="text">
+               <string>Verbinden</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="valuePm400Status">
+            <property name="text">
+             <string notr="true">—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelAttenuation">
+            <property name="text">
+             <string>Abschwächung:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <layout class="QHBoxLayout" name="layoutAttenuation">
+            <item>
+             <widget class="QDoubleSpinBox" name="spinAttenuation">
+              <property name="suffix">
+               <string> dB</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="maximum">
+               <double>60.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="buttonToggleAttenuation">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="toolTip">
+               <string>Setzt die PM400-Abschwächung auf den nebenstehenden Wert, bzw. schaltet sie aus, falls bereits aktiv.</string>
+              </property>
+              <property name="text">
+               <string>Abschwächung setzen</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupLive">
+         <property name="title">
+          <string>Live-Werte</string>
+         </property>
+         <layout class="QFormLayout" name="layoutLive">
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>4</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelDetectorVoltage">
+            <property name="text">
+             <string>Detektorspannung:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="valueDetectorVoltage">
+            <property name="text">
+             <string notr="true">—</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelPm400Power">
+            <property name="text">
+             <string>PM400-Leistung:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="valuePm400Power">
+            <property name="text">
+             <string notr="true">—</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Close</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>PowerCalibrationWindow</receiver>
+   <slot>close()</slot>
+  </connection>
+ </connections>
+</ui>

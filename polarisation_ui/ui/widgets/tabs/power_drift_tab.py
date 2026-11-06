@@ -17,17 +17,21 @@ from PySide6.QtWidgets import QWidget
 from polarisation_ui.core.models import Frame
 from polarisation_ui.infrastructure.config import AppConfig
 from polarisation_ui.pyqt.ui_power_drift_tab import Ui_PowerDriftTab
+from polarisation_ui.ui.i18n import apply_strings
 from polarisation_ui.ui.widgets.plot_tab_base import ConnState, PlotTabBase
+from polarisation_ui.ui.widgets.tab_title import TabTitle
+from polarisation_ui.ui.widgets.vscroll import lock_vertical_scroll
 
 _MAX_DURATION_S: int = 3600  # 1 hour cap
 _MAX_POINTS: int = _MAX_DURATION_S * 10  # 36 000 samples at 10 Hz
+_DASH = "—"  # placeholder for an unavailable value
 
 
 class PowerDriftTab(PlotTabBase):
     """Laser-Drift experiment tab: intensity + angle stability over up to 1 hour."""
 
     tab_id = "power_drift"
-    tab_title = "Laser-Drift"
+    tab_title = TabTitle()  # type: ignore[assignment]  # config: ui.tabs.power_drift
     required_sources: set[str] = {"ENC:BOTH", "ADC"}
     required_modules: set[str] = set()
 
@@ -49,7 +53,11 @@ class PowerDriftTab(PlotTabBase):
         """Construct the tab's widgets and wire up signal connections."""
         self._ui = Ui_PowerDriftTab()
         self._ui.setupUi(self)
-        self._ui.btnClear.clicked.connect(self._clear_data)
+        apply_strings(self, self.config.section("ui").get("power_drift_tab", {}))
+        self._ui.intensityPlot.apply_config(self.config)
+        self._ui.anglesPlot.apply_config(self.config)
+        lock_vertical_scroll(self._ui.scrollSide)
+        self._ui.buttonClear.clicked.connect(self._clear_data)
 
     # ── PlotTabBase lifecycle ─────────────────────────────────────────────────
 
@@ -94,11 +102,11 @@ class PowerDriftTab(PlotTabBase):
         """Latch a fresh time reference (if none is running yet) and enable Clear."""
         if self._t0_ms is None:
             self._t0_ms = -1  # sentinel: first frame will latch t0
-        self._ui.btnClear.setEnabled(True)
+        self._ui.buttonClear.setEnabled(True)
 
     def on_measurement_stopped(self) -> None:
         """Keep the data visible after stopping so students can examine the curve."""
-        self._ui.btnClear.setEnabled(False)
+        self._ui.buttonClear.setEnabled(False)
 
     def inject_modules(self, modules: dict[str, object]) -> None:
         """No-op — this tab does not require any host modules."""
@@ -146,31 +154,35 @@ class PowerDriftTab(PlotTabBase):
         h = total // 3600
         m = (total % 3600) // 60
         s = total % 60
-        self._ui.lblElapsed.setText(f"{h:02d}:{m:02d}:{s:02d}")
+        self._ui.valueElapsed.setText(f"{h:02d}:{m:02d}:{s:02d}")
         self._ui.progressBar.setValue(total)
 
     def _update_intensity_stats(self, intensity: list[float]) -> None:
         labels = (
-            self._ui.lblICurrent,
-            self._ui.lblIMean,
-            self._ui.lblIMin,
-            self._ui.lblIMax,
+            self._ui.valueIntensityCurrent,
+            self._ui.valueIntensityMean,
+            self._ui.valueIntensityMin,
+            self._ui.valueIntensityMax,
         )
         if not intensity:
-            for lbl in labels:
-                lbl.setText("—")
+            for label in labels:
+                label.setText(_DASH)
             return
         arr = np.array(intensity, dtype=float)
         values = (intensity[-1], float(arr.mean()), float(arr.min()), float(arr.max()))
-        for lbl, val in zip(labels, values, strict=True):
-            lbl.setText(f"{val:.5f} V")
+        for label, val in zip(labels, values, strict=True):
+            label.setText(self.config.text("power_drift_tab.stat_voltage", value=f"{val:.5f}"))
 
     def _update_angle_deltas(self, sample: float | None, detector: float | None) -> None:
         if sample is None or detector is None or self._first_sample_angle is None:
-            self._ui.lblDeltaSample.setText("—")
-            self._ui.lblDeltaDetector.setText("—")
+            self._ui.valueDeltaSample.setText(_DASH)
+            self._ui.valueDeltaDetector.setText(_DASH)
             return
         ds = sample - self._first_sample_angle
         dd = detector - (self._first_detector_angle or 0.0)
-        self._ui.lblDeltaSample.setText(f"{ds:+.3f}°")
-        self._ui.lblDeltaDetector.setText(f"{dd:+.3f}°")
+        self._ui.valueDeltaSample.setText(
+            self.config.text("power_drift_tab.delta_angle", value=f"{ds:+.3f}")
+        )
+        self._ui.valueDeltaDetector.setText(
+            self.config.text("power_drift_tab.delta_angle", value=f"{dd:+.3f}")
+        )

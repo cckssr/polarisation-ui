@@ -8,9 +8,12 @@ This is a pyqtgraph custom widget — constructing Qt objects in Python is an
 explicit exception per CLAUDE.md for pyqtgraph widgets.
 """
 
+from __future__ import annotations
+
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
+from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
 
@@ -22,9 +25,10 @@ class MultiGainCalibrationPlot(QWidget):
     calibration point arrives from the worker thread.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pyqtgraph plot widget with an empty per-gain-stage point buffer."""
+    def __init__(self, parent: QWidget | None = None, config: AppConfig | None = None) -> None:
+        """Build the plot widget with empty per-gain-stage point buffers; texts from ``config``."""
         super().__init__(parent)
+        self._config: AppConfig = config if config is not None else default_config()
         self._data: dict[int, tuple[list[float], list[float]]] = {g: ([], []) for g in range(1, 5)}
         self._setup_plot()
 
@@ -35,8 +39,6 @@ class MultiGainCalibrationPlot(QWidget):
         colors = plot_colors()
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Detektorspannung", units="V")
-        self._plot_widget.setLabel("left", "Optische Leistung", units="W")
         self._plot_widget.addLegend()
 
         self._series: dict[int, pg.PlotDataItem] = {}
@@ -45,7 +47,7 @@ class MultiGainCalibrationPlot(QWidget):
             series = self._plot_widget.plot(
                 [],
                 [],
-                name=f"Gain {gain}",
+                name=self._series_name(gain),
                 pen=None,
                 symbol="o",
                 symbolSize=7,
@@ -56,6 +58,29 @@ class MultiGainCalibrationPlot(QWidget):
 
         style_plot(self._plot_widget)
         layout.addWidget(self._plot_widget)
+        self._apply_labels()
+
+    def _series_name(self, gain: int) -> str:
+        return self._config.text("plots.multi_gain_series_name", gain=gain)
+
+    def _apply_labels(self) -> None:
+        self._plot_widget.setLabel(
+            "bottom", self._config.text("plots.multi_gain_voltage_label"), units="V"
+        )
+        self._plot_widget.setLabel(
+            "left", self._config.text("plots.multi_gain_power_label"), units="W"
+        )
+
+    def apply_config(self, config: AppConfig) -> None:
+        """Use the axis and legend texts of ``config``."""
+        self._config = config
+        self._apply_labels()
+        legend = self._plot_widget.plotItem.legend
+        for gain, series in self._series.items():
+            name = self._series_name(gain)
+            series.opts["name"] = name
+            if legend is not None:
+                legend.getLabel(series).setText(name)
 
     # ── Public API ────────────────────────────────────────────────────────────
 

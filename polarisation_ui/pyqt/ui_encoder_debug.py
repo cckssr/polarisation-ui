@@ -55,6 +55,7 @@ from PySide6.QtWidgets import (
     QLCDNumber,
     QLabel,
     QLineEdit,
+    QPlainTextEdit,
     QProgressBar,
     QPushButton,
     QSizePolicy,
@@ -62,6 +63,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QTabWidget,
     QTextEdit,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -72,48 +74,89 @@ class Ui_EncoderDebugDialog(object):
         if not EncoderDebugDialog.objectName():
             EncoderDebugDialog.setObjectName("EncoderDebugDialog")
         EncoderDebugDialog.resize(860, 683)
-        self.verticalLayout_root = QVBoxLayout(EncoderDebugDialog)
-        self.verticalLayout_root.setSpacing(6)
-        self.verticalLayout_root.setObjectName("verticalLayout_root")
-        self.gbControl = QGroupBox(EncoderDebugDialog)
-        self.gbControl.setObjectName("gbControl")
-        self.hlControl = QHBoxLayout(self.gbControl)
+        self.layoutRoot = QVBoxLayout(EncoderDebugDialog)
+        self.layoutRoot.setSpacing(6)
+        self.layoutRoot.setObjectName("layoutRoot")
+        self.groupConnection = QGroupBox(EncoderDebugDialog)
+        self.groupConnection.setObjectName("groupConnection")
+        self.layoutConnection = QHBoxLayout(self.groupConnection)
+        self.layoutConnection.setObjectName("layoutConnection")
+        self.labelPort = QLabel(self.groupConnection)
+        self.labelPort.setObjectName("labelPort")
+
+        self.layoutConnection.addWidget(self.labelPort)
+
+        self.comboPort = QComboBox(self.groupConnection)
+        self.comboPort.setObjectName("comboPort")
+        self.comboPort.setMinimumSize(QSize(160, 0))
+
+        self.layoutConnection.addWidget(self.comboPort)
+
+        self.buttonRefreshPorts = QToolButton(self.groupConnection)
+        self.buttonRefreshPorts.setObjectName("buttonRefreshPorts")
+        icon = QIcon(QIcon.fromTheme("view-refresh"))
+        self.buttonRefreshPorts.setIcon(icon)
+
+        self.layoutConnection.addWidget(self.buttonRefreshPorts)
+
+        self.buttonConnect = QPushButton(self.groupConnection)
+        self.buttonConnect.setObjectName("buttonConnect")
+        self.buttonConnect.setMinimumSize(QSize(100, 0))
+
+        self.layoutConnection.addWidget(self.buttonConnect)
+
+        self.valueConnectionStatus = QLabel(self.groupConnection)
+        self.valueConnectionStatus.setObjectName("valueConnectionStatus")
+
+        self.layoutConnection.addWidget(self.valueConnectionStatus)
+
+        self.spacerConnection = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+
+        self.layoutConnection.addItem(self.spacerConnection)
+
+        self.layoutRoot.addWidget(self.groupConnection)
+
+        self.groupControl = QGroupBox(EncoderDebugDialog)
+        self.groupControl.setObjectName("groupControl")
+        self.hlControl = QHBoxLayout(self.groupControl)
         self.hlControl.setObjectName("hlControl")
-        self.lblEncoderSel = QLabel(self.gbControl)
-        self.lblEncoderSel.setObjectName("lblEncoderSel")
+        self.labelEncoderSelect = QLabel(self.groupControl)
+        self.labelEncoderSelect.setObjectName("labelEncoderSelect")
 
-        self.hlControl.addWidget(self.lblEncoderSel)
+        self.hlControl.addWidget(self.labelEncoderSelect)
 
-        self.cbEncoderSelect = QComboBox(self.gbControl)
-        self.cbEncoderSelect.addItem("")
-        self.cbEncoderSelect.addItem("")
-        self.cbEncoderSelect.addItem("")
-        self.cbEncoderSelect.setObjectName("cbEncoderSelect")
-        self.cbEncoderSelect.setMinimumSize(QSize(180, 30))
+        self.comboEncoderSelect = QComboBox(self.groupControl)
+        self.comboEncoderSelect.addItem("")
+        self.comboEncoderSelect.addItem("")
+        self.comboEncoderSelect.addItem("")
+        self.comboEncoderSelect.setObjectName("comboEncoderSelect")
+        self.comboEncoderSelect.setMinimumSize(QSize(180, 30))
 
-        self.hlControl.addWidget(self.cbEncoderSelect)
+        self.hlControl.addWidget(self.comboEncoderSelect)
 
-        self.cbAutoRefresh = QCheckBox(self.gbControl)
-        self.cbAutoRefresh.setObjectName("cbAutoRefresh")
-        self.cbAutoRefresh.setChecked(True)
+        self.checkAutoRefresh = QCheckBox(self.groupControl)
+        self.checkAutoRefresh.setObjectName("checkAutoRefresh")
+        self.checkAutoRefresh.setChecked(True)
 
-        self.hlControl.addWidget(self.cbAutoRefresh)
+        self.hlControl.addWidget(self.checkAutoRefresh)
 
-        self.spbRefreshInterval = QSpinBox(self.gbControl)
-        self.spbRefreshInterval.setObjectName("spbRefreshInterval")
-        self.spbRefreshInterval.setMinimum(100)
-        self.spbRefreshInterval.setMaximum(5000)
-        self.spbRefreshInterval.setSingleStep(100)
-        self.spbRefreshInterval.setValue(500)
+        self.spinRefreshInterval = QSpinBox(self.groupControl)
+        self.spinRefreshInterval.setObjectName("spinRefreshInterval")
+        self.spinRefreshInterval.setMinimum(100)
+        self.spinRefreshInterval.setMaximum(5000)
+        self.spinRefreshInterval.setSingleStep(100)
+        self.spinRefreshInterval.setValue(500)
 
-        self.hlControl.addWidget(self.spbRefreshInterval)
+        self.hlControl.addWidget(self.spinRefreshInterval)
 
-        self.btnRefresh = QPushButton(self.gbControl)
-        self.btnRefresh.setObjectName("btnRefresh")
-        icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.ViewRefresh))
-        self.btnRefresh.setIcon(icon)
+        self.buttonRefresh = QPushButton(self.groupControl)
+        self.buttonRefresh.setObjectName("buttonRefresh")
+        icon1 = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.ViewRefresh))
+        self.buttonRefresh.setIcon(icon1)
 
-        self.hlControl.addWidget(self.btnRefresh)
+        self.hlControl.addWidget(self.buttonRefresh)
 
         self.hspacer_ctrl = QSpacerItem(
             20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -121,17 +164,17 @@ class Ui_EncoderDebugDialog(object):
 
         self.hlControl.addItem(self.hspacer_ctrl)
 
-        self.btnZeroEncoder = QPushButton(self.gbControl)
-        self.btnZeroEncoder.setObjectName("btnZeroEncoder")
+        self.buttonZeroEncoder = QPushButton(self.groupControl)
+        self.buttonZeroEncoder.setObjectName("buttonZeroEncoder")
 
-        self.hlControl.addWidget(self.btnZeroEncoder)
+        self.hlControl.addWidget(self.buttonZeroEncoder)
 
-        self.btnClearErrorFlag = QPushButton(self.gbControl)
-        self.btnClearErrorFlag.setObjectName("btnClearErrorFlag")
+        self.buttonClearErrorFlag = QPushButton(self.groupControl)
+        self.buttonClearErrorFlag.setObjectName("buttonClearErrorFlag")
 
-        self.hlControl.addWidget(self.btnClearErrorFlag)
+        self.hlControl.addWidget(self.buttonClearErrorFlag)
 
-        self.verticalLayout_root.addWidget(self.gbControl)
+        self.layoutRoot.addWidget(self.groupControl)
 
         self.tabWidget = QTabWidget(EncoderDebugDialog)
         self.tabWidget.setObjectName("tabWidget")
@@ -139,17 +182,17 @@ class Ui_EncoderDebugDialog(object):
         self.tabMeasurements.setObjectName("tabMeasurements")
         self.hlMeasurements = QHBoxLayout(self.tabMeasurements)
         self.hlMeasurements.setObjectName("hlMeasurements")
-        self.gbMeasA = QGroupBox(self.tabMeasurements)
-        self.gbMeasA.setObjectName("gbMeasA")
-        self.formMeasA = QFormLayout(self.gbMeasA)
+        self.groupMeasA = QGroupBox(self.tabMeasurements)
+        self.groupMeasA.setObjectName("groupMeasA")
+        self.formMeasA = QFormLayout(self.groupMeasA)
         self.formMeasA.setObjectName("formMeasA")
         self.formMeasA.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
-        self.lblConnA = QLabel(self.gbMeasA)
-        self.lblConnA.setObjectName("lblConnA")
+        self.labelConnA = QLabel(self.groupMeasA)
+        self.labelConnA.setObjectName("labelConnA")
 
-        self.formMeasA.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblConnA)
+        self.formMeasA.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelConnA)
 
-        self.ledConnA = QFrame(self.gbMeasA)
+        self.ledConnA = QFrame(self.groupMeasA)
         self.ledConnA.setObjectName("ledConnA")
         self.ledConnA.setMinimumSize(QSize(20, 20))
         self.ledConnA.setMaximumSize(QSize(20, 20))
@@ -157,12 +200,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(0, QFormLayout.ItemRole.FieldRole, self.ledConnA)
 
-        self.lblAngleA = QLabel(self.gbMeasA)
-        self.lblAngleA.setObjectName("lblAngleA")
+        self.labelAngleA = QLabel(self.groupMeasA)
+        self.labelAngleA.setObjectName("labelAngleA")
 
-        self.formMeasA.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblAngleA)
+        self.formMeasA.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAngleA)
 
-        self.lcdAngleA = QLCDNumber(self.gbMeasA)
+        self.lcdAngleA = QLCDNumber(self.groupMeasA)
         self.lcdAngleA.setObjectName("lcdAngleA")
         self.lcdAngleA.setMinimumSize(QSize(150, 50))
         self.lcdAngleA.setSmallDecimalPoint(True)
@@ -171,12 +214,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdAngleA)
 
-        self.lblMagnitudeA = QLabel(self.gbMeasA)
-        self.lblMagnitudeA.setObjectName("lblMagnitudeA")
+        self.labelMagnitudeA = QLabel(self.groupMeasA)
+        self.labelMagnitudeA.setObjectName("labelMagnitudeA")
 
-        self.formMeasA.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblMagnitudeA)
+        self.formMeasA.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelMagnitudeA)
 
-        self.lcdMagnitudeA = QLCDNumber(self.gbMeasA)
+        self.lcdMagnitudeA = QLCDNumber(self.groupMeasA)
         self.lcdMagnitudeA.setObjectName("lcdMagnitudeA")
         self.lcdMagnitudeA.setMinimumSize(QSize(150, 50))
         self.lcdMagnitudeA.setSmallDecimalPoint(True)
@@ -185,33 +228,33 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lcdMagnitudeA)
 
-        self.lblMagBarA = QLabel(self.gbMeasA)
-        self.lblMagBarA.setObjectName("lblMagBarA")
+        self.labelFieldStrengthA = QLabel(self.groupMeasA)
+        self.labelFieldStrengthA.setObjectName("labelFieldStrengthA")
 
-        self.formMeasA.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblMagBarA)
+        self.formMeasA.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelFieldStrengthA)
 
-        self.pbarMagnitudeA = QProgressBar(self.gbMeasA)
-        self.pbarMagnitudeA.setObjectName("pbarMagnitudeA")
-        self.pbarMagnitudeA.setMaximum(16383)
-        self.pbarMagnitudeA.setValue(0)
-        self.pbarMagnitudeA.setTextVisible(False)
+        self.progressMagnitudeA = QProgressBar(self.groupMeasA)
+        self.progressMagnitudeA.setObjectName("progressMagnitudeA")
+        self.progressMagnitudeA.setMaximum(16383)
+        self.progressMagnitudeA.setValue(0)
+        self.progressMagnitudeA.setTextVisible(False)
 
-        self.formMeasA.setWidget(3, QFormLayout.ItemRole.FieldRole, self.pbarMagnitudeA)
+        self.formMeasA.setWidget(3, QFormLayout.ItemRole.FieldRole, self.progressMagnitudeA)
 
-        self.line = QFrame(self.gbMeasA)
-        self.line.setObjectName("line")
-        self.line.setMinimumSize(QSize(50, 10))
-        self.line.setFrameShape(QFrame.Shape.HLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+        self.lineSeparatorA = QFrame(self.groupMeasA)
+        self.lineSeparatorA.setObjectName("lineSeparatorA")
+        self.lineSeparatorA.setMinimumSize(QSize(50, 10))
+        self.lineSeparatorA.setFrameShape(QFrame.Shape.HLine)
+        self.lineSeparatorA.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.formMeasA.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.line)
+        self.formMeasA.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.lineSeparatorA)
 
-        self.lblCofA = QLabel(self.gbMeasA)
-        self.lblCofA.setObjectName("lblCofA")
+        self.labelCofA = QLabel(self.groupMeasA)
+        self.labelCofA.setObjectName("labelCofA")
 
-        self.formMeasA.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblCofA)
+        self.formMeasA.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelCofA)
 
-        self.ledCofA = QFrame(self.gbMeasA)
+        self.ledCofA = QFrame(self.groupMeasA)
         self.ledCofA.setObjectName("ledCofA")
         self.ledCofA.setMinimumSize(QSize(20, 20))
         self.ledCofA.setMaximumSize(QSize(20, 20))
@@ -219,12 +262,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(5, QFormLayout.ItemRole.FieldRole, self.ledCofA)
 
-        self.lblCompHA = QLabel(self.gbMeasA)
-        self.lblCompHA.setObjectName("lblCompHA")
+        self.labelCompHA = QLabel(self.groupMeasA)
+        self.labelCompHA.setObjectName("labelCompHA")
 
-        self.formMeasA.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblCompHA)
+        self.formMeasA.setWidget(6, QFormLayout.ItemRole.LabelRole, self.labelCompHA)
 
-        self.ledCompHA = QFrame(self.gbMeasA)
+        self.ledCompHA = QFrame(self.groupMeasA)
         self.ledCompHA.setObjectName("ledCompHA")
         self.ledCompHA.setMinimumSize(QSize(20, 20))
         self.ledCompHA.setMaximumSize(QSize(20, 20))
@@ -232,12 +275,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(6, QFormLayout.ItemRole.FieldRole, self.ledCompHA)
 
-        self.lblCompLA = QLabel(self.gbMeasA)
-        self.lblCompLA.setObjectName("lblCompLA")
+        self.labelCompLA = QLabel(self.groupMeasA)
+        self.labelCompLA.setObjectName("labelCompLA")
 
-        self.formMeasA.setWidget(7, QFormLayout.ItemRole.LabelRole, self.lblCompLA)
+        self.formMeasA.setWidget(7, QFormLayout.ItemRole.LabelRole, self.labelCompLA)
 
-        self.ledCompLA = QFrame(self.gbMeasA)
+        self.ledCompLA = QFrame(self.groupMeasA)
         self.ledCompLA.setObjectName("ledCompLA")
         self.ledCompLA.setMinimumSize(QSize(20, 20))
         self.ledCompLA.setMaximumSize(QSize(20, 20))
@@ -245,12 +288,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(7, QFormLayout.ItemRole.FieldRole, self.ledCompLA)
 
-        self.lblOcfA = QLabel(self.gbMeasA)
-        self.lblOcfA.setObjectName("lblOcfA")
+        self.labelOcfA = QLabel(self.groupMeasA)
+        self.labelOcfA.setObjectName("labelOcfA")
 
-        self.formMeasA.setWidget(8, QFormLayout.ItemRole.LabelRole, self.lblOcfA)
+        self.formMeasA.setWidget(8, QFormLayout.ItemRole.LabelRole, self.labelOcfA)
 
-        self.ledOcfA = QFrame(self.gbMeasA)
+        self.ledOcfA = QFrame(self.groupMeasA)
         self.ledOcfA.setObjectName("ledOcfA")
         self.ledOcfA.setMinimumSize(QSize(20, 20))
         self.ledOcfA.setMaximumSize(QSize(20, 20))
@@ -258,12 +301,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(8, QFormLayout.ItemRole.FieldRole, self.ledOcfA)
 
-        self.lblErrorA = QLabel(self.gbMeasA)
-        self.lblErrorA.setObjectName("lblErrorA")
+        self.labelErrorA = QLabel(self.groupMeasA)
+        self.labelErrorA.setObjectName("labelErrorA")
 
-        self.formMeasA.setWidget(9, QFormLayout.ItemRole.LabelRole, self.lblErrorA)
+        self.formMeasA.setWidget(9, QFormLayout.ItemRole.LabelRole, self.labelErrorA)
 
-        self.ledErrorA = QFrame(self.gbMeasA)
+        self.ledErrorA = QFrame(self.groupMeasA)
         self.ledErrorA.setObjectName("ledErrorA")
         self.ledErrorA.setMinimumSize(QSize(20, 20))
         self.ledErrorA.setMaximumSize(QSize(20, 20))
@@ -271,44 +314,44 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasA.setWidget(9, QFormLayout.ItemRole.FieldRole, self.ledErrorA)
 
-        self.lblAgcA_lbl = QLabel(self.gbMeasA)
-        self.lblAgcA_lbl.setObjectName("lblAgcA_lbl")
+        self.labelAgcA = QLabel(self.groupMeasA)
+        self.labelAgcA.setObjectName("labelAgcA")
 
-        self.formMeasA.setWidget(10, QFormLayout.ItemRole.LabelRole, self.lblAgcA_lbl)
+        self.formMeasA.setWidget(10, QFormLayout.ItemRole.LabelRole, self.labelAgcA)
 
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.horizontalLayout.setContentsMargins(-1, -1, 0, -1)
-        self.pbarAgcA = QProgressBar(self.gbMeasA)
-        self.pbarAgcA.setObjectName("pbarAgcA")
-        self.pbarAgcA.setMaximum(255)
-        self.pbarAgcA.setValue(0)
+        self.layoutAgcA = QHBoxLayout()
+        self.layoutAgcA.setObjectName("layoutAgcA")
+        self.layoutAgcA.setContentsMargins(-1, -1, 0, -1)
+        self.progressAgcA = QProgressBar(self.groupMeasA)
+        self.progressAgcA.setObjectName("progressAgcA")
+        self.progressAgcA.setMaximum(255)
+        self.progressAgcA.setValue(0)
 
-        self.horizontalLayout.addWidget(self.pbarAgcA)
+        self.layoutAgcA.addWidget(self.progressAgcA)
 
-        self.spbAgcA = QSpinBox(self.gbMeasA)
-        self.spbAgcA.setObjectName("spbAgcA")
-        self.spbAgcA.setReadOnly(True)
-        self.spbAgcA.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self.spbAgcA.setMaximum(255)
+        self.spinAgcA = QSpinBox(self.groupMeasA)
+        self.spinAgcA.setObjectName("spinAgcA")
+        self.spinAgcA.setReadOnly(True)
+        self.spinAgcA.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.spinAgcA.setMaximum(255)
 
-        self.horizontalLayout.addWidget(self.spbAgcA)
+        self.layoutAgcA.addWidget(self.spinAgcA)
 
-        self.formMeasA.setLayout(10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout)
+        self.formMeasA.setLayout(10, QFormLayout.ItemRole.FieldRole, self.layoutAgcA)
 
-        self.hlMeasurements.addWidget(self.gbMeasA)
+        self.hlMeasurements.addWidget(self.groupMeasA)
 
-        self.gbMeasB = QGroupBox(self.tabMeasurements)
-        self.gbMeasB.setObjectName("gbMeasB")
-        self.formMeasB = QFormLayout(self.gbMeasB)
+        self.groupMeasB = QGroupBox(self.tabMeasurements)
+        self.groupMeasB.setObjectName("groupMeasB")
+        self.formMeasB = QFormLayout(self.groupMeasB)
         self.formMeasB.setObjectName("formMeasB")
         self.formMeasB.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
-        self.lblConnB = QLabel(self.gbMeasB)
-        self.lblConnB.setObjectName("lblConnB")
+        self.labelConnB = QLabel(self.groupMeasB)
+        self.labelConnB.setObjectName("labelConnB")
 
-        self.formMeasB.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblConnB)
+        self.formMeasB.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelConnB)
 
-        self.ledConnB = QFrame(self.gbMeasB)
+        self.ledConnB = QFrame(self.groupMeasB)
         self.ledConnB.setObjectName("ledConnB")
         self.ledConnB.setMinimumSize(QSize(20, 20))
         self.ledConnB.setMaximumSize(QSize(20, 20))
@@ -316,12 +359,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(0, QFormLayout.ItemRole.FieldRole, self.ledConnB)
 
-        self.lblAngleB = QLabel(self.gbMeasB)
-        self.lblAngleB.setObjectName("lblAngleB")
+        self.labelAngleB = QLabel(self.groupMeasB)
+        self.labelAngleB.setObjectName("labelAngleB")
 
-        self.formMeasB.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblAngleB)
+        self.formMeasB.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAngleB)
 
-        self.lcdAngleB = QLCDNumber(self.gbMeasB)
+        self.lcdAngleB = QLCDNumber(self.groupMeasB)
         self.lcdAngleB.setObjectName("lcdAngleB")
         self.lcdAngleB.setMinimumSize(QSize(150, 50))
         self.lcdAngleB.setSmallDecimalPoint(True)
@@ -330,12 +373,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdAngleB)
 
-        self.lblMagnitudeB = QLabel(self.gbMeasB)
-        self.lblMagnitudeB.setObjectName("lblMagnitudeB")
+        self.labelMagnitudeB = QLabel(self.groupMeasB)
+        self.labelMagnitudeB.setObjectName("labelMagnitudeB")
 
-        self.formMeasB.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblMagnitudeB)
+        self.formMeasB.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelMagnitudeB)
 
-        self.lcdMagnitudeB = QLCDNumber(self.gbMeasB)
+        self.lcdMagnitudeB = QLCDNumber(self.groupMeasB)
         self.lcdMagnitudeB.setObjectName("lcdMagnitudeB")
         self.lcdMagnitudeB.setMinimumSize(QSize(150, 50))
         self.lcdMagnitudeB.setSmallDecimalPoint(True)
@@ -344,33 +387,33 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lcdMagnitudeB)
 
-        self.lblMagBarB = QLabel(self.gbMeasB)
-        self.lblMagBarB.setObjectName("lblMagBarB")
+        self.labelFieldStrengthB = QLabel(self.groupMeasB)
+        self.labelFieldStrengthB.setObjectName("labelFieldStrengthB")
 
-        self.formMeasB.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblMagBarB)
+        self.formMeasB.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelFieldStrengthB)
 
-        self.pbarMagnitudeB = QProgressBar(self.gbMeasB)
-        self.pbarMagnitudeB.setObjectName("pbarMagnitudeB")
-        self.pbarMagnitudeB.setMaximum(16383)
-        self.pbarMagnitudeB.setValue(0)
-        self.pbarMagnitudeB.setTextVisible(False)
+        self.progressMagnitudeB = QProgressBar(self.groupMeasB)
+        self.progressMagnitudeB.setObjectName("progressMagnitudeB")
+        self.progressMagnitudeB.setMaximum(16383)
+        self.progressMagnitudeB.setValue(0)
+        self.progressMagnitudeB.setTextVisible(False)
 
-        self.formMeasB.setWidget(3, QFormLayout.ItemRole.FieldRole, self.pbarMagnitudeB)
+        self.formMeasB.setWidget(3, QFormLayout.ItemRole.FieldRole, self.progressMagnitudeB)
 
-        self.line_2 = QFrame(self.gbMeasB)
-        self.line_2.setObjectName("line_2")
-        self.line_2.setMinimumSize(QSize(50, 10))
-        self.line_2.setFrameShape(QFrame.Shape.HLine)
-        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
+        self.lineSeparatorB = QFrame(self.groupMeasB)
+        self.lineSeparatorB.setObjectName("lineSeparatorB")
+        self.lineSeparatorB.setMinimumSize(QSize(50, 10))
+        self.lineSeparatorB.setFrameShape(QFrame.Shape.HLine)
+        self.lineSeparatorB.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.formMeasB.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.line_2)
+        self.formMeasB.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.lineSeparatorB)
 
-        self.lblCofB = QLabel(self.gbMeasB)
-        self.lblCofB.setObjectName("lblCofB")
+        self.labelCofB = QLabel(self.groupMeasB)
+        self.labelCofB.setObjectName("labelCofB")
 
-        self.formMeasB.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblCofB)
+        self.formMeasB.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelCofB)
 
-        self.ledCofB = QFrame(self.gbMeasB)
+        self.ledCofB = QFrame(self.groupMeasB)
         self.ledCofB.setObjectName("ledCofB")
         self.ledCofB.setMinimumSize(QSize(20, 20))
         self.ledCofB.setMaximumSize(QSize(20, 20))
@@ -378,12 +421,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(5, QFormLayout.ItemRole.FieldRole, self.ledCofB)
 
-        self.lblCompHB = QLabel(self.gbMeasB)
-        self.lblCompHB.setObjectName("lblCompHB")
+        self.labelCompHB = QLabel(self.groupMeasB)
+        self.labelCompHB.setObjectName("labelCompHB")
 
-        self.formMeasB.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblCompHB)
+        self.formMeasB.setWidget(6, QFormLayout.ItemRole.LabelRole, self.labelCompHB)
 
-        self.ledCompHB = QFrame(self.gbMeasB)
+        self.ledCompHB = QFrame(self.groupMeasB)
         self.ledCompHB.setObjectName("ledCompHB")
         self.ledCompHB.setMinimumSize(QSize(20, 20))
         self.ledCompHB.setMaximumSize(QSize(20, 20))
@@ -391,12 +434,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(6, QFormLayout.ItemRole.FieldRole, self.ledCompHB)
 
-        self.lblCompLB = QLabel(self.gbMeasB)
-        self.lblCompLB.setObjectName("lblCompLB")
+        self.labelCompLB = QLabel(self.groupMeasB)
+        self.labelCompLB.setObjectName("labelCompLB")
 
-        self.formMeasB.setWidget(7, QFormLayout.ItemRole.LabelRole, self.lblCompLB)
+        self.formMeasB.setWidget(7, QFormLayout.ItemRole.LabelRole, self.labelCompLB)
 
-        self.ledCompLB = QFrame(self.gbMeasB)
+        self.ledCompLB = QFrame(self.groupMeasB)
         self.ledCompLB.setObjectName("ledCompLB")
         self.ledCompLB.setMinimumSize(QSize(20, 20))
         self.ledCompLB.setMaximumSize(QSize(20, 20))
@@ -404,12 +447,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(7, QFormLayout.ItemRole.FieldRole, self.ledCompLB)
 
-        self.lblOcfB = QLabel(self.gbMeasB)
-        self.lblOcfB.setObjectName("lblOcfB")
+        self.labelOcfB = QLabel(self.groupMeasB)
+        self.labelOcfB.setObjectName("labelOcfB")
 
-        self.formMeasB.setWidget(8, QFormLayout.ItemRole.LabelRole, self.lblOcfB)
+        self.formMeasB.setWidget(8, QFormLayout.ItemRole.LabelRole, self.labelOcfB)
 
-        self.ledOcfB = QFrame(self.gbMeasB)
+        self.ledOcfB = QFrame(self.groupMeasB)
         self.ledOcfB.setObjectName("ledOcfB")
         self.ledOcfB.setMinimumSize(QSize(20, 20))
         self.ledOcfB.setMaximumSize(QSize(20, 20))
@@ -417,12 +460,12 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(8, QFormLayout.ItemRole.FieldRole, self.ledOcfB)
 
-        self.lblErrorB = QLabel(self.gbMeasB)
-        self.lblErrorB.setObjectName("lblErrorB")
+        self.labelErrorB = QLabel(self.groupMeasB)
+        self.labelErrorB.setObjectName("labelErrorB")
 
-        self.formMeasB.setWidget(9, QFormLayout.ItemRole.LabelRole, self.lblErrorB)
+        self.formMeasB.setWidget(9, QFormLayout.ItemRole.LabelRole, self.labelErrorB)
 
-        self.ledErrorB = QFrame(self.gbMeasB)
+        self.ledErrorB = QFrame(self.groupMeasB)
         self.ledErrorB.setObjectName("ledErrorB")
         self.ledErrorB.setMinimumSize(QSize(20, 20))
         self.ledErrorB.setMaximumSize(QSize(20, 20))
@@ -430,88 +473,99 @@ class Ui_EncoderDebugDialog(object):
 
         self.formMeasB.setWidget(9, QFormLayout.ItemRole.FieldRole, self.ledErrorB)
 
-        self.lblAgcB_lbl = QLabel(self.gbMeasB)
-        self.lblAgcB_lbl.setObjectName("lblAgcB_lbl")
+        self.labelAgcB = QLabel(self.groupMeasB)
+        self.labelAgcB.setObjectName("labelAgcB")
 
-        self.formMeasB.setWidget(10, QFormLayout.ItemRole.LabelRole, self.lblAgcB_lbl)
+        self.formMeasB.setWidget(10, QFormLayout.ItemRole.LabelRole, self.labelAgcB)
 
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(-1, -1, 0, -1)
-        self.pbarAgcB = QProgressBar(self.gbMeasB)
-        self.pbarAgcB.setObjectName("pbarAgcB")
-        self.pbarAgcB.setMaximum(255)
-        self.pbarAgcB.setValue(0)
+        self.layoutAgcB = QHBoxLayout()
+        self.layoutAgcB.setObjectName("layoutAgcB")
+        self.layoutAgcB.setContentsMargins(-1, -1, 0, -1)
+        self.progressAgcB = QProgressBar(self.groupMeasB)
+        self.progressAgcB.setObjectName("progressAgcB")
+        self.progressAgcB.setMaximum(255)
+        self.progressAgcB.setValue(0)
 
-        self.horizontalLayout_2.addWidget(self.pbarAgcB)
+        self.layoutAgcB.addWidget(self.progressAgcB)
 
-        self.spbAgcB = QSpinBox(self.gbMeasB)
-        self.spbAgcB.setObjectName("spbAgcB")
-        self.spbAgcB.setReadOnly(True)
-        self.spbAgcB.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self.spbAgcB.setMaximum(255)
+        self.spinAgcB = QSpinBox(self.groupMeasB)
+        self.spinAgcB.setObjectName("spinAgcB")
+        self.spinAgcB.setReadOnly(True)
+        self.spinAgcB.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.spinAgcB.setMaximum(255)
 
-        self.horizontalLayout_2.addWidget(self.spbAgcB)
+        self.layoutAgcB.addWidget(self.spinAgcB)
 
-        self.formMeasB.setLayout(10, QFormLayout.ItemRole.FieldRole, self.horizontalLayout_2)
+        self.formMeasB.setLayout(10, QFormLayout.ItemRole.FieldRole, self.layoutAgcB)
 
-        self.hlMeasurements.addWidget(self.gbMeasB)
+        self.hlMeasurements.addWidget(self.groupMeasB)
 
         self.tabWidget.addTab(self.tabMeasurements, "")
         self.tabSystem = QWidget()
         self.tabSystem.setObjectName("tabSystem")
         self.vlSystem = QVBoxLayout(self.tabSystem)
         self.vlSystem.setObjectName("vlSystem")
-        self.gbSysInfo = QGroupBox(self.tabSystem)
-        self.gbSysInfo.setObjectName("gbSysInfo")
-        self.formSysInfo = QFormLayout(self.gbSysInfo)
+        self.groupSysInfo = QGroupBox(self.tabSystem)
+        self.groupSysInfo.setObjectName("groupSysInfo")
+        self.formSysInfo = QFormLayout(self.groupSysInfo)
         self.formSysInfo.setObjectName("formSysInfo")
         self.formSysInfo.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
-        self.lblIdn_lbl = QLabel(self.gbSysInfo)
-        self.lblIdn_lbl.setObjectName("lblIdn_lbl")
+        self.labelIdn = QLabel(self.groupSysInfo)
+        self.labelIdn.setObjectName("labelIdn")
 
-        self.formSysInfo.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblIdn_lbl)
+        self.formSysInfo.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelIdn)
 
-        self.leIdn = QLineEdit(self.gbSysInfo)
-        self.leIdn.setObjectName("leIdn")
-        self.leIdn.setReadOnly(True)
+        self.editIdn = QLineEdit(self.groupSysInfo)
+        self.editIdn.setObjectName("editIdn")
+        self.editIdn.setReadOnly(True)
 
-        self.formSysInfo.setWidget(0, QFormLayout.ItemRole.FieldRole, self.leIdn)
+        self.formSysInfo.setWidget(0, QFormLayout.ItemRole.FieldRole, self.editIdn)
 
-        self.lblPollInt_lbl = QLabel(self.gbSysInfo)
-        self.lblPollInt_lbl.setObjectName("lblPollInt_lbl")
+        self.labelPollInterval = QLabel(self.groupSysInfo)
+        self.labelPollInterval.setObjectName("labelPollInterval")
 
-        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblPollInt_lbl)
+        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelPollInterval)
 
-        self.spbPollInterval = QSpinBox(self.gbSysInfo)
-        self.spbPollInterval.setObjectName("spbPollInterval")
-        self.spbPollInterval.setReadOnly(True)
-        self.spbPollInterval.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self.spbPollInterval.setMaximum(9999)
+        self.spinPollInterval = QSpinBox(self.groupSysInfo)
+        self.spinPollInterval.setObjectName("spinPollInterval")
+        self.spinPollInterval.setReadOnly(True)
+        self.spinPollInterval.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.spinPollInterval.setMaximum(9999)
 
-        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spbPollInterval)
+        self.formSysInfo.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinPollInterval)
 
-        self.lblDebugMode_lbl = QLabel(self.gbSysInfo)
-        self.lblDebugMode_lbl.setObjectName("lblDebugMode_lbl")
+        self.labelDebugMode = QLabel(self.groupSysInfo)
+        self.labelDebugMode.setObjectName("labelDebugMode")
 
-        self.formSysInfo.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblDebugMode_lbl)
+        self.formSysInfo.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelDebugMode)
 
-        self.cbDebugMode = QCheckBox(self.gbSysInfo)
-        self.cbDebugMode.setObjectName("cbDebugMode")
+        self.checkDebugMode = QCheckBox(self.groupSysInfo)
+        self.checkDebugMode.setObjectName("checkDebugMode")
 
-        self.formSysInfo.setWidget(2, QFormLayout.ItemRole.FieldRole, self.cbDebugMode)
+        self.formSysInfo.setWidget(2, QFormLayout.ItemRole.FieldRole, self.checkDebugMode)
 
-        self.vlSystem.addWidget(self.gbSysInfo)
+        self.labelSampleInverted = QLabel(self.groupSysInfo)
+        self.labelSampleInverted.setObjectName("labelSampleInverted")
 
-        self.gbScpiErrors = QGroupBox(self.tabSystem)
-        self.gbScpiErrors.setObjectName("gbScpiErrors")
-        self.vlScpiErrors = QVBoxLayout(self.gbScpiErrors)
+        self.formSysInfo.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelSampleInverted)
+
+        self.checkSampleInverted = QCheckBox(self.groupSysInfo)
+        self.checkSampleInverted.setObjectName("checkSampleInverted")
+        self.checkSampleInverted.setEnabled(False)
+
+        self.formSysInfo.setWidget(3, QFormLayout.ItemRole.FieldRole, self.checkSampleInverted)
+
+        self.vlSystem.addWidget(self.groupSysInfo)
+
+        self.groupScpiErrors = QGroupBox(self.tabSystem)
+        self.groupScpiErrors.setObjectName("groupScpiErrors")
+        self.vlScpiErrors = QVBoxLayout(self.groupScpiErrors)
         self.vlScpiErrors.setObjectName("vlScpiErrors")
-        self.teScpiErrors = QTextEdit(self.gbScpiErrors)
-        self.teScpiErrors.setObjectName("teScpiErrors")
-        self.teScpiErrors.setReadOnly(True)
+        self.editScpiErrors = QTextEdit(self.groupScpiErrors)
+        self.editScpiErrors.setObjectName("editScpiErrors")
+        self.editScpiErrors.setReadOnly(True)
 
-        self.vlScpiErrors.addWidget(self.teScpiErrors)
+        self.vlScpiErrors.addWidget(self.editScpiErrors)
 
         self.hlScpiErrBtns = QHBoxLayout()
         self.hlScpiErrBtns.setObjectName("hlScpiErrBtns")
@@ -521,19 +575,19 @@ class Ui_EncoderDebugDialog(object):
 
         self.hlScpiErrBtns.addItem(self.hspacerErrQ)
 
-        self.btnReadScpiErrors = QPushButton(self.gbScpiErrors)
-        self.btnReadScpiErrors.setObjectName("btnReadScpiErrors")
+        self.buttonReadScpiErrors = QPushButton(self.groupScpiErrors)
+        self.buttonReadScpiErrors.setObjectName("buttonReadScpiErrors")
 
-        self.hlScpiErrBtns.addWidget(self.btnReadScpiErrors)
+        self.hlScpiErrBtns.addWidget(self.buttonReadScpiErrors)
 
-        self.btnClearScpiErrors = QPushButton(self.gbScpiErrors)
-        self.btnClearScpiErrors.setObjectName("btnClearScpiErrors")
+        self.buttonClearScpiErrors = QPushButton(self.groupScpiErrors)
+        self.buttonClearScpiErrors.setObjectName("buttonClearScpiErrors")
 
-        self.hlScpiErrBtns.addWidget(self.btnClearScpiErrors)
+        self.hlScpiErrBtns.addWidget(self.buttonClearScpiErrors)
 
         self.vlScpiErrors.addLayout(self.hlScpiErrBtns)
 
-        self.vlSystem.addWidget(self.gbScpiErrors)
+        self.vlSystem.addWidget(self.groupScpiErrors)
 
         self.vspacerSys = QSpacerItem(
             20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
@@ -546,40 +600,325 @@ class Ui_EncoderDebugDialog(object):
         self.tabTerminal.setObjectName("tabTerminal")
         self.vlTerminal = QVBoxLayout(self.tabTerminal)
         self.vlTerminal.setObjectName("vlTerminal")
-        self.teTerminalLog = QTextEdit(self.tabTerminal)
-        self.teTerminalLog.setObjectName("teTerminalLog")
-        self.teTerminalLog.setReadOnly(True)
+        self.editTerminalLog = QTextEdit(self.tabTerminal)
+        self.editTerminalLog.setObjectName("editTerminalLog")
+        self.editTerminalLog.setReadOnly(True)
 
-        self.vlTerminal.addWidget(self.teTerminalLog)
+        self.vlTerminal.addWidget(self.editTerminalLog)
 
         self.hlTerminalInput = QHBoxLayout()
         self.hlTerminalInput.setObjectName("hlTerminalInput")
-        self.leCommandInput = QLineEdit(self.tabTerminal)
-        self.leCommandInput.setObjectName("leCommandInput")
+        self.editCommandInput = QLineEdit(self.tabTerminal)
+        self.editCommandInput.setObjectName("editCommandInput")
 
-        self.hlTerminalInput.addWidget(self.leCommandInput)
+        self.hlTerminalInput.addWidget(self.editCommandInput)
 
-        self.btnSendCommand = QPushButton(self.tabTerminal)
-        self.btnSendCommand.setObjectName("btnSendCommand")
+        self.buttonSendCommand = QPushButton(self.tabTerminal)
+        self.buttonSendCommand.setObjectName("buttonSendCommand")
 
-        self.hlTerminalInput.addWidget(self.btnSendCommand)
+        self.hlTerminalInput.addWidget(self.buttonSendCommand)
 
-        self.btnClearLog = QPushButton(self.tabTerminal)
-        self.btnClearLog.setObjectName("btnClearLog")
+        self.buttonClearLog = QPushButton(self.tabTerminal)
+        self.buttonClearLog.setObjectName("buttonClearLog")
 
-        self.hlTerminalInput.addWidget(self.btnClearLog)
+        self.hlTerminalInput.addWidget(self.buttonClearLog)
 
         self.vlTerminal.addLayout(self.hlTerminalInput)
 
         self.tabWidget.addTab(self.tabTerminal, "")
+        self.tabAds = QWidget()
+        self.tabAds.setObjectName("tabAds")
+        self.vlAds = QVBoxLayout(self.tabAds)
+        self.vlAds.setObjectName("vlAds")
+        self.groupAdcLive = QGroupBox(self.tabAds)
+        self.groupAdcLive.setObjectName("groupAdcLive")
+        self.formAdcLive = QFormLayout(self.groupAdcLive)
+        self.formAdcLive.setObjectName("formAdcLive")
+        self.labelAdcPresent = QLabel(self.groupAdcLive)
+        self.labelAdcPresent.setObjectName("labelAdcPresent")
 
-        self.verticalLayout_root.addWidget(self.tabWidget)
+        self.formAdcLive.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelAdcPresent)
+
+        self.ledAdcPresent = QFrame(self.groupAdcLive)
+        self.ledAdcPresent.setObjectName("ledAdcPresent")
+        self.ledAdcPresent.setMinimumSize(QSize(20, 20))
+        self.ledAdcPresent.setMaximumSize(QSize(20, 20))
+        self.ledAdcPresent.setFrameShape(QFrame.Shape.Box)
+
+        self.formAdcLive.setWidget(0, QFormLayout.ItemRole.FieldRole, self.ledAdcPresent)
+
+        self.labelAdcVoltage = QLabel(self.groupAdcLive)
+        self.labelAdcVoltage.setObjectName("labelAdcVoltage")
+
+        self.formAdcLive.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAdcVoltage)
+
+        self.lcdAdcVoltage = QLCDNumber(self.groupAdcLive)
+        self.lcdAdcVoltage.setObjectName("lcdAdcVoltage")
+        self.lcdAdcVoltage.setMinimumSize(QSize(180, 50))
+        self.lcdAdcVoltage.setSmallDecimalPoint(True)
+        self.lcdAdcVoltage.setDigitCount(10)
+
+        self.formAdcLive.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lcdAdcVoltage)
+
+        self.labelAdcDrdy = QLabel(self.groupAdcLive)
+        self.labelAdcDrdy.setObjectName("labelAdcDrdy")
+
+        self.formAdcLive.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelAdcDrdy)
+
+        self.ledAdcDrdy = QFrame(self.groupAdcLive)
+        self.ledAdcDrdy.setObjectName("ledAdcDrdy")
+        self.ledAdcDrdy.setMinimumSize(QSize(20, 20))
+        self.ledAdcDrdy.setMaximumSize(QSize(20, 20))
+        self.ledAdcDrdy.setFrameShape(QFrame.Shape.Box)
+
+        self.formAdcLive.setWidget(2, QFormLayout.ItemRole.FieldRole, self.ledAdcDrdy)
+
+        self.vlAds.addWidget(self.groupAdcLive)
+
+        self.hlAdsMid = QHBoxLayout()
+        self.hlAdsMid.setObjectName("hlAdsMid")
+        self.groupAdcRegisters = QGroupBox(self.tabAds)
+        self.groupAdcRegisters.setObjectName("groupAdcRegisters")
+        self.formAdcRegisters = QFormLayout(self.groupAdcRegisters)
+        self.formAdcRegisters.setObjectName("formAdcRegisters")
+        self.labelReg0 = QLabel(self.groupAdcRegisters)
+        self.labelReg0.setObjectName("labelReg0")
+
+        self.formAdcRegisters.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelReg0)
+
+        self.editReg0 = QLineEdit(self.groupAdcRegisters)
+        self.editReg0.setObjectName("editReg0")
+        self.editReg0.setReadOnly(True)
+
+        self.formAdcRegisters.setWidget(0, QFormLayout.ItemRole.FieldRole, self.editReg0)
+
+        self.labelReg1 = QLabel(self.groupAdcRegisters)
+        self.labelReg1.setObjectName("labelReg1")
+
+        self.formAdcRegisters.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelReg1)
+
+        self.editReg1 = QLineEdit(self.groupAdcRegisters)
+        self.editReg1.setObjectName("editReg1")
+        self.editReg1.setReadOnly(True)
+
+        self.formAdcRegisters.setWidget(1, QFormLayout.ItemRole.FieldRole, self.editReg1)
+
+        self.labelReg2 = QLabel(self.groupAdcRegisters)
+        self.labelReg2.setObjectName("labelReg2")
+
+        self.formAdcRegisters.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelReg2)
+
+        self.editReg2 = QLineEdit(self.groupAdcRegisters)
+        self.editReg2.setObjectName("editReg2")
+        self.editReg2.setReadOnly(True)
+
+        self.formAdcRegisters.setWidget(2, QFormLayout.ItemRole.FieldRole, self.editReg2)
+
+        self.labelReg3 = QLabel(self.groupAdcRegisters)
+        self.labelReg3.setObjectName("labelReg3")
+
+        self.formAdcRegisters.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelReg3)
+
+        self.editReg3 = QLineEdit(self.groupAdcRegisters)
+        self.editReg3.setObjectName("editReg3")
+        self.editReg3.setReadOnly(True)
+
+        self.formAdcRegisters.setWidget(3, QFormLayout.ItemRole.FieldRole, self.editReg3)
+
+        self.labelLastRaw = QLabel(self.groupAdcRegisters)
+        self.labelLastRaw.setObjectName("labelLastRaw")
+
+        self.formAdcRegisters.setWidget(4, QFormLayout.ItemRole.LabelRole, self.labelLastRaw)
+
+        self.editLastRaw = QLineEdit(self.groupAdcRegisters)
+        self.editLastRaw.setObjectName("editLastRaw")
+        self.editLastRaw.setReadOnly(True)
+
+        self.formAdcRegisters.setWidget(4, QFormLayout.ItemRole.FieldRole, self.editLastRaw)
+
+        self.hlAdsMid.addWidget(self.groupAdcRegisters)
+
+        self.groupAdcConfig = QGroupBox(self.tabAds)
+        self.groupAdcConfig.setObjectName("groupAdcConfig")
+        self.formAdcConfig = QFormLayout(self.groupAdcConfig)
+        self.formAdcConfig.setObjectName("formAdcConfig")
+        self.labelMux = QLabel(self.groupAdcConfig)
+        self.labelMux.setObjectName("labelMux")
+
+        self.formAdcConfig.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelMux)
+
+        self.editMux = QLineEdit(self.groupAdcConfig)
+        self.editMux.setObjectName("editMux")
+        self.editMux.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(0, QFormLayout.ItemRole.FieldRole, self.editMux)
+
+        self.labelGain = QLabel(self.groupAdcConfig)
+        self.labelGain.setObjectName("labelGain")
+
+        self.formAdcConfig.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelGain)
+
+        self.editGain = QLineEdit(self.groupAdcConfig)
+        self.editGain.setObjectName("editGain")
+        self.editGain.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(1, QFormLayout.ItemRole.FieldRole, self.editGain)
+
+        self.labelRate = QLabel(self.groupAdcConfig)
+        self.labelRate.setObjectName("labelRate")
+
+        self.formAdcConfig.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelRate)
+
+        self.editRate = QLineEdit(self.groupAdcConfig)
+        self.editRate.setObjectName("editRate")
+        self.editRate.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(2, QFormLayout.ItemRole.FieldRole, self.editRate)
+
+        self.labelMode = QLabel(self.groupAdcConfig)
+        self.labelMode.setObjectName("labelMode")
+
+        self.formAdcConfig.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelMode)
+
+        self.editMode = QLineEdit(self.groupAdcConfig)
+        self.editMode.setObjectName("editMode")
+        self.editMode.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(3, QFormLayout.ItemRole.FieldRole, self.editMode)
+
+        self.labelFir = QLabel(self.groupAdcConfig)
+        self.labelFir.setObjectName("labelFir")
+
+        self.formAdcConfig.setWidget(4, QFormLayout.ItemRole.LabelRole, self.labelFir)
+
+        self.editFir = QLineEdit(self.groupAdcConfig)
+        self.editFir.setObjectName("editFir")
+        self.editFir.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(4, QFormLayout.ItemRole.FieldRole, self.editFir)
+
+        self.labelVref = QLabel(self.groupAdcConfig)
+        self.labelVref.setObjectName("labelVref")
+
+        self.formAdcConfig.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelVref)
+
+        self.editVref = QLineEdit(self.groupAdcConfig)
+        self.editVref.setObjectName("editVref")
+        self.editVref.setReadOnly(True)
+
+        self.formAdcConfig.setWidget(5, QFormLayout.ItemRole.FieldRole, self.editVref)
+
+        self.buttonReadAdcConfig = QPushButton(self.groupAdcConfig)
+        self.buttonReadAdcConfig.setObjectName("buttonReadAdcConfig")
+
+        self.formAdcConfig.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.buttonReadAdcConfig)
+
+        self.hlAdsMid.addWidget(self.groupAdcConfig)
+
+        self.vlAds.addLayout(self.hlAdsMid)
+
+        self.groupPdtia = QGroupBox(self.tabAds)
+        self.groupPdtia.setObjectName("groupPdtia")
+        self.formPdtia = QFormLayout(self.groupPdtia)
+        self.formPdtia.setObjectName("formPdtia")
+        self.labelPdtiaStage = QLabel(self.groupPdtia)
+        self.labelPdtiaStage.setObjectName("labelPdtiaStage")
+
+        self.formPdtia.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelPdtiaStage)
+
+        self.editPdtiaStage = QLineEdit(self.groupPdtia)
+        self.editPdtiaStage.setObjectName("editPdtiaStage")
+        self.editPdtiaStage.setReadOnly(True)
+
+        self.formPdtia.setWidget(0, QFormLayout.ItemRole.FieldRole, self.editPdtiaStage)
+
+        self.labelPdtiaPattern = QLabel(self.groupPdtia)
+        self.labelPdtiaPattern.setObjectName("labelPdtiaPattern")
+
+        self.formPdtia.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelPdtiaPattern)
+
+        self.editPdtiaPattern = QLineEdit(self.groupPdtia)
+        self.editPdtiaPattern.setObjectName("editPdtiaPattern")
+        self.editPdtiaPattern.setReadOnly(True)
+
+        self.formPdtia.setWidget(1, QFormLayout.ItemRole.FieldRole, self.editPdtiaPattern)
+
+        self.vlAds.addWidget(self.groupPdtia)
+
+        self.vspacerAds = QSpacerItem(
+            20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
+
+        self.vlAds.addItem(self.vspacerAds)
+
+        self.tabWidget.addTab(self.tabAds, "")
+        self.tabRawStream = QWidget()
+        self.tabRawStream.setObjectName("tabRawStream")
+        self.vlRawStream = QVBoxLayout(self.tabRawStream)
+        self.vlRawStream.setObjectName("vlRawStream")
+        self.labelRawStreamNotice = QLabel(self.tabRawStream)
+        self.labelRawStreamNotice.setObjectName("labelRawStreamNotice")
+        self.labelRawStreamNotice.setWordWrap(True)
+
+        self.vlRawStream.addWidget(self.labelRawStreamNotice)
+
+        self.editRawStream = QPlainTextEdit(self.tabRawStream)
+        self.editRawStream.setObjectName("editRawStream")
+        self.editRawStream.setReadOnly(True)
+        font = QFont()
+        font.setFamilies(["Monospace"])
+        self.editRawStream.setFont(font)
+        self.editRawStream.setMaximumBlockCount(500)
+
+        self.vlRawStream.addWidget(self.editRawStream)
+
+        self.hlRawStreamButtons = QHBoxLayout()
+        self.hlRawStreamButtons.setObjectName("hlRawStreamButtons")
+        self.buttonClearRawStream = QPushButton(self.tabRawStream)
+        self.buttonClearRawStream.setObjectName("buttonClearRawStream")
+
+        self.hlRawStreamButtons.addWidget(self.buttonClearRawStream)
+
+        self.hspacerRawStream = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+
+        self.hlRawStreamButtons.addItem(self.hspacerRawStream)
+
+        self.vlRawStream.addLayout(self.hlRawStreamButtons)
+
+        self.tabWidget.addTab(self.tabRawStream, "")
+        self.tabSelfTest = QWidget()
+        self.tabSelfTest.setObjectName("tabSelfTest")
+        self.vlSelfTest = QVBoxLayout(self.tabSelfTest)
+        self.vlSelfTest.setObjectName("vlSelfTest")
+        self.labelSelfTestInfo = QLabel(self.tabSelfTest)
+        self.labelSelfTestInfo.setObjectName("labelSelfTestInfo")
+        self.labelSelfTestInfo.setWordWrap(True)
+
+        self.vlSelfTest.addWidget(self.labelSelfTestInfo)
+
+        self.buttonRunSelfTest = QPushButton(self.tabSelfTest)
+        self.buttonRunSelfTest.setObjectName("buttonRunSelfTest")
+
+        self.vlSelfTest.addWidget(self.buttonRunSelfTest)
+
+        self.editSelfTest = QPlainTextEdit(self.tabSelfTest)
+        self.editSelfTest.setObjectName("editSelfTest")
+        self.editSelfTest.setReadOnly(True)
+        self.editSelfTest.setFont(font)
+
+        self.vlSelfTest.addWidget(self.editSelfTest)
+
+        self.tabWidget.addTab(self.tabSelfTest, "")
+
+        self.layoutRoot.addWidget(self.tabWidget)
 
         self.buttonBox = QDialogButtonBox(EncoderDebugDialog)
         self.buttonBox.setObjectName("buttonBox")
         self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Close)
 
-        self.verticalLayout_root.addWidget(self.buttonBox)
+        self.layoutRoot.addWidget(self.buttonBox)
 
         self.retranslateUi(EncoderDebugDialog)
         self.buttonBox.rejected.connect(EncoderDebugDialog.reject)
@@ -594,71 +933,89 @@ class Ui_EncoderDebugDialog(object):
         EncoderDebugDialog.setWindowTitle(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder Debug", None)
         )
-        self.gbControl.setTitle(QCoreApplication.translate("EncoderDebugDialog", "Steuerung", None))
-        self.lblEncoderSel.setText(
+        self.groupConnection.setTitle(
+            QCoreApplication.translate("EncoderDebugDialog", "Arduino-Verbindung", None)
+        )
+        self.labelPort.setText(QCoreApplication.translate("EncoderDebugDialog", "Port:", None))
+        self.buttonRefreshPorts.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u21bb", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.buttonRefreshPorts.setToolTip(
+            QCoreApplication.translate("EncoderDebugDialog", "Ports neu laden", None)
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonConnect.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Verbinden", None)
+        )
+        self.valueConnectionStatus.setText("")
+        self.groupControl.setTitle(
+            QCoreApplication.translate("EncoderDebugDialog", "Steuerung", None)
+        )
+        self.labelEncoderSelect.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder:", None)
         )
-        self.cbEncoderSelect.setItemText(
+        self.comboEncoderSelect.setItemText(
             0, QCoreApplication.translate("EncoderDebugDialog", "A \u2013 Sample", None)
         )
-        self.cbEncoderSelect.setItemText(
+        self.comboEncoderSelect.setItemText(
             1, QCoreApplication.translate("EncoderDebugDialog", "B \u2013 Detektor", None)
         )
-        self.cbEncoderSelect.setItemText(
+        self.comboEncoderSelect.setItemText(
             2, QCoreApplication.translate("EncoderDebugDialog", "Beide", None)
         )
 
-        self.cbAutoRefresh.setText(
+        self.checkAutoRefresh.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Auto-Refresh", None)
         )
         # if QT_CONFIG(tooltip)
-        self.spbRefreshInterval.setToolTip(
+        self.spinRefreshInterval.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Refresh-Intervall in Millisekunden", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spbRefreshInterval.setSuffix(
+        self.spinRefreshInterval.setSuffix(
             QCoreApplication.translate("EncoderDebugDialog", " ms", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnRefresh.setToolTip(
+        self.buttonRefresh.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Alle Werte einmalig abrufen", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnRefresh.setText(
+        self.buttonRefresh.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Aktualisieren", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnZeroEncoder.setToolTip(
+        self.buttonZeroEncoder.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Aktuelle Position als Nullpunkt setzen (CONF:ZERO)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnZeroEncoder.setText(
+        self.buttonZeroEncoder.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Nullpunkt setzen", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnClearErrorFlag.setToolTip(
+        self.buttonClearErrorFlag.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Hardware Error-Flag l\u00f6schen (CONF:ERR)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClearErrorFlag.setText(
+        self.buttonClearErrorFlag.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Fehler l\u00f6schen", None)
         )
-        self.gbMeasA.setTitle(
+        self.groupMeasA.setTitle(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder A \u2013 Sample", None)
         )
-        self.lblConnA.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
+        self.labelConnA.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
         # if QT_CONFIG(tooltip)
         self.ledConnA.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Verbindungsstatus Encoder A", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAngleA.setText(
+        self.labelAngleA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Winkel (\u00b0)", None)
         )
         # if QT_CONFIG(tooltip)
@@ -666,25 +1023,27 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblMagnitudeA.setText(
+        self.labelMagnitudeA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Magnitude (raw)", None)
         )
         # if QT_CONFIG(tooltip)
         self.lcdMagnitudeA.setToolTip(
-            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "Magnitude des Magnetfelds (MEAS:ENC:MAGN? A)", None
+            )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblMagBarA.setText(
+        self.labelFieldStrengthA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Feldst\u00e4rke", None)
         )
         # if QT_CONFIG(tooltip)
-        self.pbarMagnitudeA.setToolTip(
+        self.progressMagnitudeA.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Visuelle Darstellung der Magnet-Amplitude", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCofA.setText(
+        self.labelCofA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None)
         )
         # if QT_CONFIG(tooltip)
@@ -696,7 +1055,7 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCompHA.setText(
+        self.labelCompHA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None)
         )
         # if QT_CONFIG(tooltip)
@@ -708,7 +1067,7 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCompLA.setText(
+        self.labelCompLA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None)
         )
         # if QT_CONFIG(tooltip)
@@ -718,7 +1077,7 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblOcfA.setText(
+        self.labelOcfA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "OCF \u2013 Sensor bereit", None)
         )
         # if QT_CONFIG(tooltip)
@@ -730,7 +1089,9 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblErrorA.setText(QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None))
+        self.labelErrorA.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None)
+        )
         # if QT_CONFIG(tooltip)
         self.ledErrorA.setToolTip(
             QCoreApplication.translate(
@@ -740,11 +1101,11 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAgcA_lbl.setText(
+        self.labelAgcA.setText(
             QCoreApplication.translate("EncoderDebugDialog", "AGC - Automatic Gain Control", None)
         )
         # if QT_CONFIG(tooltip)
-        self.pbarAgcA.setToolTip(
+        self.progressAgcA.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog",
                 "AGC: 0 = max Verst\u00e4rkung (schwaches Feld), 255 = min Verst\u00e4rkung (starkes Feld)",
@@ -753,7 +1114,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         # if QT_CONFIG(tooltip)
-        self.spbAgcA.setToolTip(
+        self.spinAgcA.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog",
                 "Automatic Gain Control 0\u2013255 (niedrig = starkes Feld)",
@@ -761,16 +1122,16 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.gbMeasB.setTitle(
+        self.groupMeasB.setTitle(
             QCoreApplication.translate("EncoderDebugDialog", "Encoder B \u2013 Detektor", None)
         )
-        self.lblConnB.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
+        self.labelConnB.setText(QCoreApplication.translate("EncoderDebugDialog", "Verbunden", None))
         # if QT_CONFIG(tooltip)
         self.ledConnB.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Verbindungsstatus Encoder B", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAngleB.setText(
+        self.labelAngleB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Winkel (\u00b0)", None)
         )
         # if QT_CONFIG(tooltip)
@@ -778,25 +1139,27 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? B)", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblMagnitudeB.setText(
+        self.labelMagnitudeB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Magnitude (raw)", None)
         )
         # if QT_CONFIG(tooltip)
         self.lcdMagnitudeB.setToolTip(
-            QCoreApplication.translate("EncoderDebugDialog", "Winkel in Grad (MEAS:ANGL? A)", None)
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "Magnitude des Magnetfelds (MEAS:ENC:MAGN? B)", None
+            )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblMagBarB.setText(
+        self.labelFieldStrengthB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Feldst\u00e4rke", None)
         )
         # if QT_CONFIG(tooltip)
-        self.pbarMagnitudeB.setToolTip(
+        self.progressMagnitudeB.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Visuelle Darstellung der Magnet-Amplitude", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCofB.setText(
+        self.labelCofB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COF \u2013 CORDIC Overflow", None)
         )
         # if QT_CONFIG(tooltip)
@@ -804,7 +1167,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "COF: CORDIC Overflow", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCompHB.setText(
+        self.labelCompHB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COMP_H \u2013 Feld zu schwach", None)
         )
         # if QT_CONFIG(tooltip)
@@ -812,7 +1175,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "COMP_H: Magnetfeld zu schwach", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblCompLB.setText(
+        self.labelCompLB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "COMP_L \u2013 Feld zu stark", None)
         )
         # if QT_CONFIG(tooltip)
@@ -820,7 +1183,7 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "COMP_L: Magnetfeld zu stark", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblOcfB.setText(
+        self.labelOcfB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "OCF \u2013 Sensor bereit", None)
         )
         # if QT_CONFIG(tooltip)
@@ -830,7 +1193,9 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblErrorB.setText(QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None))
+        self.labelErrorB.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Error Flag", None)
+        )
         # if QT_CONFIG(tooltip)
         self.ledErrorB.setToolTip(
             QCoreApplication.translate(
@@ -838,11 +1203,11 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAgcB_lbl.setText(
+        self.labelAgcB.setText(
             QCoreApplication.translate("EncoderDebugDialog", "AGC - Automatic Gain Control", None)
         )
         # if QT_CONFIG(tooltip)
-        self.pbarAgcB.setToolTip(
+        self.progressAgcB.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog",
                 "AGC: 0 = max Verst\u00e4rkung, 255 = min Verst\u00e4rkung",
@@ -851,7 +1216,7 @@ class Ui_EncoderDebugDialog(object):
         )
         # endif // QT_CONFIG(tooltip)
         # if QT_CONFIG(tooltip)
-        self.spbAgcB.setToolTip(
+        self.spinAgcB.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Automatic Gain Control 0\u2013255", None
             )
@@ -861,27 +1226,25 @@ class Ui_EncoderDebugDialog(object):
             self.tabWidget.indexOf(self.tabMeasurements),
             QCoreApplication.translate("EncoderDebugDialog", "Messwerte", None),
         )
-        self.gbSysInfo.setTitle(
+        self.groupSysInfo.setTitle(
             QCoreApplication.translate("EncoderDebugDialog", "Ger\u00e4teinformationen", None)
         )
-        self.lblIdn_lbl.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "IDN (*IDN?)", None)
-        )
+        self.labelIdn.setText(QCoreApplication.translate("EncoderDebugDialog", "IDN (*IDN?)", None))
         # if QT_CONFIG(tooltip)
-        self.leIdn.setToolTip(
+        self.editIdn.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Ger\u00e4teidentifikation (*IDN?)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.leIdn.setPlaceholderText(
+        self.editIdn.setPlaceholderText(
             QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
         )
-        self.lblPollInt_lbl.setText(
+        self.labelPollInterval.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Poll-Intervall (SENS:INT?)", None)
         )
         # if QT_CONFIG(tooltip)
-        self.spbPollInterval.setToolTip(
+        self.spinPollInterval.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog",
                 "Aktuelles Abfrageintervall des Arduino in ms (SENS:INT?)",
@@ -889,51 +1252,54 @@ class Ui_EncoderDebugDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.spbPollInterval.setSuffix(
+        self.spinPollInterval.setSuffix(
             QCoreApplication.translate("EncoderDebugDialog", " ms", None)
         )
-        self.lblDebugMode_lbl.setText(
+        self.labelDebugMode.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Debug-Modus (SYST:DEB?)", None)
         )
         # if QT_CONFIG(tooltip)
-        self.cbDebugMode.setToolTip(
+        self.checkDebugMode.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Arduino Debug-Ausgabe aktiv (SYST:DEB ON/OFF)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.cbDebugMode.setText(QCoreApplication.translate("EncoderDebugDialog", "Aktiv", None))
-        self.gbScpiErrors.setTitle(
+        self.checkDebugMode.setText(QCoreApplication.translate("EncoderDebugDialog", "Aktiv", None))
+        self.labelSampleInverted.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Probe invertiert:", None)
+        )
+        self.groupScpiErrors.setTitle(
             QCoreApplication.translate("EncoderDebugDialog", "SCPI Fehler-Queue (SYST:ERR?)", None)
         )
         # if QT_CONFIG(tooltip)
-        self.teScpiErrors.setToolTip(
+        self.editScpiErrors.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Inhalt der SCPI Fehler-Queue (SYST:ERR?)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.teScpiErrors.setPlaceholderText(
+        self.editScpiErrors.setPlaceholderText(
             QCoreApplication.translate("EncoderDebugDialog", "Keine Fehler", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnReadScpiErrors.setToolTip(
+        self.buttonReadScpiErrors.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "Alle Eintr\u00e4ge aus der SCPI Fehler-Queue lesen", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnReadScpiErrors.setText(
+        self.buttonReadScpiErrors.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Queue auslesen", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnClearScpiErrors.setToolTip(
+        self.buttonClearScpiErrors.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "SCPI Error Queue l\u00f6schen (*CLS)", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClearScpiErrors.setText(
+        self.buttonClearScpiErrors.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Queue l\u00f6schen (*CLS)", None)
         )
         self.tabWidget.setTabText(
@@ -941,42 +1307,195 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "System", None),
         )
         # if QT_CONFIG(tooltip)
-        self.teTerminalLog.setToolTip(
+        self.editTerminalLog.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "SCPI Kommunikationslog", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.teTerminalLog.setPlaceholderText(
+        self.editTerminalLog.setPlaceholderText(
             QCoreApplication.translate("EncoderDebugDialog", "Bereit\u2026", None)
         )
         # if QT_CONFIG(tooltip)
-        self.leCommandInput.setToolTip(
+        self.editCommandInput.setToolTip(
             QCoreApplication.translate(
                 "EncoderDebugDialog", "SCPI-Befehl eingeben, z.B.  MEAS:ANGL? A  oder  *IDN?", None
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.leCommandInput.setPlaceholderText(
+        self.editCommandInput.setPlaceholderText(
             QCoreApplication.translate("EncoderDebugDialog", "SCPI-Befehl, z.B. MEAS:ANGL? A", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnSendCommand.setToolTip(
+        self.buttonSendCommand.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Befehl senden (auch Enter)", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnSendCommand.setText(
+        self.buttonSendCommand.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Senden", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnClearLog.setToolTip(
+        self.buttonClearLog.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Terminal-Log leeren", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnClearLog.setText(
+        self.buttonClearLog.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Log leeren", None)
         )
         self.tabWidget.setTabText(
             self.tabWidget.indexOf(self.tabTerminal),
             QCoreApplication.translate("EncoderDebugDialog", "SCPI Terminal", None),
+        )
+        self.groupAdcLive.setTitle(
+            QCoreApplication.translate("EncoderDebugDialog", "Live-Messwerte", None)
+        )
+        self.labelAdcPresent.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "ADS1220 vorhanden:", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.ledAdcPresent.setToolTip(
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "ADS1220 antwortet auf DIAG:ADC?", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.labelAdcVoltage.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Spannung (V):", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.lcdAdcVoltage.setToolTip(
+            QCoreApplication.translate("EncoderDebugDialog", "MEAS:ADC:VOLT? (V)", None)
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.labelAdcDrdy.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Bereit (zeitbasiert):", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.ledAdcDrdy.setToolTip(
+            QCoreApplication.translate(
+                "EncoderDebugDialog",
+                "Zeitbasierte Bereitschaft (DRDY-Pin nicht angeschlossen)",
+                None,
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.groupAdcRegisters.setTitle(
+            QCoreApplication.translate("EncoderDebugDialog", "Register (DIAG:ADC?)", None)
+        )
+        self.labelReg0.setText(QCoreApplication.translate("EncoderDebugDialog", "REG0:", None))
+        self.editReg0.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelReg1.setText(QCoreApplication.translate("EncoderDebugDialog", "REG1:", None))
+        self.editReg1.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelReg2.setText(QCoreApplication.translate("EncoderDebugDialog", "REG2:", None))
+        self.editReg2.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelReg3.setText(QCoreApplication.translate("EncoderDebugDialog", "REG3:", None))
+        self.editReg3.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelLastRaw.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Last Raw:", None)
+        )
+        self.editLastRaw.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.groupAdcConfig.setTitle(
+            QCoreApplication.translate("EncoderDebugDialog", "Konfiguration (CONF:ADC:*?)", None)
+        )
+        self.labelMux.setText(QCoreApplication.translate("EncoderDebugDialog", "MUX:", None))
+        self.editMux.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelGain.setText(QCoreApplication.translate("EncoderDebugDialog", "Gain:", None))
+        self.editGain.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelRate.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Rate (SPS):", None)
+        )
+        self.editRate.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelMode.setText(QCoreApplication.translate("EncoderDebugDialog", "Mode:", None))
+        self.editMode.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelFir.setText(QCoreApplication.translate("EncoderDebugDialog", "FIR Filter:", None))
+        self.editFir.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelVref.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Spannungsref.:", None)
+        )
+        self.editVref.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.buttonReadAdcConfig.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Konfiguration lesen", None)
+        )
+        self.groupPdtia.setTitle(
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "PD-TIA Verst\u00e4rkung (DIAG:PDTIA?)", None
+            )
+        )
+        self.labelPdtiaStage.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "Stufe:", None)
+        )
+        self.editPdtiaStage.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.labelPdtiaPattern.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "GPIO Muster:", None)
+        )
+        self.editPdtiaPattern.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u2013", None)
+        )
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.tabAds),
+            QCoreApplication.translate("EncoderDebugDialog", "ADS1220", None),
+        )
+        self.labelRawStreamNotice.setText(
+            QCoreApplication.translate(
+                "EncoderDebugDialog",
+                "Kein DataController verf\u00fcgbar.\n"
+                "\u00d6ffne den Debug-Dialog \u00fcber das Hauptfenster (Strg+D).",
+                None,
+            )
+        )
+        self.editRawStream.setPlaceholderText(
+            QCoreApplication.translate("EncoderDebugDialog", "Warte auf Frames \u2026", None)
+        )
+        self.buttonClearRawStream.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "L\u00f6schen", None)
+        )
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.tabRawStream),
+            QCoreApplication.translate("EncoderDebugDialog", "Raw Stream", None),
+        )
+        self.labelSelfTestInfo.setText(
+            QCoreApplication.translate(
+                "EncoderDebugDialog",
+                "F\u00fchrt DIAG:SELF? aus \u2014 \u00fcberpr\u00fcft alle Subsysteme (Encoder A/B, ADC, PD-TIA).\n"
+                "Jedes Subsystem meldet PASS oder FAIL.",
+                None,
+            )
+        )
+        self.buttonRunSelfTest.setText(
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "Selbsttest ausf\u00fchren  (DIAG:SELF?)", None
+            )
+        )
+        self.editSelfTest.setPlaceholderText(
+            QCoreApplication.translate(
+                "EncoderDebugDialog", "Noch kein Test durchgef\u00fchrt.", None
+            )
+        )
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.tabSelfTest),
+            QCoreApplication.translate("EncoderDebugDialog", "Selbsttest", None),
         )
 
     # retranslateUi

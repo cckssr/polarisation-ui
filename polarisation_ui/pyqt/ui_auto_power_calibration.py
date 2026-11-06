@@ -83,23 +83,23 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.mainLayout.setSpacing(6)
         self.mainLayout.setObjectName("mainLayout")
         self.mainLayout.setContentsMargins(8, 8, 8, 8)
-        self.gbConnections = QGroupBox(AutoPowerCalibrationDialog)
-        self.gbConnections.setObjectName("gbConnections")
-        self.connectionsLayout = QHBoxLayout(self.gbConnections)
+        self.groupConnections = QGroupBox(AutoPowerCalibrationDialog)
+        self.groupConnections.setObjectName("groupConnections")
+        self.connectionsLayout = QHBoxLayout(self.groupConnections)
         self.connectionsLayout.setSpacing(6)
         self.connectionsLayout.setObjectName("connectionsLayout")
         self.connectionsLayout.setContentsMargins(6, 4, 6, 6)
-        self.gbArduino = QGroupBox(self.gbConnections)
-        self.gbArduino.setObjectName("gbArduino")
-        self.arduinoGrid = QGridLayout(self.gbArduino)
+        self.groupArduino = QGroupBox(self.groupConnections)
+        self.groupArduino.setObjectName("groupArduino")
+        self.arduinoGrid = QGridLayout(self.groupArduino)
         self.arduinoGrid.setSpacing(4)
         self.arduinoGrid.setObjectName("arduinoGrid")
-        self.lblArduinoPort = QLabel(self.gbArduino)
-        self.lblArduinoPort.setObjectName("lblArduinoPort")
+        self.labelArduinoPort = QLabel(self.groupArduino)
+        self.labelArduinoPort.setObjectName("labelArduinoPort")
 
-        self.arduinoGrid.addWidget(self.lblArduinoPort, 0, 0, 1, 1)
+        self.arduinoGrid.addWidget(self.labelArduinoPort, 0, 0, 1, 1)
 
-        self.comboArduinoPort = QComboBox(self.gbArduino)
+        self.comboArduinoPort = QComboBox(self.groupArduino)
         self.comboArduinoPort.setObjectName("comboArduinoPort")
         self.comboArduinoPort.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.comboArduinoPort.setMinimumContentsLength(14)
@@ -111,40 +111,40 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.arduinoGrid.addWidget(self.comboArduinoPort, 0, 1, 1, 1)
 
-        self.btnRefreshArduino = QPushButton(self.gbArduino)
-        self.btnRefreshArduino.setObjectName("btnRefreshArduino")
+        self.buttonRefreshArduino = QPushButton(self.groupArduino)
+        self.buttonRefreshArduino.setObjectName("buttonRefreshArduino")
 
-        self.arduinoGrid.addWidget(self.btnRefreshArduino, 0, 2, 1, 1)
+        self.arduinoGrid.addWidget(self.buttonRefreshArduino, 0, 2, 1, 1)
 
-        self.lblArduinoStatus = QLabel(self.gbArduino)
-        self.lblArduinoStatus.setObjectName("lblArduinoStatus")
+        self.valueArduinoStatus = QLabel(self.groupArduino)
+        self.valueArduinoStatus.setObjectName("valueArduinoStatus")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.lblArduinoStatus.sizePolicy().hasHeightForWidth())
-        self.lblArduinoStatus.setSizePolicy(sizePolicy1)
-        self.lblArduinoStatus.setMinimumSize(QSize(80, 0))
+        sizePolicy1.setHeightForWidth(self.valueArduinoStatus.sizePolicy().hasHeightForWidth())
+        self.valueArduinoStatus.setSizePolicy(sizePolicy1)
+        self.valueArduinoStatus.setMinimumSize(QSize(80, 0))
 
-        self.arduinoGrid.addWidget(self.lblArduinoStatus, 1, 0, 1, 2)
+        self.arduinoGrid.addWidget(self.valueArduinoStatus, 1, 0, 1, 2)
 
-        self.btnConnectArduino = QPushButton(self.gbArduino)
-        self.btnConnectArduino.setObjectName("btnConnectArduino")
+        self.buttonConnectArduino = QPushButton(self.groupArduino)
+        self.buttonConnectArduino.setObjectName("buttonConnectArduino")
 
-        self.arduinoGrid.addWidget(self.btnConnectArduino, 1, 2, 1, 1)
+        self.arduinoGrid.addWidget(self.buttonConnectArduino, 1, 2, 1, 1)
 
-        self.connectionsLayout.addWidget(self.gbArduino)
+        self.connectionsLayout.addWidget(self.groupArduino)
 
-        self.gbKDC = QGroupBox(self.gbConnections)
-        self.gbKDC.setObjectName("gbKDC")
-        self.kdcGrid = QGridLayout(self.gbKDC)
+        self.groupKDC = QGroupBox(self.groupConnections)
+        self.groupKDC.setObjectName("groupKDC")
+        self.kdcGrid = QGridLayout(self.groupKDC)
         self.kdcGrid.setSpacing(4)
         self.kdcGrid.setObjectName("kdcGrid")
-        self.lblKDCDevice = QLabel(self.gbKDC)
-        self.lblKDCDevice.setObjectName("lblKDCDevice")
+        self.labelKDCDevice = QLabel(self.groupKDC)
+        self.labelKDCDevice.setObjectName("labelKDCDevice")
 
-        self.kdcGrid.addWidget(self.lblKDCDevice, 0, 0, 1, 1)
+        self.kdcGrid.addWidget(self.labelKDCDevice, 0, 0, 1, 1)
 
-        self.comboKDC = QComboBox(self.gbKDC)
+        self.comboKDC = QComboBox(self.groupKDC)
         self.comboKDC.setObjectName("comboKDC")
         self.comboKDC.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.comboKDC.setMinimumContentsLength(14)
@@ -153,43 +153,43 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.kdcGrid.addWidget(self.comboKDC, 0, 1, 1, 1)
 
-        self.btnRefreshKDC = QPushButton(self.gbKDC)
-        self.btnRefreshKDC.setObjectName("btnRefreshKDC")
+        self.buttonRefreshKDC = QPushButton(self.groupKDC)
+        self.buttonRefreshKDC.setObjectName("buttonRefreshKDC")
 
-        self.kdcGrid.addWidget(self.btnRefreshKDC, 0, 2, 1, 1)
+        self.kdcGrid.addWidget(self.buttonRefreshKDC, 0, 2, 1, 1)
 
-        self.lblKDCStatus = QLabel(self.gbKDC)
-        self.lblKDCStatus.setObjectName("lblKDCStatus")
-        sizePolicy1.setHeightForWidth(self.lblKDCStatus.sizePolicy().hasHeightForWidth())
-        self.lblKDCStatus.setSizePolicy(sizePolicy1)
-        self.lblKDCStatus.setMinimumSize(QSize(80, 0))
+        self.valueKDCStatus = QLabel(self.groupKDC)
+        self.valueKDCStatus.setObjectName("valueKDCStatus")
+        sizePolicy1.setHeightForWidth(self.valueKDCStatus.sizePolicy().hasHeightForWidth())
+        self.valueKDCStatus.setSizePolicy(sizePolicy1)
+        self.valueKDCStatus.setMinimumSize(QSize(80, 0))
 
-        self.kdcGrid.addWidget(self.lblKDCStatus, 1, 0, 1, 2)
+        self.kdcGrid.addWidget(self.valueKDCStatus, 1, 0, 1, 2)
 
-        self.btnConnectKDC = QPushButton(self.gbKDC)
-        self.btnConnectKDC.setObjectName("btnConnectKDC")
+        self.buttonConnectKDC = QPushButton(self.groupKDC)
+        self.buttonConnectKDC.setObjectName("buttonConnectKDC")
 
-        self.kdcGrid.addWidget(self.btnConnectKDC, 1, 2, 1, 1)
+        self.kdcGrid.addWidget(self.buttonConnectKDC, 1, 2, 1, 1)
 
-        self.btnHomeKDC = QPushButton(self.gbKDC)
-        self.btnHomeKDC.setObjectName("btnHomeKDC")
-        self.btnHomeKDC.setEnabled(False)
+        self.buttonHomeKDC = QPushButton(self.groupKDC)
+        self.buttonHomeKDC.setObjectName("buttonHomeKDC")
+        self.buttonHomeKDC.setEnabled(False)
 
-        self.kdcGrid.addWidget(self.btnHomeKDC, 2, 0, 1, 3)
+        self.kdcGrid.addWidget(self.buttonHomeKDC, 2, 0, 1, 3)
 
-        self.connectionsLayout.addWidget(self.gbKDC)
+        self.connectionsLayout.addWidget(self.groupKDC)
 
-        self.gbNDStage = QGroupBox(self.gbConnections)
-        self.gbNDStage.setObjectName("gbNDStage")
-        self.ndGrid = QGridLayout(self.gbNDStage)
+        self.groupNDStage = QGroupBox(self.groupConnections)
+        self.groupNDStage.setObjectName("groupNDStage")
+        self.ndGrid = QGridLayout(self.groupNDStage)
         self.ndGrid.setSpacing(4)
         self.ndGrid.setObjectName("ndGrid")
-        self.lblNDDevice = QLabel(self.gbNDStage)
-        self.lblNDDevice.setObjectName("lblNDDevice")
+        self.labelNDDevice = QLabel(self.groupNDStage)
+        self.labelNDDevice.setObjectName("labelNDDevice")
 
-        self.ndGrid.addWidget(self.lblNDDevice, 0, 0, 1, 1)
+        self.ndGrid.addWidget(self.labelNDDevice, 0, 0, 1, 1)
 
-        self.comboNDStage = QComboBox(self.gbNDStage)
+        self.comboNDStage = QComboBox(self.groupNDStage)
         self.comboNDStage.setObjectName("comboNDStage")
         self.comboNDStage.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.comboNDStage.setMinimumContentsLength(14)
@@ -198,88 +198,88 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndGrid.addWidget(self.comboNDStage, 0, 1, 1, 1)
 
-        self.btnRefreshNDStage = QPushButton(self.gbNDStage)
-        self.btnRefreshNDStage.setObjectName("btnRefreshNDStage")
+        self.buttonRefreshNDStage = QPushButton(self.groupNDStage)
+        self.buttonRefreshNDStage.setObjectName("buttonRefreshNDStage")
 
-        self.ndGrid.addWidget(self.btnRefreshNDStage, 0, 2, 1, 1)
+        self.ndGrid.addWidget(self.buttonRefreshNDStage, 0, 2, 1, 1)
 
-        self.lblNDStatus = QLabel(self.gbNDStage)
-        self.lblNDStatus.setObjectName("lblNDStatus")
-        sizePolicy1.setHeightForWidth(self.lblNDStatus.sizePolicy().hasHeightForWidth())
-        self.lblNDStatus.setSizePolicy(sizePolicy1)
-        self.lblNDStatus.setMinimumSize(QSize(80, 0))
+        self.valueNDStatus = QLabel(self.groupNDStage)
+        self.valueNDStatus.setObjectName("valueNDStatus")
+        sizePolicy1.setHeightForWidth(self.valueNDStatus.sizePolicy().hasHeightForWidth())
+        self.valueNDStatus.setSizePolicy(sizePolicy1)
+        self.valueNDStatus.setMinimumSize(QSize(80, 0))
 
-        self.ndGrid.addWidget(self.lblNDStatus, 1, 0, 1, 2)
+        self.ndGrid.addWidget(self.valueNDStatus, 1, 0, 1, 2)
 
-        self.btnConnectNDStage = QPushButton(self.gbNDStage)
-        self.btnConnectNDStage.setObjectName("btnConnectNDStage")
+        self.buttonConnectNDStage = QPushButton(self.groupNDStage)
+        self.buttonConnectNDStage.setObjectName("buttonConnectNDStage")
 
-        self.ndGrid.addWidget(self.btnConnectNDStage, 1, 2, 1, 1)
+        self.ndGrid.addWidget(self.buttonConnectNDStage, 1, 2, 1, 1)
 
-        self.btnHomeNDStage = QPushButton(self.gbNDStage)
-        self.btnHomeNDStage.setObjectName("btnHomeNDStage")
-        self.btnHomeNDStage.setEnabled(False)
+        self.buttonHomeNDStage = QPushButton(self.groupNDStage)
+        self.buttonHomeNDStage.setObjectName("buttonHomeNDStage")
+        self.buttonHomeNDStage.setEnabled(False)
 
-        self.ndGrid.addWidget(self.btnHomeNDStage, 2, 0, 1, 2)
+        self.ndGrid.addWidget(self.buttonHomeNDStage, 2, 0, 1, 2)
 
-        self.btnZeroNDStage = QPushButton(self.gbNDStage)
-        self.btnZeroNDStage.setObjectName("btnZeroNDStage")
-        self.btnZeroNDStage.setEnabled(False)
+        self.buttonZeroNDStage = QPushButton(self.groupNDStage)
+        self.buttonZeroNDStage.setObjectName("buttonZeroNDStage")
+        self.buttonZeroNDStage.setEnabled(False)
 
-        self.ndGrid.addWidget(self.btnZeroNDStage, 2, 2, 1, 1)
+        self.ndGrid.addWidget(self.buttonZeroNDStage, 2, 2, 1, 1)
 
-        self.lblNDPosition = QLabel(self.gbNDStage)
-        self.lblNDPosition.setObjectName("lblNDPosition")
-        sizePolicy1.setHeightForWidth(self.lblNDPosition.sizePolicy().hasHeightForWidth())
-        self.lblNDPosition.setSizePolicy(sizePolicy1)
-        self.lblNDPosition.setMinimumSize(QSize(80, 0))
+        self.valueNDPosition = QLabel(self.groupNDStage)
+        self.valueNDPosition.setObjectName("valueNDPosition")
+        sizePolicy1.setHeightForWidth(self.valueNDPosition.sizePolicy().hasHeightForWidth())
+        self.valueNDPosition.setSizePolicy(sizePolicy1)
+        self.valueNDPosition.setMinimumSize(QSize(80, 0))
 
-        self.ndGrid.addWidget(self.lblNDPosition, 3, 0, 1, 3)
+        self.ndGrid.addWidget(self.valueNDPosition, 3, 0, 1, 3)
 
-        self.lblNDDriver = QLabel(self.gbNDStage)
-        self.lblNDDriver.setObjectName("lblNDDriver")
-        sizePolicy1.setHeightForWidth(self.lblNDDriver.sizePolicy().hasHeightForWidth())
-        self.lblNDDriver.setSizePolicy(sizePolicy1)
-        self.lblNDDriver.setMinimumSize(QSize(80, 0))
+        self.valueNDDriver = QLabel(self.groupNDStage)
+        self.valueNDDriver.setObjectName("valueNDDriver")
+        sizePolicy1.setHeightForWidth(self.valueNDDriver.sizePolicy().hasHeightForWidth())
+        self.valueNDDriver.setSizePolicy(sizePolicy1)
+        self.valueNDDriver.setMinimumSize(QSize(80, 0))
 
-        self.ndGrid.addWidget(self.lblNDDriver, 4, 0, 1, 2)
+        self.ndGrid.addWidget(self.valueNDDriver, 4, 0, 1, 2)
 
-        self.btnSelfTestNDStage = QPushButton(self.gbNDStage)
-        self.btnSelfTestNDStage.setObjectName("btnSelfTestNDStage")
-        self.btnSelfTestNDStage.setEnabled(False)
+        self.buttonSelfTestNDStage = QPushButton(self.groupNDStage)
+        self.buttonSelfTestNDStage.setObjectName("buttonSelfTestNDStage")
+        self.buttonSelfTestNDStage.setEnabled(False)
 
-        self.ndGrid.addWidget(self.btnSelfTestNDStage, 4, 2, 1, 1)
+        self.ndGrid.addWidget(self.buttonSelfTestNDStage, 4, 2, 1, 1)
 
         self.ndJogLayout = QHBoxLayout()
         self.ndJogLayout.setSpacing(4)
         self.ndJogLayout.setObjectName("ndJogLayout")
-        self.btnNDJogMinus5 = QPushButton(self.gbNDStage)
-        self.btnNDJogMinus5.setObjectName("btnNDJogMinus5")
-        self.btnNDJogMinus5.setEnabled(False)
-        self.btnNDJogMinus5.setMaximumSize(QSize(44, 22))
+        self.buttonNDJogMinus5 = QPushButton(self.groupNDStage)
+        self.buttonNDJogMinus5.setObjectName("buttonNDJogMinus5")
+        self.buttonNDJogMinus5.setEnabled(False)
+        self.buttonNDJogMinus5.setMaximumSize(QSize(44, 22))
 
-        self.ndJogLayout.addWidget(self.btnNDJogMinus5)
+        self.ndJogLayout.addWidget(self.buttonNDJogMinus5)
 
-        self.btnNDJogMinus1 = QPushButton(self.gbNDStage)
-        self.btnNDJogMinus1.setObjectName("btnNDJogMinus1")
-        self.btnNDJogMinus1.setEnabled(False)
-        self.btnNDJogMinus1.setMaximumSize(QSize(44, 22))
+        self.buttonNDJogMinus1 = QPushButton(self.groupNDStage)
+        self.buttonNDJogMinus1.setObjectName("buttonNDJogMinus1")
+        self.buttonNDJogMinus1.setEnabled(False)
+        self.buttonNDJogMinus1.setMaximumSize(QSize(44, 22))
 
-        self.ndJogLayout.addWidget(self.btnNDJogMinus1)
+        self.ndJogLayout.addWidget(self.buttonNDJogMinus1)
 
-        self.btnNDJogPlus1 = QPushButton(self.gbNDStage)
-        self.btnNDJogPlus1.setObjectName("btnNDJogPlus1")
-        self.btnNDJogPlus1.setEnabled(False)
-        self.btnNDJogPlus1.setMaximumSize(QSize(44, 22))
+        self.buttonNDJogPlus1 = QPushButton(self.groupNDStage)
+        self.buttonNDJogPlus1.setObjectName("buttonNDJogPlus1")
+        self.buttonNDJogPlus1.setEnabled(False)
+        self.buttonNDJogPlus1.setMaximumSize(QSize(44, 22))
 
-        self.ndJogLayout.addWidget(self.btnNDJogPlus1)
+        self.ndJogLayout.addWidget(self.buttonNDJogPlus1)
 
-        self.btnNDJogPlus5 = QPushButton(self.gbNDStage)
-        self.btnNDJogPlus5.setObjectName("btnNDJogPlus5")
-        self.btnNDJogPlus5.setEnabled(False)
-        self.btnNDJogPlus5.setMaximumSize(QSize(44, 22))
+        self.buttonNDJogPlus5 = QPushButton(self.groupNDStage)
+        self.buttonNDJogPlus5.setObjectName("buttonNDJogPlus5")
+        self.buttonNDJogPlus5.setEnabled(False)
+        self.buttonNDJogPlus5.setMaximumSize(QSize(44, 22))
 
-        self.ndJogLayout.addWidget(self.btnNDJogPlus5)
+        self.ndJogLayout.addWidget(self.buttonNDJogPlus5)
 
         self.ndJogSpacer = QSpacerItem(
             20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -287,28 +287,28 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndJogLayout.addItem(self.ndJogSpacer)
 
-        self.btnNDMotorOff = QPushButton(self.gbNDStage)
-        self.btnNDMotorOff.setObjectName("btnNDMotorOff")
-        self.btnNDMotorOff.setEnabled(False)
-        self.btnNDMotorOff.setMaximumSize(QSize(80, 22))
+        self.buttonNDMotorOff = QPushButton(self.groupNDStage)
+        self.buttonNDMotorOff.setObjectName("buttonNDMotorOff")
+        self.buttonNDMotorOff.setEnabled(False)
+        self.buttonNDMotorOff.setMaximumSize(QSize(80, 22))
 
-        self.ndJogLayout.addWidget(self.btnNDMotorOff)
+        self.ndJogLayout.addWidget(self.buttonNDMotorOff)
 
         self.ndGrid.addLayout(self.ndJogLayout, 5, 0, 1, 3)
 
-        self.connectionsLayout.addWidget(self.gbNDStage)
+        self.connectionsLayout.addWidget(self.groupNDStage)
 
-        self.gbPM400 = QGroupBox(self.gbConnections)
-        self.gbPM400.setObjectName("gbPM400")
-        self.pmGrid = QGridLayout(self.gbPM400)
+        self.groupPM400 = QGroupBox(self.groupConnections)
+        self.groupPM400.setObjectName("groupPM400")
+        self.pmGrid = QGridLayout(self.groupPM400)
         self.pmGrid.setSpacing(4)
         self.pmGrid.setObjectName("pmGrid")
-        self.lblPMResource = QLabel(self.gbPM400)
-        self.lblPMResource.setObjectName("lblPMResource")
+        self.labelPMResource = QLabel(self.groupPM400)
+        self.labelPMResource.setObjectName("labelPMResource")
 
-        self.pmGrid.addWidget(self.lblPMResource, 0, 0, 1, 1)
+        self.pmGrid.addWidget(self.labelPMResource, 0, 0, 1, 1)
 
-        self.comboPM400 = QComboBox(self.gbPM400)
+        self.comboPM400 = QComboBox(self.groupPM400)
         self.comboPM400.setObjectName("comboPM400")
         self.comboPM400.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.comboPM400.setMinimumContentsLength(14)
@@ -317,43 +317,43 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.pmGrid.addWidget(self.comboPM400, 0, 1, 1, 1)
 
-        self.btnRefreshPM400 = QPushButton(self.gbPM400)
-        self.btnRefreshPM400.setObjectName("btnRefreshPM400")
+        self.buttonRefreshPM400 = QPushButton(self.groupPM400)
+        self.buttonRefreshPM400.setObjectName("buttonRefreshPM400")
 
-        self.pmGrid.addWidget(self.btnRefreshPM400, 0, 2, 1, 1)
+        self.pmGrid.addWidget(self.buttonRefreshPM400, 0, 2, 1, 1)
 
-        self.lblPM400Status = QLabel(self.gbPM400)
-        self.lblPM400Status.setObjectName("lblPM400Status")
-        sizePolicy1.setHeightForWidth(self.lblPM400Status.sizePolicy().hasHeightForWidth())
-        self.lblPM400Status.setSizePolicy(sizePolicy1)
-        self.lblPM400Status.setMinimumSize(QSize(80, 0))
+        self.valuePM400Status = QLabel(self.groupPM400)
+        self.valuePM400Status.setObjectName("valuePM400Status")
+        sizePolicy1.setHeightForWidth(self.valuePM400Status.sizePolicy().hasHeightForWidth())
+        self.valuePM400Status.setSizePolicy(sizePolicy1)
+        self.valuePM400Status.setMinimumSize(QSize(80, 0))
 
-        self.pmGrid.addWidget(self.lblPM400Status, 1, 0, 1, 2)
+        self.pmGrid.addWidget(self.valuePM400Status, 1, 0, 1, 2)
 
-        self.btnConnectPM400 = QPushButton(self.gbPM400)
-        self.btnConnectPM400.setObjectName("btnConnectPM400")
+        self.buttonConnectPM400 = QPushButton(self.groupPM400)
+        self.buttonConnectPM400.setObjectName("buttonConnectPM400")
 
-        self.pmGrid.addWidget(self.btnConnectPM400, 1, 2, 1, 1)
+        self.pmGrid.addWidget(self.buttonConnectPM400, 1, 2, 1, 1)
 
-        self.btnZeroPM400 = QPushButton(self.gbPM400)
-        self.btnZeroPM400.setObjectName("btnZeroPM400")
-        self.btnZeroPM400.setEnabled(False)
+        self.buttonZeroPM400 = QPushButton(self.groupPM400)
+        self.buttonZeroPM400.setObjectName("buttonZeroPM400")
+        self.buttonZeroPM400.setEnabled(False)
 
-        self.pmGrid.addWidget(self.btnZeroPM400, 2, 0, 1, 3)
+        self.pmGrid.addWidget(self.buttonZeroPM400, 2, 0, 1, 3)
 
-        self.connectionsLayout.addWidget(self.gbPM400)
+        self.connectionsLayout.addWidget(self.groupPM400)
 
-        self.gbPM400B = QGroupBox(self.gbConnections)
-        self.gbPM400B.setObjectName("gbPM400B")
-        self.pmBGrid = QGridLayout(self.gbPM400B)
+        self.groupPM400B = QGroupBox(self.groupConnections)
+        self.groupPM400B.setObjectName("groupPM400B")
+        self.pmBGrid = QGridLayout(self.groupPM400B)
         self.pmBGrid.setSpacing(4)
         self.pmBGrid.setObjectName("pmBGrid")
-        self.lblPM400BResource = QLabel(self.gbPM400B)
-        self.lblPM400BResource.setObjectName("lblPM400BResource")
+        self.labelPM400BResource = QLabel(self.groupPM400B)
+        self.labelPM400BResource.setObjectName("labelPM400BResource")
 
-        self.pmBGrid.addWidget(self.lblPM400BResource, 0, 0, 1, 1)
+        self.pmBGrid.addWidget(self.labelPM400BResource, 0, 0, 1, 1)
 
-        self.comboPM400B = QComboBox(self.gbPM400B)
+        self.comboPM400B = QComboBox(self.groupPM400B)
         self.comboPM400B.setObjectName("comboPM400B")
         self.comboPM400B.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.comboPM400B.setMinimumContentsLength(14)
@@ -363,33 +363,33 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.pmBGrid.addWidget(self.comboPM400B, 0, 1, 1, 1)
 
-        self.btnRefreshPM400B = QPushButton(self.gbPM400B)
-        self.btnRefreshPM400B.setObjectName("btnRefreshPM400B")
+        self.buttonRefreshPM400B = QPushButton(self.groupPM400B)
+        self.buttonRefreshPM400B.setObjectName("buttonRefreshPM400B")
 
-        self.pmBGrid.addWidget(self.btnRefreshPM400B, 0, 2, 1, 1)
+        self.pmBGrid.addWidget(self.buttonRefreshPM400B, 0, 2, 1, 1)
 
-        self.lblPM400BStatus = QLabel(self.gbPM400B)
-        self.lblPM400BStatus.setObjectName("lblPM400BStatus")
-        sizePolicy1.setHeightForWidth(self.lblPM400BStatus.sizePolicy().hasHeightForWidth())
-        self.lblPM400BStatus.setSizePolicy(sizePolicy1)
-        self.lblPM400BStatus.setMinimumSize(QSize(80, 0))
+        self.valuePM400BStatus = QLabel(self.groupPM400B)
+        self.valuePM400BStatus.setObjectName("valuePM400BStatus")
+        sizePolicy1.setHeightForWidth(self.valuePM400BStatus.sizePolicy().hasHeightForWidth())
+        self.valuePM400BStatus.setSizePolicy(sizePolicy1)
+        self.valuePM400BStatus.setMinimumSize(QSize(80, 0))
 
-        self.pmBGrid.addWidget(self.lblPM400BStatus, 1, 0, 1, 2)
+        self.pmBGrid.addWidget(self.valuePM400BStatus, 1, 0, 1, 2)
 
-        self.btnConnectPM400B = QPushButton(self.gbPM400B)
-        self.btnConnectPM400B.setObjectName("btnConnectPM400B")
+        self.buttonConnectPM400B = QPushButton(self.groupPM400B)
+        self.buttonConnectPM400B.setObjectName("buttonConnectPM400B")
 
-        self.pmBGrid.addWidget(self.btnConnectPM400B, 1, 2, 1, 1)
+        self.pmBGrid.addWidget(self.buttonConnectPM400B, 1, 2, 1, 1)
 
-        self.btnZeroPM400B = QPushButton(self.gbPM400B)
-        self.btnZeroPM400B.setObjectName("btnZeroPM400B")
-        self.btnZeroPM400B.setEnabled(False)
+        self.buttonZeroPM400B = QPushButton(self.groupPM400B)
+        self.buttonZeroPM400B.setObjectName("buttonZeroPM400B")
+        self.buttonZeroPM400B.setEnabled(False)
 
-        self.pmBGrid.addWidget(self.btnZeroPM400B, 2, 0, 1, 3)
+        self.pmBGrid.addWidget(self.buttonZeroPM400B, 2, 0, 1, 3)
 
-        self.connectionsLayout.addWidget(self.gbPM400B)
+        self.connectionsLayout.addWidget(self.groupPM400B)
 
-        self.mainLayout.addWidget(self.gbConnections)
+        self.mainLayout.addWidget(self.groupConnections)
 
         self.workAreaLayout = QHBoxLayout()
         self.workAreaLayout.setSpacing(8)
@@ -397,53 +397,53 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.leftPanelLayout = QVBoxLayout()
         self.leftPanelLayout.setSpacing(5)
         self.leftPanelLayout.setObjectName("leftPanelLayout")
-        self.tabsMode = QTabWidget(AutoPowerCalibrationDialog)
-        self.tabsMode.setObjectName("tabsMode")
+        self.tabMode = QTabWidget(AutoPowerCalibrationDialog)
+        self.tabMode.setObjectName("tabMode")
         self.tabCalibration = QWidget()
         self.tabCalibration.setObjectName("tabCalibration")
         self.tabCalibrationLayout = QVBoxLayout(self.tabCalibration)
         self.tabCalibrationLayout.setSpacing(5)
         self.tabCalibrationLayout.setObjectName("tabCalibrationLayout")
-        self.gbIntensitySource = QGroupBox(self.tabCalibration)
-        self.gbIntensitySource.setObjectName("gbIntensitySource")
-        self.intensitySourceLayout = QHBoxLayout(self.gbIntensitySource)
+        self.groupIntensitySource = QGroupBox(self.tabCalibration)
+        self.groupIntensitySource.setObjectName("groupIntensitySource")
+        self.intensitySourceLayout = QHBoxLayout(self.groupIntensitySource)
         self.intensitySourceLayout.setSpacing(6)
         self.intensitySourceLayout.setObjectName("intensitySourceLayout")
-        self.lblIntensitySource = QLabel(self.gbIntensitySource)
-        self.lblIntensitySource.setObjectName("lblIntensitySource")
+        self.labelIntensitySource = QLabel(self.groupIntensitySource)
+        self.labelIntensitySource.setObjectName("labelIntensitySource")
 
-        self.intensitySourceLayout.addWidget(self.lblIntensitySource)
+        self.intensitySourceLayout.addWidget(self.labelIntensitySource)
 
-        self.radioSourcePolariser = QRadioButton(self.gbIntensitySource)
+        self.radioSourcePolariser = QRadioButton(self.groupIntensitySource)
         self.radioSourcePolariser.setObjectName("radioSourcePolariser")
         self.radioSourcePolariser.setChecked(True)
 
         self.intensitySourceLayout.addWidget(self.radioSourcePolariser)
 
-        self.radioSourceND = QRadioButton(self.gbIntensitySource)
+        self.radioSourceND = QRadioButton(self.groupIntensitySource)
         self.radioSourceND.setObjectName("radioSourceND")
 
         self.intensitySourceLayout.addWidget(self.radioSourceND)
 
-        self.tabCalibrationLayout.addWidget(self.gbIntensitySource)
+        self.tabCalibrationLayout.addWidget(self.groupIntensitySource)
 
         self.topControlsRow = QHBoxLayout()
         self.topControlsRow.setSpacing(5)
         self.topControlsRow.setObjectName("topControlsRow")
-        self.gbAlignment = QGroupBox(self.tabCalibration)
-        self.gbAlignment.setObjectName("gbAlignment")
-        self.alignLayout = QVBoxLayout(self.gbAlignment)
+        self.groupAlignment = QGroupBox(self.tabCalibration)
+        self.groupAlignment.setObjectName("groupAlignment")
+        self.alignLayout = QVBoxLayout(self.groupAlignment)
         self.alignLayout.setSpacing(3)
         self.alignLayout.setObjectName("alignLayout")
         self.alignForm = QFormLayout()
         self.alignForm.setObjectName("alignForm")
         self.alignForm.setVerticalSpacing(3)
-        self.lblAlignStart = QLabel(self.gbAlignment)
-        self.lblAlignStart.setObjectName("lblAlignStart")
+        self.labelAlignStart = QLabel(self.groupAlignment)
+        self.labelAlignStart.setObjectName("labelAlignStart")
 
-        self.alignForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblAlignStart)
+        self.alignForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelAlignStart)
 
-        self.spinAlignStart = QDoubleSpinBox(self.gbAlignment)
+        self.spinAlignStart = QDoubleSpinBox(self.groupAlignment)
         self.spinAlignStart.setObjectName("spinAlignStart")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy2.setHorizontalStretch(0)
@@ -457,12 +457,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.alignForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinAlignStart)
 
-        self.lblAlignEnd = QLabel(self.gbAlignment)
-        self.lblAlignEnd.setObjectName("lblAlignEnd")
+        self.labelAlignEnd = QLabel(self.groupAlignment)
+        self.labelAlignEnd.setObjectName("labelAlignEnd")
 
-        self.alignForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblAlignEnd)
+        self.alignForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAlignEnd)
 
-        self.spinAlignEnd = QDoubleSpinBox(self.gbAlignment)
+        self.spinAlignEnd = QDoubleSpinBox(self.groupAlignment)
         self.spinAlignEnd.setObjectName("spinAlignEnd")
         sizePolicy2.setHeightForWidth(self.spinAlignEnd.sizePolicy().hasHeightForWidth())
         self.spinAlignEnd.setSizePolicy(sizePolicy2)
@@ -473,12 +473,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.alignForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinAlignEnd)
 
-        self.lblAlignNPoints = QLabel(self.gbAlignment)
-        self.lblAlignNPoints.setObjectName("lblAlignNPoints")
+        self.labelAlignNPoints = QLabel(self.groupAlignment)
+        self.labelAlignNPoints.setObjectName("labelAlignNPoints")
 
-        self.alignForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblAlignNPoints)
+        self.alignForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelAlignNPoints)
 
-        self.spinAlignNPoints = QSpinBox(self.gbAlignment)
+        self.spinAlignNPoints = QSpinBox(self.groupAlignment)
         self.spinAlignNPoints.setObjectName("spinAlignNPoints")
         sizePolicy2.setHeightForWidth(self.spinAlignNPoints.sizePolicy().hasHeightForWidth())
         self.spinAlignNPoints.setSizePolicy(sizePolicy2)
@@ -488,12 +488,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.alignForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinAlignNPoints)
 
-        self.lblAlignSettle = QLabel(self.gbAlignment)
-        self.lblAlignSettle.setObjectName("lblAlignSettle")
+        self.labelAlignSettle = QLabel(self.groupAlignment)
+        self.labelAlignSettle.setObjectName("labelAlignSettle")
 
-        self.alignForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblAlignSettle)
+        self.alignForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelAlignSettle)
 
-        self.spinAlignSettle = QDoubleSpinBox(self.gbAlignment)
+        self.spinAlignSettle = QDoubleSpinBox(self.groupAlignment)
         self.spinAlignSettle.setObjectName("spinAlignSettle")
         sizePolicy2.setHeightForWidth(self.spinAlignSettle.sizePolicy().hasHeightForWidth())
         self.spinAlignSettle.setSizePolicy(sizePolicy2)
@@ -510,42 +510,42 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.alignButtonLayout = QHBoxLayout()
         self.alignButtonLayout.setSpacing(4)
         self.alignButtonLayout.setObjectName("alignButtonLayout")
-        self.btnAlignPolariser = QPushButton(self.gbAlignment)
-        self.btnAlignPolariser.setObjectName("btnAlignPolariser")
-        self.btnAlignPolariser.setEnabled(False)
+        self.buttonAlignPolariser = QPushButton(self.groupAlignment)
+        self.buttonAlignPolariser.setObjectName("buttonAlignPolariser")
+        self.buttonAlignPolariser.setEnabled(False)
 
-        self.alignButtonLayout.addWidget(self.btnAlignPolariser)
+        self.alignButtonLayout.addWidget(self.buttonAlignPolariser)
 
-        self.btnAbortAlign = QPushButton(self.gbAlignment)
-        self.btnAbortAlign.setObjectName("btnAbortAlign")
-        self.btnAbortAlign.setEnabled(False)
+        self.buttonAbortAlign = QPushButton(self.groupAlignment)
+        self.buttonAbortAlign.setObjectName("buttonAbortAlign")
+        self.buttonAbortAlign.setEnabled(False)
 
-        self.alignButtonLayout.addWidget(self.btnAbortAlign)
+        self.alignButtonLayout.addWidget(self.buttonAbortAlign)
 
         self.alignLayout.addLayout(self.alignButtonLayout)
 
-        self.lblAngleOffset = QLabel(self.gbAlignment)
-        self.lblAngleOffset.setObjectName("lblAngleOffset")
-        sizePolicy1.setHeightForWidth(self.lblAngleOffset.sizePolicy().hasHeightForWidth())
-        self.lblAngleOffset.setSizePolicy(sizePolicy1)
-        self.lblAngleOffset.setMinimumSize(QSize(80, 48))
-        self.lblAngleOffset.setWordWrap(True)
+        self.valueAngleOffset = QLabel(self.groupAlignment)
+        self.valueAngleOffset.setObjectName("valueAngleOffset")
+        sizePolicy1.setHeightForWidth(self.valueAngleOffset.sizePolicy().hasHeightForWidth())
+        self.valueAngleOffset.setSizePolicy(sizePolicy1)
+        self.valueAngleOffset.setMinimumSize(QSize(80, 48))
+        self.valueAngleOffset.setWordWrap(True)
 
-        self.alignLayout.addWidget(self.lblAngleOffset)
+        self.alignLayout.addWidget(self.valueAngleOffset)
 
-        self.topControlsRow.addWidget(self.gbAlignment)
+        self.topControlsRow.addWidget(self.groupAlignment)
 
-        self.gbBeam = QGroupBox(self.tabCalibration)
-        self.gbBeam.setObjectName("gbBeam")
-        self.beamForm = QFormLayout(self.gbBeam)
+        self.groupBeam = QGroupBox(self.tabCalibration)
+        self.groupBeam.setObjectName("groupBeam")
+        self.beamForm = QFormLayout(self.groupBeam)
         self.beamForm.setObjectName("beamForm")
         self.beamForm.setVerticalSpacing(3)
-        self.lblWavelength = QLabel(self.gbBeam)
-        self.lblWavelength.setObjectName("lblWavelength")
+        self.labelWavelength = QLabel(self.groupBeam)
+        self.labelWavelength.setObjectName("labelWavelength")
 
-        self.beamForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblWavelength)
+        self.beamForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelWavelength)
 
-        self.spinWavelength = QDoubleSpinBox(self.gbBeam)
+        self.spinWavelength = QDoubleSpinBox(self.groupBeam)
         self.spinWavelength.setObjectName("spinWavelength")
         sizePolicy2.setHeightForWidth(self.spinWavelength.sizePolicy().hasHeightForWidth())
         self.spinWavelength.setSizePolicy(sizePolicy2)
@@ -556,12 +556,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.beamForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinWavelength)
 
-        self.lblAttenuation = QLabel(self.gbBeam)
-        self.lblAttenuation.setObjectName("lblAttenuation")
+        self.labelAttenuation = QLabel(self.groupBeam)
+        self.labelAttenuation.setObjectName("labelAttenuation")
 
-        self.beamForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblAttenuation)
+        self.beamForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAttenuation)
 
-        self.spinAttenuation = QDoubleSpinBox(self.gbBeam)
+        self.spinAttenuation = QDoubleSpinBox(self.groupBeam)
         self.spinAttenuation.setObjectName("spinAttenuation")
         sizePolicy2.setHeightForWidth(self.spinAttenuation.sizePolicy().hasHeightForWidth())
         self.spinAttenuation.setSizePolicy(sizePolicy2)
@@ -573,12 +573,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.beamForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinAttenuation)
 
-        self.lblPmAveraging = QLabel(self.gbBeam)
-        self.lblPmAveraging.setObjectName("lblPmAveraging")
+        self.labelPmAveraging = QLabel(self.groupBeam)
+        self.labelPmAveraging.setObjectName("labelPmAveraging")
 
-        self.beamForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblPmAveraging)
+        self.beamForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelPmAveraging)
 
-        self.spinPmAveraging = QSpinBox(self.gbBeam)
+        self.spinPmAveraging = QSpinBox(self.groupBeam)
         self.spinPmAveraging.setObjectName("spinPmAveraging")
         sizePolicy2.setHeightForWidth(self.spinPmAveraging.sizePolicy().hasHeightForWidth())
         self.spinPmAveraging.setSizePolicy(sizePolicy2)
@@ -588,24 +588,24 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.beamForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinPmAveraging)
 
-        self.topControlsRow.addWidget(self.gbBeam)
+        self.topControlsRow.addWidget(self.groupBeam)
 
         self.tabCalibrationLayout.addLayout(self.topControlsRow)
 
-        self.gbSweep = QGroupBox(self.tabCalibration)
-        self.gbSweep.setObjectName("gbSweep")
-        self.sweepLayout = QVBoxLayout(self.gbSweep)
+        self.groupSweep = QGroupBox(self.tabCalibration)
+        self.groupSweep.setObjectName("groupSweep")
+        self.sweepLayout = QVBoxLayout(self.groupSweep)
         self.sweepLayout.setSpacing(3)
         self.sweepLayout.setObjectName("sweepLayout")
         self.sweepForm = QFormLayout()
         self.sweepForm.setObjectName("sweepForm")
         self.sweepForm.setVerticalSpacing(3)
-        self.lblAngleStart = QLabel(self.gbSweep)
-        self.lblAngleStart.setObjectName("lblAngleStart")
+        self.labelAngleStart = QLabel(self.groupSweep)
+        self.labelAngleStart.setObjectName("labelAngleStart")
 
-        self.sweepForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblAngleStart)
+        self.sweepForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelAngleStart)
 
-        self.spinAngleStart = QDoubleSpinBox(self.gbSweep)
+        self.spinAngleStart = QDoubleSpinBox(self.groupSweep)
         self.spinAngleStart.setObjectName("spinAngleStart")
         sizePolicy2.setHeightForWidth(self.spinAngleStart.sizePolicy().hasHeightForWidth())
         self.spinAngleStart.setSizePolicy(sizePolicy2)
@@ -616,12 +616,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinAngleStart)
 
-        self.lblAngleEnd = QLabel(self.gbSweep)
-        self.lblAngleEnd.setObjectName("lblAngleEnd")
+        self.labelAngleEnd = QLabel(self.groupSweep)
+        self.labelAngleEnd.setObjectName("labelAngleEnd")
 
-        self.sweepForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblAngleEnd)
+        self.sweepForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelAngleEnd)
 
-        self.spinAngleEnd = QDoubleSpinBox(self.gbSweep)
+        self.spinAngleEnd = QDoubleSpinBox(self.groupSweep)
         self.spinAngleEnd.setObjectName("spinAngleEnd")
         sizePolicy2.setHeightForWidth(self.spinAngleEnd.sizePolicy().hasHeightForWidth())
         self.spinAngleEnd.setSizePolicy(sizePolicy2)
@@ -632,12 +632,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinAngleEnd)
 
-        self.lblNPoints = QLabel(self.gbSweep)
-        self.lblNPoints.setObjectName("lblNPoints")
+        self.labelNPoints = QLabel(self.groupSweep)
+        self.labelNPoints.setObjectName("labelNPoints")
 
-        self.sweepForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblNPoints)
+        self.sweepForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelNPoints)
 
-        self.spinNPoints = QSpinBox(self.gbSweep)
+        self.spinNPoints = QSpinBox(self.groupSweep)
         self.spinNPoints.setObjectName("spinNPoints")
         sizePolicy2.setHeightForWidth(self.spinNPoints.sizePolicy().hasHeightForWidth())
         self.spinNPoints.setSizePolicy(sizePolicy2)
@@ -647,12 +647,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinNPoints)
 
-        self.lblPointSettle = QLabel(self.gbSweep)
-        self.lblPointSettle.setObjectName("lblPointSettle")
+        self.labelPointSettle = QLabel(self.groupSweep)
+        self.labelPointSettle.setObjectName("labelPointSettle")
 
-        self.sweepForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblPointSettle)
+        self.sweepForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelPointSettle)
 
-        self.spinPointSettle = QDoubleSpinBox(self.gbSweep)
+        self.spinPointSettle = QDoubleSpinBox(self.groupSweep)
         self.spinPointSettle.setObjectName("spinPointSettle")
         sizePolicy2.setHeightForWidth(self.spinPointSettle.sizePolicy().hasHeightForWidth())
         self.spinPointSettle.setSizePolicy(sizePolicy2)
@@ -664,12 +664,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinPointSettle)
 
-        self.lblGainSettle = QLabel(self.gbSweep)
-        self.lblGainSettle.setObjectName("lblGainSettle")
+        self.labelGainSettle = QLabel(self.groupSweep)
+        self.labelGainSettle.setObjectName("labelGainSettle")
 
-        self.sweepForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.lblGainSettle)
+        self.sweepForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.labelGainSettle)
 
-        self.spinGainSettle = QDoubleSpinBox(self.gbSweep)
+        self.spinGainSettle = QDoubleSpinBox(self.groupSweep)
         self.spinGainSettle.setObjectName("spinGainSettle")
         sizePolicy2.setHeightForWidth(self.spinGainSettle.sizePolicy().hasHeightForWidth())
         self.spinGainSettle.setSizePolicy(sizePolicy2)
@@ -681,12 +681,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.spinGainSettle)
 
-        self.lblDetectorSamples = QLabel(self.gbSweep)
-        self.lblDetectorSamples.setObjectName("lblDetectorSamples")
+        self.labelDetectorSamples = QLabel(self.groupSweep)
+        self.labelDetectorSamples.setObjectName("labelDetectorSamples")
 
-        self.sweepForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblDetectorSamples)
+        self.sweepForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelDetectorSamples)
 
-        self.spinDetectorSamples = QSpinBox(self.gbSweep)
+        self.spinDetectorSamples = QSpinBox(self.groupSweep)
         self.spinDetectorSamples.setObjectName("spinDetectorSamples")
         sizePolicy2.setHeightForWidth(self.spinDetectorSamples.sizePolicy().hasHeightForWidth())
         self.spinDetectorSamples.setSizePolicy(sizePolicy2)
@@ -696,12 +696,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.sweepForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.spinDetectorSamples)
 
-        self.lblSaturationThreshold = QLabel(self.gbSweep)
-        self.lblSaturationThreshold.setObjectName("lblSaturationThreshold")
+        self.labelSaturationThreshold = QLabel(self.groupSweep)
+        self.labelSaturationThreshold.setObjectName("labelSaturationThreshold")
 
-        self.sweepForm.setWidget(6, QFormLayout.ItemRole.LabelRole, self.lblSaturationThreshold)
+        self.sweepForm.setWidget(6, QFormLayout.ItemRole.LabelRole, self.labelSaturationThreshold)
 
-        self.spinSaturationThreshold = QDoubleSpinBox(self.gbSweep)
+        self.spinSaturationThreshold = QDoubleSpinBox(self.groupSweep)
         self.spinSaturationThreshold.setObjectName("spinSaturationThreshold")
         sizePolicy2.setHeightForWidth(self.spinSaturationThreshold.sizePolicy().hasHeightForWidth())
         self.spinSaturationThreshold.setSizePolicy(sizePolicy2)
@@ -718,17 +718,17 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.gridModeLayout = QHBoxLayout()
         self.gridModeLayout.setSpacing(6)
         self.gridModeLayout.setObjectName("gridModeLayout")
-        self.lblGridMode = QLabel(self.gbSweep)
-        self.lblGridMode.setObjectName("lblGridMode")
+        self.labelGridMode = QLabel(self.groupSweep)
+        self.labelGridMode.setObjectName("labelGridMode")
 
-        self.gridModeLayout.addWidget(self.lblGridMode)
+        self.gridModeLayout.addWidget(self.labelGridMode)
 
-        self.radioLinearAngle = QRadioButton(self.gbSweep)
+        self.radioLinearAngle = QRadioButton(self.groupSweep)
         self.radioLinearAngle.setObjectName("radioLinearAngle")
 
         self.gridModeLayout.addWidget(self.radioLinearAngle)
 
-        self.radioLinearCos2 = QRadioButton(self.gbSweep)
+        self.radioLinearCos2 = QRadioButton(self.groupSweep)
         self.radioLinearCos2.setObjectName("radioLinearCos2")
         self.radioLinearCos2.setChecked(True)
 
@@ -739,71 +739,71 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.gainCheckboxLayout = QHBoxLayout()
         self.gainCheckboxLayout.setSpacing(6)
         self.gainCheckboxLayout.setObjectName("gainCheckboxLayout")
-        self.lblGains = QLabel(self.gbSweep)
-        self.lblGains.setObjectName("lblGains")
+        self.labelGains = QLabel(self.groupSweep)
+        self.labelGains.setObjectName("labelGains")
 
-        self.gainCheckboxLayout.addWidget(self.lblGains)
+        self.gainCheckboxLayout.addWidget(self.labelGains)
 
-        self.chkGain1 = QCheckBox(self.gbSweep)
-        self.chkGain1.setObjectName("chkGain1")
-        self.chkGain1.setChecked(True)
+        self.checkGain1 = QCheckBox(self.groupSweep)
+        self.checkGain1.setObjectName("checkGain1")
+        self.checkGain1.setChecked(True)
 
-        self.gainCheckboxLayout.addWidget(self.chkGain1)
+        self.gainCheckboxLayout.addWidget(self.checkGain1)
 
-        self.chkGain2 = QCheckBox(self.gbSweep)
-        self.chkGain2.setObjectName("chkGain2")
-        self.chkGain2.setChecked(True)
+        self.checkGain2 = QCheckBox(self.groupSweep)
+        self.checkGain2.setObjectName("checkGain2")
+        self.checkGain2.setChecked(True)
 
-        self.gainCheckboxLayout.addWidget(self.chkGain2)
+        self.gainCheckboxLayout.addWidget(self.checkGain2)
 
-        self.chkGain3 = QCheckBox(self.gbSweep)
-        self.chkGain3.setObjectName("chkGain3")
-        self.chkGain3.setChecked(True)
+        self.checkGain3 = QCheckBox(self.groupSweep)
+        self.checkGain3.setObjectName("checkGain3")
+        self.checkGain3.setChecked(True)
 
-        self.gainCheckboxLayout.addWidget(self.chkGain3)
+        self.gainCheckboxLayout.addWidget(self.checkGain3)
 
-        self.chkGain4 = QCheckBox(self.gbSweep)
-        self.chkGain4.setObjectName("chkGain4")
-        self.chkGain4.setChecked(True)
+        self.checkGain4 = QCheckBox(self.groupSweep)
+        self.checkGain4.setObjectName("checkGain4")
+        self.checkGain4.setChecked(True)
 
-        self.gainCheckboxLayout.addWidget(self.chkGain4)
+        self.gainCheckboxLayout.addWidget(self.checkGain4)
 
         self.sweepLayout.addLayout(self.gainCheckboxLayout)
 
-        self.tabCalibrationLayout.addWidget(self.gbSweep)
+        self.tabCalibrationLayout.addWidget(self.groupSweep)
 
-        self.gbPowerGrid = QGroupBox(self.tabCalibration)
-        self.gbPowerGrid.setObjectName("gbPowerGrid")
-        self.powerGridForm = QFormLayout(self.gbPowerGrid)
+        self.groupPowerGrid = QGroupBox(self.tabCalibration)
+        self.groupPowerGrid.setObjectName("groupPowerGrid")
+        self.powerGridForm = QFormLayout(self.groupPowerGrid)
         self.powerGridForm.setObjectName("powerGridForm")
         self.powerGridForm.setVerticalSpacing(3)
-        self.lblPowerGridMode = QLabel(self.gbPowerGrid)
-        self.lblPowerGridMode.setObjectName("lblPowerGridMode")
+        self.labelPowerGridMode = QLabel(self.groupPowerGrid)
+        self.labelPowerGridMode.setObjectName("labelPowerGridMode")
 
-        self.powerGridForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblPowerGridMode)
+        self.powerGridForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelPowerGridMode)
 
         self.powerGridModeLayout = QHBoxLayout()
         self.powerGridModeLayout.setSpacing(6)
         self.powerGridModeLayout.setObjectName("powerGridModeLayout")
-        self.radioGridLogPower = QRadioButton(self.gbPowerGrid)
+        self.radioGridLogPower = QRadioButton(self.groupPowerGrid)
         self.radioGridLogPower.setObjectName("radioGridLogPower")
         self.radioGridLogPower.setChecked(True)
 
         self.powerGridModeLayout.addWidget(self.radioGridLogPower)
 
-        self.radioGridLinearPower = QRadioButton(self.gbPowerGrid)
+        self.radioGridLinearPower = QRadioButton(self.groupPowerGrid)
         self.radioGridLinearPower.setObjectName("radioGridLinearPower")
 
         self.powerGridModeLayout.addWidget(self.radioGridLinearPower)
 
         self.powerGridForm.setLayout(0, QFormLayout.ItemRole.FieldRole, self.powerGridModeLayout)
 
-        self.lblPowerTolerancePct = QLabel(self.gbPowerGrid)
-        self.lblPowerTolerancePct.setObjectName("lblPowerTolerancePct")
+        self.labelPowerTolerancePct = QLabel(self.groupPowerGrid)
+        self.labelPowerTolerancePct.setObjectName("labelPowerTolerancePct")
 
-        self.powerGridForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblPowerTolerancePct)
+        self.powerGridForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelPowerTolerancePct)
 
-        self.spinPowerTolerancePct = QDoubleSpinBox(self.gbPowerGrid)
+        self.spinPowerTolerancePct = QDoubleSpinBox(self.groupPowerGrid)
         self.spinPowerTolerancePct.setObjectName("spinPowerTolerancePct")
         sizePolicy2.setHeightForWidth(self.spinPowerTolerancePct.sizePolicy().hasHeightForWidth())
         self.spinPowerTolerancePct.setSizePolicy(sizePolicy2)
@@ -814,12 +814,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.powerGridForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinPowerTolerancePct)
 
-        self.lblMaxRefineSteps = QLabel(self.gbPowerGrid)
-        self.lblMaxRefineSteps.setObjectName("lblMaxRefineSteps")
+        self.labelMaxRefineSteps = QLabel(self.groupPowerGrid)
+        self.labelMaxRefineSteps.setObjectName("labelMaxRefineSteps")
 
-        self.powerGridForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblMaxRefineSteps)
+        self.powerGridForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelMaxRefineSteps)
 
-        self.spinMaxRefineSteps = QSpinBox(self.gbPowerGrid)
+        self.spinMaxRefineSteps = QSpinBox(self.groupPowerGrid)
         self.spinMaxRefineSteps.setObjectName("spinMaxRefineSteps")
         sizePolicy2.setHeightForWidth(self.spinMaxRefineSteps.sizePolicy().hasHeightForWidth())
         self.spinMaxRefineSteps.setSizePolicy(sizePolicy2)
@@ -829,61 +829,61 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.powerGridForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinMaxRefineSteps)
 
-        self.chkPowerFromCurve = QCheckBox(self.gbPowerGrid)
-        self.chkPowerFromCurve.setObjectName("chkPowerFromCurve")
+        self.checkPowerFromCurve = QCheckBox(self.groupPowerGrid)
+        self.checkPowerFromCurve.setObjectName("checkPowerFromCurve")
 
-        self.powerGridForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.chkPowerFromCurve)
+        self.powerGridForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.checkPowerFromCurve)
 
-        self.tabCalibrationLayout.addWidget(self.gbPowerGrid)
+        self.tabCalibrationLayout.addWidget(self.groupPowerGrid)
 
-        self.gbProfile = QGroupBox(self.tabCalibration)
-        self.gbProfile.setObjectName("gbProfile")
-        self.profileForm = QFormLayout(self.gbProfile)
+        self.groupProfile = QGroupBox(self.tabCalibration)
+        self.groupProfile.setObjectName("groupProfile")
+        self.profileForm = QFormLayout(self.groupProfile)
         self.profileForm.setObjectName("profileForm")
         self.profileForm.setVerticalSpacing(3)
-        self.lblProfileName = QLabel(self.gbProfile)
-        self.lblProfileName.setObjectName("lblProfileName")
+        self.labelProfileName = QLabel(self.groupProfile)
+        self.labelProfileName.setObjectName("labelProfileName")
 
-        self.profileForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblProfileName)
+        self.profileForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelProfileName)
 
-        self.lineProfileName = QLineEdit(self.gbProfile)
-        self.lineProfileName.setObjectName("lineProfileName")
-        sizePolicy2.setHeightForWidth(self.lineProfileName.sizePolicy().hasHeightForWidth())
-        self.lineProfileName.setSizePolicy(sizePolicy2)
+        self.editProfileName = QLineEdit(self.groupProfile)
+        self.editProfileName.setObjectName("editProfileName")
+        sizePolicy2.setHeightForWidth(self.editProfileName.sizePolicy().hasHeightForWidth())
+        self.editProfileName.setSizePolicy(sizePolicy2)
 
-        self.profileForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineProfileName)
+        self.profileForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.editProfileName)
 
-        self.lblOutputPath = QLabel(self.gbProfile)
-        self.lblOutputPath.setObjectName("lblOutputPath")
-        sizePolicy1.setHeightForWidth(self.lblOutputPath.sizePolicy().hasHeightForWidth())
-        self.lblOutputPath.setSizePolicy(sizePolicy1)
-        self.lblOutputPath.setMinimumSize(QSize(80, 48))
-        self.lblOutputPath.setWordWrap(True)
+        self.valueOutputPath = QLabel(self.groupProfile)
+        self.valueOutputPath.setObjectName("valueOutputPath")
+        sizePolicy1.setHeightForWidth(self.valueOutputPath.sizePolicy().hasHeightForWidth())
+        self.valueOutputPath.setSizePolicy(sizePolicy1)
+        self.valueOutputPath.setMinimumSize(QSize(80, 48))
+        self.valueOutputPath.setWordWrap(True)
 
-        self.profileForm.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.lblOutputPath)
+        self.profileForm.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.valueOutputPath)
 
-        self.tabCalibrationLayout.addWidget(self.gbProfile)
+        self.tabCalibrationLayout.addWidget(self.groupProfile)
 
         self.controlLayout = QHBoxLayout()
         self.controlLayout.setSpacing(6)
         self.controlLayout.setObjectName("controlLayout")
-        self.btnStart = QPushButton(self.tabCalibration)
-        self.btnStart.setObjectName("btnStart")
-        self.btnStart.setEnabled(False)
+        self.buttonStart = QPushButton(self.tabCalibration)
+        self.buttonStart.setObjectName("buttonStart")
+        self.buttonStart.setEnabled(False)
 
-        self.controlLayout.addWidget(self.btnStart)
+        self.controlLayout.addWidget(self.buttonStart)
 
-        self.btnAbort = QPushButton(self.tabCalibration)
-        self.btnAbort.setObjectName("btnAbort")
-        self.btnAbort.setEnabled(False)
+        self.buttonAbort = QPushButton(self.tabCalibration)
+        self.buttonAbort.setObjectName("buttonAbort")
+        self.buttonAbort.setEnabled(False)
 
-        self.controlLayout.addWidget(self.btnAbort)
+        self.controlLayout.addWidget(self.buttonAbort)
 
-        self.btnSave = QPushButton(self.tabCalibration)
-        self.btnSave.setObjectName("btnSave")
-        self.btnSave.setEnabled(False)
+        self.buttonSave = QPushButton(self.tabCalibration)
+        self.buttonSave.setObjectName("buttonSave")
+        self.buttonSave.setEnabled(False)
 
-        self.controlLayout.addWidget(self.btnSave)
+        self.controlLayout.addWidget(self.buttonSave)
 
         self.tabCalibrationLayout.addLayout(self.controlLayout)
 
@@ -893,23 +893,23 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.tabCalibrationLayout.addItem(self.tabCalibrationSpacer)
 
-        self.tabsMode.addTab(self.tabCalibration, "")
+        self.tabMode.addTab(self.tabCalibration, "")
         self.tabNDRange = QWidget()
         self.tabNDRange.setObjectName("tabNDRange")
         self.tabNDRangeLayout = QVBoxLayout(self.tabNDRange)
         self.tabNDRangeLayout.setSpacing(5)
         self.tabNDRangeLayout.setObjectName("tabNDRangeLayout")
-        self.gbNDScanParams = QGroupBox(self.tabNDRange)
-        self.gbNDScanParams.setObjectName("gbNDScanParams")
-        self.ndScanForm = QFormLayout(self.gbNDScanParams)
+        self.groupNDScanParams = QGroupBox(self.tabNDRange)
+        self.groupNDScanParams.setObjectName("groupNDScanParams")
+        self.ndScanForm = QFormLayout(self.groupNDScanParams)
         self.ndScanForm.setObjectName("ndScanForm")
         self.ndScanForm.setVerticalSpacing(3)
-        self.lblNDScanStart = QLabel(self.gbNDScanParams)
-        self.lblNDScanStart.setObjectName("lblNDScanStart")
+        self.labelNDScanStart = QLabel(self.groupNDScanParams)
+        self.labelNDScanStart.setObjectName("labelNDScanStart")
 
-        self.ndScanForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblNDScanStart)
+        self.ndScanForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelNDScanStart)
 
-        self.spinNDScanStart = QDoubleSpinBox(self.gbNDScanParams)
+        self.spinNDScanStart = QDoubleSpinBox(self.groupNDScanParams)
         self.spinNDScanStart.setObjectName("spinNDScanStart")
         sizePolicy2.setHeightForWidth(self.spinNDScanStart.sizePolicy().hasHeightForWidth())
         self.spinNDScanStart.setSizePolicy(sizePolicy2)
@@ -920,12 +920,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinNDScanStart)
 
-        self.lblNDScanEnd = QLabel(self.gbNDScanParams)
-        self.lblNDScanEnd.setObjectName("lblNDScanEnd")
+        self.labelNDScanEnd = QLabel(self.groupNDScanParams)
+        self.labelNDScanEnd.setObjectName("labelNDScanEnd")
 
-        self.ndScanForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblNDScanEnd)
+        self.ndScanForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelNDScanEnd)
 
-        self.spinNDScanEnd = QDoubleSpinBox(self.gbNDScanParams)
+        self.spinNDScanEnd = QDoubleSpinBox(self.groupNDScanParams)
         self.spinNDScanEnd.setObjectName("spinNDScanEnd")
         sizePolicy2.setHeightForWidth(self.spinNDScanEnd.sizePolicy().hasHeightForWidth())
         self.spinNDScanEnd.setSizePolicy(sizePolicy2)
@@ -936,12 +936,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinNDScanEnd)
 
-        self.lblNDScanPoints = QLabel(self.gbNDScanParams)
-        self.lblNDScanPoints.setObjectName("lblNDScanPoints")
+        self.labelNDScanPoints = QLabel(self.groupNDScanParams)
+        self.labelNDScanPoints.setObjectName("labelNDScanPoints")
 
-        self.ndScanForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblNDScanPoints)
+        self.ndScanForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelNDScanPoints)
 
-        self.spinNDScanPoints = QSpinBox(self.gbNDScanParams)
+        self.spinNDScanPoints = QSpinBox(self.groupNDScanParams)
         self.spinNDScanPoints.setObjectName("spinNDScanPoints")
         sizePolicy2.setHeightForWidth(self.spinNDScanPoints.sizePolicy().hasHeightForWidth())
         self.spinNDScanPoints.setSizePolicy(sizePolicy2)
@@ -951,12 +951,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinNDScanPoints)
 
-        self.lblNDScanSettle = QLabel(self.gbNDScanParams)
-        self.lblNDScanSettle.setObjectName("lblNDScanSettle")
+        self.labelNDScanSettle = QLabel(self.groupNDScanParams)
+        self.labelNDScanSettle.setObjectName("labelNDScanSettle")
 
-        self.ndScanForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lblNDScanSettle)
+        self.ndScanForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelNDScanSettle)
 
-        self.spinNDScanSettle = QDoubleSpinBox(self.gbNDScanParams)
+        self.spinNDScanSettle = QDoubleSpinBox(self.groupNDScanParams)
         self.spinNDScanSettle.setObjectName("spinNDScanSettle")
         sizePolicy2.setHeightForWidth(self.spinNDScanSettle.sizePolicy().hasHeightForWidth())
         self.spinNDScanSettle.setSizePolicy(sizePolicy2)
@@ -968,12 +968,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinNDScanSettle)
 
-        self.lblNDDarkFloor = QLabel(self.gbNDScanParams)
-        self.lblNDDarkFloor.setObjectName("lblNDDarkFloor")
+        self.labelNDDarkFloor = QLabel(self.groupNDScanParams)
+        self.labelNDDarkFloor.setObjectName("labelNDDarkFloor")
 
-        self.ndScanForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.lblNDDarkFloor)
+        self.ndScanForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.labelNDDarkFloor)
 
-        self.spinNDDarkFloorUW = QDoubleSpinBox(self.gbNDScanParams)
+        self.spinNDDarkFloorUW = QDoubleSpinBox(self.groupNDScanParams)
         self.spinNDDarkFloorUW.setObjectName("spinNDDarkFloorUW")
         sizePolicy2.setHeightForWidth(self.spinNDDarkFloorUW.sizePolicy().hasHeightForWidth())
         self.spinNDDarkFloorUW.setSizePolicy(sizePolicy2)
@@ -984,12 +984,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.spinNDDarkFloorUW)
 
-        self.lblNDScanSamples = QLabel(self.gbNDScanParams)
-        self.lblNDScanSamples.setObjectName("lblNDScanSamples")
+        self.labelNDScanSamples = QLabel(self.groupNDScanParams)
+        self.labelNDScanSamples.setObjectName("labelNDScanSamples")
 
-        self.ndScanForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.lblNDScanSamples)
+        self.ndScanForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelNDScanSamples)
 
-        self.spinNDScanSamples = QSpinBox(self.gbNDScanParams)
+        self.spinNDScanSamples = QSpinBox(self.groupNDScanParams)
         self.spinNDScanSamples.setObjectName("spinNDScanSamples")
         sizePolicy2.setHeightForWidth(self.spinNDScanSamples.sizePolicy().hasHeightForWidth())
         self.spinNDScanSamples.setSizePolicy(sizePolicy2)
@@ -999,62 +999,62 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndScanForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.spinNDScanSamples)
 
-        self.tabNDRangeLayout.addWidget(self.gbNDScanParams)
+        self.tabNDRangeLayout.addWidget(self.groupNDScanParams)
 
         self.ndScanButtonLayout = QHBoxLayout()
         self.ndScanButtonLayout.setSpacing(6)
         self.ndScanButtonLayout.setObjectName("ndScanButtonLayout")
-        self.btnScanNDRange = QPushButton(self.tabNDRange)
-        self.btnScanNDRange.setObjectName("btnScanNDRange")
-        self.btnScanNDRange.setEnabled(False)
+        self.buttonScanNDRange = QPushButton(self.tabNDRange)
+        self.buttonScanNDRange.setObjectName("buttonScanNDRange")
+        self.buttonScanNDRange.setEnabled(False)
 
-        self.ndScanButtonLayout.addWidget(self.btnScanNDRange)
+        self.ndScanButtonLayout.addWidget(self.buttonScanNDRange)
 
-        self.btnAbortNDScan = QPushButton(self.tabNDRange)
-        self.btnAbortNDScan.setObjectName("btnAbortNDScan")
-        self.btnAbortNDScan.setEnabled(False)
+        self.buttonAbortNDScan = QPushButton(self.tabNDRange)
+        self.buttonAbortNDScan.setObjectName("buttonAbortNDScan")
+        self.buttonAbortNDScan.setEnabled(False)
 
-        self.ndScanButtonLayout.addWidget(self.btnAbortNDScan)
+        self.ndScanButtonLayout.addWidget(self.buttonAbortNDScan)
 
         self.tabNDRangeLayout.addLayout(self.ndScanButtonLayout)
 
-        self.lblNDRange = QLabel(self.tabNDRange)
-        self.lblNDRange.setObjectName("lblNDRange")
-        sizePolicy1.setHeightForWidth(self.lblNDRange.sizePolicy().hasHeightForWidth())
-        self.lblNDRange.setSizePolicy(sizePolicy1)
-        self.lblNDRange.setMinimumSize(QSize(80, 48))
-        self.lblNDRange.setWordWrap(True)
+        self.valueNDRange = QLabel(self.tabNDRange)
+        self.valueNDRange.setObjectName("valueNDRange")
+        sizePolicy1.setHeightForWidth(self.valueNDRange.sizePolicy().hasHeightForWidth())
+        self.valueNDRange.setSizePolicy(sizePolicy1)
+        self.valueNDRange.setMinimumSize(QSize(80, 48))
+        self.valueNDRange.setWordWrap(True)
 
-        self.tabNDRangeLayout.addWidget(self.lblNDRange)
+        self.tabNDRangeLayout.addWidget(self.valueNDRange)
 
-        self.ndPlotWidget = NDTransmissionPlot(self.tabNDRange)
-        self.ndPlotWidget.setObjectName("ndPlotWidget")
+        self.ndRangePlot = NDTransmissionPlot(self.tabNDRange)
+        self.ndRangePlot.setObjectName("ndRangePlot")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(1)
-        sizePolicy3.setHeightForWidth(self.ndPlotWidget.sizePolicy().hasHeightForWidth())
-        self.ndPlotWidget.setSizePolicy(sizePolicy3)
-        self.ndPlotWidget.setMinimumSize(QSize(300, 200))
+        sizePolicy3.setHeightForWidth(self.ndRangePlot.sizePolicy().hasHeightForWidth())
+        self.ndRangePlot.setSizePolicy(sizePolicy3)
+        self.ndRangePlot.setMinimumSize(QSize(300, 200))
 
-        self.tabNDRangeLayout.addWidget(self.ndPlotWidget)
+        self.tabNDRangeLayout.addWidget(self.ndRangePlot)
 
-        self.tabsMode.addTab(self.tabNDRange, "")
+        self.tabMode.addTab(self.tabNDRange, "")
         self.tabNDLinearity = QWidget()
         self.tabNDLinearity.setObjectName("tabNDLinearity")
         self.tabNDLinearityLayout = QVBoxLayout(self.tabNDLinearity)
         self.tabNDLinearityLayout.setSpacing(5)
         self.tabNDLinearityLayout.setObjectName("tabNDLinearityLayout")
-        self.gbNDLinParams = QGroupBox(self.tabNDLinearity)
-        self.gbNDLinParams.setObjectName("gbNDLinParams")
-        self.ndLinForm = QGridLayout(self.gbNDLinParams)
+        self.groupNDLinParams = QGroupBox(self.tabNDLinearity)
+        self.groupNDLinParams.setObjectName("groupNDLinParams")
+        self.ndLinForm = QGridLayout(self.groupNDLinParams)
         self.ndLinForm.setObjectName("ndLinForm")
         self.ndLinForm.setVerticalSpacing(3)
-        self.lblNDLinStart = QLabel(self.gbNDLinParams)
-        self.lblNDLinStart.setObjectName("lblNDLinStart")
+        self.labelNDLinStart = QLabel(self.groupNDLinParams)
+        self.labelNDLinStart.setObjectName("labelNDLinStart")
 
-        self.ndLinForm.addWidget(self.lblNDLinStart, 0, 0, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinStart, 0, 0, 1, 1)
 
-        self.spinNDLinStart = QDoubleSpinBox(self.gbNDLinParams)
+        self.spinNDLinStart = QDoubleSpinBox(self.groupNDLinParams)
         self.spinNDLinStart.setObjectName("spinNDLinStart")
         sizePolicy2.setHeightForWidth(self.spinNDLinStart.sizePolicy().hasHeightForWidth())
         self.spinNDLinStart.setSizePolicy(sizePolicy2)
@@ -1065,12 +1065,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinStart, 0, 1, 1, 1)
 
-        self.lblNDLinScans = QLabel(self.gbNDLinParams)
-        self.lblNDLinScans.setObjectName("lblNDLinScans")
+        self.labelNDLinScans = QLabel(self.groupNDLinParams)
+        self.labelNDLinScans.setObjectName("labelNDLinScans")
 
-        self.ndLinForm.addWidget(self.lblNDLinScans, 0, 2, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinScans, 0, 2, 1, 1)
 
-        self.spinNDLinScans = QSpinBox(self.gbNDLinParams)
+        self.spinNDLinScans = QSpinBox(self.groupNDLinParams)
         self.spinNDLinScans.setObjectName("spinNDLinScans")
         sizePolicy2.setHeightForWidth(self.spinNDLinScans.sizePolicy().hasHeightForWidth())
         self.spinNDLinScans.setSizePolicy(sizePolicy2)
@@ -1080,12 +1080,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinScans, 0, 3, 1, 1)
 
-        self.lblNDLinEnd = QLabel(self.gbNDLinParams)
-        self.lblNDLinEnd.setObjectName("lblNDLinEnd")
+        self.labelNDLinEnd = QLabel(self.groupNDLinParams)
+        self.labelNDLinEnd.setObjectName("labelNDLinEnd")
 
-        self.ndLinForm.addWidget(self.lblNDLinEnd, 1, 0, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinEnd, 1, 0, 1, 1)
 
-        self.spinNDLinEnd = QDoubleSpinBox(self.gbNDLinParams)
+        self.spinNDLinEnd = QDoubleSpinBox(self.groupNDLinParams)
         self.spinNDLinEnd.setObjectName("spinNDLinEnd")
         sizePolicy2.setHeightForWidth(self.spinNDLinEnd.sizePolicy().hasHeightForWidth())
         self.spinNDLinEnd.setSizePolicy(sizePolicy2)
@@ -1096,18 +1096,18 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinEnd, 1, 1, 1, 1)
 
-        self.checkNDLinAlternate = QCheckBox(self.gbNDLinParams)
+        self.checkNDLinAlternate = QCheckBox(self.groupNDLinParams)
         self.checkNDLinAlternate.setObjectName("checkNDLinAlternate")
         self.checkNDLinAlternate.setChecked(True)
 
         self.ndLinForm.addWidget(self.checkNDLinAlternate, 1, 2, 1, 2)
 
-        self.lblNDLinPoints = QLabel(self.gbNDLinParams)
-        self.lblNDLinPoints.setObjectName("lblNDLinPoints")
+        self.labelNDLinPoints = QLabel(self.groupNDLinParams)
+        self.labelNDLinPoints.setObjectName("labelNDLinPoints")
 
-        self.ndLinForm.addWidget(self.lblNDLinPoints, 2, 0, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinPoints, 2, 0, 1, 1)
 
-        self.spinNDLinPoints = QSpinBox(self.gbNDLinParams)
+        self.spinNDLinPoints = QSpinBox(self.groupNDLinParams)
         self.spinNDLinPoints.setObjectName("spinNDLinPoints")
         sizePolicy2.setHeightForWidth(self.spinNDLinPoints.sizePolicy().hasHeightForWidth())
         self.spinNDLinPoints.setSizePolicy(sizePolicy2)
@@ -1117,12 +1117,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinPoints, 2, 1, 1, 1)
 
-        self.lblNDLinFloor = QLabel(self.gbNDLinParams)
-        self.lblNDLinFloor.setObjectName("lblNDLinFloor")
+        self.labelNDLinFloor = QLabel(self.groupNDLinParams)
+        self.labelNDLinFloor.setObjectName("labelNDLinFloor")
 
-        self.ndLinForm.addWidget(self.lblNDLinFloor, 2, 2, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinFloor, 2, 2, 1, 1)
 
-        self.spinNDLinFloorUW = QDoubleSpinBox(self.gbNDLinParams)
+        self.spinNDLinFloorUW = QDoubleSpinBox(self.groupNDLinParams)
         self.spinNDLinFloorUW.setObjectName("spinNDLinFloorUW")
         sizePolicy2.setHeightForWidth(self.spinNDLinFloorUW.sizePolicy().hasHeightForWidth())
         self.spinNDLinFloorUW.setSizePolicy(sizePolicy2)
@@ -1133,12 +1133,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinFloorUW, 2, 3, 1, 1)
 
-        self.lblNDLinSettle = QLabel(self.gbNDLinParams)
-        self.lblNDLinSettle.setObjectName("lblNDLinSettle")
+        self.labelNDLinSettle = QLabel(self.groupNDLinParams)
+        self.labelNDLinSettle.setObjectName("labelNDLinSettle")
 
-        self.ndLinForm.addWidget(self.lblNDLinSettle, 3, 0, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinSettle, 3, 0, 1, 1)
 
-        self.spinNDLinSettle = QDoubleSpinBox(self.gbNDLinParams)
+        self.spinNDLinSettle = QDoubleSpinBox(self.groupNDLinParams)
         self.spinNDLinSettle.setObjectName("spinNDLinSettle")
         sizePolicy2.setHeightForWidth(self.spinNDLinSettle.sizePolicy().hasHeightForWidth())
         self.spinNDLinSettle.setSizePolicy(sizePolicy2)
@@ -1150,12 +1150,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinSettle, 3, 1, 1, 1)
 
-        self.lblNDLinTol = QLabel(self.gbNDLinParams)
-        self.lblNDLinTol.setObjectName("lblNDLinTol")
+        self.labelNDLinTol = QLabel(self.groupNDLinParams)
+        self.labelNDLinTol.setObjectName("labelNDLinTol")
 
-        self.ndLinForm.addWidget(self.lblNDLinTol, 3, 2, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinTol, 3, 2, 1, 1)
 
-        self.spinNDLinTol = QDoubleSpinBox(self.gbNDLinParams)
+        self.spinNDLinTol = QDoubleSpinBox(self.groupNDLinParams)
         self.spinNDLinTol.setObjectName("spinNDLinTol")
         sizePolicy2.setHeightForWidth(self.spinNDLinTol.sizePolicy().hasHeightForWidth())
         self.spinNDLinTol.setSizePolicy(sizePolicy2)
@@ -1167,12 +1167,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinTol, 3, 3, 1, 1)
 
-        self.lblNDLinSamples = QLabel(self.gbNDLinParams)
-        self.lblNDLinSamples.setObjectName("lblNDLinSamples")
+        self.labelNDLinSamples = QLabel(self.groupNDLinParams)
+        self.labelNDLinSamples.setObjectName("labelNDLinSamples")
 
-        self.ndLinForm.addWidget(self.lblNDLinSamples, 4, 0, 1, 1)
+        self.ndLinForm.addWidget(self.labelNDLinSamples, 4, 0, 1, 1)
 
-        self.spinNDLinSamples = QSpinBox(self.gbNDLinParams)
+        self.spinNDLinSamples = QSpinBox(self.groupNDLinParams)
         self.spinNDLinSamples.setObjectName("spinNDLinSamples")
         sizePolicy2.setHeightForWidth(self.spinNDLinSamples.sizePolicy().hasHeightForWidth())
         self.spinNDLinSamples.setSizePolicy(sizePolicy2)
@@ -1182,28 +1182,28 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.ndLinForm.addWidget(self.spinNDLinSamples, 4, 1, 1, 1)
 
-        self.tabNDLinearityLayout.addWidget(self.gbNDLinParams)
+        self.tabNDLinearityLayout.addWidget(self.groupNDLinParams)
 
         self.ndLinButtonLayout = QHBoxLayout()
         self.ndLinButtonLayout.setSpacing(6)
         self.ndLinButtonLayout.setObjectName("ndLinButtonLayout")
-        self.btnScanNDLin = QPushButton(self.tabNDLinearity)
-        self.btnScanNDLin.setObjectName("btnScanNDLin")
-        self.btnScanNDLin.setEnabled(False)
+        self.buttonScanNDLin = QPushButton(self.tabNDLinearity)
+        self.buttonScanNDLin.setObjectName("buttonScanNDLin")
+        self.buttonScanNDLin.setEnabled(False)
 
-        self.ndLinButtonLayout.addWidget(self.btnScanNDLin)
+        self.ndLinButtonLayout.addWidget(self.buttonScanNDLin)
 
-        self.btnAbortNDLin = QPushButton(self.tabNDLinearity)
-        self.btnAbortNDLin.setObjectName("btnAbortNDLin")
-        self.btnAbortNDLin.setEnabled(False)
+        self.buttonAbortNDLin = QPushButton(self.tabNDLinearity)
+        self.buttonAbortNDLin.setObjectName("buttonAbortNDLin")
+        self.buttonAbortNDLin.setEnabled(False)
 
-        self.ndLinButtonLayout.addWidget(self.btnAbortNDLin)
+        self.ndLinButtonLayout.addWidget(self.buttonAbortNDLin)
 
-        self.btnClearNDLin = QPushButton(self.tabNDLinearity)
-        self.btnClearNDLin.setObjectName("btnClearNDLin")
-        self.btnClearNDLin.setEnabled(False)
+        self.buttonClearNDLin = QPushButton(self.tabNDLinearity)
+        self.buttonClearNDLin.setObjectName("buttonClearNDLin")
+        self.buttonClearNDLin.setEnabled(False)
 
-        self.ndLinButtonLayout.addWidget(self.btnClearNDLin)
+        self.ndLinButtonLayout.addWidget(self.buttonClearNDLin)
 
         self.ndLinButtonSpacer = QSpacerItem(
             40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -1213,60 +1213,60 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.tabNDLinearityLayout.addLayout(self.ndLinButtonLayout)
 
-        self.ndLinPlotWidget = NDLinearityPlot(self.tabNDLinearity)
-        self.ndLinPlotWidget.setObjectName("ndLinPlotWidget")
+        self.ndLinearityPlot = NDLinearityPlot(self.tabNDLinearity)
+        self.ndLinearityPlot.setObjectName("ndLinearityPlot")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(3)
-        sizePolicy4.setHeightForWidth(self.ndLinPlotWidget.sizePolicy().hasHeightForWidth())
-        self.ndLinPlotWidget.setSizePolicy(sizePolicy4)
-        self.ndLinPlotWidget.setMinimumSize(QSize(300, 200))
+        sizePolicy4.setHeightForWidth(self.ndLinearityPlot.sizePolicy().hasHeightForWidth())
+        self.ndLinearityPlot.setSizePolicy(sizePolicy4)
+        self.ndLinearityPlot.setMinimumSize(QSize(300, 200))
 
-        self.tabNDLinearityLayout.addWidget(self.ndLinPlotWidget)
+        self.tabNDLinearityLayout.addWidget(self.ndLinearityPlot)
 
-        self.lblNDLinStatus = QLabel(self.tabNDLinearity)
-        self.lblNDLinStatus.setObjectName("lblNDLinStatus")
-        sizePolicy1.setHeightForWidth(self.lblNDLinStatus.sizePolicy().hasHeightForWidth())
-        self.lblNDLinStatus.setSizePolicy(sizePolicy1)
-        self.lblNDLinStatus.setMinimumSize(QSize(80, 34))
-        self.lblNDLinStatus.setWordWrap(True)
+        self.valueNDLinStatus = QLabel(self.tabNDLinearity)
+        self.valueNDLinStatus.setObjectName("valueNDLinStatus")
+        sizePolicy1.setHeightForWidth(self.valueNDLinStatus.sizePolicy().hasHeightForWidth())
+        self.valueNDLinStatus.setSizePolicy(sizePolicy1)
+        self.valueNDLinStatus.setMinimumSize(QSize(80, 34))
+        self.valueNDLinStatus.setWordWrap(True)
 
-        self.tabNDLinearityLayout.addWidget(self.lblNDLinStatus)
+        self.tabNDLinearityLayout.addWidget(self.valueNDLinStatus)
 
-        self.txtNDLinReport = QPlainTextEdit(self.tabNDLinearity)
-        self.txtNDLinReport.setObjectName("txtNDLinReport")
+        self.editNDLinReport = QPlainTextEdit(self.tabNDLinearity)
+        self.editNDLinReport.setObjectName("editNDLinReport")
         sizePolicy5 = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         sizePolicy5.setHorizontalStretch(0)
         sizePolicy5.setVerticalStretch(1)
-        sizePolicy5.setHeightForWidth(self.txtNDLinReport.sizePolicy().hasHeightForWidth())
-        self.txtNDLinReport.setSizePolicy(sizePolicy5)
-        self.txtNDLinReport.setMinimumSize(QSize(80, 90))
+        sizePolicy5.setHeightForWidth(self.editNDLinReport.sizePolicy().hasHeightForWidth())
+        self.editNDLinReport.setSizePolicy(sizePolicy5)
+        self.editNDLinReport.setMinimumSize(QSize(80, 90))
         font = QFont()
         font.setFamilies(["Menlo"])
         font.setPointSize(10)
-        self.txtNDLinReport.setFont(font)
-        self.txtNDLinReport.setReadOnly(True)
-        self.txtNDLinReport.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.editNDLinReport.setFont(font)
+        self.editNDLinReport.setReadOnly(True)
+        self.editNDLinReport.setLineWrapMode(QPlainTextEdit.NoWrap)
 
-        self.tabNDLinearityLayout.addWidget(self.txtNDLinReport)
+        self.tabNDLinearityLayout.addWidget(self.editNDLinReport)
 
-        self.tabsMode.addTab(self.tabNDLinearity, "")
+        self.tabMode.addTab(self.tabNDLinearity, "")
         self.tabDetectorCompare = QWidget()
         self.tabDetectorCompare.setObjectName("tabDetectorCompare")
         self.tabDetectorCompareLayout = QVBoxLayout(self.tabDetectorCompare)
         self.tabDetectorCompareLayout.setSpacing(5)
         self.tabDetectorCompareLayout.setObjectName("tabDetectorCompareLayout")
-        self.gbXCheckParams = QGroupBox(self.tabDetectorCompare)
-        self.gbXCheckParams.setObjectName("gbXCheckParams")
-        self.xCheckForm = QFormLayout(self.gbXCheckParams)
+        self.groupXCheckParams = QGroupBox(self.tabDetectorCompare)
+        self.groupXCheckParams.setObjectName("groupXCheckParams")
+        self.xCheckForm = QFormLayout(self.groupXCheckParams)
         self.xCheckForm.setObjectName("xCheckForm")
         self.xCheckForm.setVerticalSpacing(3)
-        self.lblXCheckPoints = QLabel(self.gbXCheckParams)
-        self.lblXCheckPoints.setObjectName("lblXCheckPoints")
+        self.labelXCheckPoints = QLabel(self.groupXCheckParams)
+        self.labelXCheckPoints.setObjectName("labelXCheckPoints")
 
-        self.xCheckForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblXCheckPoints)
+        self.xCheckForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelXCheckPoints)
 
-        self.spinXCheckPoints = QSpinBox(self.gbXCheckParams)
+        self.spinXCheckPoints = QSpinBox(self.groupXCheckParams)
         self.spinXCheckPoints.setObjectName("spinXCheckPoints")
         sizePolicy2.setHeightForWidth(self.spinXCheckPoints.sizePolicy().hasHeightForWidth())
         self.spinXCheckPoints.setSizePolicy(sizePolicy2)
@@ -1276,12 +1276,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.xCheckForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinXCheckPoints)
 
-        self.lblXCheckSettle = QLabel(self.gbXCheckParams)
-        self.lblXCheckSettle.setObjectName("lblXCheckSettle")
+        self.labelXCheckSettle = QLabel(self.groupXCheckParams)
+        self.labelXCheckSettle.setObjectName("labelXCheckSettle")
 
-        self.xCheckForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblXCheckSettle)
+        self.xCheckForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelXCheckSettle)
 
-        self.spinXCheckSettle = QDoubleSpinBox(self.gbXCheckParams)
+        self.spinXCheckSettle = QDoubleSpinBox(self.groupXCheckParams)
         self.spinXCheckSettle.setObjectName("spinXCheckSettle")
         sizePolicy2.setHeightForWidth(self.spinXCheckSettle.sizePolicy().hasHeightForWidth())
         self.spinXCheckSettle.setSizePolicy(sizePolicy2)
@@ -1293,12 +1293,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.xCheckForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinXCheckSettle)
 
-        self.lblXCheckTolerance = QLabel(self.gbXCheckParams)
-        self.lblXCheckTolerance.setObjectName("lblXCheckTolerance")
+        self.labelXCheckTolerance = QLabel(self.groupXCheckParams)
+        self.labelXCheckTolerance.setObjectName("labelXCheckTolerance")
 
-        self.xCheckForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblXCheckTolerance)
+        self.xCheckForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelXCheckTolerance)
 
-        self.spinXCheckTolerance = QDoubleSpinBox(self.gbXCheckParams)
+        self.spinXCheckTolerance = QDoubleSpinBox(self.groupXCheckParams)
         self.spinXCheckTolerance.setObjectName("spinXCheckTolerance")
         sizePolicy2.setHeightForWidth(self.spinXCheckTolerance.sizePolicy().hasHeightForWidth())
         self.spinXCheckTolerance.setSizePolicy(sizePolicy2)
@@ -1309,65 +1309,65 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.xCheckForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinXCheckTolerance)
 
-        self.tabDetectorCompareLayout.addWidget(self.gbXCheckParams)
+        self.tabDetectorCompareLayout.addWidget(self.groupXCheckParams)
 
         self.xCheckButtonLayout = QHBoxLayout()
         self.xCheckButtonLayout.setSpacing(6)
         self.xCheckButtonLayout.setObjectName("xCheckButtonLayout")
-        self.btnStartXCheck = QPushButton(self.tabDetectorCompare)
-        self.btnStartXCheck.setObjectName("btnStartXCheck")
-        self.btnStartXCheck.setEnabled(False)
+        self.buttonStartXCheck = QPushButton(self.tabDetectorCompare)
+        self.buttonStartXCheck.setObjectName("buttonStartXCheck")
+        self.buttonStartXCheck.setEnabled(False)
 
-        self.xCheckButtonLayout.addWidget(self.btnStartXCheck)
+        self.xCheckButtonLayout.addWidget(self.buttonStartXCheck)
 
-        self.btnAbortXCheck = QPushButton(self.tabDetectorCompare)
-        self.btnAbortXCheck.setObjectName("btnAbortXCheck")
-        self.btnAbortXCheck.setEnabled(False)
+        self.buttonAbortXCheck = QPushButton(self.tabDetectorCompare)
+        self.buttonAbortXCheck.setObjectName("buttonAbortXCheck")
+        self.buttonAbortXCheck.setEnabled(False)
 
-        self.xCheckButtonLayout.addWidget(self.btnAbortXCheck)
+        self.xCheckButtonLayout.addWidget(self.buttonAbortXCheck)
 
-        self.btnSaveXCheck = QPushButton(self.tabDetectorCompare)
-        self.btnSaveXCheck.setObjectName("btnSaveXCheck")
-        self.btnSaveXCheck.setEnabled(False)
+        self.buttonSaveXCheck = QPushButton(self.tabDetectorCompare)
+        self.buttonSaveXCheck.setObjectName("buttonSaveXCheck")
+        self.buttonSaveXCheck.setEnabled(False)
 
-        self.xCheckButtonLayout.addWidget(self.btnSaveXCheck)
+        self.xCheckButtonLayout.addWidget(self.buttonSaveXCheck)
 
         self.tabDetectorCompareLayout.addLayout(self.xCheckButtonLayout)
 
-        self.lblXCheckResult = QLabel(self.tabDetectorCompare)
-        self.lblXCheckResult.setObjectName("lblXCheckResult")
-        sizePolicy1.setHeightForWidth(self.lblXCheckResult.sizePolicy().hasHeightForWidth())
-        self.lblXCheckResult.setSizePolicy(sizePolicy1)
-        self.lblXCheckResult.setMinimumSize(QSize(80, 48))
-        self.lblXCheckResult.setWordWrap(True)
+        self.valueXCheckResult = QLabel(self.tabDetectorCompare)
+        self.valueXCheckResult.setObjectName("valueXCheckResult")
+        sizePolicy1.setHeightForWidth(self.valueXCheckResult.sizePolicy().hasHeightForWidth())
+        self.valueXCheckResult.setSizePolicy(sizePolicy1)
+        self.valueXCheckResult.setMinimumSize(QSize(80, 48))
+        self.valueXCheckResult.setWordWrap(True)
 
-        self.tabDetectorCompareLayout.addWidget(self.lblXCheckResult)
+        self.tabDetectorCompareLayout.addWidget(self.valueXCheckResult)
 
-        self.xCheckPlotWidget = DetectorComparisonPlot(self.tabDetectorCompare)
-        self.xCheckPlotWidget.setObjectName("xCheckPlotWidget")
-        sizePolicy3.setHeightForWidth(self.xCheckPlotWidget.sizePolicy().hasHeightForWidth())
-        self.xCheckPlotWidget.setSizePolicy(sizePolicy3)
-        self.xCheckPlotWidget.setMinimumSize(QSize(300, 200))
+        self.xCheckPlot = DetectorComparisonPlot(self.tabDetectorCompare)
+        self.xCheckPlot.setObjectName("xCheckPlot")
+        sizePolicy3.setHeightForWidth(self.xCheckPlot.sizePolicy().hasHeightForWidth())
+        self.xCheckPlot.setSizePolicy(sizePolicy3)
+        self.xCheckPlot.setMinimumSize(QSize(300, 200))
 
-        self.tabDetectorCompareLayout.addWidget(self.xCheckPlotWidget)
+        self.tabDetectorCompareLayout.addWidget(self.xCheckPlot)
 
-        self.tabsMode.addTab(self.tabDetectorCompare, "")
+        self.tabMode.addTab(self.tabDetectorCompare, "")
         self.tabGainVerify = QWidget()
         self.tabGainVerify.setObjectName("tabGainVerify")
         self.tabGainVerifyLayout = QVBoxLayout(self.tabGainVerify)
         self.tabGainVerifyLayout.setSpacing(5)
         self.tabGainVerifyLayout.setObjectName("tabGainVerifyLayout")
-        self.gbVerifyParams = QGroupBox(self.tabGainVerify)
-        self.gbVerifyParams.setObjectName("gbVerifyParams")
-        self.verifyForm = QFormLayout(self.gbVerifyParams)
+        self.groupVerifyParams = QGroupBox(self.tabGainVerify)
+        self.groupVerifyParams.setObjectName("groupVerifyParams")
+        self.verifyForm = QFormLayout(self.groupVerifyParams)
         self.verifyForm.setObjectName("verifyForm")
         self.verifyForm.setVerticalSpacing(3)
-        self.lblVerifyLevels = QLabel(self.gbVerifyParams)
-        self.lblVerifyLevels.setObjectName("lblVerifyLevels")
+        self.labelVerifyLevels = QLabel(self.groupVerifyParams)
+        self.labelVerifyLevels.setObjectName("labelVerifyLevels")
 
-        self.verifyForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lblVerifyLevels)
+        self.verifyForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelVerifyLevels)
 
-        self.spinVerifyLevels = QSpinBox(self.gbVerifyParams)
+        self.spinVerifyLevels = QSpinBox(self.groupVerifyParams)
         self.spinVerifyLevels.setObjectName("spinVerifyLevels")
         sizePolicy2.setHeightForWidth(self.spinVerifyLevels.sizePolicy().hasHeightForWidth())
         self.spinVerifyLevels.setSizePolicy(sizePolicy2)
@@ -1377,12 +1377,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.verifyForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.spinVerifyLevels)
 
-        self.lblVerifySettle = QLabel(self.gbVerifyParams)
-        self.lblVerifySettle.setObjectName("lblVerifySettle")
+        self.labelVerifySettle = QLabel(self.groupVerifyParams)
+        self.labelVerifySettle.setObjectName("labelVerifySettle")
 
-        self.verifyForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lblVerifySettle)
+        self.verifyForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelVerifySettle)
 
-        self.spinVerifySettle = QDoubleSpinBox(self.gbVerifyParams)
+        self.spinVerifySettle = QDoubleSpinBox(self.groupVerifyParams)
         self.spinVerifySettle.setObjectName("spinVerifySettle")
         sizePolicy2.setHeightForWidth(self.spinVerifySettle.sizePolicy().hasHeightForWidth())
         self.spinVerifySettle.setSizePolicy(sizePolicy2)
@@ -1394,12 +1394,12 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.verifyForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinVerifySettle)
 
-        self.lblVerifyTolerancePct = QLabel(self.gbVerifyParams)
-        self.lblVerifyTolerancePct.setObjectName("lblVerifyTolerancePct")
+        self.labelVerifyTolerancePct = QLabel(self.groupVerifyParams)
+        self.labelVerifyTolerancePct.setObjectName("labelVerifyTolerancePct")
 
-        self.verifyForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lblVerifyTolerancePct)
+        self.verifyForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.labelVerifyTolerancePct)
 
-        self.spinVerifyTolerancePct = QDoubleSpinBox(self.gbVerifyParams)
+        self.spinVerifyTolerancePct = QDoubleSpinBox(self.groupVerifyParams)
         self.spinVerifyTolerancePct.setObjectName("spinVerifyTolerancePct")
         sizePolicy2.setHeightForWidth(self.spinVerifyTolerancePct.sizePolicy().hasHeightForWidth())
         self.spinVerifyTolerancePct.setSizePolicy(sizePolicy2)
@@ -1410,22 +1410,22 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.verifyForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.spinVerifyTolerancePct)
 
-        self.tabGainVerifyLayout.addWidget(self.gbVerifyParams)
+        self.tabGainVerifyLayout.addWidget(self.groupVerifyParams)
 
         self.verifyButtonLayout = QHBoxLayout()
         self.verifyButtonLayout.setSpacing(6)
         self.verifyButtonLayout.setObjectName("verifyButtonLayout")
-        self.btnStartVerify = QPushButton(self.tabGainVerify)
-        self.btnStartVerify.setObjectName("btnStartVerify")
-        self.btnStartVerify.setEnabled(False)
+        self.buttonStartVerify = QPushButton(self.tabGainVerify)
+        self.buttonStartVerify.setObjectName("buttonStartVerify")
+        self.buttonStartVerify.setEnabled(False)
 
-        self.verifyButtonLayout.addWidget(self.btnStartVerify)
+        self.verifyButtonLayout.addWidget(self.buttonStartVerify)
 
-        self.btnAbortVerify = QPushButton(self.tabGainVerify)
-        self.btnAbortVerify.setObjectName("btnAbortVerify")
-        self.btnAbortVerify.setEnabled(False)
+        self.buttonAbortVerify = QPushButton(self.tabGainVerify)
+        self.buttonAbortVerify.setObjectName("buttonAbortVerify")
+        self.buttonAbortVerify.setEnabled(False)
 
-        self.verifyButtonLayout.addWidget(self.btnAbortVerify)
+        self.verifyButtonLayout.addWidget(self.buttonAbortVerify)
 
         self.tabGainVerifyLayout.addLayout(self.verifyButtonLayout)
 
@@ -1451,18 +1451,18 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.tabGainVerifyLayout.addWidget(self.tableGainVerify)
 
-        self.lblVerifyResult = QLabel(self.tabGainVerify)
-        self.lblVerifyResult.setObjectName("lblVerifyResult")
-        sizePolicy1.setHeightForWidth(self.lblVerifyResult.sizePolicy().hasHeightForWidth())
-        self.lblVerifyResult.setSizePolicy(sizePolicy1)
-        self.lblVerifyResult.setMinimumSize(QSize(80, 48))
-        self.lblVerifyResult.setWordWrap(True)
+        self.valueVerifyResult = QLabel(self.tabGainVerify)
+        self.valueVerifyResult.setObjectName("valueVerifyResult")
+        sizePolicy1.setHeightForWidth(self.valueVerifyResult.sizePolicy().hasHeightForWidth())
+        self.valueVerifyResult.setSizePolicy(sizePolicy1)
+        self.valueVerifyResult.setMinimumSize(QSize(80, 48))
+        self.valueVerifyResult.setWordWrap(True)
 
-        self.tabGainVerifyLayout.addWidget(self.lblVerifyResult)
+        self.tabGainVerifyLayout.addWidget(self.valueVerifyResult)
 
-        self.tabsMode.addTab(self.tabGainVerify, "")
+        self.tabMode.addTab(self.tabGainVerify, "")
 
-        self.leftPanelLayout.addWidget(self.tabsMode)
+        self.leftPanelLayout.addWidget(self.tabMode)
 
         self.progressBar = QProgressBar(AutoPowerCalibrationDialog)
         self.progressBar.setObjectName("progressBar")
@@ -1471,38 +1471,38 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.leftPanelLayout.addWidget(self.progressBar)
 
-        self.lblPhase = QLabel(AutoPowerCalibrationDialog)
-        self.lblPhase.setObjectName("lblPhase")
-        sizePolicy1.setHeightForWidth(self.lblPhase.sizePolicy().hasHeightForWidth())
-        self.lblPhase.setSizePolicy(sizePolicy1)
-        self.lblPhase.setMinimumSize(QSize(80, 0))
+        self.valuePhase = QLabel(AutoPowerCalibrationDialog)
+        self.valuePhase.setObjectName("valuePhase")
+        sizePolicy1.setHeightForWidth(self.valuePhase.sizePolicy().hasHeightForWidth())
+        self.valuePhase.setSizePolicy(sizePolicy1)
+        self.valuePhase.setMinimumSize(QSize(80, 0))
 
-        self.leftPanelLayout.addWidget(self.lblPhase)
+        self.leftPanelLayout.addWidget(self.valuePhase)
 
         self.workAreaLayout.addLayout(self.leftPanelLayout)
 
         self.rightPanelLayout = QVBoxLayout()
         self.rightPanelLayout.setSpacing(5)
         self.rightPanelLayout.setObjectName("rightPanelLayout")
-        self.plotWidget = MultiGainCalibrationPlot(AutoPowerCalibrationDialog)
-        self.plotWidget.setObjectName("plotWidget")
-        sizePolicy4.setHeightForWidth(self.plotWidget.sizePolicy().hasHeightForWidth())
-        self.plotWidget.setSizePolicy(sizePolicy4)
-        self.plotWidget.setMinimumSize(QSize(380, 250))
+        self.calibrationPlot = MultiGainCalibrationPlot(AutoPowerCalibrationDialog)
+        self.calibrationPlot.setObjectName("calibrationPlot")
+        sizePolicy4.setHeightForWidth(self.calibrationPlot.sizePolicy().hasHeightForWidth())
+        self.calibrationPlot.setSizePolicy(sizePolicy4)
+        self.calibrationPlot.setMinimumSize(QSize(380, 250))
 
-        self.rightPanelLayout.addWidget(self.plotWidget)
+        self.rightPanelLayout.addWidget(self.calibrationPlot)
 
-        self.plainTextLog = QPlainTextEdit(AutoPowerCalibrationDialog)
-        self.plainTextLog.setObjectName("plainTextLog")
+        self.editLog = QPlainTextEdit(AutoPowerCalibrationDialog)
+        self.editLog.setObjectName("editLog")
         sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         sizePolicy6.setHorizontalStretch(0)
         sizePolicy6.setVerticalStretch(1)
-        sizePolicy6.setHeightForWidth(self.plainTextLog.sizePolicy().hasHeightForWidth())
-        self.plainTextLog.setSizePolicy(sizePolicy6)
-        self.plainTextLog.setMaximumSize(QSize(16777215, 150))
-        self.plainTextLog.setReadOnly(True)
+        sizePolicy6.setHeightForWidth(self.editLog.sizePolicy().hasHeightForWidth())
+        self.editLog.setSizePolicy(sizePolicy6)
+        self.editLog.setMaximumSize(QSize(16777215, 150))
+        self.editLog.setReadOnly(True)
 
-        self.rightPanelLayout.addWidget(self.plainTextLog)
+        self.rightPanelLayout.addWidget(self.editLog)
 
         self.workAreaLayout.addLayout(self.rightPanelLayout)
 
@@ -1512,7 +1512,7 @@ class Ui_AutoPowerCalibrationDialog(object):
 
         self.retranslateUi(AutoPowerCalibrationDialog)
 
-        self.tabsMode.setCurrentIndex(0)
+        self.tabMode.setCurrentIndex(0)
 
         QMetaObject.connectSlotsByName(AutoPowerCalibrationDialog)
 
@@ -1524,67 +1524,67 @@ class Ui_AutoPowerCalibrationDialog(object):
                 "AutoPowerCalibrationDialog", "Automatische Leistungskalibrierung", None
             )
         )
-        self.gbConnections.setTitle(
+        self.groupConnections.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbindungen", None)
         )
-        self.gbArduino.setTitle(
+        self.groupArduino.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Arduino (Detektor & Gain)", None
             )
         )
-        self.lblArduinoPort.setText(
+        self.labelArduinoPort.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Port:", None)
         )
-        self.btnRefreshArduino.setText(
+        self.buttonRefreshArduino.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
-        self.lblArduinoStatus.setText(
+        self.valueArduinoStatus.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
-        self.btnConnectArduino.setText(
+        self.buttonConnectArduino.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
-        self.gbKDC.setTitle(
+        self.groupKDC.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "KDC101 Rotationsantrieb (PRM1/MZ8)", None
             )
         )
-        self.lblKDCDevice.setText(
+        self.labelKDCDevice.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ger\u00e4t:", None)
         )
-        self.btnRefreshKDC.setText(
+        self.buttonRefreshKDC.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
-        self.lblKDCStatus.setText(
+        self.valueKDCStatus.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
-        self.btnConnectKDC.setText(
+        self.buttonConnectKDC.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
-        self.btnHomeKDC.setText(
+        self.buttonHomeKDC.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Referenzfahrt (Home)", None)
         )
-        self.gbNDStage.setTitle(
+        self.groupNDStage.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "ND-Filter Drehantrieb (Schrittmotor, ESP32 + DRV8825)",
                 None,
             )
         )
-        self.lblNDDevice.setText(
+        self.labelNDDevice.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Port:", None)
         )
-        self.btnRefreshNDStage.setText(
+        self.buttonRefreshNDStage.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
-        self.lblNDStatus.setText(
+        self.valueNDStatus.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
-        self.btnConnectNDStage.setText(
+        self.buttonConnectNDStage.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnHomeNDStage.setToolTip(
+        self.buttonHomeNDStage.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "F\u00e4hrt den Referenzschalter an und setzt dort 0\u00b0. Ohne Referenzschalter (Firmware: PIN_HOME = -1) wird 0\u00b0 an der aktuellen Position gesetzt.",
@@ -1592,11 +1592,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnHomeNDStage.setText(
+        self.buttonHomeNDStage.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Referenzfahrt (Home)", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnZeroNDStage.setToolTip(
+        self.buttonZeroNDStage.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Setzt die aktuelle Position des Filterrads als 0\u00b0 (klare Stelle des Filters), ohne zu fahren.",
@@ -1604,17 +1604,17 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnZeroNDStage.setText(
+        self.buttonZeroNDStage.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nullpunkt hier setzen", None)
         )
-        self.lblNDPosition.setText(
+        self.valueNDPosition.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Winkel: \u2013 \u00b0", None)
         )
-        self.lblNDDriver.setText(
+        self.valueNDDriver.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Treiber: \u2013", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnSelfTestNDStage.setToolTip(
+        self.buttonSelfTestNDStage.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "F\u00e4hrt das Filterrad kurz hin und zur\u00fcck und pr\u00fcft dabei den /FAULT-Pin des DRV8825 (\u00dcberstrom/\u00dcbertemperatur).",
@@ -1622,11 +1622,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnSelfTestNDStage.setText(
+        self.buttonSelfTestNDStage.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Treiber testen", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnNDJogMinus5.setToolTip(
+        self.buttonNDJogMinus5.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Filterrad um 5\u00b0 zur\u00fcckdrehen (Handjustage des Nullpunkts).",
@@ -1634,11 +1634,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnNDJogMinus5.setText(
+        self.buttonNDJogMinus5.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "\u22125\u00b0", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnNDJogMinus1.setToolTip(
+        self.buttonNDJogMinus1.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Filterrad um 1\u00b0 zur\u00fcckdrehen (Handjustage des Nullpunkts).",
@@ -1646,11 +1646,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnNDJogMinus1.setText(
+        self.buttonNDJogMinus1.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "\u22121\u00b0", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnNDJogPlus1.setToolTip(
+        self.buttonNDJogPlus1.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Filterrad um 1\u00b0 vordrehen (Handjustage des Nullpunkts).",
@@ -1658,11 +1658,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnNDJogPlus1.setText(
+        self.buttonNDJogPlus1.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "+1\u00b0", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnNDJogPlus5.setToolTip(
+        self.buttonNDJogPlus5.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Filterrad um 5\u00b0 vordrehen (Handjustage des Nullpunkts).",
@@ -1670,11 +1670,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnNDJogPlus5.setText(
+        self.buttonNDJogPlus5.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "+5\u00b0", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnNDMotorOff.setToolTip(
+        self.buttonNDMotorOff.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Gibt den Motor frei (kein Haltestrom), damit das Rad von Hand gedreht werden kann. Die n\u00e4chste Fahrt schaltet den Motor automatisch wieder ein. Danach \u201eNullpunkt hier setzen\u201c.",
@@ -1682,53 +1682,53 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnNDMotorOff.setText(
+        self.buttonNDMotorOff.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Motor aus", None)
         )
-        self.gbPM400.setTitle(
+        self.groupPM400.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "PM400 A (Referenz, S120C)", None
             )
         )
-        self.lblPMResource.setText(
+        self.labelPMResource.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "VISA:", None)
         )
-        self.btnRefreshPM400.setText(
+        self.buttonRefreshPM400.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
-        self.lblPM400Status.setText(
+        self.valuePM400Status.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
-        self.btnConnectPM400.setText(
+        self.buttonConnectPM400.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
-        self.btnZeroPM400.setText(
+        self.buttonZeroPM400.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nullabgleich (Zero)", None)
         )
-        self.gbPM400B.setTitle(
+        self.groupPM400B.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "PM400 B (Vergleichsmessger\u00e4t)", None
             )
         )
-        self.lblPM400BResource.setText(
+        self.labelPM400BResource.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "VISA:", None)
         )
-        self.btnRefreshPM400B.setText(
+        self.buttonRefreshPM400B.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Aktualisieren", None)
         )
-        self.lblPM400BStatus.setText(
+        self.valuePM400BStatus.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nicht verbunden", None)
         )
-        self.btnConnectPM400B.setText(
+        self.buttonConnectPM400B.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Verbinden", None)
         )
-        self.btnZeroPM400B.setText(
+        self.buttonZeroPM400B.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Nullabgleich (Zero)", None)
         )
-        self.gbIntensitySource.setTitle(
+        self.groupIntensitySource.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Intensit\u00e4tsquelle", None)
         )
-        self.lblIntensitySource.setText(
+        self.labelIntensitySource.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Quelle:", None)
         )
         self.radioSourcePolariser.setText(
@@ -1737,12 +1737,12 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.radioSourceND.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "ND-Filter", None)
         )
-        self.gbAlignment.setTitle(
+        self.groupAlignment.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Polarisator-Ausrichtung", None
             )
         )
-        self.lblAlignStart.setText(
+        self.labelAlignStart.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scanstart (\u00b0):", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1754,7 +1754,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAlignEnd.setText(
+        self.labelAlignEnd.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scanende (\u00b0):", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1766,7 +1766,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAlignNPoints.setText(
+        self.labelAlignNPoints.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Schritte:", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1778,29 +1778,29 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblAlignSettle.setText(
+        self.labelAlignSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
-        self.btnAlignPolariser.setText(
+        self.buttonAlignPolariser.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ausrichtung starten", None)
         )
-        self.btnAbortAlign.setText(
+        self.buttonAbortAlign.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
-        self.lblAngleOffset.setText(
+        self.valueAngleOffset.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Winkelversatz: nicht gesetzt", None
             )
         )
-        self.gbBeam.setTitle(
+        self.groupBeam.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Licht / Leistungsmessung", None
             )
         )
-        self.lblWavelength.setText(
+        self.labelWavelength.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wellenl\u00e4nge (nm):", None)
         )
-        self.lblAttenuation.setText(
+        self.labelAttenuation.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "ST D\u00e4mpfung (dB):", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1812,31 +1812,31 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblPmAveraging.setText(
+        self.labelPmAveraging.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "PM400 Mittelwerte:", None)
         )
-        self.gbSweep.setTitle(
+        self.groupSweep.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Sweep-Einstellungen", None)
         )
-        self.lblAngleStart.setText(
+        self.labelAngleStart.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Startwinkel (\u00b0):", None)
         )
-        self.lblAngleEnd.setText(
+        self.labelAngleEnd.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Endwinkel (\u00b0):", None)
         )
-        self.lblNPoints.setText(
+        self.labelNPoints.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Anzahl Punkte:", None)
         )
-        self.lblPointSettle.setText(
+        self.labelPointSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit / Punkt (s):", None)
         )
-        self.lblGainSettle.setText(
+        self.labelGainSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit / Gain (s):", None)
         )
-        self.lblDetectorSamples.setText(
+        self.labelDetectorSamples.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Detektor-Samples:", None)
         )
-        self.lblSaturationThreshold.setText(
+        self.labelSaturationThreshold.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "S\u00e4ttigungsschwelle (V):", None
             )
@@ -1850,7 +1850,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblGridMode.setText(
+        self.labelGridMode.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Winkelraster:", None)
         )
         self.radioLinearAngle.setText(
@@ -1861,19 +1861,19 @@ class Ui_AutoPowerCalibrationDialog(object):
                 "AutoPowerCalibrationDialog", "Linear in cos\u00b2(\u03b8)", None
             )
         )
-        self.lblGains.setText(
+        self.labelGains.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Gain-Stufen:", None)
         )
-        self.chkGain1.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "1", None))
-        self.chkGain2.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "2", None))
-        self.chkGain3.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "3", None))
-        self.chkGain4.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "4", None))
-        self.gbPowerGrid.setTitle(
+        self.checkGain1.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "1", None))
+        self.checkGain2.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "2", None))
+        self.checkGain3.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "3", None))
+        self.checkGain4.setText(QCoreApplication.translate("AutoPowerCalibrationDialog", "4", None))
+        self.groupPowerGrid.setTitle(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Leistungsraster (nur ND-Filter)", None
             )
         )
-        self.lblPowerGridMode.setText(
+        self.labelPowerGridMode.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Rastermodus:", None)
         )
         self.radioGridLogPower.setText(
@@ -1882,7 +1882,7 @@ class Ui_AutoPowerCalibrationDialog(object):
         self.radioGridLinearPower.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Linear", None)
         )
-        self.lblPowerTolerancePct.setText(
+        self.labelPowerTolerancePct.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Toleranz (%):", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1894,11 +1894,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblMaxRefineSteps.setText(
+        self.labelMaxRefineSteps.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Max. Nachjustierungen:", None)
         )
         # if QT_CONFIG(tooltip)
-        self.chkPowerFromCurve.setToolTip(
+        self.checkPowerFromCurve.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Die Leistung jedes Punkts wird aus der ND-Kennlinie des Bereichsscans dieser Sitzung genommen, der PM400 wird nicht gelesen und darf au\u00dferhalb des Strahls stehen. Keine Nachjustierung. Die Genauigkeit h\u00e4ngt von der Kennlinie ab: Bereichsscan mit vielen Punkten und Mittelung messen, Nullpunkt danach nicht mehr \u00e4ndern.",
@@ -1906,54 +1906,54 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.chkPowerFromCurve.setText(
+        self.checkPowerFromCurve.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Leistung aus ND-Kennlinie (PM400 nicht im Strahl)",
                 None,
             )
         )
-        self.gbProfile.setTitle(
+        self.groupProfile.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Profil", None)
         )
-        self.lblProfileName.setText(
+        self.labelProfileName.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Profilname:", None)
         )
-        self.lineProfileName.setPlaceholderText(
+        self.editProfileName.setPlaceholderText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "z.B. Det-A_auto", None)
         )
-        self.lblOutputPath.setText(
+        self.valueOutputPath.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "\u2013", None)
         )
-        self.btnStart.setText(
+        self.buttonStart.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Starten", None)
         )
-        self.btnAbort.setText(
+        self.buttonAbort.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
-        self.btnSave.setText(
+        self.buttonSave.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Profil speichern", None)
         )
-        self.tabsMode.setTabText(
-            self.tabsMode.indexOf(self.tabCalibration),
+        self.tabMode.setTabText(
+            self.tabMode.indexOf(self.tabCalibration),
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Kalibrierung", None),
         )
-        self.gbNDScanParams.setTitle(
+        self.groupNDScanParams.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scan-Parameter", None)
         )
-        self.lblNDScanStart.setText(
+        self.labelNDScanStart.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Start (\u00b0):", None)
         )
-        self.lblNDScanEnd.setText(
+        self.labelNDScanEnd.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ende (\u00b0):", None)
         )
-        self.lblNDScanPoints.setText(
+        self.labelNDScanPoints.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Punkte:", None)
         )
-        self.lblNDScanSettle.setText(
+        self.labelNDScanSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
-        self.lblNDDarkFloor.setText(
+        self.labelNDDarkFloor.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Dunkel-Schwelle (\u00b5W):", None
             )
@@ -1967,7 +1967,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblNDScanSamples.setText(
+        self.labelNDScanSamples.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Mittelungen/Punkt:", None)
         )
         # if QT_CONFIG(tooltip)
@@ -1979,26 +1979,26 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnScanNDRange.setText(
+        self.buttonScanNDRange.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Bereichsscan starten", None)
         )
-        self.btnAbortNDScan.setText(
+        self.buttonAbortNDScan.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
-        self.lblNDRange.setText(
+        self.valueNDRange.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Bereich: \u2013", None)
         )
-        self.tabsMode.setTabText(
-            self.tabsMode.indexOf(self.tabNDRange),
+        self.tabMode.setTabText(
+            self.tabMode.indexOf(self.tabNDRange),
             QCoreApplication.translate("AutoPowerCalibrationDialog", "ND-Bereich", None),
         )
-        self.gbNDLinParams.setTitle(
+        self.groupNDLinParams.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scan-Parameter", None)
         )
-        self.lblNDLinStart.setText(
+        self.labelNDLinStart.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Start (\u00b0):", None)
         )
-        self.lblNDLinScans.setText(
+        self.labelNDLinScans.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Anzahl Scans:", None)
         )
         # if QT_CONFIG(tooltip)
@@ -2008,7 +2008,7 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblNDLinEnd.setText(
+        self.labelNDLinEnd.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ende (\u00b0):", None)
         )
         # if QT_CONFIG(tooltip)
@@ -2025,10 +2025,10 @@ class Ui_AutoPowerCalibrationDialog(object):
                 "AutoPowerCalibrationDialog", "Richtung abwechseln (Hysterese)", None
             )
         )
-        self.lblNDLinPoints.setText(
+        self.labelNDLinPoints.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Punkte:", None)
         )
-        self.lblNDLinFloor.setText(
+        self.labelNDLinFloor.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Rausch-Schwelle (\u00b5W):", None
             )
@@ -2042,10 +2042,10 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblNDLinSettle.setText(
+        self.labelNDLinSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
-        self.lblNDLinTol.setText(
+        self.labelNDLinTol.setText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog", "Toleranz max. Abw. (OD):", None
             )
@@ -2059,11 +2059,11 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblNDLinSamples.setText(
+        self.labelNDLinSamples.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Mittelungen/Punkt:", None)
         )
         # if QT_CONFIG(tooltip)
-        self.btnScanNDLin.setToolTip(
+        self.buttonScanNDLin.setToolTip(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Misst die konfigurierte Anzahl Scans und h\u00e4ngt sie an die vorhandenen an, damit mehrere L\u00e4ufe (z. B. nach Umbau) verglichen werden k\u00f6nnen.",
@@ -2071,61 +2071,61 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.btnScanNDLin.setText(
+        self.buttonScanNDLin.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scans starten", None)
         )
-        self.btnAbortNDLin.setText(
+        self.buttonAbortNDLin.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
-        self.btnClearNDLin.setText(
+        self.buttonClearNDLin.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Scans verwerfen", None)
         )
-        self.lblNDLinStatus.setText(
+        self.valueNDLinStatus.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Status: \u2013", None)
         )
-        self.txtNDLinReport.setPlaceholderText(
+        self.editNDLinReport.setPlaceholderText(
             QCoreApplication.translate(
                 "AutoPowerCalibrationDialog",
                 "Noch keine Scans. Der Bericht vergleicht Linearit\u00e4t, Streuung und Hysterese.",
                 None,
             )
         )
-        self.tabsMode.setTabText(
-            self.tabsMode.indexOf(self.tabNDLinearity),
+        self.tabMode.setTabText(
+            self.tabMode.indexOf(self.tabNDLinearity),
             QCoreApplication.translate("AutoPowerCalibrationDialog", "ND-Linearit\u00e4t", None),
         )
-        self.gbXCheckParams.setTitle(
+        self.groupXCheckParams.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Vergleichs-Parameter", None)
         )
-        self.lblXCheckPoints.setText(
+        self.labelXCheckPoints.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Punkte:", None)
         )
-        self.lblXCheckSettle.setText(
+        self.labelXCheckSettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
-        self.lblXCheckTolerance.setText(
+        self.labelXCheckTolerance.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Toleranz (%):", None)
         )
-        self.btnStartXCheck.setText(
+        self.buttonStartXCheck.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Vergleich starten", None)
         )
-        self.btnAbortXCheck.setText(
+        self.buttonAbortXCheck.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
-        self.btnSaveXCheck.setText(
+        self.buttonSaveXCheck.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ergebnis speichern", None)
         )
-        self.lblXCheckResult.setText(
+        self.valueXCheckResult.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ergebnis: \u2013", None)
         )
-        self.tabsMode.setTabText(
-            self.tabsMode.indexOf(self.tabDetectorCompare),
+        self.tabMode.setTabText(
+            self.tabMode.indexOf(self.tabDetectorCompare),
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Detektor-Vergleich", None),
         )
-        self.gbVerifyParams.setTitle(
+        self.groupVerifyParams.setTitle(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Pr\u00fcf-Parameter", None)
         )
-        self.lblVerifyLevels.setText(
+        self.labelVerifyLevels.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Pegel:", None)
         )
         # if QT_CONFIG(tooltip)
@@ -2137,16 +2137,16 @@ class Ui_AutoPowerCalibrationDialog(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.lblVerifySettle.setText(
+        self.labelVerifySettle.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Wartezeit (s):", None)
         )
-        self.lblVerifyTolerancePct.setText(
+        self.labelVerifyTolerancePct.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Toleranz (%):", None)
         )
-        self.btnStartVerify.setText(
+        self.buttonStartVerify.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Pr\u00fcfung starten", None)
         )
-        self.btnAbortVerify.setText(
+        self.buttonAbortVerify.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Abbrechen", None)
         )
         ___qtablewidgetitem = self.tableGainVerify.horizontalHeaderItem(0)
@@ -2173,17 +2173,17 @@ class Ui_AutoPowerCalibrationDialog(object):
         ___qtablewidgetitem5.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Gain 4 (W)", None)
         )
-        self.lblVerifyResult.setText(
+        self.valueVerifyResult.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Ergebnis: \u2013", None)
         )
-        self.tabsMode.setTabText(
-            self.tabsMode.indexOf(self.tabGainVerify),
+        self.tabMode.setTabText(
+            self.tabMode.indexOf(self.tabGainVerify),
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Gain-Pr\u00fcfung", None),
         )
-        self.lblPhase.setText(
+        self.valuePhase.setText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Bereit", None)
         )
-        self.plainTextLog.setPlaceholderText(
+        self.editLog.setPlaceholderText(
             QCoreApplication.translate("AutoPowerCalibrationDialog", "Log-Ausgabe\u2026", None)
         )
 
