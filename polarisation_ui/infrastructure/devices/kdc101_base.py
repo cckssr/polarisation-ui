@@ -1,10 +1,10 @@
-"""Shared KDC101 transport layer for rotation and linear stage adapters.
+"""Shared KDC101 transport layer for Thorlabs Kinesis stage adapters.
 
-Both ``KDC101Polariser`` (PRM1-Z8 rotation stage) and ``KDC101NDStage``
-(MTS50/M-Z8 linear stage) talk to the same Thorlabs KDC101 controller over
-pylablib's ``KinesisMotor``. This module holds the pylablib import bootstrap,
-connection lifecycle, homing, and the position-poll-until-stable move logic
-shared by both — only the position unit and pylablib scale name differ.
+``KDC101Polariser`` (PRM1-Z8 rotation stage) talks to the Thorlabs KDC101
+controller over pylablib's ``KinesisMotor``. This module holds the pylablib
+import bootstrap, connection lifecycle, homing, and the
+position-poll-until-stable move logic; subclasses only supply the position
+unit and pylablib scale name.
 
 Do NOT use raw APT messages here — all communication goes through pylablib.
 """
@@ -64,13 +64,13 @@ def _ensure_pylablib() -> bool:
 
 
 class KDC101MotorBase:
-    """Transport-level KDC101 driver shared by rotation and linear stage adapters.
+    """Transport-level KDC101 driver shared by Kinesis stage adapters.
 
     Subclasses set ``_SCALE`` (a pylablib named scale string, e.g.
-    ``"PRM1-Z8"`` or ``"MTS50-Z8"``) and ``_POSITION_STABLE_DELTA`` (position
+    ``"PRM1-Z8"``) and ``_POSITION_STABLE_DELTA`` (position
     units within which two consecutive reads count as "the same" while
     polling for move completion) and expose unit-named public wrappers
-    (``move_to``/``get_position_deg`` or ``move_to_mm``/``get_position_mm``)
+    (e.g. ``move_to``/``get_position_deg``)
     around the protected ``_move_to`` / ``_get_position`` / ``_get_position_nowait``
     methods here.
     """

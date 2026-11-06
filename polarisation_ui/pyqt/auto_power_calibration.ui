@@ -68,6 +68,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboArduinoPort">
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
@@ -85,6 +91,18 @@
          </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="lblArduinoStatus">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
@@ -118,6 +136,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboKDC">
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
@@ -135,6 +159,18 @@
          </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="lblKDCStatus">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
@@ -163,7 +199,7 @@
       <item>
        <widget class="QGroupBox" name="gbNDStage">
         <property name="title">
-         <string>ND-Filter Linearantrieb (MTS50/M-Z8)</string>
+         <string>ND-Filter Drehantrieb (Schrittmotor, ESP32 + DRV8825)</string>
         </property>
         <layout class="QGridLayout" name="ndGrid">
          <property name="spacing">
@@ -172,12 +208,18 @@
          <item row="0" column="0">
           <widget class="QLabel" name="lblNDDevice">
            <property name="text">
-            <string>Gerät:</string>
+            <string>Port:</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboNDStage">
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
@@ -195,6 +237,18 @@
          </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="lblNDStatus">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
@@ -207,22 +261,197 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
+         <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="btnHomeNDStage">
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Fährt den Referenzschalter an und setzt dort 0°. Ohne Referenzschalter (Firmware: PIN_HOME = -1) wird 0° an der aktuellen Position gesetzt.</string>
            </property>
            <property name="text">
             <string>Referenzfahrt (Home)</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="3">
-          <widget class="QLabel" name="lblNDPosition">
+         <item row="2" column="2">
+          <widget class="QPushButton" name="btnZeroNDStage">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Setzt die aktuelle Position des Filterrads als 0° (klare Stelle des Filters), ohne zu fahren.</string>
+           </property>
            <property name="text">
-            <string>Position: – mm</string>
+            <string>Nullpunkt hier setzen</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="0" colspan="3">
+          <widget class="QLabel" name="lblNDPosition">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Winkel: – °</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QLabel" name="lblNDDriver">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Treiber: –</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QPushButton" name="btnSelfTestNDStage">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Fährt das Filterrad kurz hin und zurück und prüft dabei den /FAULT-Pin des DRV8825 (Überstrom/Übertemperatur).</string>
+           </property>
+           <property name="text">
+            <string>Treiber testen</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="3">
+          <layout class="QHBoxLayout" name="ndJogLayout">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="btnNDJogMinus5">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>44</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Filterrad um 5° zurückdrehen (Handjustage des Nullpunkts).</string>
+             </property>
+             <property name="text">
+              <string>−5°</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnNDJogMinus1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>44</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Filterrad um 1° zurückdrehen (Handjustage des Nullpunkts).</string>
+             </property>
+             <property name="text">
+              <string>−1°</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnNDJogPlus1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>44</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Filterrad um 1° vordrehen (Handjustage des Nullpunkts).</string>
+             </property>
+             <property name="text">
+              <string>+1°</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnNDJogPlus5">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>44</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Filterrad um 5° vordrehen (Handjustage des Nullpunkts).</string>
+             </property>
+             <property name="text">
+              <string>+5°</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="ndJogSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnNDMotorOff">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Gibt den Motor frei (kein Haltestrom), damit das Rad von Hand gedreht werden kann. Die nächste Fahrt schaltet den Motor automatisch wieder ein. Danach „Nullpunkt hier setzen“.</string>
+             </property>
+             <property name="text">
+              <string>Motor aus</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -245,6 +474,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboPM400">
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
@@ -265,6 +500,18 @@
          </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="lblPM400Status">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
@@ -308,6 +555,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboPM400B">
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
@@ -328,6 +581,18 @@
          </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="lblPM400BStatus">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
@@ -590,6 +855,18 @@
                 </item>
                 <item>
                  <widget class="QLabel" name="lblAngleOffset">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>48</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>Winkelversatz: nicht gesetzt</string>
                   </property>
@@ -1116,6 +1393,16 @@
                 </property>
                </widget>
               </item>
+              <item row="3" column="0" colspan="2">
+               <widget class="QCheckBox" name="chkPowerFromCurve">
+                <property name="toolTip">
+                 <string>Die Leistung jedes Punkts wird aus der ND-Kennlinie des Bereichsscans dieser Sitzung genommen, der PM400 wird nicht gelesen und darf außerhalb des Strahls stehen. Keine Nachjustierung. Die Genauigkeit hängt von der Kennlinie ab: Bereichsscan mit vielen Punkten und Mittelung messen, Nullpunkt danach nicht mehr ändern.</string>
+                </property>
+                <property name="text">
+                 <string>Leistung aus ND-Kennlinie (PM400 nicht im Strahl)</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -1150,6 +1437,18 @@
               </item>
               <item row="1" column="0" colspan="2">
                <widget class="QLabel" name="lblOutputPath">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>48</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string>–</string>
                 </property>
@@ -1233,7 +1532,7 @@
               <item row="0" column="0">
                <widget class="QLabel" name="lblNDScanStart">
                 <property name="text">
-                 <string>Start (mm):</string>
+                 <string>Start (°):</string>
                 </property>
                </widget>
               </item>
@@ -1246,13 +1545,13 @@
                  </sizepolicy>
                 </property>
                 <property name="decimals">
-                 <number>2</number>
+                 <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>0.000000000000000</double>
+                 <double>-360.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>50.000000000000000</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
                  <double>0.000000000000000</double>
@@ -1262,7 +1561,7 @@
               <item row="1" column="0">
                <widget class="QLabel" name="lblNDScanEnd">
                 <property name="text">
-                 <string>Ende (mm):</string>
+                 <string>Ende (°):</string>
                 </property>
                </widget>
               </item>
@@ -1275,16 +1574,16 @@
                  </sizepolicy>
                 </property>
                 <property name="decimals">
-                 <number>2</number>
+                 <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>0.000000000000000</double>
+                 <double>-360.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>50.000000000000000</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>50.000000000000000</double>
+                 <double>360.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1310,7 +1609,7 @@
                  <number>200</number>
                 </property>
                 <property name="value">
-                 <number>26</number>
+                 <number>37</number>
                 </property>
                </widget>
               </item>
@@ -1378,6 +1677,35 @@
                 </property>
                </widget>
               </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="lblNDScanSamples">
+                <property name="text">
+                 <string>Mittelungen/Punkt:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QSpinBox" name="spinNDScanSamples">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Anzahl PM400-Messungen, die pro Winkel gemittelt werden (reduziert Rauschen, verlängert den Scan).</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>50</number>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -1410,6 +1738,18 @@
            </item>
            <item>
             <widget class="QLabel" name="lblNDRange">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>48</height>
+              </size>
+             </property>
              <property name="text">
               <string>Bereich: –</string>
              </property>
@@ -1431,6 +1771,401 @@
                <width>300</width>
                <height>200</height>
               </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tabNDLinearity">
+          <attribute name="title">
+           <string>ND-Linearität</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="tabNDLinearityLayout">
+           <property name="spacing">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="gbNDLinParams">
+             <property name="title">
+              <string>Scan-Parameter</string>
+             </property>
+             <layout class="QGridLayout" name="ndLinForm">
+              <property name="verticalSpacing">
+               <number>3</number>
+              </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblNDLinStart">
+               <property name="text">
+                <string>Start (°):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="spinNDLinStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="minimum">
+                <double>-360</double>
+               </property>
+               <property name="maximum">
+                <double>360</double>
+               </property>
+               <property name="value">
+                <double>0</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lblNDLinScans">
+               <property name="text">
+                <string>Anzahl Scans:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QSpinBox" name="spinNDLinScans">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Wie viele Scans nacheinander gemessen werden.</string>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>50</number>
+               </property>
+               <property name="value">
+                <number>3</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lblNDLinEnd">
+               <property name="text">
+                <string>Ende (°):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="spinNDLinEnd">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="minimum">
+                <double>-360</double>
+               </property>
+               <property name="maximum">
+                <double>360</double>
+               </property>
+               <property name="value">
+                <double>360</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2" colspan="2">
+              <widget class="QCheckBox" name="checkNDLinAlternate">
+               <property name="toolTip">
+                <string>Jeder zweite Scan läuft rückwärts. Der Versatz zwischen vorwärts und rückwärts misst Hysterese / Getriebespiel.</string>
+               </property>
+               <property name="text">
+                <string>Richtung abwechseln (Hysterese)</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="lblNDLinPoints">
+               <property name="text">
+                <string>Punkte:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QSpinBox" name="spinNDLinPoints">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimum">
+                <number>3</number>
+               </property>
+               <property name="maximum">
+                <number>500</number>
+               </property>
+               <property name="value">
+                <number>37</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="lblNDLinFloor">
+               <property name="text">
+                <string>Rausch-Schwelle (µW):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3">
+              <widget class="QDoubleSpinBox" name="spinNDLinFloorUW">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Messpunkte mit Leistung unterhalb dieser Schwelle werden nicht in den Fit einbezogen. 0 = nur Leistung &gt; 0.</string>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0</double>
+               </property>
+               <property name="maximum">
+                <double>1000</double>
+               </property>
+               <property name="value">
+                <double>0</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="lblNDLinSettle">
+               <property name="text">
+                <string>Wartezeit (s):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QDoubleSpinBox" name="spinNDLinSettle">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>2</number>
+               </property>
+               <property name="minimum">
+                <double>0</double>
+               </property>
+               <property name="maximum">
+                <double>10</double>
+               </property>
+               <property name="singleStep">
+                <double>0.05</double>
+               </property>
+               <property name="value">
+                <double>0.2</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QLabel" name="lblNDLinTol">
+               <property name="text">
+                <string>Toleranz max. Abw. (OD):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QDoubleSpinBox" name="spinNDLinTol">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Ein Scan gilt als linear, wenn die größte Abweichung vom Geraden-Fit des OD diese Schwelle nicht überschreitet. 0,05 OD ≈ 12 % Transmission.</string>
+               </property>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="minimum">
+                <double>0.001</double>
+               </property>
+               <property name="maximum">
+                <double>5</double>
+               </property>
+               <property name="singleStep">
+                <double>0.005</double>
+               </property>
+               <property name="value">
+                <double>0.05</double>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="lblNDLinSamples">
+               <property name="text">
+                <string>Mittelungen/Punkt:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QSpinBox" name="spinNDLinSamples">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>50</number>
+               </property>
+               <property name="value">
+                <number>1</number>
+               </property>
+              </widget>
+             </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="ndLinButtonLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="btnScanNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Misst die konfigurierte Anzahl Scans und hängt sie an die vorhandenen an, damit mehrere Läufe (z. B. nach Umbau) verglichen werden können.</string>
+               </property>
+               <property name="text">
+                <string>Scans starten</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnAbortNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Abbrechen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnClearNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Scans verwerfen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="ndLinButtonSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="NDLinearityPlot" name="ndLinPlotWidget" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>3</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>200</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblNDLinStatus">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Status: –</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPlainTextEdit" name="txtNDLinReport">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>1</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>90</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Menlo</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+             <property name="lineWrapMode">
+              <enum>QPlainTextEdit::NoWrap</enum>
+             </property>
+             <property name="placeholderText">
+              <string>Noch keine Scans. Der Bericht vergleicht Linearität, Streuung und Hysterese.</string>
              </property>
             </widget>
            </item>
@@ -1582,6 +2317,18 @@
            </item>
            <item>
             <widget class="QLabel" name="lblXCheckResult">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>48</height>
+              </size>
+             </property>
              <property name="text">
               <string>Ergebnis: –</string>
              </property>
@@ -1790,6 +2537,18 @@
            </item>
            <item>
             <widget class="QLabel" name="lblVerifyResult">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>48</height>
+              </size>
+             </property>
              <property name="text">
               <string>Ergebnis: –</string>
              </property>
@@ -1814,6 +2573,18 @@
        </item>
        <item>
         <widget class="QLabel" name="lblPhase">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>80</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Bereit</string>
          </property>
@@ -1885,6 +2656,11 @@
    <class>DetectorComparisonPlot</class>
    <extends>QWidget</extends>
    <header>polarisation_ui.ui.widgets.detector_comparison_plot</header>
+  </customwidget>
+  <customwidget>
+   <class>NDLinearityPlot</class>
+   <extends>QWidget</extends>
+   <header>polarisation_ui.ui.widgets.nd_linearity_plot</header>
   </customwidget>
  </customwidgets>
  <resources/>

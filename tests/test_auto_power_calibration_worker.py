@@ -12,10 +12,10 @@ from polarisation_ui.infrastructure.devices.intensity_actuator import (
     PolariserActuator,
 )
 from polarisation_ui.infrastructure.mocks.mock_arduino import MockArduino
-from polarisation_ui.infrastructure.mocks.mock_kdc101_nd_stage import MockKDC101NDStage
 from polarisation_ui.infrastructure.mocks.mock_kdc101_polariser import (
     MockKDC101Polariser,
 )
+from polarisation_ui.infrastructure.mocks.mock_nd_stage import MockNDStage
 from polarisation_ui.infrastructure.mocks.mock_pm400 import MockPM400
 
 _DIRECT = Qt.ConnectionType.DirectConnection
@@ -328,22 +328,22 @@ class TestAutoPowerCalibrationWorkerNDMode:
 
         self._app = QApplication.instance() or QApplication(sys.argv)
 
-    def _nd_scan(self, end_mm: float = 20.0, n: int = 5) -> tuple[tuple[float, float], ...]:
-        """Coarse scan matching MockPM400's ND model exactly (P_max=1e-6, OD_MAX=3, travel=50).
+    def _nd_scan(self, end_deg: float = 144.0, n: int = 5) -> tuple[tuple[float, float], ...]:
+        """Coarse scan matching MockPM400's ND model exactly (P_max=1e-6, OD_MAX=3, range=360°).
 
-        Deliberately coarse (5 points over 20 mm) so linear interpolation of
+        Deliberately coarse (5 points over 144°) so linear interpolation of
         this exponential curve has real error — exercising the worker's
         bisection refinement, not just its initial interpolated guess.
         """
-        step = end_mm / (n - 1)
-        return tuple((i * step, 1e-6 * 10 ** (-3.0 * (i * step) / 50.0)) for i in range(n))
+        step = end_deg / (n - 1)
+        return tuple((i * step, 1e-6 * 10 ** (-3.0 * (i * step) / 360.0)) for i in range(n))
 
     def test_nd_sweep_hits_target_powers_within_tolerance(self):
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
         mock_arduino = MockArduino()
         dm = _make_device_manager(mock_arduino)
-        nd = MockKDC101NDStage()
+        nd = MockNDStage()
         nd.connect("mock://nd-stage")
         pm = MockPM400(nd_mock=nd)
         pm.connect("mock://pm400")
@@ -408,12 +408,58 @@ class TestAutoPowerCalibrationWorkerNDMode:
         dm.disconnect_all()
         mock_arduino.stop()
 
+    def test_curve_mode_never_touches_the_pm400(self):
+        from polarisation_ui.core.auto_calibration_settings import build_power_grid
+        from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
+
+        mock_arduino = MockArduino()
+        dm = _make_device_manager(mock_arduino)
+        nd = MockNDStage()
+        nd.connect("mock://nd-stage")
+
+        class ExplodingPM:
+            def __getattr__(self, name):
+                raise AssertionError(f"PM400.{name} must not be used in curve mode")
+
+        scan = self._nd_scan()
+        params = _make_params(
+            selected_gains=(1,),
+            n_points=6,
+            intensity_source="nd_filter",
+            power_grid_mode="log_power",
+            nd_scan_points=scan,
+            power_from_nd_curve=True,
+            adc_saturation_threshold_V=2.6,
+        )
+        expected = build_power_grid(
+            max(p for _, p in scan), min(p for _, p in scan), 6, "log_power"
+        )
+
+        recorded: list[tuple] = []
+        finished: list[PowerCalibrationProfile] = []
+        failed: list[str] = []
+        worker = AutoPowerCalibrationWorker(
+            device_manager=dm, actuator=NDFilterActuator(nd), pm=ExplodingPM(), params=params
+        )
+        worker.point_recorded.connect(lambda *a: recorded.append(a), _DIRECT)
+        worker.finished.connect(lambda p: finished.append(p), _DIRECT)
+        worker.failed.connect(lambda m: failed.append(m), _DIRECT)
+        worker.start()
+        worker.wait(30_000)
+
+        assert not failed, f"Worker failed: {failed}"
+        assert [r[3] for r in recorded] == pytest.approx(expected)
+        assert finished[0].intensity_control["power_source"] == "nd_curve"
+
+        dm.disconnect_all()
+        mock_arduino.stop()
+
     def test_abort_stops_nd_sweep_cleanly(self):
         from polarisation_ui.infrastructure.qt_threads import AutoPowerCalibrationWorker
 
         mock_arduino = MockArduino()
         dm = _make_device_manager(mock_arduino)
-        nd = MockKDC101NDStage()
+        nd = MockNDStage()
         nd.connect("mock://nd-stage")
         pm = MockPM400(nd_mock=nd)
         pm.connect("mock://pm400")
@@ -445,3 +491,14 @@ class TestAutoPowerCalibrationWorkerNDMode:
 
         dm.disconnect_all()
         mock_arduino.stop()
+
+
+class TestNDActuatorDoesNotRezero:
+    def test_home_leaves_the_wheel_frame_untouched(self):
+        from polarisation_ui.infrastructure.mocks.mock_nd_stage import MockNDStage
+
+        nd = MockNDStage()
+        nd.connect("mock://nd-stage")
+        nd.move_to_deg(340.0)
+        NDFilterActuator(nd).home()
+        assert nd.get_position_deg() == 340.0

@@ -204,3 +204,4 @@ build/
 
 # Platformio specifics
 !src_arduino/lib/
+.pio/

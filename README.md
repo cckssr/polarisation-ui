@@ -148,11 +148,11 @@ Then launch the UI — the mock PTY path appears automatically in the port list 
 The automated power-calibration wizard (menu → "Automatische Leistungskalibrierung") records (voltage, power) pairs for each PD-TIA gain stage and writes a `PowerCalibrationProfile` JSON. It supports two intensity actuators, selectable per run:
 
 - **Polarisator** (default) — a KDC101 + PRM1-Z8 rotating polariser; intensity follows Malus's law.
-- **ND-Filter** — a KDC101 + Thorlabs MTS50/M-Z8 linear stage carrying a gradient neutral-density filter. Sweep points are chosen in the *power* domain (log- or linear-spaced target watts, inverted to stage position via the calibrated range scan) rather than in position, with closed-loop bisection against the live PM400 reading to correct for wedge drift.
+- **ND-Filter** — an axial (rotary) variable neutral-density filter turned by a stepper motor, driven by a separate ESP32 + DRV8825 controller over USB serial (firmware in `src_nd_stepper/`, flash with `pio run -t upload`; pins, microstepping and optional home switch are set in `src_nd_stepper/src/config.h`). Positions are wheel angles in degrees; zero is only a reference, so negative angles are allowed (software travel limits default to ±360°, `CONF:MOT:LIM`). The _ND-Linearität_ tab of the automatic power calibration repeats scans (optionally alternating direction) and compares the OD-vs-angle straight-line fit, scan-to-scan scatter and forward/backward hysteresis against a tolerance. Sweep points are chosen in the _power_ domain (log- or linear-spaced target watts, inverted to wheel angle via the calibrated range scan) rather than in angle, with closed-loop bisection against the live PM400 reading to correct for wedge drift.
 
 Three additional tabs support bringing the ND filter into service:
 
-- **ND-Bereich** — scans the stage across its travel and derives the usable `[clear, dark]` position range from the power-meter curve (persisted in `~/.config/polarisation-ui/auto_calibration_settings.json`).
+- **ND-Bereich** — scans the wheel across its range and derives the usable `[clear, dark]` angle range from the power-meter curve (persisted in `~/.config/polarisation-ui/auto_calibration_settings.json`).
 - **Detektor-Vergleich** — cross-checks a second PM400 against the first across the calibrated ND range, to validate a reference meter before trusting it for PD-TIA calibration. Results export to a standalone JSON (not a calibration profile).
 - **Gain-Prüfung** — after calibrating, verifies that every PD-TIA gain stage reports the same watts at a handful of power levels chosen from the overlap of adjacent `gain_auto_switch_power_W` windows in `config.json`.
 

@@ -22,12 +22,13 @@ from polarisation_ui.core.detector_crosscheck import (
     DetectorComparisonPoint,
     evaluate_detector_comparison,
 )
-from polarisation_ui.core.exceptions import KDC101Error, PM400Error
+from polarisation_ui.core.exceptions import ActuatorError, KDC101Error, PM400Error
 from polarisation_ui.core.gain_crosscheck import (
     GainCrossCheckLevel,
     evaluate_gain_crosscheck,
 )
 from polarisation_ui.core.nd_filter import analyse_nd_scan
+from polarisation_ui.core.nd_linearity import BACKWARD, FORWARD, NDLinearityScan
 from polarisation_ui.core.power_calibration import (
     PowerCalibrationProfile,
 )
@@ -38,8 +39,8 @@ from polarisation_ui.infrastructure.logging import Debug
 if TYPE_CHECKING:
     from polarisation_ui.core.models import Frame
     from polarisation_ui.infrastructure.devices.intensity_actuator import IntensityActuator
-    from polarisation_ui.infrastructure.devices.kdc101_nd_stage import KDC101NDStage
     from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
+    from polarisation_ui.infrastructure.devices.nd_stepper import NDStepperStage
     from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 
 
@@ -161,22 +162,27 @@ class AutoPowerCalibrationWorker(QThread):
     def _run_sweep(self) -> None:
         p = self._params
 
-        # Configure PM400 for this run
-        self.log.emit(
-            f"PM400: wavelength={p.wavelength_nm} nm, "
-            f"attenuation={p.beamsplitter_attenuation_dB:.2f} dB"
-        )
-        try:
-            self._pm.set_wavelength_nm(p.wavelength_nm)
-            self._pm.set_attenuation_dB(p.beamsplitter_attenuation_dB)
-            self._pm.set_averaging(p.pm_averaging)
-        except PM400Error as exc:
-            self.failed.emit(f"PM400 configuration failed: {exc}")
-            return
+        from_curve = p.intensity_source == "nd_filter" and p.power_from_nd_curve
+        sensor_meta: dict = {}
+        if from_curve:
+            self.log.emit("Leistung aus ND-Kennlinie — PM400 wird nicht verwendet.")
+        else:
+            # Configure PM400 for this run
+            self.log.emit(
+                f"PM400: wavelength={p.wavelength_nm} nm, "
+                f"attenuation={p.beamsplitter_attenuation_dB:.2f} dB"
+            )
+            try:
+                self._pm.set_wavelength_nm(p.wavelength_nm)
+                self._pm.set_attenuation_dB(p.beamsplitter_attenuation_dB)
+                self._pm.set_averaging(p.pm_averaging)
+            except PM400Error as exc:
+                self.failed.emit(f"PM400 configuration failed: {exc}")
+                return
 
-        # Collect sensor identification for metadata
-        raw_sensor = self._pm.sensor_info()
-        sensor_meta = _parse_sensor_info(raw_sensor)
+            # Collect sensor identification for metadata
+            raw_sensor = self._pm.sensor_info()
+            sensor_meta = _parse_sensor_info(raw_sensor)
         if sensor_meta:
             self.log.emit(
                 f"PM400 sensor: {sensor_meta.get('name', '?')} "
@@ -188,7 +194,7 @@ class AutoPowerCalibrationWorker(QThread):
         self.log.emit(f"{self._actuator.label}: homing…")
         try:
             self._actuator.home()
-        except KDC101Error as exc:
+        except ActuatorError as exc:
             self.failed.emit(f"{self._actuator.label} homing failed: {exc}")
             return
 
@@ -221,6 +227,7 @@ class AutoPowerCalibrationWorker(QThread):
             "max_refine_steps": p.max_refine_steps,
         }
         intensity_meta["levels"] = recorded_levels
+        intensity_meta["power_source"] = "nd_curve" if from_curve else "pm400"
         profile.intensity_control = intensity_meta
 
         self.log.emit("Sweep complete.")
@@ -269,7 +276,7 @@ class AutoPowerCalibrationWorker(QThread):
 
                 try:
                     self._actuator.move_to(angle)
-                except KDC101Error as exc:
+                except ActuatorError as exc:
                     self.failed.emit(f"{self._actuator.label} move failed: {exc}")
                     return None
 
@@ -343,7 +350,7 @@ class AutoPowerCalibrationWorker(QThread):
     ) -> "list[list[float]] | None":
         """Run the ND-filter (power-domain) sweep.
 
-        Returns the recorded ``[position_mm, power_W]`` levels for the first
+        Returns the recorded ``[angle_deg, power_W]`` levels for the first
         selected gain, or None if the sweep failed/aborted (the
         corresponding signal has been emitted).
         """
@@ -389,24 +396,29 @@ class AutoPowerCalibrationWorker(QThread):
 
                 try:
                     self._actuator.move_to(position)
-                except KDC101Error as exc:
+                except ActuatorError as exc:
                     self.failed.emit(f"{self._actuator.label} move failed: {exc}")
                     return None
                 time.sleep(p.point_settle_s)
 
-                try:
-                    achieved_power = self._pm.read_power_W()
-                except PM400Error as exc:
-                    self.failed.emit(f"PM400 read failed: {exc}")
-                    return None
+                if p.power_from_nd_curve:
+                    # The position was obtained by inverting the curve for this
+                    # target, so the curve says the power here *is* the target.
+                    achieved_power = target
+                else:
+                    try:
+                        achieved_power = self._pm.read_power_W()
+                    except PM400Error as exc:
+                        self.failed.emit(f"PM400 read failed: {exc}")
+                        return None
 
-                position, achieved_power = self._refine_to_target(
-                    target, position, achieved_power, scan
-                )
+                    position, achieved_power = self._refine_to_target(
+                        target, position, achieved_power, scan
+                    )
 
                 voltage_mean = self._average_adc_voltage(p.detector_samples)
                 if voltage_mean is None:
-                    self.log.emit(f"  Warning: no ADC readings at x={position:.2f} mm, skipping")
+                    self.log.emit(f"  Warning: no ADC readings at θ={position:.2f}°, skipping")
                     done += 1
                     self.progress.emit(done, total)
                     idx += 1
@@ -416,7 +428,7 @@ class AutoPowerCalibrationWorker(QThread):
                 if voltage_mean >= sat_threshold:
                     profile.gains[gain].n_saturated_skipped += 1
                     self.log.emit(
-                        f"  x={position:.2f} mm | V={voltage_mean:.4f} V — "
+                        f"  θ={position:.2f}° | V={voltage_mean:.4f} V — "
                         f"SATURATED (≥{sat_threshold:.2f} V), skipping"
                     )
                     done += 1
@@ -449,8 +461,9 @@ class AutoPowerCalibrationWorker(QThread):
                 self.point_recorded.emit(gain, position, voltage_mean, achieved_power)
                 self.progress.emit(done, total)
                 self.log.emit(
-                    f"  x={position:.2f} mm | V={voltage_mean:.6f} V | "
-                    f"P={achieved_power:.3e} W (Ziel {target:.3e} W)"
+                    f"  θ={position:.2f}° | V={voltage_mean:.6f} V | "
+                    f"P={achieved_power:.3e} W "
+                    + ("(ND-Kennlinie)" if p.power_from_nd_curve else f"(Ziel {target:.3e} W)")
                 )
                 idx += 1
 
@@ -489,7 +502,7 @@ class AutoPowerCalibrationWorker(QThread):
             mid = (lo_pos + hi_pos) / 2.0
             try:
                 self._actuator.move_to(mid)
-            except KDC101Error:
+            except ActuatorError:
                 break  # keep the last good reading rather than failing the whole sweep
             time.sleep(p.point_settle_s)
             try:
@@ -518,7 +531,7 @@ class AutoPowerCalibrationWorker(QThread):
 def _power_bracket(target_W: float, scan: "tuple[tuple[float, float], ...]") -> tuple[float, float]:
     """Return ``(pos_high_power, pos_low_power)`` bracketing *target_W* in *scan*.
 
-    *scan* is a raw ``(position_mm, power_W)`` scan. Positions are returned
+    *scan* is a raw ``(position_deg, power_W)`` scan. Positions are returned
     ordered so the first element's power is >= *target_W* >= the second's,
     matching the sweep's assumption that power decreases as position
     increases. Falls back to clamping at whichever end is closest when
@@ -637,7 +650,7 @@ class AlignPolariserWorker(QThread):
 class NDRangeScanWorker(QThread):
     """Off-main-thread worker that scans the ND-filter stage across its travel.
 
-    Reports (position_mm, power_W) pairs so
+    Reports (position_deg, power_W) pairs so
     ``core.nd_filter.analyse_nd_scan`` can derive the calibrated clear/dark
     end positions used as the ND stage's usable range.
 
@@ -645,7 +658,7 @@ class NDRangeScanWorker(QThread):
     mechanism.
     """
 
-    point_scanned = Signal(float, float)  # (position_mm, power_W)
+    point_scanned = Signal(float, float)  # (position_deg, power_W)
     progress = Signal(int, int)  # (done, total)
     finished = Signal(object)  # NDFilterRange
     failed = Signal(str)
@@ -653,26 +666,28 @@ class NDRangeScanWorker(QThread):
 
     def __init__(
         self,
-        nd: "KDC101NDStage",
+        nd: "NDStepperStage",
         pm: "PM400PowerMeter",
-        start_mm: float,
-        end_mm: float,
+        start_deg: float,
+        end_deg: float,
         n_points: int,
         settle_s: float,
         dark_floor_W: float | None = None,
         plateau_frac: float = 0.01,
+        samples_per_point: int = 1,
         parent=None,
     ) -> None:
         """Store the devices and scan parameters this worker will drive."""
         super().__init__(parent)
         self._nd = nd
         self._pm = pm
-        self._start = start_mm
-        self._end = end_mm
+        self._start = start_deg
+        self._end = end_deg
         self._n_points = max(n_points, 3)
         self._settle = settle_s
         self._dark_floor_W = dark_floor_W
         self._plateau_frac = plateau_frac
+        self._samples = max(samples_per_point, 1)
         self._abort: bool = False
 
     def abort(self) -> None:
@@ -692,7 +707,10 @@ class NDRangeScanWorker(QThread):
         n = self._n_points
         positions = linear_angle_grid(self._start, self._end, n)
 
-        self.log.emit(f"ND-Bereichsscan: {self._start:.2f}…{self._end:.2f} mm ({n} Punkte)")
+        self.log.emit(
+            f"ND-Bereichsscan: {self._start:.2f}…{self._end:.2f}° "
+            f"({n} Punkte, {self._samples} Mittelung(en))"
+        )
 
         scan: list[tuple[float, float]] = []
 
@@ -702,15 +720,15 @@ class NDRangeScanWorker(QThread):
                 return
 
             try:
-                self._nd.move_to_mm(pos)
-            except KDC101Error as exc:
-                self.failed.emit(f"ND-Bühne Bewegung fehlgeschlagen: {exc}")
+                self._nd.move_to_deg(pos)
+            except ActuatorError as exc:
+                self.failed.emit(f"ND-Filterrad Bewegung fehlgeschlagen: {exc}")
                 return
 
             time.sleep(self._settle)
 
             try:
-                power = self._pm.read_power_W()
+                power = sum(self._pm.read_power_W() for _ in range(self._samples)) / self._samples
             except PM400Error as exc:
                 self.failed.emit(f"PM400 Lesefehler: {exc}")
                 return
@@ -718,7 +736,7 @@ class NDRangeScanWorker(QThread):
             scan.append((pos, power))
             self.point_scanned.emit(pos, power)
             self.progress.emit(i + 1, n)
-            self.log.emit(f"  x={pos:.2f} mm | P={power:.3e} W")
+            self.log.emit(f"  θ={pos:.2f}° | P={power:.3e} W")
 
         try:
             result = analyse_nd_scan(
@@ -731,17 +749,129 @@ class NDRangeScanWorker(QThread):
         if not result.monotonic:
             self.log.emit("Warnung: Scan ist zwischen den Enden nicht monoton.")
         self.log.emit(
-            f"Bereich: klar={result.pos_clear_mm:.2f} mm ({result.power_clear_W:.3e} W), "
-            f"dunkel={result.pos_dark_mm:.2f} mm ({result.power_dark_W:.3e} W), "
+            f"Bereich: klar={result.pos_clear_deg:.2f}° ({result.power_clear_W:.3e} W), "
+            f"dunkel={result.pos_dark_deg:.2f}° ({result.power_dark_W:.3e} W), "
             f"Dynamikbereich={result.dynamic_range_dB:.1f} dB"
         )
         self.finished.emit(result)
 
 
+class NDLinearityScanWorker(QThread):
+    """Off-main-thread worker that runs several ND-wheel scans back to back.
+
+    Each scan visits the same ``n_points`` angles between *start_deg* and
+    *end_deg*; with *alternate* every second scan runs in the opposite
+    direction so that backlash / hysteresis shows up as a forward-vs-backward
+    offset. Completed scans are delivered one by one via ``scan_finished`` —
+    an abort therefore keeps everything measured so far.
+
+    Signals are delivered to the main thread via Qt's queued-connection
+    mechanism.
+    """
+
+    scan_started = Signal(int, str)  # (scan index, direction)
+    point_scanned = Signal(int, float, float)  # (scan index, position_deg, power_W)
+    scan_finished = Signal(object)  # NDLinearityScan
+    progress = Signal(int, int)  # (points done, points total over all scans)
+    finished = Signal(object)  # list[NDLinearityScan] — all scans of this run
+    failed = Signal(str)
+    log = Signal(str)
+
+    def __init__(
+        self,
+        nd: "NDStepperStage",
+        pm: "PM400PowerMeter",
+        start_deg: float,
+        end_deg: float,
+        n_points: int,
+        settle_s: float,
+        n_scans: int = 3,
+        alternate: bool = True,
+        samples_per_point: int = 1,
+        first_index: int = 0,
+        parent=None,
+    ) -> None:
+        """Store the devices and scan parameters this worker will drive."""
+        super().__init__(parent)
+        self._nd = nd
+        self._pm = pm
+        self._start = start_deg
+        self._end = end_deg
+        self._n_points = max(n_points, 3)
+        self._settle = settle_s
+        self._n_scans = max(n_scans, 1)
+        self._alternate = alternate
+        self._samples = max(samples_per_point, 1)
+        self._first_index = first_index
+        self._abort: bool = False
+
+    def abort(self) -> None:
+        """Request a clean stop (completed scans are kept)."""
+        self._abort = True
+
+    def run(self) -> None:
+        """Run all scans, catching and reporting unexpected errors."""
+        Debug.info("NDLinearityScanWorker: starting linearity scans")
+        try:
+            self._run_scans()
+        except Exception as exc:
+            Debug.error(f"NDLinearityScanWorker: unexpected error: {exc}", exc_info=True)
+            self.failed.emit(str(exc))
+
+    def _read_power(self) -> float:
+        """Return the mean of ``samples_per_point`` power readings."""
+        return sum(self._pm.read_power_W() for _ in range(self._samples)) / self._samples
+
+    def _run_scans(self) -> None:
+        grid = linear_angle_grid(self._start, self._end, self._n_points)
+        total = self._n_scans * self._n_points
+        done = 0
+        completed: list[NDLinearityScan] = []
+        self.log.emit(
+            f"ND-Linearität: {self._n_scans} Scan(s), {self._start:.2f}…{self._end:.2f}° "
+            f"({self._n_points} Punkte, {self._samples} Mittelung(en))"
+        )
+
+        for k in range(self._n_scans):
+            backward = self._alternate and k % 2 == 1
+            direction = BACKWARD if backward else FORWARD
+            index = self._first_index + k
+            positions = list(reversed(grid)) if backward else grid
+            self.scan_started.emit(index, direction)
+            self.log.emit(f"Scan {index + 1} ({'rückwärts' if backward else 'vorwärts'})")
+
+            scan: list[tuple[float, float]] = []
+            for pos in positions:
+                if self._abort:
+                    self.failed.emit("Abgebrochen")
+                    return
+                try:
+                    self._nd.move_to_deg(pos)
+                except ActuatorError as exc:
+                    self.failed.emit(f"ND-Filterrad Bewegung fehlgeschlagen: {exc}")
+                    return
+                time.sleep(self._settle)
+                try:
+                    power = self._read_power()
+                except PM400Error as exc:
+                    self.failed.emit(f"PM400 Lesefehler: {exc}")
+                    return
+                scan.append((pos, power))
+                done += 1
+                self.point_scanned.emit(index, pos, power)
+                self.progress.emit(done, total)
+
+            result = NDLinearityScan(index=index, direction=direction, points=tuple(scan))
+            completed.append(result)
+            self.scan_finished.emit(result)
+
+        self.finished.emit(completed)
+
+
 class DetectorCrossCheckWorker(QThread):
     """Off-main-thread worker that cross-checks two PM400s across the ND range.
 
-    Drives the ND stage across its calibrated ``[pos_clear_mm, pos_dark_mm]``
+    Drives the ND stage across its calibrated ``[pos_clear_deg, pos_dark_deg]``
     range and records simultaneous readings from two power meters, so
     ``core.detector_crosscheck.evaluate_detector_comparison`` can verify they
     agree before one of them is trusted as the beamsplitter-arm reference for
@@ -751,7 +881,7 @@ class DetectorCrossCheckWorker(QThread):
     mechanism.
     """
 
-    point_recorded = Signal(float, float, float)  # (position_mm, power_a_W, power_b_W)
+    point_recorded = Signal(float, float, float)  # (position_deg, power_a_W, power_b_W)
     progress = Signal(int, int)  # (done, total)
     finished = Signal(object)  # DetectorComparisonResult
     failed = Signal(str)
@@ -759,11 +889,11 @@ class DetectorCrossCheckWorker(QThread):
 
     def __init__(
         self,
-        nd: "KDC101NDStage",
+        nd: "NDStepperStage",
         pm_a: "PM400PowerMeter",
         pm_b: "PM400PowerMeter",
-        pos_clear_mm: float,
-        pos_dark_mm: float,
+        pos_clear_deg: float,
+        pos_dark_deg: float,
         n_points: int,
         settle_s: float,
         tolerance_pct: float = 5.0,
@@ -774,8 +904,8 @@ class DetectorCrossCheckWorker(QThread):
         self._nd = nd
         self._pm_a = pm_a
         self._pm_b = pm_b
-        self._pos_clear = pos_clear_mm
-        self._pos_dark = pos_dark_mm
+        self._pos_clear = pos_clear_deg
+        self._pos_dark = pos_dark_deg
         self._n_points = max(n_points, 3)
         self._settle = settle_s
         self._tolerance_pct = tolerance_pct
@@ -799,7 +929,7 @@ class DetectorCrossCheckWorker(QThread):
         positions = linear_angle_grid(self._pos_clear, self._pos_dark, n)
 
         self.log.emit(
-            f"Detektor-Vergleich: {self._pos_clear:.2f}…{self._pos_dark:.2f} mm ({n} Punkte)"
+            f"Detektor-Vergleich: {self._pos_clear:.2f}…{self._pos_dark:.2f}° ({n} Punkte)"
         )
 
         points: list[DetectorComparisonPoint] = []
@@ -810,9 +940,9 @@ class DetectorCrossCheckWorker(QThread):
                 return
 
             try:
-                self._nd.move_to_mm(pos)
-            except KDC101Error as exc:
-                self.failed.emit(f"ND-Bühne Bewegung fehlgeschlagen: {exc}")
+                self._nd.move_to_deg(pos)
+            except ActuatorError as exc:
+                self.failed.emit(f"ND-Filterrad Bewegung fehlgeschlagen: {exc}")
                 return
 
             time.sleep(self._settle)
@@ -828,7 +958,7 @@ class DetectorCrossCheckWorker(QThread):
             points.append(point)
             self.point_recorded.emit(pos, power_a, power_b)
             self.progress.emit(i + 1, n)
-            self.log.emit(f"  x={pos:.2f} mm | A={power_a:.3e} W | B={power_b:.3e} W")
+            self.log.emit(f"  θ={pos:.2f}° | A={power_a:.3e} W | B={power_b:.3e} W")
 
         try:
             result = evaluate_detector_comparison(points, tolerance_pct=self._tolerance_pct)
@@ -923,7 +1053,7 @@ class GainCrossCheckWorker(QThread):
 
             try:
                 self._actuator.move_to(level)
-            except KDC101Error as exc:
+            except ActuatorError as exc:
                 self.failed.emit(f"{self._actuator.label} move failed: {exc}")
                 return
             time.sleep(self._settle)
@@ -1366,8 +1496,8 @@ class KDC101HomeWorker(QThread):
     done = Signal()
     error = Signal(str)
 
-    def __init__(self, kdc: "KDC101Polariser", parent=None) -> None:
-        """Store the KDC handle to home when run() executes."""
+    def __init__(self, kdc: "KDC101Polariser | NDStepperStage", parent=None) -> None:
+        """Store the stage handle (KDC101 polariser or ND stepper) to home when run() executes."""
         super().__init__(parent)
         self._kdc = kdc
 
@@ -1376,7 +1506,7 @@ class KDC101HomeWorker(QThread):
         try:
             self._kdc.home()
             self.done.emit()
-        except KDC101Error as exc:
+        except ActuatorError as exc:
             self.error.emit(str(exc))
 
 

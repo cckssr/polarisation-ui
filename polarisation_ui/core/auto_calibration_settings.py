@@ -39,12 +39,12 @@ class AutoCalibrationConnectionSettings:
     0° always means maximum power regardless of how the polariser is mounted.
     """
     nd_stage_conn_id: str = ""
-    """KDC101 connection id for the ND-filter linear stage (MTS50/M-Z8)."""
+    """Serial port of the ND-filter stepper controller (ESP32 + DRV8825)."""
     pm400_b_visa_resource: str = ""
     """VISA resource of the second PM400 used for the detector cross-check."""
-    nd_pos_clear_mm: float | None = None
+    nd_pos_clear_deg: float | None = None
     """Calibrated ND-stage position of maximum transmission, from the range scan."""
-    nd_pos_dark_mm: float | None = None
+    nd_pos_dark_deg: float | None = None
     """Calibrated ND-stage position of minimum transmission, from the range scan."""
     nd_power_clear_W: float | None = None
     nd_power_dark_W: float | None = None
@@ -78,8 +78,8 @@ class AutoCalibrationConnectionSettings:
                 angle_offset_deg=float(data.get("angle_offset_deg", 0.0)),
                 nd_stage_conn_id=str(data.get("nd_stage_conn_id", "")),
                 pm400_b_visa_resource=str(data.get("pm400_b_visa_resource", "")),
-                nd_pos_clear_mm=_opt_float("nd_pos_clear_mm"),
-                nd_pos_dark_mm=_opt_float("nd_pos_dark_mm"),
+                nd_pos_clear_deg=_opt_float("nd_pos_clear_deg"),
+                nd_pos_dark_deg=_opt_float("nd_pos_dark_deg"),
                 nd_power_clear_W=_opt_float("nd_power_clear_W"),
                 nd_power_dark_W=_opt_float("nd_power_dark_W"),
                 nd_calibrated_at=str(data.get("nd_calibrated_at", "")),
@@ -119,13 +119,18 @@ class AutoCalibrationParams:
     power_grid_mode: Literal["log_power", "linear_power"] = "log_power"
     """Only used when intensity_source == "nd_filter" — see build_power_grid()."""
     nd_scan_points: tuple[tuple[float, float], ...] = ()
-    """The calibrated ND range scan (position_mm, power_W), used to invert target
+    """The calibrated ND range scan (position_deg, power_W), used to invert target
     powers to stage positions. Required when intensity_source == "nd_filter"."""
     power_tolerance_pct: float = 5.0
     """Max allowed |achieved - target| / target for an ND-mode sweep point before
     the worker bisects to refine the position (see max_refine_steps)."""
     max_refine_steps: int = 2
     """Max bisection refinement moves per ND-mode sweep point."""
+    power_from_nd_curve: bool = False
+    """ND mode only: take each point's power from the calibrated ND curve
+    (``nd_scan_points``) instead of reading the PM400, so the PM400 may be out
+    of the beam. No PM400 access, no bisection refinement — the recorded power
+    is the target the curve was inverted for."""
 
 
 def build_angle_grid(params: AutoCalibrationParams) -> list[float]:
@@ -207,7 +212,7 @@ def positions_for_target_powers(
 ) -> list[float]:
     """Invert a calibrated ND-filter position/power scan to reach *targets_W*.
 
-    *scan_points* is a raw ``(position_mm, power_W)`` scan — typically
+    *scan_points* is a raw ``(position_deg, power_W)`` scan — typically
     ``NDFilterRange.scan_points`` from ``core.nd_filter.analyse_nd_scan``.
     Interpolation is monotonic-in-power (the scan is sorted by power before
     inverting), so a non-monotonic scan gives an approximate but well-defined

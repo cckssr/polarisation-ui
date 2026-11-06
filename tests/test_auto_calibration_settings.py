@@ -64,8 +64,8 @@ class TestAutoCalibrationConnectionSettings:
         s = AutoCalibrationConnectionSettings()
         assert s.nd_stage_conn_id == ""
         assert s.pm400_b_visa_resource == ""
-        assert s.nd_pos_clear_mm is None
-        assert s.nd_pos_dark_mm is None
+        assert s.nd_pos_clear_deg is None
+        assert s.nd_pos_dark_deg is None
         assert s.nd_power_clear_W is None
         assert s.nd_power_dark_W is None
         assert s.nd_calibrated_at == ""
@@ -75,8 +75,8 @@ class TestAutoCalibrationConnectionSettings:
         s = AutoCalibrationConnectionSettings(
             nd_stage_conn_id="27123456",
             pm400_b_visa_resource="USB0::0x1313::0x8078::P0002::INSTR",
-            nd_pos_clear_mm=2.5,
-            nd_pos_dark_mm=47.5,
+            nd_pos_clear_deg=2.5,
+            nd_pos_dark_deg=47.5,
             nd_power_clear_W=1e-3,
             nd_power_dark_W=1e-7,
             nd_calibrated_at="2026-08-24T10:00:00",
@@ -85,8 +85,8 @@ class TestAutoCalibrationConnectionSettings:
         loaded = AutoCalibrationConnectionSettings.load(path)
         assert loaded.nd_stage_conn_id == "27123456"
         assert loaded.pm400_b_visa_resource == "USB0::0x1313::0x8078::P0002::INSTR"
-        assert loaded.nd_pos_clear_mm == pytest.approx(2.5)
-        assert loaded.nd_pos_dark_mm == pytest.approx(47.5)
+        assert loaded.nd_pos_clear_deg == pytest.approx(2.5)
+        assert loaded.nd_pos_dark_deg == pytest.approx(47.5)
         assert loaded.nd_power_clear_W == pytest.approx(1e-3)
         assert loaded.nd_power_dark_W == pytest.approx(1e-7)
         assert loaded.nd_calibrated_at == "2026-08-24T10:00:00"
@@ -103,7 +103,19 @@ class TestAutoCalibrationConnectionSettings:
         loaded = AutoCalibrationConnectionSettings.load(path)
         assert loaded.kdc101_conn_id == "X"
         assert loaded.nd_stage_conn_id == ""
-        assert loaded.nd_pos_clear_mm is None
+        assert loaded.nd_pos_clear_deg is None
+
+    def test_legacy_mm_range_is_not_read_as_degrees(self, tmp_path):
+        """Ranges saved by the old linear ND stage (mm keys) must not be reused as angles."""
+        path = tmp_path / "legacy.json"
+        path.write_text(
+            '{"nd_pos_clear_mm":2.5,"nd_pos_dark_mm":47.5,'
+            '"nd_power_clear_W":1e-6,"nd_power_dark_W":1e-9}',
+            encoding="utf-8",
+        )
+        loaded = AutoCalibrationConnectionSettings.load(path)
+        assert loaded.nd_pos_clear_deg is None
+        assert loaded.nd_pos_dark_deg is None
 
 
 # ── build_angle_grid ──────────────────────────────────────────────────────────

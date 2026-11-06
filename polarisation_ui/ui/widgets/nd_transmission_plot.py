@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 class NDTransmissionPlot(QWidget):
     """Live scatter plot for the ND-filter range scan.
 
-    X = stage position (mm), Y = optical power (W, log scale). Call
+    X = wheel angle (°), Y = optical power (W, log scale). Call
     ``add_point()`` as each scan point arrives, then ``set_range_markers()``
     once ``core.nd_filter.analyse_nd_scan`` has picked the clear/dark ends.
     """
@@ -35,7 +35,7 @@ class NDTransmissionPlot(QWidget):
         self._plot_widget = pg.PlotWidget()
         self._plot_widget.setBackground("w")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._plot_widget.setLabel("bottom", "Position", units="mm")
+        self._plot_widget.setLabel("bottom", "Winkel", units="°")
         self._plot_widget.setLabel("left", "Optische Leistung", units="W")
         self._plot_widget.setLogMode(y=True)
 
@@ -61,17 +61,17 @@ class NDTransmissionPlot(QWidget):
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def add_point(self, position_mm: float, power_W: float) -> None:
+    def add_point(self, position_deg: float, power_W: float) -> None:
         """Append a scan point and refresh the series."""
-        self._xs.append(position_mm)
+        self._xs.append(position_deg)
         self._ys.append(power_W)
         self._series.setData(self._xs, self._ys)
 
-    def set_range_markers(self, pos_clear_mm: float, pos_dark_mm: float) -> None:
+    def set_range_markers(self, pos_clear_deg: float, pos_dark_deg: float) -> None:
         """Show vertical markers at the calibrated clear/dark end positions."""
-        self._clear_marker.setValue(pos_clear_mm)
+        self._clear_marker.setValue(pos_clear_deg)
         self._clear_marker.setVisible(True)
-        self._dark_marker.setValue(pos_dark_mm)
+        self._dark_marker.setValue(pos_dark_deg)
         self._dark_marker.setVisible(True)
 
     def clear(self) -> None:

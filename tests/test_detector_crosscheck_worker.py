@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import Qt
 
 from polarisation_ui.core.detector_crosscheck import DetectorComparisonResult
-from polarisation_ui.infrastructure.mocks.mock_kdc101_nd_stage import MockKDC101NDStage
+from polarisation_ui.infrastructure.mocks.mock_nd_stage import MockNDStage
 from polarisation_ui.infrastructure.mocks.mock_pm400 import MockPM400
 
 _DIRECT = Qt.ConnectionType.DirectConnection
@@ -23,7 +23,7 @@ class TestDetectorCrossCheckWorker:
     def test_identical_meters_pass(self):
         from polarisation_ui.infrastructure.qt_threads import DetectorCrossCheckWorker
 
-        nd = MockKDC101NDStage()
+        nd = MockNDStage()
         nd.connect("mock://nd-stage")
         # Both meters driven by the same ND mock -> identical readings.
         pm_a = MockPM400(nd_mock=nd)
@@ -35,15 +35,15 @@ class TestDetectorCrossCheckWorker:
         results: list[DetectorComparisonResult] = []
         failures: list[str] = []
 
-        # Stay well above the mock's noise floor (pos_dark_mm=50 would put the
+        # Stay well above the mock's noise floor (pos_dark_deg=360 would put the
         # signal within ~1x the noise amplitude, where two independently
         # noisy meters legitimately disagree by more than typical tolerances).
         worker = DetectorCrossCheckWorker(
             nd=nd,
             pm_a=pm_a,
             pm_b=pm_b,
-            pos_clear_mm=0.0,
-            pos_dark_mm=20.0,
+            pos_clear_deg=0.0,
+            pos_dark_deg=144.0,
             n_points=9,
             settle_s=0.0,
             tolerance_pct=10.0,
@@ -65,7 +65,7 @@ class TestDetectorCrossCheckWorker:
     def test_abort_stops_worker_cleanly(self):
         from polarisation_ui.infrastructure.qt_threads import DetectorCrossCheckWorker
 
-        nd = MockKDC101NDStage()
+        nd = MockNDStage()
         nd.connect("mock://nd-stage")
         pm_a = MockPM400(nd_mock=nd)
         pm_a.connect("mock://pm400a")
@@ -77,8 +77,8 @@ class TestDetectorCrossCheckWorker:
             nd=nd,
             pm_a=pm_a,
             pm_b=pm_b,
-            pos_clear_mm=0.0,
-            pos_dark_mm=50.0,
+            pos_clear_deg=0.0,
+            pos_dark_deg=360.0,
             n_points=200,
             settle_s=0.02,
         )

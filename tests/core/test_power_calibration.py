@@ -117,7 +117,7 @@ class TestPowerCalibrationProfileSaveLoad:
         path = tmp_path / "profile.json"
         profile = PowerCalibrationProfile(
             name="Det-A",
-            intensity_control={"kind": "nd_filter", "unit": "mm", "range": [2.5, 47.5]},
+            intensity_control={"kind": "nd_filter", "unit": "deg", "range": [2.5, 47.5]},
             gain_crosscheck={"passed": True, "worst_spread_pct": 1.2},
         )
         profile.gains[1] = GainCalibration(gain_stage=1, points=list(self._FIXED_POINTS))
@@ -126,7 +126,7 @@ class TestPowerCalibrationProfileSaveLoad:
         loaded = PowerCalibrationProfile.load(path)
         assert loaded.intensity_control == {
             "kind": "nd_filter",
-            "unit": "mm",
+            "unit": "deg",
             "range": [2.5, 47.5],
         }
         assert loaded.gain_crosscheck == {"passed": True, "worst_spread_pct": 1.2}

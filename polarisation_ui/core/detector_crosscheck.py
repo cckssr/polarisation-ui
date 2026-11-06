@@ -19,7 +19,7 @@ class DetectorComparisonPoint:
     """One simultaneous reading from both power meters at a given ND position."""
 
     position: float
-    """Actuator level (mm for the ND stage) at which both readings were taken."""
+    """Actuator level (degrees for the ND wheel) at which both readings were taken."""
     power_a_W: float
     """Reference meter (behind the beamsplitter, unchanged)."""
     power_b_W: float

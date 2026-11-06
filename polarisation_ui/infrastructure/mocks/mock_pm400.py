@@ -1,7 +1,7 @@
 """Mock PM400PowerMeter for headless tests.
 
 Simulates power from either a MockKDC101Polariser's current angle (Malus's
-law) or a MockKDC101NDStage's current position (exponential wedge
+law) or a MockNDStage's current angle (exponential wedge
 transmission) so that the full calibration worker can run without any real
 hardware.
 """
@@ -10,7 +10,7 @@ import math
 import random
 
 from polarisation_ui.core.exceptions import PM400Error
-from polarisation_ui.infrastructure.devices.kdc101_nd_stage import TRAVEL_MM
+from polarisation_ui.infrastructure.devices.nd_stepper import MAX_ANGLE_DEG
 
 
 class MockPM400:
@@ -21,12 +21,12 @@ class MockPM400:
 
         P = P_max * cos²(θ) * 10^(-attenuation_dB/10) + noise
 
-    *nd_mock* is a MockKDC101NDStage (or any object with ``get_position_mm()``);
+    *nd_mock* is a MockNDStage (or any object with ``get_position_deg()``);
     when given instead, power follows an exponential gradient-ND-filter model:
 
-        P = P_max * 10^(-OD_max * x / TRAVEL_MM) * 10^(-attenuation_dB/10) + noise
+        P = P_max * 10^(-OD_max * x / MAX_ANGLE_DEG) * 10^(-attenuation_dB/10) + noise
 
-    where x is the current ND-stage position (mm). Passing both is not a
+    where x is the current ND-wheel angle (degrees). Passing both is not a
     supported configuration; *nd_mock* takes precedence if both are given.
     P_max = 1 µW, noise is Gaussian with the same magnitude in both models.
     """
@@ -66,8 +66,8 @@ class MockPM400:
         self._require_connected()
         att_factor = 10.0 ** (-self._attenuation_dB / 10.0)
         if self._nd is not None:
-            position_mm = self._nd.get_position_mm()
-            transmission = 10.0 ** (-self._OD_MAX * position_mm / TRAVEL_MM)
+            position_deg = self._nd.get_position_deg()
+            transmission = 10.0 ** (-self._OD_MAX * position_deg / MAX_ANGLE_DEG)
             power = self._P_MAX_W * transmission * att_factor
         else:
             angle_deg = self._kdc.get_position_deg() if self._kdc is not None else 0.0

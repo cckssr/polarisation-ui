@@ -73,7 +73,7 @@ class TestBuildPowerGrid:
 
 class TestPositionsForTargetPowers:
     def _scan(self):
-        # Monotonic decay, position 0..50 mm, 3 decades.
+        # Monotonic decay, position 0..50°, 3 decades.
         return [(x, 1e-3 * 10 ** (-3 * x / 50)) for x in range(0, 51, 5)]
 
     def test_maps_targets_to_positions_monotonically(self):

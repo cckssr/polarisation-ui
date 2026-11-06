@@ -7,12 +7,12 @@ from polarisation_ui.core.nd_filter import analyse_nd_scan
 
 class TestBasicScan:
     def test_monotonic_decay_picks_ends_and_dynamic_range(self):
-        # 3 decades of decay over 0..50 mm, clear end at 0, dark end at 50.
+        # 3 decades of decay over 0..50°, clear end at 0, dark end at 50.
         points = [(x, 1e-3 * 10 ** (-3 * x / 50)) for x in range(0, 51, 5)]
         result = analyse_nd_scan(points)
 
-        assert result.pos_clear_mm == pytest.approx(0.0)
-        assert result.pos_dark_mm == pytest.approx(50.0)
+        assert result.pos_clear_deg == pytest.approx(0.0)
+        assert result.pos_dark_deg == pytest.approx(50.0)
         assert result.power_clear_W == pytest.approx(1e-3)
         assert result.power_dark_W == pytest.approx(1e-6, rel=1e-6)
         assert result.dynamic_range_dB == pytest.approx(30.0, abs=0.01)
@@ -22,8 +22,8 @@ class TestBasicScan:
         points = [(x, 1e-3 * 10 ** (-3 * x / 50)) for x in range(50, -1, -5)]
         result = analyse_nd_scan(points)
 
-        assert result.pos_clear_mm == pytest.approx(0.0)
-        assert result.pos_dark_mm == pytest.approx(50.0)
+        assert result.pos_clear_deg == pytest.approx(0.0)
+        assert result.pos_dark_deg == pytest.approx(50.0)
         assert result.monotonic is True
 
     def test_raises_on_fewer_than_two_points(self):
@@ -33,7 +33,7 @@ class TestBasicScan:
 
 class TestPlateauDetection:
     def test_clear_end_is_innermost_edge_of_plateau(self):
-        # Flat clear-aperture region at 0 and 5 mm, then decaying.
+        # Flat clear-aperture region at 0° and 5°, then decaying.
         points = [
             (0, 1.0e-3),
             (5, 1.0e-3),
@@ -43,8 +43,8 @@ class TestPlateauDetection:
         ]
         result = analyse_nd_scan(points, plateau_frac=0.01)
 
-        # 5 mm still qualifies (>= 0.99 * 1e-3); 10 mm does not (9e-4 < 9.9e-4).
-        assert result.pos_clear_mm == pytest.approx(5.0)
+        # 5° still qualifies (>= 0.99 * 1e-3); 10° does not (9e-4 < 9.9e-4).
+        assert result.pos_clear_deg == pytest.approx(5.0)
 
     def test_tighter_plateau_frac_shrinks_the_clear_region(self):
         points = [
@@ -55,7 +55,7 @@ class TestPlateauDetection:
             (20, 1.0e-4),
         ]
         result = analyse_nd_scan(points, plateau_frac=0.0001)
-        assert result.pos_clear_mm == pytest.approx(5.0)  # still exactly equal to peak
+        assert result.pos_clear_deg == pytest.approx(5.0)  # still exactly equal to peak
 
 
 class TestDarkFloor:
@@ -69,7 +69,7 @@ class TestDarkFloor:
             (50, 4.0e-9),
         ]
         result = analyse_nd_scan(points, dark_floor_W=5e-9)
-        assert result.pos_dark_mm == pytest.approx(30.0)
+        assert result.pos_dark_deg == pytest.approx(30.0)
         assert result.power_dark_W == pytest.approx(5e-9)
 
     def test_no_floor_uses_raw_minimum(self):
@@ -82,7 +82,7 @@ class TestDarkFloor:
             (50, 4.0e-9),
         ]
         result = analyse_nd_scan(points)
-        assert result.pos_dark_mm == pytest.approx(40.0)
+        assert result.pos_dark_deg == pytest.approx(40.0)
         assert result.power_dark_W == pytest.approx(3.0e-9)
 
 
@@ -116,8 +116,8 @@ class TestJsonRoundTrip:
         result = analyse_nd_scan(points)
         d = result.to_json_dict()
         assert set(d) == {
-            "pos_clear_mm",
-            "pos_dark_mm",
+            "pos_clear_deg",
+            "pos_dark_deg",
             "power_clear_W",
             "power_dark_W",
             "dynamic_range_dB",

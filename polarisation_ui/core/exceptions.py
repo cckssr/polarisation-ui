@@ -38,7 +38,17 @@ class IncompatibleFirmwareError(GoniometerError):
     pass
 
 
-class KDC101Error(Exception):
+class ActuatorError(Exception):
+    """Base for failures of any intensity actuator (KDC101 polariser, ND stepper).
+
+    Lets sweep workers handle "the thing that varies beam intensity failed"
+    without knowing which concrete device they are driving.
+    """
+
+    pass
+
+
+class KDC101Error(ActuatorError):
     """Raised when KDC101 motor controller communication fails."""
 
     pass
@@ -46,6 +56,18 @@ class KDC101Error(Exception):
 
 class KDC101TimeoutError(KDC101Error):
     """Raised when a KDC101 move or home operation times out."""
+
+    pass
+
+
+class NDStageError(ActuatorError):
+    """Raised when the ND-filter stepper controller (ESP32 + DRV8825) fails."""
+
+    pass
+
+
+class NDStageTimeoutError(NDStageError):
+    """Raised when an ND-stage move or home operation times out."""
 
     pass
 

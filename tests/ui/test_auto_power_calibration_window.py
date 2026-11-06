@@ -116,3 +116,126 @@ class TestComputeVerifyLevels:
         for n in (1, 5, 10, 20):
             for level in window._compute_verify_levels(n):
                 assert 0.0 <= level <= 50.0
+
+
+class TestWindowSizeStability:
+    """Long text in status labels must clip, not enlarge the dialog."""
+
+    _LONG = "Verbunden: /dev/cu.usbserial-0123456789-with-a-very-long-descriptive-port-name " * 4
+    _LABELS = (
+        "lblArduinoStatus",
+        "lblKDCStatus",
+        "lblPM400Status",
+        "lblPM400BStatus",
+        "lblNDStatus",
+        "lblNDPosition",
+        "lblNDDriver",
+        "lblPhase",
+        "lblOutputPath",
+        "lblAngleOffset",
+        "lblNDRange",
+        "lblXCheckResult",
+        "lblVerifyResult",
+    )
+
+    def test_long_label_text_does_not_grow_minimum_width(self, window, qapp):
+        before = window.minimumSizeHint().width()
+        for name in self._LABELS:
+            getattr(window.ui, name).setText(self._LONG)
+        qapp.processEvents()
+        assert window.minimumSizeHint().width() == before
+
+    def test_long_combo_entries_do_not_grow_minimum_width(self, window, qapp):
+        from PySide6.QtWidgets import QComboBox
+
+        before = window.minimumSizeHint().width()
+        for combo in window.findChildren(QComboBox):
+            combo.addItem("/dev/cu.usbserial-0123456789 – Silicon Labs CP210x USB to UART Bridge")
+        qapp.processEvents()
+        assert window.minimumSizeHint().width() == before
+
+    def test_long_phase_text_is_kept_as_tooltip(self, window):
+        window._set_phase(self._LONG)
+        assert window.ui.lblPhase.toolTip() == self._LONG
+
+
+class TestNDLinearityTab:
+    @staticmethod
+    def _scan(index, direction, offset_od=0.0):
+        from polarisation_ui.core.nd_linearity import NDLinearityScan
+
+        positions = [float(p) for p in range(0, 101, 10)]
+        if direction == "backward":
+            positions.reverse()
+        pts = tuple((p, 1e-6 * 10 ** (-(0.01 * p + offset_od))) for p in positions)
+        return NDLinearityScan(index, direction, pts)
+
+    def test_report_lists_every_scan_and_hysteresis(self, window):
+        window._on_nd_lin_scan_finished(self._scan(0, "forward"))
+        window._on_nd_lin_scan_finished(self._scan(1, "backward", offset_od=0.03))
+        text = window.ui.txtNDLinReport.toPlainText()
+        assert "vorwärts" in text and "rückwärts" in text
+        assert "Hysterese (vorwärts ↔ rückwärts)" in text
+        assert "≈ 3.00°" in text
+
+    def test_scan_over_tolerance_is_flagged(self, window):
+        window.ui.spinNDLinTol.setValue(0.001)
+        scan = self._scan(0, "forward")
+        # Bend one point so the line no longer fits.
+        pts = list(scan.points)
+        pts[5] = (pts[5][0], pts[5][1] * 0.7)
+        window._on_nd_lin_scan_finished(type(scan)(0, "forward", tuple(pts)))
+        assert "ÜBER TOLERANZ" in window.ui.txtNDLinReport.toPlainText()
+
+    def test_clear_discards_scans_and_report(self, window):
+        window._on_nd_lin_scan_finished(self._scan(0, "forward"))
+        window._clear_nd_lin()
+        assert window._nd_lin_scans == []
+        assert window.ui.txtNDLinReport.toPlainText() == ""
+
+    def test_start_without_hardware_does_not_launch_worker(self, window, monkeypatch):
+        from PySide6.QtWidgets import QMessageBox
+
+        monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
+        window._start_nd_lin()
+        assert window._nd_lin_worker is None
+
+    def test_status_says_linearity_is_diagnostic_and_names_sweep_curve(self, window):
+        text = window.ui.lblNDLinStatus.text()
+        assert "nicht auf Sweeps angewendet" in text
+        assert "Sweep-Kennlinie: keine" in text
+        window._nd_range = _fake_nd_scan()
+        window._refresh_nd_lin_status()
+        assert "Bereichsscan dieser Sitzung" in window.ui.lblNDLinStatus.text()
+
+
+class TestPowerFromNDCurve:
+    def test_curve_keeps_only_points_between_the_calibrated_ends(self, window):
+        # Rising tail beyond the dark end (sensor noise) must be dropped.
+        pts = [(x, 1e-3 * 10 ** (-3 * x / 50)) for x in range(0, 51, 2)]
+        result = analyse_nd_scan(pts + [(52.0, 5e-5)], dark_floor_W=2e-6)
+        kept = window._nd_curve_between_ends(result)
+        lo, hi = sorted((result.pos_clear_deg, result.pos_dark_deg))
+        assert kept and all(lo <= pos <= hi for pos, _ in kept)
+        assert (52.0, 5e-5) not in kept
+
+    def test_curve_mode_greys_out_pm400_only_options(self, window):
+        window.ui.radioSourceND.setChecked(True)  # the grid group is disabled in polariser mode
+        window.ui.chkPowerFromCurve.setChecked(True)
+        assert not window.ui.spinPowerTolerancePct.isEnabled()
+        assert not window.ui.spinMaxRefineSteps.isEnabled()
+        window.ui.chkPowerFromCurve.setChecked(False)
+        assert window.ui.spinPowerTolerancePct.isEnabled()
+
+    def test_curve_mode_requires_a_scan_from_this_session(self, window, monkeypatch):
+        from PySide6.QtWidgets import QMessageBox
+
+        warned: list[str] = []
+        monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+        window.ui.chkGain1.setChecked(True)
+        window.ui.lineProfileName.setText("p")
+        window.ui.radioSourceND.setChecked(True)
+        window.ui.chkPowerFromCurve.setChecked(True)
+        window._start_sweep()
+        assert window._worker is None
+        assert warned and "Bereichsscan dieser Sitzung" in warned[0]

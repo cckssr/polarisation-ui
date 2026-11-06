@@ -9,7 +9,7 @@ from polarisation_ui.core.gain_crosscheck import GainCrossCheckResult
 from polarisation_ui.core.power_calibration import GainCalibration, PowerCalibrationProfile
 from polarisation_ui.infrastructure.devices.intensity_actuator import NDFilterActuator
 from polarisation_ui.infrastructure.mocks.mock_arduino import MockArduino
-from polarisation_ui.infrastructure.mocks.mock_kdc101_nd_stage import MockKDC101NDStage
+from polarisation_ui.infrastructure.mocks.mock_nd_stage import MockNDStage
 from polarisation_ui.infrastructure.mocks.mock_pm400 import MockPM400
 
 _DIRECT = Qt.ConnectionType.DirectConnection
@@ -33,7 +33,7 @@ def _make_devices():
     tests comes entirely from the profile's per-gain conversion factors."""
     mock_arduino = MockArduino()
     dm = _make_device_manager(mock_arduino)
-    nd = MockKDC101NDStage()
+    nd = MockNDStage()
     nd.connect("mock://nd-stage")
     pm = MockPM400(nd_mock=nd)
     pm.connect("mock://pm400")
@@ -57,7 +57,7 @@ class TestGainCrossCheckWorker:
 
         mock_arduino, dm, nd, pm = _make_devices()
         # Both gains calibrated so ~2.5 V (the mock's fixed ADC reading) maps
-        # to ~1e-6 W, matching MockPM400's ND model at position 0 mm.
+        # to ~1e-6 W, matching MockPM400's ND model at angle 0°.
         profile = PowerCalibrationProfile(name="test", adc_saturation_threshold_V=2.6)
         profile.gains[1] = GainCalibration(gain_stage=1, points=[(2.5, 1.0e-6)])
         profile.gains[2] = GainCalibration(gain_stage=2, points=[(2.5, 1.0e-6)])

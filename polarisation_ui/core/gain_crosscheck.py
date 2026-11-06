@@ -20,7 +20,7 @@ class GainCrossCheckLevel:
     """One test level: a fixed actuator position, measured through every stage."""
 
     level: float
-    """Actuator position (mm for the ND stage, degrees for the polariser) at
+    """Actuator position (degrees for both the ND wheel and the polariser) at
     which this level was measured."""
     pm_power_W: float
     """Reference PM400 reading at this level."""
