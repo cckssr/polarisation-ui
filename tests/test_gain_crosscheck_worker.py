@@ -95,6 +95,47 @@ class TestGainCrossCheckWorker:
         dm.disconnect_all()
         mock_arduino.stop()
 
+    def test_curve_reference_replaces_pm400(self):
+        from polarisation_ui.infrastructure.qt_threads import GainCrossCheckWorker
+
+        mock_arduino, dm, nd, _pm = _make_devices()
+
+        class ExplodingPM:
+            def __getattr__(self, name):
+                raise AssertionError(f"PM400.{name} must not be used with a curve reference")
+
+        profile = PowerCalibrationProfile(name="test", adc_saturation_threshold_V=2.6)
+        profile.gains[1] = GainCalibration(gain_stage=1, points=[(2.5, 1.0e-6)])
+        profile.gains[2] = GainCalibration(gain_stage=2, points=[(2.5, 1.0e-6)])
+        # The curve says 1e-6 W at the tested position, matching both gains.
+        curve = ((0.0, 1.0e-6), (100.0, 1.0e-8))
+
+        results: list[GainCrossCheckResult] = []
+        failures: list[str] = []
+        worker = GainCrossCheckWorker(
+            device_manager=dm,
+            actuator=NDFilterActuator(nd),
+            pm=ExplodingPM(),
+            profile=profile,
+            levels=[0.0],
+            gains=(1, 2),
+            settle_s=0.0,
+            detector_samples=2,
+            tolerance_pct=10.0,
+            nd_curve=curve,
+        )
+        worker.finished.connect(results.append, _DIRECT)
+        worker.failed.connect(failures.append, _DIRECT)
+        worker.start()
+        worker.wait(15_000)
+
+        assert not failures, failures
+        assert results[0].passed is True
+        assert results[0].worst_pm_deviation_pct == pytest.approx(0.0, abs=0.5)
+
+        dm.disconnect_all()
+        mock_arduino.stop()
+
     def test_detects_gain_mismatch(self):
         from polarisation_ui.infrastructure.qt_threads import GainCrossCheckWorker
 

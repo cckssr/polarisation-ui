@@ -176,7 +176,12 @@ class GainCalibrationTab(QWidget):
             self.ui.valueFactor.setText(self._text("text_factor_none"))
         else:
             self.ui.valueFactor.setText(
-                self._text("text_factor", factor=f"{factor:.4e}", stage=self._gain_stage)
+                self._text(
+                    "text_factor",
+                    factor=f"{factor:.4e}",
+                    offset=f"{self._cal.zero_offset_V() * 1e3:.3f}",
+                    stage=self._gain_stage,
+                )
             )
 
         # Update scatter plot
@@ -184,10 +189,13 @@ class GainCalibrationTab(QWidget):
             vs = [v for v, _ in pts]
             ps = [p for _, p in pts]
             self._scatter.setData(vs, ps)
-            # Fit line: y = factor * x
+            # Fit line: y = factor * (x - V0)
             if factor is not None and len(vs) >= 1:
                 x_min, x_max = min(vs), max(vs)
-                self._fit_line.setData([x_min, x_max], [factor * x_min, factor * x_max])
+                v0 = self._cal.zero_offset_V()
+                self._fit_line.setData(
+                    [x_min, x_max], [factor * (x_min - v0), factor * (x_max - v0)]
+                )
             else:
                 self._fit_line.setData([], [])
         else:
@@ -267,7 +275,7 @@ class PowerCalibrationWindow(QDialog):
     def _connect_live_updates(self) -> None:
         if self._data_controller is None:
             return
-        self._data_controller.intensity_updated.connect(self._on_live_voltage)
+        self._data_controller.calibration_voltage_updated.connect(self._on_live_voltage)
 
     @Slot(float)
     def _on_live_voltage(self, voltage: float) -> None:
@@ -426,7 +434,7 @@ class PowerCalibrationWindow(QDialog):
         """Detach from DataController's live-voltage signal and disconnect the PM400."""
         if self._data_controller is not None:
             try:
-                self._data_controller.intensity_updated.disconnect(self._on_live_voltage)
+                self._data_controller.calibration_voltage_updated.disconnect(self._on_live_voltage)
             except RuntimeError:
                 pass
         self._pm_poll_timer.stop()

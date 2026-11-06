@@ -253,7 +253,10 @@ class BrewsterTab(PlotTabBase):
             intensity_V = frame.intensity
         else:
             peak_power_W = (
-                self._peak_intensity * frame.conv_factor_W_per_V
+                max(
+                    0.0,
+                    frame.conv_factor_W_per_V * (self._peak_intensity - frame.power_offset_V),
+                )
                 if frame.conv_factor_W_per_V is not None
                 else None
             )

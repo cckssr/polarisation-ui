@@ -133,6 +133,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self._nd_lin_scans: list[NDLinearityScan] = []
         self._xcheck_worker: DetectorCrossCheckWorker | None = None
         self._verify_worker: GainCrossCheckWorker | None = None
+        self._verify_from_curve = False  # reference of the running/last gain verification
 
         self._profile: PowerCalibrationProfile | None = None
         self._angle_offset_deg: float = 0.0
@@ -290,6 +291,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.buttonAbortXCheck.clicked.connect(self._abort_xcheck)
         self.ui.buttonSaveXCheck.clicked.connect(self._save_xcheck)
 
+        self.ui.checkVerifyFromCurve.toggled.connect(self._on_verify_source_changed)
         self.ui.buttonStartVerify.clicked.connect(self._start_verify)
         self.ui.buttonAbortVerify.clicked.connect(self._abort_verify)
 
@@ -858,6 +860,7 @@ class AutoPowerCalibrationWindow(QDialog):
             nd_scan_points=nd_scan_points,
             power_tolerance_pct=self.ui.spinPowerTolerancePct.value(),
             max_refine_steps=self.ui.spinMaxRefineSteps.value(),
+            return_pass=self.ui.checkReturnPass.isChecked(),
             power_from_nd_curve=from_curve,
         )
 
@@ -889,7 +892,7 @@ class AutoPowerCalibrationWindow(QDialog):
         self._worker.failed.connect(self._on_sweep_failed)
         self._worker.log.connect(self._append_log)
 
-        total = params.n_points * len(params.selected_gains)
+        total = params.n_points * len(params.selected_gains) * (2 if params.return_pass else 1)
         self.ui.progressBar.setMaximum(total)
         self.ui.progressBar.setValue(0)
         self.ui.calibrationPlot.clear()
@@ -1346,8 +1349,12 @@ class AutoPowerCalibrationWindow(QDialog):
         if self._profile is None:
             self._warn("title_verify", "verify_needs_profile")
             return
-        if not self._nd.is_connected() or not self._pm.is_connected():
-            self._warn("title_verify", "nd_devices_required")
+        from_curve = self.ui.checkVerifyFromCurve.isChecked()
+        if not self._nd.is_connected() or not (from_curve or self._pm.is_connected()):
+            self._warn("title_verify", "verify_devices_required")
+            return
+        if from_curve and self._nd_range is None:
+            self._warn("title_verify", "verify_curve_needs_session_scan")
             return
 
         gains = tuple(sorted(g for g, cal in self._profile.gains.items() if cal.points))
@@ -1364,6 +1371,7 @@ class AutoPowerCalibrationWindow(QDialog):
             self._device_manager if self._standalone else self._data_controller.device_manager
         )
         self.ui.tableGainVerify.setRowCount(0)
+        self._verify_from_curve = from_curve
         self._verify_worker = GainCrossCheckWorker(
             device_manager=device_manager,
             actuator=NDFilterActuator(self._nd, nd_range=self._nd_range),
@@ -1374,6 +1382,7 @@ class AutoPowerCalibrationWindow(QDialog):
             settle_s=self.ui.spinVerifySettle.value(),
             detector_samples=self.ui.spinDetectorSamples.value(),
             tolerance_pct=self.ui.spinVerifyTolerancePct.value(),
+            nd_curve=self._nd_curve_between_ends(self._nd_range) if from_curve else None,
             parent=self,
         )
         self._verify_worker.level_done.connect(self._on_verify_level_done)
@@ -1410,11 +1419,15 @@ class AutoPowerCalibrationWindow(QDialog):
         self._verify_result = result
         self._set_verify_running(False)
         verdict = self._m("verdict_ok" if result.passed else "verdict_failed")
+        reference = (
+            "verify_reference_curve" if self._verify_from_curve else "verify_reference_pm400"
+        )
         self.ui.valueVerifyResult.setText(
             self._t(
                 "verify_result",
                 spread=f"{result.worst_spread_pct:.2f}",
                 pm_deviation=f"{result.worst_pm_deviation_pct:.2f}",
+                reference=self._t(reference),
                 verdict=verdict,
             )
         )
@@ -1435,7 +1448,17 @@ class AutoPowerCalibrationWindow(QDialog):
         self.ui.buttonAbortVerify.setEnabled(running)
 
     def _verify_ready(self) -> bool:
-        return self._profile is not None and self._nd.is_connected() and self._pm.is_connected()
+        pm_ok = self._pm.is_connected() or self.ui.checkVerifyFromCurve.isChecked()
+        return self._profile is not None and self._nd.is_connected() and pm_ok
+
+    @Slot()
+    def _on_verify_source_changed(self) -> None:
+        self.ui.buttonStartVerify.setEnabled(
+            not self._verify_worker_active() and self._verify_ready()
+        )
+
+    def _verify_worker_active(self) -> bool:
+        return self._verify_worker is not None and self._verify_worker.isRunning()
 
     # ── Save ──────────────────────────────────────────────────────────────────
 

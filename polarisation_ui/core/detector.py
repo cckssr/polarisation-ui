@@ -41,7 +41,8 @@ def point_power(frame: Frame | None, intensity_V: float) -> tuple[float | None, 
     - ``frame.detector == DETECTOR_PM400`` → ``(frame.power_W, None)`` — the
       PM400 measures power directly, so there is no per-volt conversion
       factor to report
-    - PD-TIA with a loaded calibration profile → ``(intensity_V * conv, conv)``
+    - PD-TIA with a loaded calibration profile →
+      ``(conv * (intensity_V - frame.power_offset_V), conv)``, clipped at 0 W
     """
     if frame is None:
         return None, None
@@ -50,4 +51,4 @@ def point_power(frame: Frame | None, intensity_V: float) -> tuple[float | None, 
     conv = frame.conv_factor_W_per_V
     if conv is None:
         return None, None
-    return intensity_V * conv, conv
+    return max(0.0, conv * (intensity_V - frame.power_offset_V)), conv

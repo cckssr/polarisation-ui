@@ -13,7 +13,10 @@ Pure Python — no PySide6, no Qt, no hardware I/O.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
+
+from .utils import interp_monotonic
 
 
 @dataclass(frozen=True)
@@ -151,3 +154,18 @@ def _is_monotonic_between(points: list[tuple[float, float]], pos_a: float, pos_b
         if cur > prev + tolerance:
             return False
     return True
+
+
+def power_at_position(position_deg: float, scan: Sequence[tuple[float, float]]) -> float:
+    """Return the power the calibrated ND curve predicts at *position_deg*.
+
+    *scan* is a raw ``(position_deg, power_W)`` scan. Positions outside the
+    scanned range are clamped to the nearest end.
+
+    Raises:
+        ValueError: *scan* is empty.
+    """
+    if not scan:
+        raise ValueError("power_at_position requires a non-empty scan")
+    ordered = sorted(scan, key=lambda pt: pt[0])
+    return interp_monotonic(position_deg, [x for x, _ in ordered], [pw for _, pw in ordered])

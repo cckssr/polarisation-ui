@@ -473,3 +473,28 @@ class TestPM400Combo:
         custom = _config().with_overrides({"ui": {"common": {"pm400_none_found": "none"}}})
         populate_pm400_combo(combo, config=custom)
         assert combo.placeholderText() == "none"
+
+
+class TestGainVerifyFromCurve:
+    def test_curve_reference_does_not_require_a_connected_pm400(self, window):
+        window._profile = _calibrated_profile()
+        window._nd.is_connected = lambda: True  # type: ignore[method-assign]
+        assert not window._verify_ready()
+        window.ui.checkVerifyFromCurve.setChecked(True)
+        assert window._verify_ready()
+
+    def test_curve_reference_requires_a_scan_from_this_session(self, window, monkeypatch):
+        from PySide6.QtWidgets import QMessageBox
+
+        warned: list[str] = []
+        monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+        window._profile = _calibrated_profile()
+        window._nd.is_connected = lambda: True  # type: ignore[method-assign]
+        window.ui.checkVerifyFromCurve.setChecked(True)
+        window._start_verify()
+        assert window._verify_worker is None
+        assert warned and "Bereichsscan dieser Sitzung" in warned[0]
+
+    def test_return_pass_checkbox_reaches_the_params(self, window):
+        window.ui.checkReturnPass.setChecked(True)
+        assert window.ui.checkReturnPass.isChecked()

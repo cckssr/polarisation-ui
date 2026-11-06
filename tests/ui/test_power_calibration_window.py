@@ -1,7 +1,8 @@
 """Tests for PowerCalibrationWindow and its per-gain tabs (Designer forms, strings, PM400 flows).
 
 No hardware: the PM400 is ``MockPM400`` (or absent), the data controller is a tiny fake that
-only carries the ``intensity_updated`` signal, and the user settings file is never read.
+only carries the raw ``calibration_voltage_updated`` signal, and the user settings file is never
+read.
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ RESOURCE = "USB0::0x1313::0x8078::MOCK00001::INSTR"
 class FakeDataController(QObject):
     """Stands in for DataController: only the live-voltage signal."""
 
-    intensity_updated = Signal(float)
+    calibration_voltage_updated = Signal(float)
 
 
 class DialogRecorder:
@@ -284,18 +285,21 @@ def test_adding_a_point_updates_the_table_the_factor_and_emits_points_changed(
     assert tab.ui.tablePoints.item(0, 0).text() == "0.500000"
     assert tab.ui.tablePoints.item(0, 1).text() == "0.001000000"
     assert tab.ui.tablePoints.item(0, 2).text() == "2.0000e-03"
-    assert tab.ui.valueFactor.text() == "Konversionsfaktor: 2.0000e-03 W/V  (Gain 1)"
+    assert tab.ui.valueFactor.text() == (
+        "Konversionsfaktor: 2.0000e-03 W/V, Nullpunkt: 0.000 mV  (Gain 1)"
+    )
     assert tab.get_calibration().points == [(0.5, 1e-3)]
 
 
-def test_the_factor_is_the_mean_of_the_ratios(window: PowerCalibrationWindow) -> None:
+def test_the_factor_is_the_slope_of_the_fitted_line(window: PowerCalibrationWindow) -> None:
+    # Not the mean of the P/V ratios: (1 V, 1 mW) and (2 V, 6 mW) lie on P = 5e-3 * (V - 0.8).
     tab = window.ui.tabGains.widget(2)
     assert isinstance(tab, GainCalibrationTab)
     _add_point(tab, 1.0, 1e-3)
     _add_point(tab, 2.0, 6e-3)
     assert tab.ui.tablePoints.rowCount() == 2
-    assert tab.ui.valueFactor.text() == "Konversionsfaktor: 2.0000e-03 W/V  (Gain 3)".replace(
-        "2.0000e-03", f"{(1e-3 + 3e-3) / 2:.4e}"
+    assert tab.ui.valueFactor.text() == (
+        "Konversionsfaktor: 5.0000e-03 W/V, Nullpunkt: 800.000 mV  (Gain 3)"
     )
 
 
@@ -353,7 +357,7 @@ def test_the_live_button_copies_the_live_voltage(
     tab.ui.buttonLive.setEnabled(True)
     tab.ui.buttonLive.click()
     assert tab.ui.spinVoltage.value() == 0.0  # nothing cached yet
-    controller.intensity_updated.emit(1.234)
+    controller.calibration_voltage_updated.emit(1.234)
     assert tab.ui.buttonLive.isEnabled()
     tab.ui.buttonLive.click()
     assert tab.ui.spinVoltage.value() == pytest.approx(1.234)
@@ -375,7 +379,7 @@ def test_loading_a_calibration_refreshes_the_tab(window: PowerCalibrationWindow)
 def test_the_live_voltage_signal_updates_the_label_and_every_tab(
     window: PowerCalibrationWindow, controller: FakeDataController
 ) -> None:
-    controller.intensity_updated.emit(2.5)
+    controller.calibration_voltage_updated.emit(2.5)
     assert window.ui.valueDetectorVoltage.text() == "2.500000 V"
     for i in range(4):
         assert window.ui.tabGains.widget(i).ui.buttonLive.isEnabled()
@@ -385,7 +389,7 @@ def test_closing_the_window_detaches_from_the_data_controller(
     window: PowerCalibrationWindow, controller: FakeDataController
 ) -> None:
     window.close()
-    controller.intensity_updated.emit(9.0)
+    controller.calibration_voltage_updated.emit(9.0)
     assert window.ui.valueDetectorVoltage.text() == "—"
 
 

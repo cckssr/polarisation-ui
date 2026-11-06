@@ -1202,6 +1202,16 @@
                   </property>
                  </widget>
                 </item>
+                <item row="7" column="0" colspan="2">
+                 <widget class="QCheckBox" name="checkReturnPass">
+                  <property name="toolTip">
+                   <string>Misst nach dem Hin-Durchlauf jedes Gains dieselben Positionen in umgekehrter Reihenfolge noch einmal. Das Log vergleicht die angepassten W/V-Faktoren von Hin- und Rückfahrt (Hysterese/Drift); beide Durchläufe gehen ins Profil ein.</string>
+                  </property>
+                  <property name="text">
+                   <string>Rückfahrt (Rückwärts-Durchlauf)</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </item>
               <item>
@@ -2456,6 +2466,16 @@
                 </property>
                 <property name="value">
                  <double>5.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="2">
+               <widget class="QCheckBox" name="checkVerifyFromCurve">
+                <property name="toolTip">
+                 <string>Die Referenzleistung jedes Pegels wird aus der ND-Kennlinie des Bereichsscans dieser Sitzung genommen; der PM400 wird nicht gelesen und darf außerhalb des Strahls stehen.</string>
+                </property>
+                <property name="text">
+                 <string>Referenz aus ND-Kennlinie (PM400 nicht im Strahl)</string>
                 </property>
                </widget>
               </item>

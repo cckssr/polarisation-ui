@@ -157,6 +157,64 @@ class TestPowerCalibrationProfileSaveLoad:
         assert with_meta_profile.conversion_factor(1) == plain.conversion_factor_W_per_V()
 
 
+class TestGainCalibrationFit:
+    """The W/V factor is a weighted LS fit with zero-light offset, not a mean of P/V."""
+
+    @staticmethod
+    def _line(slope: float, v0: float, powers: list[float]) -> list[tuple[float, float]]:
+        return [(p / slope + v0, p) for p in powers]
+
+    def test_recovers_slope_and_offset(self):
+        cal = GainCalibration(
+            gain_stage=2, points=self._line(1.2e-4, -5.6e-3, [4e-7, 1e-6, 1e-5, 1e-4, 2.4e-4])
+        )
+        assert cal.conversion_factor_W_per_V() == pytest.approx(1.2e-4, rel=1e-9)
+        assert cal.zero_offset_V() == pytest.approx(-5.6e-3, rel=1e-9)
+
+    def test_regression_small_voltage_points_do_not_inflate_factor(self):
+        """Mean of P/V gave ~2x the true slope when points sit near V=0 with an offset."""
+        cal = GainCalibration(
+            gain_stage=2, points=self._line(1.2e-4, -5.6e-3, [4e-7, 1e-6, 1e-5, 1e-4, 2.4e-4])
+        )
+        naive = sum(p / v for v, p in cal.points if v > 0) / sum(1 for v, _ in cal.points if v > 0)
+        assert naive > 1.5 * 1.2e-4  # the old estimator is clearly biased on this data
+        assert cal.conversion_factor_W_per_V() == pytest.approx(1.2e-4, rel=1e-6)
+
+    def test_watts_from_voltage_applies_offset(self):
+        cal = GainCalibration(gain_stage=1, points=self._line(1e-3, -6e-3, [4e-7, 1e-5, 1e-3]))
+        # Zero-light reading maps to zero power, not to a negative one.
+        assert cal.watts_from_voltage(-6e-3) == pytest.approx(0.0, abs=1e-15)
+        assert cal.watts_from_voltage(0.5) == pytest.approx(1e-3 * (0.5 + 6e-3))
+
+    def test_single_point_falls_back_to_origin_line(self):
+        cal = GainCalibration(gain_stage=3, points=[(0.2, 2e-6)])
+        assert cal.conversion_factor_W_per_V() == pytest.approx(1e-5)
+        assert cal.zero_offset_V() == 0.0
+
+    def test_identical_voltages_fall_back_to_origin_line(self):
+        cal = GainCalibration(gain_stage=3, points=[(0.2, 2e-6), (0.2, 2e-6)])
+        assert cal.conversion_factor_W_per_V() == pytest.approx(1e-5)
+        assert cal.zero_offset_V() == 0.0
+
+    def test_no_points_or_no_positive_power(self):
+        assert GainCalibration(gain_stage=1).conversion_factor_W_per_V() is None
+        assert GainCalibration(gain_stage=1).watts_from_voltage(0.1) is None
+        assert GainCalibration(gain_stage=1).zero_offset_V() == 0.0
+        assert GainCalibration(gain_stage=1, points=[(0.1, 0.0)]).fit() is None
+
+    def test_offset_survives_save_and_load(self, tmp_path):
+        profile = PowerCalibrationProfile(name="Det-A")
+        profile.gains[2] = GainCalibration(
+            gain_stage=2, points=self._line(1.2e-4, -5.6e-3, [4e-7, 1e-5, 2.4e-4])
+        )
+        path = tmp_path / "p.json"
+        profile.save(path)
+        loaded = PowerCalibrationProfile.load(path)
+        assert loaded.zero_offset_V(2) == pytest.approx(-5.6e-3, rel=1e-6)
+        assert loaded.watts_from_voltage(-5.6e-3, 2) == pytest.approx(0.0, abs=1e-12)
+        assert loaded.zero_offset_V(4) == 0.0
+
+
 class TestLoadGainPowerLimits:
     def test_parses_valid_entries(self):
         config = {"pdtia": {"gain_auto_switch_power_W": {"1": {"min": 1e-4, "max": 1.0}}}}
