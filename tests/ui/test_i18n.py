@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -108,3 +109,21 @@ def test_non_string_values_are_ignored(form: QWidget, warnings: list[str]) -> No
     apply_strings(form, {"buttonGo": 5, "labelInfo": {"nested": "x"}})  # type: ignore[dict-item]
     assert warnings == []
     assert form.findChild(QPushButton, "buttonGo").text() == ""
+
+
+def test_the_tab_kind_sets_the_title_of_a_tab_page(qtbot, warnings: list[str]) -> None:
+    tabs = QTabWidget()
+    qtbot.addWidget(tabs)
+    page = QWidget()
+    page.setObjectName("tabSettings")
+    tabs.addTab(page, "")
+    apply_strings(tabs, {"tabSettings@tab": "Einstellungen", "labelInfo@tab": "x"})
+    assert tabs.tabText(0) == "Einstellungen"
+    assert any("labelInfo" in w for w in warnings)
+
+
+def test_the_tab_kind_on_a_widget_outside_a_tab_widget_is_reported(
+    form: QWidget, warnings: list[str]
+) -> None:
+    apply_strings(form, {"labelInfo@tab": "Info"})
+    assert any("not a tab page" in w for w in warnings)

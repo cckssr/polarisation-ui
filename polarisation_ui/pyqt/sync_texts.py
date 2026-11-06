@@ -61,6 +61,20 @@ def _set_string_property(element: ET.Element, name: str, text: str) -> None:
     element.insert(last + 1, prop)
 
 
+def _set_string_attribute(element: ET.Element, name: str, text: str) -> None:
+    for attr in element.findall("attribute"):
+        if attr.get("name") == name:
+            string = attr.find("string")
+            if string is None:
+                string = ET.SubElement(attr, "string")
+            string.text = text
+            string.attrib.pop("notr", None)
+            return
+    attr = ET.Element("attribute", name=name)
+    ET.SubElement(attr, "string").text = text
+    element.insert(0, attr)
+
+
 def sync_text(source: str, strings: dict[str, object]) -> str:
     """Return the ``.ui`` XML ``source`` with the plain-string entries of ``strings`` applied."""
     root = ET.fromstring(source)
@@ -76,6 +90,9 @@ def sync_text(source: str, strings: dict[str, object]) -> str:
             continue
         element = top if name == "self" else elements.get(name)
         if element is None:
+            continue
+        if kind == "tab":  # a tab page's title is an <attribute>, not a <property>
+            _set_string_attribute(element, "title", text)
             continue
         prop = _property_for(kind, element.get("class", "QAction"))
         if prop:
@@ -99,10 +116,12 @@ def main(argv: list[str] | None = None) -> int:
     """Update (or with ``--check`` verify) all forms; returns the process exit code."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--check", action="store_true", help="only report out-of-date files")
+    parser.add_argument("forms", nargs="*", help="form stems to handle (default: all)")
     args = parser.parse_args(argv)
     config = load_config()
     stale = 0
-    for path in sorted(PYQT_DIR.glob("*.ui")):
+    paths = [PYQT_DIR / f"{stem}.ui" for stem in args.forms] or sorted(PYQT_DIR.glob("*.ui"))
+    for path in paths:
         new = synced_text(path, config)
         if new == path.read_text(encoding="utf-8"):
             continue

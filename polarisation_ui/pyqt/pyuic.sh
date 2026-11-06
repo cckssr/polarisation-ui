@@ -11,7 +11,7 @@ cd "$(dirname "$0")/../.."
 
 PYQT_DIR=polarisation_ui/pyqt
 
-.venv/bin/python -m polarisation_ui.pyqt.sync_texts
+.venv/bin/python -m polarisation_ui.pyqt.sync_texts "$@"  # only the named forms, if any
 
 if [ "$#" -gt 0 ]; then
     stems=("$@")

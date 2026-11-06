@@ -2,7 +2,8 @@
 
 Keys are Designer object names (camelCase, no underscore; ``self`` is the root widget);
 ``name@kind`` selects another property: ``@tooltip``, ``@suffix``, ``@prefix``,
-``@placeholder``, ``@title`` (window title).
+``@placeholder``, ``@title`` (window title), ``@tab`` (the title of a tab page in its
+``QTabWidget``).
 Keys with an underscore (e.g. ``plot_y_label``) are plain texts looked up by the code and are
 skipped here.
 """
@@ -12,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from PySide6.QtCore import QObject
-from PySide6.QtWidgets import QDockWidget
+from PySide6.QtWidgets import QDockWidget, QTabWidget, QWidget
 
 from polarisation_ui.infrastructure.logging import Debug
 
@@ -37,6 +38,9 @@ def apply_strings(root: QObject, strings: Mapping[str, object]) -> None:
             obj.setPlaceholderText(text)  # type: ignore[attr-defined]
         elif kind == "title":
             obj.setWindowTitle(text)  # type: ignore[attr-defined]
+        elif kind == "tab":
+            if not _set_tab_title(obj, text):
+                Debug.warning(f"ui string {key!r}: {name!r} is not a tab page")
         elif isinstance(obj, QDockWidget):
             obj.setWindowTitle(text)
         elif hasattr(obj, "setTitle"):
@@ -45,3 +49,16 @@ def apply_strings(root: QObject, strings: Mapping[str, object]) -> None:
             obj.setText(text)
         else:
             Debug.warning(f"cannot set text on {name!r}")
+
+
+def _set_tab_title(page: QObject, text: str) -> bool:
+    """Set the tab text of ``page`` in the nearest enclosing ``QTabWidget``."""
+    if not isinstance(page, QWidget):
+        return False
+    parent = page.parentWidget()
+    while parent is not None and not isinstance(parent, QTabWidget):
+        parent = parent.parentWidget()
+    if parent is None or (index := parent.indexOf(page)) < 0:
+        return False
+    parent.setTabText(index, text)
+    return True

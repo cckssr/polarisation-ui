@@ -125,3 +125,27 @@ def test_the_text_check_reports_a_missing_key_and_accepts_a_complete_form(tmp_pa
     ]
     complete = {"self@title": "T", "buttonGo": "S", "buttonGo@tooltip": "L", "groupMain": "G"}
     assert untranslated_texts(form, complete) == []
+
+
+def test_the_tab_kind_writes_the_title_attribute_of_a_tab_page() -> None:
+    from polarisation_ui.pyqt.sync_texts import sync_text
+
+    source = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n<ui version="4.0"><class>Form</class>'
+        '<widget class="QTabWidget" name="tabWidget"><widget class="QWidget" name="tabMain">'
+        '<attribute name="title"><string>Old</string></attribute></widget>'
+        '<widget class="QWidget" name="tabOther"/></widget></ui>'
+    )
+    root = ET.fromstring(sync_text(source, {"tabMain@tab": "Neu", "tabOther@tab": "Zweiter"}))
+    titles = {
+        page.get("name"): page.find("attribute/string").text  # type: ignore[union-attr]
+        for page in root.iter("widget")
+        if page.find("attribute") is not None
+    }
+    assert titles == {"tabMain": "Neu", "tabOther": "Zweiter"}
+
+
+def test_sync_texts_handles_only_the_named_forms() -> None:
+    from polarisation_ui.pyqt import sync_texts
+
+    assert sync_texts.main(["--check", "log_window"]) == 0
