@@ -102,7 +102,7 @@ To pin to a specific release:
 pip install git+https://github.com/cckssr/polarisation-ui.git@v1.0.0
 ```
 
-The production wheel does **not** include the mock Arduino simulator or test utilities.
+The production wheel does **not** include the mock Arduino simulator or test utilities, so `--simulate` needs a source checkout (development installation below).
 
 ### Development Installation
 
@@ -189,6 +189,8 @@ The application is configured via `polarisation_ui/config.json`. German UI strin
 | `save.base_folder`                  | string | `"Polarisation"`                  | Root export folder name                                 |
 
 Further sections: `ui.<form>` holds the German texts of every Designer form by object name, `messages.<area>` the status and error texts, `profiles.<name>` the tabs and widgets a profile hides (`hidden_tabs`, `hidden_widgets`) plus text `overrides`, and `plot_colors` the curve colours (plot backgrounds follow the system light/dark palette). After editing texts, run `polarisation_ui/pyqt/pyuic.sh` so the Designer forms show them too.
+
+**Design check without hardware or devices:** `python -m polarisation_ui.pyqt.preview <form> --watch` shows a Designer form with the configured texts (no argument: choose the form in a dialog) and reloads it when the `.ui` file or `config.json` is saved. It needs only PySide6 and loads nothing from the infrastructure layer. Qt Creator opens `pyproject.toml` as a Python project (`[tool.pyside6-project]`); _Run_ starts this preview. Add new forms to that file list.
 
 Override the config at runtime by placing a custom `config.json` in the current working directory — it takes priority over the bundled one.
 

@@ -147,3 +147,56 @@ def test_sync_texts_handles_only_the_named_forms() -> None:
     from polarisation_ui.pyqt import sync_texts
 
     assert sync_texts.main(["--check", "log_window"]) == 0
+
+
+# ── Qt Creator project and preview isolation ──────────────────────────────────
+
+_REPO = PYQT_DIR.parent.parent
+
+
+def _imported_modules_after(statement: str) -> set[str]:
+    """Module names loaded by a fresh interpreter after running ``statement``."""
+    import subprocess
+    import sys
+
+    code = f"import sys\n{statement}\nprint('\\n'.join(sys.modules))"
+    env = {"QT_QPA_PLATFORM": "offscreen", "PATH": ""}
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=_REPO, env=env, capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    return set(result.stdout.split())
+
+
+def test_the_preview_loads_no_infrastructure_and_no_device_packages() -> None:
+    loaded = _imported_modules_after(
+        "from PySide6.QtWidgets import QApplication\n"
+        "app = QApplication([])\n"
+        "from polarisation_ui.pyqt.preview import build_form\n"
+        "build_form('main_window')"
+    )
+    forbidden = {m for m in loaded if m.startswith("polarisation_ui.infrastructure")}
+    forbidden |= {m for m in loaded if m.split(".")[0] in {"serial", "pyvisa", "pylablib"}}
+    assert not forbidden
+
+
+def test_the_app_imports_without_the_mocks_package() -> None:
+    # The release wheel leaves out infrastructure.mocks; only --simulate needs them.
+    loaded = _imported_modules_after(
+        "sys.modules['polarisation_ui.infrastructure.mocks'] = None  # as if not installed\n"
+        "import polarisation_ui.main\n"
+        "import polarisation_ui.ui.windows.main_window\n"
+        "from polarisation_ui.ui.context import simulation_available\n"
+        "assert not simulation_available()"
+    )
+    assert "polarisation_ui.ui.windows.main_window" in loaded
+
+
+def test_the_qt_creator_project_lists_every_form() -> None:
+    import re
+
+    text = (_REPO / "pyproject.toml").read_text(encoding="utf-8")
+    section = text.split("[tool.pyside6-project]", 1)[1].split("\n[", 1)[0]
+    listed = set(re.findall(r'"polarisation_ui/pyqt/(\w+)\.ui"', section))
+    assert listed == set(FORMS)
+    assert '"polarisation_ui/pyqt/preview.py"' in section

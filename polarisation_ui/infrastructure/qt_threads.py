@@ -1338,7 +1338,9 @@ class KDCSweepWorker(QThread):
         self.finished.emit()
 
     def _read_settled(self, after_ts: float) -> "tuple[float, Frame | None]":
-        """Wait out the settle time, then keep polling ``read_average()`` until it
+        """Wait for a reading taken after the move.
+
+        Waits out the settle time, then keeps polling ``read_average()`` until it
         reflects a frame taken after *after_ts* (i.e. after the move completed)
         or a bounded timeout elapses — avoids recording a point from a
         pre-move reading still sitting in the tab's averaging buffer.
@@ -1567,9 +1569,10 @@ class KDCZeroFindWorker(QThread):
         positions: "list[tuple[float, float]]",
         intensities: "list[tuple[float, float]]",
     ) -> "tuple[float, float] | None":
-        """Interpolate the stage angle at each intensity sample's timestamp and
-        return the (angle, intensity) pair at the minimum, or None if nothing
-        usable was collected.
+        """Return the (angle, intensity) pair at the intensity minimum.
+
+        Interpolates the stage angle at each intensity sample's timestamp; None if
+        nothing usable was collected.
         """
         if len(positions) < 2 or not intensities:
             return None
@@ -1587,8 +1590,9 @@ class KDCZeroFindWorker(QThread):
     # ── Fine pass: stepped, waiting for a fresh frame at each step ──────────
 
     def _read_fresh(self) -> "Frame | None":
-        """Block until a frame newer than the last one consumed arrives, after
-        the fine-pass settle time, up to a bounded timeout.
+        """Block until a frame newer than the last one consumed arrives.
+
+        Waits the fine-pass settle time first, then up to a bounded timeout.
         """
         time.sleep(self._FINE_SETTLE_S)
         latest = self._read_latest()
@@ -1610,8 +1614,9 @@ class KDCZeroFindWorker(QThread):
         return None
 
     def _scan_stepped(self, center_deg: float) -> "list[tuple[float, float]]":
-        """Step ±_FINE_HALF_WINDOW_DEG around *center_deg*, waiting for a fresh
-        frame at each step. Returns (angle, intensity) pairs.
+        """Step ±_FINE_HALF_WINDOW_DEG around *center_deg*.
+
+        Waits for a fresh frame at each step. Returns (angle, intensity) pairs.
         """
         lo = max(0.0, center_deg - self._FINE_HALF_WINDOW_DEG)
         hi = min(180.0, center_deg + self._FINE_HALF_WINDOW_DEG)

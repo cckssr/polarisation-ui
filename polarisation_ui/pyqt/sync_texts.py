@@ -21,12 +21,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from polarisation_ui.infrastructure.config import AppConfig, load_config
+from polarisation_ui.pyqt.forms import PYQT_DIR, SECTIONS
 
-PYQT_DIR = Path(__file__).resolve().parent
-
-# .ui file stem -> sections of the ``ui`` config that the code applies to it; the default is
-# the stem itself (e.g. ``"a_scan_tab": ("a_scan_actions",)``).
-SECTIONS: dict[str, tuple[str, ...]] = {}
+__all__ = ["PYQT_DIR", "SECTIONS", "sync_text", "synced_text"]
 
 # ``name@kind`` suffix -> Designer property.
 _KIND_PROPERTIES = {

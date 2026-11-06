@@ -83,6 +83,14 @@ def main():
         ),
     )
     args, qt_argv = parser.parse_known_args()
+    if args.simulate:
+        from polarisation_ui.ui.context import simulation_available
+
+        if not simulation_available():
+            parser.error(
+                "--simulate needs the mock devices, which the release wheel leaves out; "
+                "use a source checkout (pip install -e .)"
+            )
     # Qt expects the program name as argv[0]
     qt_argv = [sys.argv[0]] + qt_argv
 

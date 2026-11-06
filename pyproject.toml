@@ -99,6 +99,36 @@ exclude = [
 [tool.setuptools.package-data]
 "polarisation_ui" = ["pyqt/*.ui", "config.json", "sensor_metadata.json"]
 
+[tool.pyside6-project]
+# Project file for Qt Creator (File > Open File or Project > pyproject.toml). Qt Creator does not
+# discover new files, so add every new .ui form here. "Run" starts preview.py: it asks for a
+# form and shows it with the config.json texts, without controllers, devices or the
+# infrastructure layer, and reloads on save. Regenerate ui_*.py with polarisation_ui/pyqt/pyuic.sh,
+# not `pyside6-project build`: that skips the config.json text sync and the ruff formatting.
+files = [
+    "polarisation_ui/pyqt/acq_settings.ui",
+    "polarisation_ui/pyqt/arduino_panel.ui",
+    "polarisation_ui/pyqt/auto_power_calibration.ui",
+    "polarisation_ui/pyqt/brewster_tab.ui",
+    "polarisation_ui/pyqt/detector_panel.ui",
+    "polarisation_ui/pyqt/ellipsometry_tab.ui",
+    "polarisation_ui/pyqt/encoder_debug.ui",
+    "polarisation_ui/pyqt/event_log_panel.ui",
+    "polarisation_ui/pyqt/kdc_panel.ui",
+    "polarisation_ui/pyqt/log_window.ui",
+    "polarisation_ui/pyqt/main_window.ui",
+    "polarisation_ui/pyqt/malus_tab.ui",
+    "polarisation_ui/pyqt/measurement_panel.ui",
+    "polarisation_ui/pyqt/power_calibration.ui",
+    "polarisation_ui/pyqt/power_calibration_gain_tab.ui",
+    "polarisation_ui/pyqt/power_drift_tab.ui",
+    "polarisation_ui/pyqt/readout_panel.ui",
+    "polarisation_ui/pyqt/save_panel.ui",
+    "polarisation_ui/pyqt/stage_panel.ui",
+    "polarisation_ui/pyqt/waveplate_tab.ui",
+    "polarisation_ui/pyqt/preview.py",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]

@@ -10,23 +10,36 @@ skipped here.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QDockWidget, QTabWidget, QWidget
 
-from polarisation_ui.infrastructure.logging import Debug
+
+def _debug_warning(message: str) -> None:
+    # Imported lazily so that the Designer preview can use this module without loading the
+    # infrastructure layer (it passes its own ``warn``).
+    from polarisation_ui.infrastructure.logging import Debug
+
+    Debug.warning(message)
 
 
-def apply_strings(root: QObject, strings: Mapping[str, object]) -> None:
-    """Set the texts of ``strings`` on the children of ``root`` (see the module docstring)."""
+def apply_strings(
+    root: QObject,
+    strings: Mapping[str, object],
+    warn: Callable[[str], None] = _debug_warning,
+) -> None:
+    """Set the texts of ``strings`` on the children of ``root`` (see the module docstring).
+
+    ``warn`` receives a message for keys that name no child or a widget without a text.
+    """
     for key, text in strings.items():
         name, _, kind = key.partition("@")
         if "_" in name or not isinstance(text, str):
             continue
         obj: QObject | None = root if name == "self" else root.findChild(QObject, name)
         if obj is None:
-            Debug.warning(f"ui string for unknown object {name!r}")
+            warn(f"ui string for unknown object {name!r}")
             continue
         if kind == "tooltip":
             obj.setToolTip(text)  # type: ignore[attr-defined]
@@ -40,7 +53,7 @@ def apply_strings(root: QObject, strings: Mapping[str, object]) -> None:
             obj.setWindowTitle(text)  # type: ignore[attr-defined]
         elif kind == "tab":
             if not _set_tab_title(obj, text):
-                Debug.warning(f"ui string {key!r}: {name!r} is not a tab page")
+                warn(f"ui string {key!r}: {name!r} is not a tab page")
         elif isinstance(obj, QDockWidget):
             obj.setWindowTitle(text)
         elif hasattr(obj, "setTitle"):
@@ -48,7 +61,7 @@ def apply_strings(root: QObject, strings: Mapping[str, object]) -> None:
         elif hasattr(obj, "setText"):
             obj.setText(text)
         else:
-            Debug.warning(f"cannot set text on {name!r}")
+            warn(f"cannot set text on {name!r}")
 
 
 def _set_tab_title(page: QObject, text: str) -> bool:

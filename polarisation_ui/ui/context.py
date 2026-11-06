@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
@@ -14,7 +15,6 @@ from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManage
 from polarisation_ui.infrastructure.devices.kdc101_polariser import KDC101Polariser
 from polarisation_ui.infrastructure.devices.pm400 import PM400PowerMeter
 from polarisation_ui.infrastructure.session_state import SESSION_STATE_PATH
-from polarisation_ui.infrastructure.simulation import SimulatedBench
 from polarisation_ui.ui.controllers.connection_controller import ConnectionController
 from polarisation_ui.ui.controllers.data_controller import DataController
 from polarisation_ui.ui.controllers.detector_controller import DetectorController
@@ -23,6 +23,24 @@ from polarisation_ui.ui.controllers.measurement_controller import MeasurementCon
 from polarisation_ui.ui.controllers.pm400_controller import PM400Controller
 from polarisation_ui.ui.controllers.session_controller import SessionController
 from polarisation_ui.ui.controllers.status import StatusHub
+
+if TYPE_CHECKING:  # the mocks are not part of the production wheel, see create()
+    from polarisation_ui.infrastructure.simulation import SimulatedBench
+
+
+def simulation_available() -> bool:
+    """Whether the mock devices for ``--simulate`` are installed (not in the release wheel)."""
+    from importlib.util import find_spec
+
+    return find_spec("polarisation_ui.infrastructure.mocks") is not None
+
+
+def _simulated_bench() -> SimulatedBench:
+    # Imported here: the production wheel leaves out infrastructure.mocks, and a normal start
+    # must not depend on them.
+    from polarisation_ui.infrastructure.simulation import SimulatedBench
+
+    return SimulatedBench()
 
 
 @dataclass
@@ -55,7 +73,7 @@ class AppContext:
         reads and writes no user files: no session state, no orphan scan, and the measurement
         journals go to a scratch directory that :meth:`shutdown` removes.
         """
-        bench = SimulatedBench() if simulate else None
+        bench = _simulated_bench() if simulate else None
         scratch = None if persist else tempfile.TemporaryDirectory(prefix="polarisation-ui-")
         journal_base = Path(scratch.name) if scratch is not None else None
 
