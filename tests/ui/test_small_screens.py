@@ -6,9 +6,15 @@ dock (readout / measurement / save) collapsed. The heights leave room for a task
 
 from __future__ import annotations
 
+import pyqtgraph as pg
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QScrollArea
+from PySide6.QtWidgets import QScrollArea, QWidget
+
+from polarisation_ui.ui.widgets.ellipsometry_fit_plot import (
+    MAIN_PLOT_MIN_HEIGHT,
+    RESIDUAL_MIN_HEIGHT,
+)
 
 WIDE_W, WIDE_H = 1920, 1000  # both docks visible
 NARROW_W, NARROW_H = 1366, 700  # right dock collapsed
@@ -84,6 +90,20 @@ def test_every_tab_is_narrow_enough_on_the_narrow_screen(qtbot, window):
 def test_the_ellipsometry_tab_is_within_the_budget(window):
     tab = next(t for t in window.tabs.tabs if t.tab_id == "ellipsometry")
     assert tab.minimumSizeHint().width() <= TAB_MAX_W
+
+
+def test_both_ellipsometry_fit_plots_stay_readable_on_the_narrow_screen(qtbot, window):
+    window.ui.actionToggleMeasurement.setChecked(False)
+    tab = next(t for t in window.tabs.tabs if t.tab_id == "ellipsometry")
+    window.ui.tabWidget.setCurrentWidget(tab)
+    window.resize(NARROW_W, NARROW_H)
+    qtbot.wait(50)
+    fit_plot = tab.findChild(QWidget, "fitPlot")
+    main, residual = sorted(fit_plot.findChildren(pg.PlotWidget), key=lambda w: w.y())
+    assert residual.height() >= RESIDUAL_MIN_HEIGHT
+    assert main.height() >= MAIN_PLOT_MIN_HEIGHT
+    # the strip is a plot, not a few pixels: its axis plus a usable plotting area fit in
+    assert residual.getPlotItem().vb.height() >= 60
 
 
 def test_the_collapsed_right_dock_leaves_the_tabs_most_of_the_narrow_screen(qtbot, window):

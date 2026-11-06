@@ -99,6 +99,8 @@ class Ui_MainWindow(object):
         self.actionFullScreen = QAction(MainWindow)
         self.actionFullScreen.setObjectName("actionFullScreen")
         self.actionFullScreen.setCheckable(True)
+        self.actionSwitchProfile = QAction(MainWindow)
+        self.actionSwitchProfile.setObjectName("actionSwitchProfile")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.centralLayout = QVBoxLayout(self.centralwidget)
@@ -256,6 +258,8 @@ class Ui_MainWindow(object):
         self.toolBar.addAction(self.actionToggleMeasurement)
         self.toolBar.addAction(self.actionToggleEventLog)
         self.toolBar.addAction(self.actionFullScreen)
+        self.toolBar.addSeparator()
+        self.toolBar.addAction(self.actionSwitchProfile)
 
         self.retranslateUi(MainWindow)
 
@@ -314,13 +318,13 @@ class Ui_MainWindow(object):
         )
         # endif // QT_CONFIG(tooltip)
         self.actionAutoSaveEnabled.setText(
-            QCoreApplication.translate("MainWindow", "Suffix-Feld", None)
+            QCoreApplication.translate("MainWindow", "Dateiname-Zusatz", None)
         )
         # if QT_CONFIG(tooltip)
         self.actionAutoSaveEnabled.setToolTip(
             QCoreApplication.translate(
                 "MainWindow",
-                "Eingabefeld f\u00fcr das eigene Dateinamen-Suffix ein- oder ausblenden",
+                "Eingabefeld \u201eEigenes Suffix\u201c im Bereich Speichern ein- oder ausblenden; ein bereits eingegebener Zusatz bleibt im Dateinamen erhalten",
                 None,
             )
         )
@@ -365,6 +369,16 @@ class Ui_MainWindow(object):
         self.actionFullScreen.setToolTip(
             QCoreApplication.translate(
                 "MainWindow", "Zwischen Vollbild und Fenster wechseln (F11)", None
+            )
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.actionSwitchProfile.setText(
+            QCoreApplication.translate("MainWindow", "Profil wechseln", None)
+        )
+        # if QT_CONFIG(tooltip)
+        self.actionSwitchProfile.setToolTip(
+            QCoreApplication.translate(
+                "MainWindow", "Zwischen Experten- und Praktikumsprofil wechseln", None
             )
         )
         # endif // QT_CONFIG(tooltip)

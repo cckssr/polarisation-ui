@@ -53,6 +53,8 @@
    <addaction name="actionToggleMeasurement"/>
    <addaction name="actionToggleEventLog"/>
    <addaction name="actionFullScreen"/>
+   <addaction name="separator"/>
+   <addaction name="actionSwitchProfile"/>
   </widget>
   <widget class="QDockWidget" name="dockControls">
    <property name="features">
@@ -283,10 +285,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Suffix-Feld</string>
+    <string>Dateiname-Zusatz</string>
    </property>
    <property name="toolTip">
-    <string>Eingabefeld für das eigene Dateinamen-Suffix ein- oder ausblenden</string>
+    <string>Eingabefeld „Eigenes Suffix“ im Bereich Speichern ein- oder ausblenden; ein bereits eingegebener Zusatz bleibt im Dateinamen erhalten</string>
    </property>
   </action>
   <action name="actionToggleControls">
@@ -343,6 +345,14 @@
    </property>
    <property name="toolTip">
     <string>Zwischen Vollbild und Fenster wechseln (F11)</string>
+   </property>
+  </action>
+  <action name="actionSwitchProfile">
+   <property name="text">
+    <string>Profil wechseln</string>
+   </property>
+   <property name="toolTip">
+    <string>Zwischen Experten- und Praktikumsprofil wechseln</string>
    </property>
   </action>
  </widget>

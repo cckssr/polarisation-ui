@@ -20,6 +20,12 @@ from polarisation_ui.core.models import EllipsometryPoint
 from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.ui.plot_style import plot_colors, style_plot
 
+# Plot heights in px (axis labels included). The residual strip needs room for its tick labels
+# plus a usable plot area; the main plot gets the rest.
+MAIN_PLOT_MIN_HEIGHT = 150
+RESIDUAL_MIN_HEIGHT = 140
+RESIDUAL_MAX_HEIGHT = 200
+
 
 class EllipsometryFitPlot(QWidget):
     """Scatter of the current analyser sweep + fitted harmonic overlay + residual strip.
@@ -78,7 +84,10 @@ class EllipsometryFitPlot(QWidget):
         self._residual_widget = pg.PlotWidget()
         self._residual_widget.showGrid(x=True, y=True, alpha=0.3)
         self._apply_axis_labels()
-        self._residual_widget.setMaximumHeight(90)
+        # both plots stay readable on small screens: the strip never shrinks to a few pixels
+        self._plot_widget.setMinimumHeight(MAIN_PLOT_MIN_HEIGHT)
+        self._residual_widget.setMinimumHeight(RESIDUAL_MIN_HEIGHT)
+        self._residual_widget.setMaximumHeight(RESIDUAL_MAX_HEIGHT)
         self._residual_widget.setXLink(self._plot_widget)
         self._residual_scatter = self._residual_widget.plot(
             [],

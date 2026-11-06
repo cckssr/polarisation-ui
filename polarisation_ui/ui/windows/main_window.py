@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QSettings, Qt, QTimer, Slot
+from PySide6.QtCore import QEvent, QSettings, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QWidget
 
@@ -22,6 +22,7 @@ from polarisation_ui.core.models import AcquisitionSettings
 from polarisation_ui.infrastructure.config import AppConfig, default_config
 from polarisation_ui.infrastructure.logging import Debug
 from polarisation_ui.pyqt.ui_main_window import Ui_MainWindow
+from polarisation_ui.ui.common.busy import has_running_thread
 from polarisation_ui.ui.common.dialogs import show_error
 from polarisation_ui.ui.common.session_prompts import SessionPrompts
 from polarisation_ui.ui.common.statusbar import StatusBarManager
@@ -34,6 +35,7 @@ from polarisation_ui.ui.controllers.status import (
     ROW_SAMPLE,
 )
 from polarisation_ui.ui.i18n import apply_strings
+from polarisation_ui.ui.profile import apply_profile, next_profile
 from polarisation_ui.ui.widgets.tab_host import TabHost
 from polarisation_ui.ui.widgets.vscroll import lock_vertical_scroll
 from polarisation_ui.ui.windows.auxiliary_windows import AuxiliaryWindows
@@ -55,7 +57,13 @@ class MainWindow(QMainWindow):
     ``simulate=True`` runs the whole bench on the mocks of ``SimulatedBench`` (no hardware).
     ``persist=False`` reads and writes no user files (session state, orphan journals, window
     layout) — for tests.
+
+    The ``profile`` of the configuration decides which tabs and widgets exist (see
+    :mod:`polarisation_ui.ui.profile`); :attr:`profile_switch_requested` asks the
+    :class:`~polarisation_ui.ui.launcher.Launcher` to rebuild the window for another profile.
     """
+
+    profile_switch_requested = Signal(str)  # profile id; the launcher rebuilds the window
 
     def __init__(
         self,
@@ -111,6 +119,8 @@ class MainWindow(QMainWindow):
         self.tabs.build()
         self._connect_tabs()
         self._publish_initial_state()
+        apply_profile(self)
+        self._connect_profile_switch()
         if persist:
             self._restore_layout()
             # Defer until the event loop runs so the window is shown before any modal dialog
@@ -338,6 +348,48 @@ class MainWindow(QMainWindow):
         ui.actionAutoPowerCalibration.triggered.connect(self.aux.open_auto_power_calibration)
         ui.actionFullScreen.triggered.connect(self.set_fullscreen)
         ui.actionAutoSaveEnabled.toggled.connect(ui.savePanel.set_suffix_visible)
+
+    # ==================== Profiles ====================
+
+    def _connect_profile_switch(self) -> None:
+        """The switch action names the profile it leads to and waits while a job runs."""
+        self.ui.actionSwitchProfile.triggered.connect(self.request_profile_switch)
+        self.ctx.measurement.started.connect(self._update_profile_action)
+        self.ctx.measurement.stopped.connect(self._update_profile_action)
+        self._update_profile_action()
+
+    def _other_profile(self) -> str:
+        return next_profile(self.config.profile, self.config.profile_names)
+
+    def is_busy(self) -> bool:
+        """True while a measurement, a sweep, a zero search or a calibration worker runs."""
+        return (
+            self.ctx.measurement.is_measuring
+            or self.ctx.kdc.zero_find_running
+            or has_running_thread(self.ctx.kdc)
+            or any(has_running_thread(tab) for tab in self.tabs.tabs)
+            or self.aux.has_running_workers()
+        )
+
+    @Slot()
+    def _update_profile_action(self) -> None:
+        cfg, action = self.config, self.ui.actionSwitchProfile
+        target = self._other_profile()
+        name = str(cfg.get(f"profiles.{target}.name", target))
+        action.setVisible(target != cfg.profile)
+        action.setEnabled(not self.ctx.measurement.is_measuring)
+        action.setText(cfg.text("main_window.text_switch_profile", profile=name))
+        action.setToolTip(cfg.text("main_window.tooltip_switch_profile", profile=name))
+
+    @Slot()
+    def request_profile_switch(self) -> None:
+        """Ask the launcher to rebuild the window with the other profile (not while busy)."""
+        if self.is_busy():
+            self._show_status("warning", self._m("profile.switch_busy"))
+            return
+        target = self._other_profile()
+        if target != self.config.profile:
+            self.profile_switch_requested.emit(target)
 
     # ==================== Initial state ====================
 

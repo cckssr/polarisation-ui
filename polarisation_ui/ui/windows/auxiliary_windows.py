@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QWidget
 
 from polarisation_ui.infrastructure.config import AppConfig
+from polarisation_ui.ui.common.busy import has_running_thread
 from polarisation_ui.ui.context import AppContext
 from polarisation_ui.ui.dialogs.acq_settings import AcquisitionSettingsDialog
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
@@ -32,6 +33,10 @@ class AuxiliaryWindows:
         self._config = config
         self._profiles_changed = profiles_changed
         self._log_window: QDialog | None = None
+
+    def has_running_workers(self) -> bool:
+        """True while an open auxiliary window runs a background worker (calibration sweep ...)."""
+        return any(has_running_thread(d) for d in self._parent.findChildren(QDialog))
 
     def open_acq_settings(self) -> None:
         """Open the acquisition settings dialog (spike filter + inversion settings)."""

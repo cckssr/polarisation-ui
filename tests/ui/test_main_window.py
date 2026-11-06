@@ -1100,6 +1100,13 @@ def test_the_suffix_toolbar_action_shows_and_hides_the_suffix_input(window) -> N
     assert not ui.editSuffix.isHidden()
 
 
+def test_the_suffix_toolbar_action_says_what_it_does(window) -> None:
+    action = window.ui.actionAutoSaveEnabled
+    assert action.text() == "Dateiname-Zusatz"
+    assert "Suffix" in action.toolTip() and "Dateinamen" in action.toolTip()
+    assert "Suffix-Feld" not in action.text()
+
+
 # ---- docks, layout persistence, full screen ---------------------------------------------------
 
 DOCKS = (
@@ -1136,7 +1143,8 @@ def test_the_layout_is_saved_on_close_and_restored_on_the_next_start(
 ) -> None:
     first = _open(qtbot, config)
     first.ui.actionToggleMeasurement.setChecked(False)
-    first.resize(900, 560)  # the offscreen screen is only 800x600
+    height = first.minimumSizeHint().height() + 30  # just above the minimum, off the default
+    first.resize(900, height)
     first.close()
     assert _stored(layout_file, "window/geometry") is not None
     assert _stored(layout_file, "window/state") is not None
@@ -1145,7 +1153,7 @@ def test_the_layout_is_saved_on_close_and_restored_on_the_next_start(
     assert second.ui.dockMeasurement.isHidden()
     assert not second.ui.actionToggleMeasurement.isChecked()
     assert second.ui.dockControls.isVisible() and second.ui.actionToggleControls.isChecked()
-    assert second.height() == 560  # the default height differs
+    assert second.height() == height  # the default height differs
     second.close()
 
 

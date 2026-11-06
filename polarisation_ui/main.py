@@ -11,6 +11,8 @@ Flags:
     --power-cal     Launch the automatic power calibration window as a standalone
     --simulate      Run the main window on simulated devices (mock Arduino, KDC101, PM400);
                     no hardware needed.
+    --profile       UI profile of the main window (expert or student); default:
+                    ``application.profile`` of config.json. The toolbar can switch it at run time.
 """
 
 import argparse
@@ -32,14 +34,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from polarisation_ui.core.formatting import init_from_config
-from polarisation_ui.infrastructure.config import AppConfig, default_config
+from polarisation_ui.infrastructure.config import default_config
 from polarisation_ui.infrastructure.device_manager import GoniometerDeviceManager
 from polarisation_ui.infrastructure.logging import Debug
+from polarisation_ui.ui.launcher import Launcher
 from polarisation_ui.ui.windows.auto_power_calibration_window import (
     AutoPowerCalibrationWindow,
 )
 from polarisation_ui.ui.windows.encoder_debug_window import EncoderDebugDialog
-from polarisation_ui.ui.windows.main_window import MainWindow
 
 
 def main():
@@ -70,6 +72,16 @@ def main():
         action="store_true",
         help="Run the main window on simulated devices (no hardware needed)",
     )
+    config = default_config()
+    parser.add_argument(
+        "--profile",
+        choices=config.profile_names,
+        default=None,
+        help=(
+            "UI profile of the main window "
+            f"(default: {config.get('application.profile', 'expert')} from config.json)"
+        ),
+    )
     args, qt_argv = parser.parse_known_args()
     # Qt expects the program name as argv[0]
     qt_argv = [sys.argv[0]] + qt_argv
@@ -79,10 +91,9 @@ def main():
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
-    # Load configuration
-    config = default_config()
+    # Configuration (loaded above for the --profile choices)
     init_from_config(config.data)
-    version = config.get("application.version", "unknown")
+    version = config.get("version", "unknown")
 
     # Initialize debug system
     debug_level_map = {
@@ -113,13 +124,16 @@ def main():
     elif args.power_cal:
         _run_power_cal(app)
     else:
-        _run_main(app, config, simulate=args.simulate)
+        _run_main(app, profile=args.profile, simulate=args.simulate)
 
 
-def _run_main(app: "QApplication", config: AppConfig, simulate: bool = False) -> None:
-    """Launch the full main window (on simulated devices with ``simulate``)."""
-    main_window = MainWindow(config, simulate=simulate)
-    main_window.show_initial(config.get("application.window_mode", "maximized"))
+def _run_main(app: "QApplication", profile: str | None = None, simulate: bool = False) -> None:
+    """Launch the full main window for ``profile`` (on simulated devices with ``simulate``).
+
+    The :class:`Launcher` owns the window so the toolbar can switch the profile at run time.
+    """
+    launcher = Launcher(profile=profile, simulate=simulate, parent=app)
+    launcher.start()
     Debug.info("Main window displayed")
     sys.exit(app.exec())
 

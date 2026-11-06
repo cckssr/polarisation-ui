@@ -613,8 +613,8 @@
       "actionEncoderDebug@tooltip": "Encoder-Debugging mit SCPI-Terminal und Diagnose öffnen",
       "actionLogWindow": "Log",
       "actionLogWindow@tooltip": "Log-Ausgabe anzeigen",
-      "actionAutoSaveEnabled": "Suffix-Feld",
-      "actionAutoSaveEnabled@tooltip": "Eingabefeld für das eigene Dateinamen-Suffix ein- oder ausblenden",
+      "actionAutoSaveEnabled": "Dateiname-Zusatz",
+      "actionAutoSaveEnabled@tooltip": "Eingabefeld „Eigenes Suffix“ im Bereich Speichern ein- oder ausblenden; ein bereits eingegebener Zusatz bleibt im Dateinamen erhalten",
       "actionToggleControls": "Steuerung",
       "actionToggleControls@tooltip": "Seitenleiste mit Geräten und Detektor ein- oder ausblenden",
       "actionToggleMeasurement": "Messdaten",
@@ -623,6 +623,10 @@
       "actionToggleEventLog@tooltip": "Ereignisprotokoll ein- oder ausblenden",
       "actionFullScreen": "Vollbild",
       "actionFullScreen@tooltip": "Zwischen Vollbild und Fenster wechseln (F11)",
+      "actionSwitchProfile": "Profil wechseln",
+      "actionSwitchProfile@tooltip": "Zwischen Experten- und Praktikumsprofil wechseln",
+      "text_switch_profile": "Zu {profile} wechseln",
+      "tooltip_switch_profile": "Zum Profil „{profile}“ wechseln (die Geräte werden neu verbunden)",
       "ports_missing": "Keine Ports gefunden.",
       "status_arduino_idle": "Nicht verbunden..",
       "status_not_connected": "Nicht verbunden",
@@ -1091,6 +1095,10 @@
       "csv_filter": "CSV-Dateien (*.csv);;Alle Dateien (*)",
       "saved": "{count} Datenpunkte gespeichert: {path}"
     },
+    "profile": {
+      "switch_busy": "Das Profil kann nicht gewechselt werden, solange eine Messung, eine Kalibrierung oder ein Nullpunkt-Suchlauf läuft.",
+      "switched": "Profil {name} aktiv."
+    },
     "session": {
       "restored": "Sitzung wiederhergestellt",
       "restore_title": "Sitzung wiederherstellen",
@@ -1216,8 +1224,15 @@
     "student": {
       "name": "Praktikum",
       "hidden_tabs": [],
-      "hidden_widgets": {},
-      "overrides": {}
+      "hidden_widgets": {
+        "main_window": ["actionEncoderDebug", "actionPowerCalibration", "actionAutoPowerCalibration"],
+        "detector_panel": ["buttonOpenCalibration"]
+      },
+      "overrides": {
+        "ui": {
+          "main_window": { "self@title": "Polarisation-UI – Praktikum" }
+        }
+      }
     }
   },
   "plot_colors": {

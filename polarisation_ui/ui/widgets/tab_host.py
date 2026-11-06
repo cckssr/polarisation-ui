@@ -53,12 +53,20 @@ class TabHost(QObject):
 
     # ---- building ------------------------------------------------------------------------
     def build(self) -> None:
-        """Instantiate every tab the registry offers for the registered modules."""
+        """Instantiate every tab the registry offers for the registered modules.
+
+        Tabs the active profile hides (``hidden_tabs``) are never instantiated.
+        """
         import polarisation_ui.ui.widgets.tabs  # NOQA: F401  (registers the tab classes)
 
         modules = ModuleRegistry.all()
-        for tab_cls in TabRegistry.available(modules=modules):
+        for tab_cls in self._offered(modules):
             self._add_tab(tab_cls, modules)
+
+    def _offered(self, modules: dict[str, object]) -> list[type[PlotTabBase]]:
+        """The registry's tabs for ``modules`` minus the ones the profile hides."""
+        hidden = set(self._cfg.hidden_tabs())
+        return [cls for cls in TabRegistry.available(modules=modules) if cls.tab_id not in hidden]
 
     def _add_tab(self, tab_cls: type[PlotTabBase], modules: dict[str, object]) -> PlotTabBase:
         """Instantiate one tab, wire its standard signals and append it to the widget."""
@@ -82,10 +90,10 @@ class TabHost(QObject):
         """Re-evaluate the tabs after a module (un)registered.
 
         Tabs whose ``required_modules`` are no longer met are hidden, newly satisfied tabs are
-        added; satisfied tabs keep their state.
+        added (unless the profile hides them); satisfied tabs keep their state.
         """
         modules = ModuleRegistry.all()
-        available = TabRegistry.available(modules=modules)
+        available = self._offered(modules)
         available_ids = {cls.tab_id for cls in available}
         existing_ids = {tab.tab_id for tab in self._tabs}
 
