@@ -8,13 +8,14 @@ PySide6 desktop app for a **polarisation / Malus-law goniometer bench** built ar
 
 Hardware surface (fixed — no sensors beyond these are planned):
 
-| Role                 | Device                               | Transport      |
-| -------------------- | ------------------------------------ | -------------- |
-| Sample angle         | AS5048A #A (14-bit magnetic encoder) | SPI → Arduino  |
-| Detector-arm angle   | AS5048A #B                           | SPI → Arduino  |
-| Intensity (PD-TIA)   | ADS1220 24-bit ADC                   | SPI → Arduino  |
-| PD-TIA discrete gain | 4 GPIO lines, high/low combinations  | Arduino GPIO   |
-| Polariser rotation   | Thorlabs KDC101 + PRM1-Z8            | USB (pylablib) |
+| Role                 | Device                                                           | Transport               |
+| -------------------- | ---------------------------------------------------------------- | ----------------------- |
+| Sample angle         | AS5048A #A (14-bit magnetic encoder)                             | SPI → Arduino           |
+| Detector-arm angle   | AS5048A #B                                                       | SPI → Arduino           |
+| Intensity (PD-TIA)   | ADS1220 24-bit ADC                                               | SPI → Arduino           |
+| PD-TIA discrete gain | 4 GPIO lines, high/low combinations                              | Arduino GPIO            |
+| Polariser rotation   | Thorlabs KDC101 + PRM1-Z8                                        | USB (pylablib)          |
+| ND-filter wheel      | Axial variable ND + stepper, ESP32 + DRV8825 (`src_nd_stepper/`) | USB serial (SCPI-style) |
 
 `calibration_tool/` is a sibling PySide6 app using a KDC101 reference stage to calibrate AS5048A eccentricity/ellipticity errors.
 
@@ -67,6 +68,7 @@ Pure Python — **no PySide6, no Qt, no hardware I/O, no serial imports**.
 - `exceptions.py` — `GoniometerError`, `AngleLimitError`, `AngleMismatchError`, `InvalidEncoderReading`, `IncompatibleFirmwareError`, `KDC101Error`, `KDC101TimeoutError`, `PM400Error`.
 - `utils.py` — `circular_mean_deg`, `linear_angle_grid`, `windowed_average_intensity`.
 - `auto_calibration_settings.py`, `power_calibration.py` — auto-calibration settings and power-calibration logic.
+- `nd_filter.py`, `nd_linearity.py` — ND-wheel usable-range analysis and OD-vs-angle linearity / repeatability analysis over several scans.
 - `ellipsometry.py` — rotating-analyser ellipsometry physics: RAE harmonic fit → (Ψ, Δ), two-phase pseudo-(n, k) inversion, three-phase ambient/film/substrate model fit (numpy grid search, no scipy dependency).
 
 ### `polarisation_ui/infrastructure/`
@@ -76,9 +78,12 @@ Device adapters, serial I/O, Qt threading helpers, config, logging. No business 
 - `device_manager.py` — `GoniometerDeviceManager` (connect, reconnect, read_angles, diagnostics).
 - `devices/dual_encoder.py` — `DualEncoderArduino` SCPI client.
 - `devices/kdc101_polariser.py` — KDC101 polariser stage adapter.
+- `devices/nd_stepper.py` — `NDStepperStage` client for the ND-filter wheel controller (angles in degrees, negative angles allowed — zero is only a reference; protocol documented in `src_nd_stepper/src/main.cpp`).
+- `devices/intensity_actuator.py` — `PolariserActuator` / `NDFilterActuator` used by the power-calibration sweeps; device failures derive from `ActuatorError`.
 - `devices/pm400.py` — PM400 power-meter adapter.
 - `mocks/mock_arduino.py` — PTY-based SCPI-speaking simulator for tests.
-- `mocks/mock_kdc101_polariser.py`, `mocks/mock_pm400.py` — device mocks.
+- `mocks/mock_kdc101_polariser.py`, `mocks/mock_pm400.py`, `mocks/mock_nd_stage.py` — in-memory device mocks.
+- `mocks/mock_nd_stepper_firmware.py` — PTY-based simulator of the ND-stepper firmware, for `NDStepperStage` protocol tests.
 - `mocks/mock_port_registry.py` — PTY port registry for mock discovery.
 - `serial_device.py` — low-level serial/text/PTY I/O with auto-reconnect helpers.
 - `qt_threads.py` — `QThread`-based workers (the only Qt usage in this layer).
@@ -272,6 +277,10 @@ Keep main context lean so Pro-plan rate limits go further:
 `calibration_tool/` is a standalone sibling PySide6 app correcting AS5048A misalignment against a Thorlabs KDC101 reference stage. Its own `main.py`, `config.py`, `devices/`, `calibration/`, `plotting/`, `tests/`.
 
 It currently **duplicates** the encoder-client concept (`calibration_tool/devices/arduino_encoder.py` vs. `polarisation_ui/infrastructure/devices/dual_encoder.py`). Consolidation onto the main-app's infrastructure is a deferred follow-up — don't pick it up incidentally. The host-side KDC101 driver is now implemented at `polarisation_ui/infrastructure/devices/kdc101_polariser.py` (using pylablib); `calibration_tool/devices/kdc101_stage.py` is the calibration tool's independent copy.
+
+## ND-Stepper Firmware
+
+Separate PlatformIO project under `./src_nd_stepper/` (generic ESP32 + DRV8825) that turns the axial ND-filter wheel. Build/flash from that directory (`pio run`, `pio run -t upload`). Pin map, microstepping, gear ratio and the optional home switch live in `src/config.h`; it reuses the SCPI line parser from `src_arduino/src/scpi_parse.inc`. This is a different device from the encoder/ADC Arduino below.
 
 ## Arduino Firmware
 

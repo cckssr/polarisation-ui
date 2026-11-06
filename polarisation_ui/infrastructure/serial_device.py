@@ -34,6 +34,11 @@ from time import sleep, time
 
 import serial
 
+try:  # POSIX only; raised by pyserial when the tty rejects its settings
+    from termios import error as _TermiosError
+except ImportError:  # Windows
+    _TermiosError = OSError  # type: ignore[misc,assignment]
+
 from .logging import Debug
 
 
@@ -119,7 +124,9 @@ class SerialDevice:
             self.connected = True
             Debug.info(f"Successfully connected to {self.port}")
             return True
-        except (serial.SerialException, OSError) as e:
+        except (serial.SerialException, OSError, _TermiosError) as e:
+            # termios.error is not an OSError subclass, so it must be listed explicitly;
+            # on macOS it (EINVAL) means the USB-serial port is in a stale state.
             self.connected = False
             Debug.error(f"Failed to connect to {self.port}: {e}")
             raise serial.SerialException(str(e)) from e

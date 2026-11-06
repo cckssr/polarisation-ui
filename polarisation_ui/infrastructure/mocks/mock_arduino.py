@@ -157,7 +157,7 @@ class MockArduino:
             self._stop_flag = False
             self._start_time = time.time()
 
-            self._thread = threading.Thread(target=self._run_loop, daemon=False)
+            self._thread = threading.Thread(target=self._run_loop, daemon=True)
             self._thread.start()
 
             Debug.info(f"MockArduino PTY: {self.pty_slave_path}")

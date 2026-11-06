@@ -1,16 +1,19 @@
 """Mock-based unit tests for KDC101Polariser.
 
-Patches the module's lazily-imported pylablib globals (_Thorlabs,
+Patches kdc101_base's lazily-imported pylablib globals (_Thorlabs,
 _ThorlabsError, _ThorlabsTimeoutError, _PYLABLIB_AVAILABLE) directly so these
 tests never touch real hardware or require pylablib/a Kinesis backend to be
-installed. Complements test_kdc101_polariser_hw.py, which is opt-in and
-requires a real connected stage.
+installed. KDC101Polariser inherits its connect/disconnect/home/move logic
+from KDC101MotorBase in kdc101_base, which is where these globals actually
+live and are read from. Complements test_kdc101_polariser_hw.py, which is
+opt-in and requires a real connected stage.
 """
 
 from unittest.mock import MagicMock
 
 import pytest
 
+import polarisation_ui.infrastructure.devices.kdc101_base as kdc_base
 import polarisation_ui.infrastructure.devices.kdc101_polariser as kdc_mod
 from polarisation_ui.core.exceptions import KDC101Error, KDC101TimeoutError
 
@@ -25,12 +28,12 @@ class _FakeThorlabsTimeoutError(_FakeThorlabsError):
 
 @pytest.fixture
 def fake_thorlabs(monkeypatch):
-    """Patch the module's cached pylablib globals with fakes; returns the fake module."""
+    """Patch kdc101_base's cached pylablib globals with fakes; returns the fake module."""
     fake_module = MagicMock()
-    monkeypatch.setattr(kdc_mod, "_Thorlabs", fake_module)
-    monkeypatch.setattr(kdc_mod, "_ThorlabsError", _FakeThorlabsError)
-    monkeypatch.setattr(kdc_mod, "_ThorlabsTimeoutError", _FakeThorlabsTimeoutError)
-    monkeypatch.setattr(kdc_mod, "_PYLABLIB_AVAILABLE", True)
+    monkeypatch.setattr(kdc_base, "_Thorlabs", fake_module)
+    monkeypatch.setattr(kdc_base, "_ThorlabsError", _FakeThorlabsError)
+    monkeypatch.setattr(kdc_base, "_ThorlabsTimeoutError", _FakeThorlabsTimeoutError)
+    monkeypatch.setattr(kdc_base, "_PYLABLIB_AVAILABLE", True)
     return fake_module
 
 
@@ -58,7 +61,7 @@ class TestConnect:
         assert kdc.is_connected() is True
 
     def test_connect_raises_kdc101error_when_pylablib_unavailable(self, monkeypatch):
-        monkeypatch.setattr(kdc_mod, "_PYLABLIB_AVAILABLE", False)
+        monkeypatch.setattr(kdc_base, "_PYLABLIB_AVAILABLE", False)
         kdc = kdc_mod.KDC101Polariser()
         with pytest.raises(KDC101Error):
             kdc.connect("27266999")
@@ -137,7 +140,7 @@ class TestMoveTo:
     def _no_real_sleep(self, monkeypatch):
         """Skip real waits between polls; the wall-clock deadline check in
         _wait_until_stopped() still applies so timeout tests stay accurate."""
-        monkeypatch.setattr(kdc_mod.time, "sleep", lambda _seconds: None)
+        monkeypatch.setattr(kdc_base.time, "sleep", lambda _seconds: None)
 
     def test_move_to_calls_motor_move_and_waits_for_stable_position(self, connected):
         kdc, mock_motor = connected
@@ -258,7 +261,7 @@ class TestListDevices:
         assert kdc_mod.KDC101Polariser.list_devices() == []
 
     def test_empty_when_pylablib_unavailable(self, monkeypatch):
-        monkeypatch.setattr(kdc_mod, "_PYLABLIB_AVAILABLE", False)
+        monkeypatch.setattr(kdc_base, "_PYLABLIB_AVAILABLE", False)
         assert kdc_mod.KDC101Polariser.list_devices() == []
 
     def test_empty_on_unexpected_error(self, fake_thorlabs):

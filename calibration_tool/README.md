@@ -118,6 +118,12 @@ regression via `scipy.stats.linregress` and reports:
 By default it also renders a 6-panel figure (linear- and log-scale linearity, fit
 residuals, and bar charts for dynamic range, R², and slope per gain stage).
 
+If the profile carries the optional `intensity_control` / `gain_crosscheck` metadata
+blocks (added for the main app's ND-filter intensity source — see the root
+`README.md`'s "Power Calibration" section), the report prints them after the
+per-gain analysis. Profiles without them (older files, or a rotating-polariser-only
+calibration) are unaffected — the fit itself only ever reads `gains.<n>.points`.
+
 ### Usage
 
 ```bash

@@ -43,10 +43,15 @@ class GainAnalysis:
     dynamic_range_db: float
 
 
+def _load_json(path: Path) -> dict:
+    """Load the full raw calibration JSON, unfiltered."""
+    with path.open() as f:
+        return json.load(f)
+
+
 def _load_points(path: Path) -> dict[str, list[list[float]]]:
     """Extract only the gain->points mapping from the JSON, ignoring all other fields."""
-    with path.open() as f:
-        data = json.load(f)
+    data = _load_json(path)
     gains_raw: dict = data.get("gains", {})
     return {gain_id: entry["points"] for gain_id, entry in gains_raw.items() if entry.get("points")}
 
@@ -165,6 +170,56 @@ def _print_report(results: list[GainAnalysis], source_name: str) -> None:
         print()
 
     print(sep)
+
+
+def _print_metadata(data: dict, hyphen_sep: str) -> None:
+    """Print the optional intensity_control and gain_crosscheck blocks, if present.
+
+    Both are informational metadata added for the ND-filter intensity source
+    (see polarisation_ui.infrastructure.devices.intensity_actuator and
+    polarisation_ui.core.gain_crosscheck) — entirely absent in profiles from
+    older app versions or from a rotating-polariser-only calibration, so this
+    prints nothing extra for those.
+    """
+    intensity = data.get("intensity_control")
+    if intensity:
+        print("  Intensity source")
+        print(hyphen_sep)
+        print(f"    Kind            : {intensity.get('kind', '?')}")
+        if "stage" in intensity:
+            print(f"    Stage           : {intensity['stage']}")
+        if "range" in intensity:
+            lo, hi = intensity["range"]
+            unit = intensity.get("unit", "")
+            print(f"    Range           : {lo:.3f} … {hi:.3f} {unit}")
+        if "power_range_W" in intensity:
+            p_lo, p_hi = intensity["power_range_W"]
+            print(f"    Power range     : {p_lo:.3e} W … {p_hi:.3e} W")
+        if "dynamic_range_dB" in intensity:
+            print(f"    Dynamic range   : {intensity['dynamic_range_dB']:.1f} dB")
+        if "angle_offset_deg" in intensity:
+            print(f"    Angle offset    : {intensity['angle_offset_deg']:.2f}°")
+        grid = intensity.get("grid")
+        if grid:
+            print(
+                f"    Grid            : mode={grid.get('mode', '?')}, "
+                f"n={grid.get('n', '?')}, tolerance={grid.get('tolerance_pct', '?')}%"
+            )
+        print()
+
+    crosscheck = data.get("gain_crosscheck")
+    if crosscheck:
+        print("  Gain-switch cross-check")
+        print(hyphen_sep)
+        verdict = "OK" if crosscheck.get("passed") else "FAILED"
+        print(f"    Verdict         : {verdict}")
+        print(f"    Worst spread    : {crosscheck.get('worst_spread_pct', float('nan')):.2f}%")
+        print(
+            f"    Worst PM400 dev.: {crosscheck.get('worst_pm_deviation_pct', float('nan')):.2f}%"
+        )
+        print(f"    Tolerance       : {crosscheck.get('tolerance_pct', float('nan')):.2f}%")
+        print(f"    Levels tested   : {len(crosscheck.get('levels', []))}")
+        print()
 
 
 def _plot(results: list[GainAnalysis], source_name: str, save_path: Path | None) -> None:
@@ -310,6 +365,7 @@ def main() -> None:
     ]
 
     _print_report(results, args.file.name)
+    _print_metadata(_load_json(args.file), "-" * 72)
 
     if not args.no_plot:
         _plot(results, args.file.name, args.save_plot)
