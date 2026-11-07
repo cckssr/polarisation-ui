@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1429</width>
-    <height>1063</height>
+    <width>1677</width>
+    <height>1243</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,30 +34,30 @@
      <property name="title">
       <string>Verbindungen</string>
      </property>
-     <layout class="QHBoxLayout" name="connectionsLayout">
-      <property name="spacing">
-       <number>6</number>
-      </property>
-      <property name="leftMargin">
-       <number>6</number>
-      </property>
-      <property name="topMargin">
-       <number>4</number>
-      </property>
-      <property name="rightMargin">
-       <number>6</number>
-      </property>
-      <property name="bottomMargin">
-       <number>6</number>
-      </property>
-      <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
        <widget class="QGroupBox" name="groupArduino">
         <property name="title">
          <string>Arduino (Detektor &amp; Gain)</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+        </property>
         <layout class="QGridLayout" name="arduinoGrid">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
          <property name="spacing">
-          <number>4</number>
+          <number>8</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="labelArduinoPort">
@@ -68,17 +68,17 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboArduinoPort">
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-           </property>
-           <property name="minimumContentsLength">
-            <number>14</number>
-           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
            </property>
           </widget>
          </item>
@@ -92,7 +92,7 @@
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="valueArduinoStatus">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -118,15 +118,46 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="1" column="0">
        <widget class="QGroupBox" name="groupKDC">
         <property name="title">
          <string>KDC101 Rotationsantrieb (PRM1/MZ8)</string>
         </property>
-        <layout class="QGridLayout" name="kdcGrid">
-         <property name="spacing">
-          <number>4</number>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <layout class="QGridLayout" name="kdcGrid" rowstretch="0,0" columnstretch="0,0,0,0">
+         <property name="leftMargin">
+          <number>5</number>
          </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item row="1" column="3">
+          <widget class="QPushButton" name="buttonHomeKDC">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Referenzfahrt (Home)</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="labelKDCDevice">
            <property name="text">
@@ -134,33 +165,40 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="comboKDC">
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-           </property>
-           <property name="minimumContentsLength">
-            <number>14</number>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="buttonConnectKDC">
+           <property name="text">
+            <string>Verbinden</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
+         <item row="0" column="3">
           <widget class="QPushButton" name="buttonRefreshKDC">
            <property name="text">
             <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
+         <item row="0" column="1" colspan="2">
+          <widget class="QComboBox" name="comboKDC">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
+          </widget>
+         </item>
          <item row="1" column="0" colspan="2">
           <widget class="QLabel" name="valueKDCStatus">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -174,36 +212,37 @@
            <property name="text">
             <string>Nicht verbunden</string>
            </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="buttonConnectKDC">
-           <property name="text">
-            <string>Verbinden</string>
+           <property name="textFormat">
+            <enum>Qt::TextFormat::AutoText</enum>
            </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="buttonHomeKDC">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Referenzfahrt (Home)</string>
+           <property name="indent">
+            <number>-1</number>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="0" column="1" rowspan="2">
        <widget class="QGroupBox" name="groupNDStage">
         <property name="title">
          <string>ND-Filter Drehantrieb (Schrittmotor, ESP32 + DRV8825)</string>
         </property>
         <layout class="QGridLayout" name="ndGrid">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
          <property name="spacing">
-          <number>4</number>
+          <number>8</number>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="labelNDDevice">
@@ -212,26 +251,35 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="comboNDStage">
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-           </property>
-           <property name="minimumContentsLength">
-            <number>14</number>
-           </property>
+         <item row="3" column="0" colspan="2">
+          <widget class="QLabel" name="valueNDDriver">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>1</horstretch>
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+             <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Treiber: –</string>
+           </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="buttonRefreshNDStage">
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="buttonHomeNDStage">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Fährt den Referenzschalter an und setzt dort 0°. Ohne Referenzschalter (Firmware: PIN_HOME = -1) wird 0° an der aktuellen Position gesetzt.</string>
+           </property>
            <property name="text">
-            <string>Aktualisieren</string>
+            <string>Referenzfahrt (Home)</string>
            </property>
           </widget>
          </item>
@@ -254,26 +302,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="buttonConnectNDStage">
-           <property name="text">
-            <string>Verbinden</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="2">
-          <widget class="QPushButton" name="buttonHomeNDStage">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>Fährt den Referenzschalter an und setzt dort 0°. Ohne Referenzschalter (Firmware: PIN_HOME = -1) wird 0° an der aktuellen Position gesetzt.</string>
-           </property>
-           <property name="text">
-            <string>Referenzfahrt (Home)</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="2">
           <widget class="QPushButton" name="buttonZeroNDStage">
            <property name="enabled">
@@ -287,62 +315,60 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="3">
-          <widget class="QLabel" name="valueNDPosition">
+         <item row="1" column="2">
+          <widget class="QPushButton" name="buttonConnectNDStage">
+           <property name="text">
+            <string>Verbinden</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboNDStage">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-             <horstretch>0</horstretch>
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>0</height>
-            </size>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
            </property>
-           <property name="text">
-            <string>Winkel: – °</string>
+           <property name="minimumContentsLength">
+            <number>14</number>
            </property>
           </widget>
          </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QLabel" name="valueNDDriver">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>0</height>
-            </size>
-           </property>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="buttonRefreshNDStage">
            <property name="text">
-            <string>Treiber: –</string>
+            <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="2">
-          <widget class="QPushButton" name="buttonSelfTestNDStage">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>Fährt das Filterrad kurz hin und zurück und prüft dabei den /FAULT-Pin des DRV8825 (Überstrom/Übertemperatur).</string>
-           </property>
-           <property name="text">
-            <string>Treiber testen</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" colspan="3">
+         <item row="4" column="0" colspan="3">
           <layout class="QHBoxLayout" name="ndJogLayout">
            <property name="spacing">
-            <number>4</number>
+            <number>10</number>
            </property>
+           <item>
+            <widget class="QLabel" name="valueNDPosition">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Winkel: – °</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QPushButton" name="buttonNDJogMinus5">
              <property name="enabled">
@@ -351,7 +377,7 @@
              <property name="maximumSize">
               <size>
                <width>44</width>
-               <height>22</height>
+               <height>30</height>
               </size>
              </property>
              <property name="toolTip">
@@ -370,7 +396,7 @@
              <property name="maximumSize">
               <size>
                <width>44</width>
-               <height>22</height>
+               <height>30</height>
               </size>
              </property>
              <property name="toolTip">
@@ -389,7 +415,7 @@
              <property name="maximumSize">
               <size>
                <width>44</width>
-               <height>22</height>
+               <height>30</height>
               </size>
              </property>
              <property name="toolTip">
@@ -408,7 +434,7 @@
              <property name="maximumSize">
               <size>
                <width>44</width>
-               <height>22</height>
+               <height>30</height>
               </size>
              </property>
              <property name="toolTip">
@@ -422,7 +448,7 @@
            <item>
             <spacer name="ndJogSpacer">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -440,7 +466,7 @@
              <property name="maximumSize">
               <size>
                <width>80</width>
-               <height>22</height>
+               <height>30</height>
               </size>
              </property>
              <property name="toolTip">
@@ -453,18 +479,50 @@
            </item>
           </layout>
          </item>
+         <item row="3" column="2">
+          <widget class="QPushButton" name="buttonSelfTestNDStage">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Fährt das Filterrad kurz hin und zurück und prüft dabei den /FAULT-Pin des DRV8825 (Überstrom/Übertemperatur).</string>
+           </property>
+           <property name="text">
+            <string>Treiber testen</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="0" column="2">
        <widget class="QGroupBox" name="groupPM400">
         <property name="title">
          <string>PM400 A (Referenz, S120C)</string>
         </property>
         <layout class="QGridLayout" name="pmGrid">
-         <property name="spacing">
-          <number>4</number>
+         <property name="leftMargin">
+          <number>5</number>
          </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="buttonRefreshPM400">
+           <property name="text">
+            <string>Aktualisieren</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="labelPMResource">
            <property name="text">
@@ -472,26 +530,36 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item row="0" column="1" colspan="2">
           <widget class="QComboBox" name="comboPM400">
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-           </property>
-           <property name="minimumContentsLength">
-            <number>14</number>
-           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
+           </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="buttonRefreshPM400">
+         <item row="1" column="3">
+          <widget class="QPushButton" name="buttonZeroPM400">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
-            <string>Aktualisieren</string>
+            <string>Nullabgleich (Zero)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="buttonConnectPM400">
+           <property name="text">
+            <string>Verbinden</string>
            </property>
           </widget>
          </item>
@@ -514,15 +582,39 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="buttonConnectPM400">
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QGroupBox" name="groupPM400B">
+        <property name="title">
+         <string>PM400 B (Vergleichsmessgerät)</string>
+        </property>
+        <layout class="QGridLayout" name="pmBGrid">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="buttonRefreshPM400B">
            <property name="text">
-            <string>Verbinden</string>
+            <string>Aktualisieren</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="buttonZeroPM400">
+         <item row="1" column="3">
+          <widget class="QPushButton" name="buttonZeroPM400B">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -531,18 +623,6 @@
            </property>
           </widget>
          </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="groupPM400B">
-        <property name="title">
-         <string>PM400 B (Vergleichsmessgerät)</string>
-        </property>
-        <layout class="QGridLayout" name="pmBGrid">
-         <property name="spacing">
-          <number>4</number>
-         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="labelPM400BResource">
            <property name="text">
@@ -550,29 +630,10 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="comboPM400B">
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-           </property>
-           <property name="minimumContentsLength">
-            <number>14</number>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="editable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="buttonRefreshPM400B">
+         <item row="1" column="2">
+          <widget class="QPushButton" name="buttonConnectPM400B">
            <property name="text">
-            <string>Aktualisieren</string>
+            <string>Verbinden</string>
            </property>
           </widget>
          </item>
@@ -595,20 +656,22 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="buttonConnectPM400B">
-           <property name="text">
-            <string>Verbinden</string>
+         <item row="0" column="1" colspan="2">
+          <widget class="QComboBox" name="comboPM400B">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QPushButton" name="buttonZeroPM400B">
-           <property name="enabled">
+           <property name="editable">
             <bool>false</bool>
            </property>
-           <property name="text">
-            <string>Nullabgleich (Zero)</string>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>14</number>
            </property>
           </widget>
          </item>
@@ -619,7 +682,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="workAreaLayout" stretch="0,1">
+    <layout class="QHBoxLayout" name="workAreaLayout" stretch="0">
      <property name="spacing">
       <number>8</number>
      </property>
@@ -637,47 +700,427 @@
           <attribute name="title">
            <string>Kalibrierung</string>
           </attribute>
-          <layout class="QVBoxLayout" name="tabCalibrationLayout">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
-            <widget class="QGroupBox" name="groupIntensitySource">
-             <property name="title">
-              <string>Intensitätsquelle</string>
+          <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1">
+           <item row="6" column="0">
+            <spacer name="tabCalibrationSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
-             <layout class="QHBoxLayout" name="intensitySourceLayout">
-              <property name="spacing">
-               <number>6</number>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>5</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="4" column="0">
+            <widget class="QGroupBox" name="groupProfile">
+             <property name="title">
+              <string>Profil</string>
+             </property>
+             <layout class="QFormLayout" name="profileForm">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
               </property>
-              <item>
-               <widget class="QLabel" name="labelIntensitySource">
+              <property name="verticalSpacing">
+               <number>3</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="labelProfileName">
                 <property name="text">
-                 <string>Quelle:</string>
+                 <string>Profilname:</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QRadioButton" name="radioSourcePolariser">
-                <property name="text">
-                 <string>Polarisator</string>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="editProfileName">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="checked">
+                <property name="placeholderText">
+                 <string>z.B. Det-A_auto</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="2">
+               <widget class="QLabel" name="valueOutputPath">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>–</string>
+                </property>
+                <property name="wordWrap">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="radioSourceND">
-                <property name="text">
-                 <string>ND-Filter</string>
                 </property>
                </widget>
               </item>
              </layout>
             </widget>
            </item>
-           <item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupSweep">
+             <property name="title">
+              <string>Sweep-Einstellungen</string>
+             </property>
+             <layout class="QVBoxLayout" name="sweepLayout">
+              <property name="spacing">
+               <number>3</number>
+              </property>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <property name="verticalSpacing">
+                 <number>3</number>
+                </property>
+                <item row="2" column="2">
+                 <widget class="QLabel" name="labelGainSettle">
+                  <property name="text">
+                   <string>Wartezeit / Gain (s):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="labelAngleEnd">
+                  <property name="text">
+                   <string>Endwinkel (°):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2" colspan="2">
+                 <widget class="QCheckBox" name="checkReturnPass">
+                  <property name="toolTip">
+                   <string>Misst nach dem Hin-Durchlauf jedes Gains dieselben Positionen in umgekehrter Reihenfolge noch einmal. Das Log vergleicht die angepassten W/V-Faktoren von Hin- und Rückfahrt (Hysterese/Drift); beide Durchläufe gehen ins Profil ein.</string>
+                  </property>
+                  <property name="text">
+                   <string>Rückfahrt (Rückwärts-Durchlauf)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="labelNPoints">
+                  <property name="text">
+                   <string>Anzahl Punkte:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="labelAngleStart">
+                  <property name="text">
+                   <string>Startwinkel (°):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QDoubleSpinBox" name="spinSaturationThreshold">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>ADC-Spannung ab der ein Messpunkt als gesättigt gilt und nicht aufgezeichnet wird. Typisch ~2.35 V (ADS1220 Vollaussteuerung ≈2.4 V).</string>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>3.300000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.050000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>2.350000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QDoubleSpinBox" name="spinAngleStart">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QDoubleSpinBox" name="spinGainSettle">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QSpinBox" name="spinNPoints">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimum">
+                   <number>3</number>
+                  </property>
+                  <property name="maximum">
+                   <number>200</number>
+                  </property>
+                  <property name="value">
+                   <number>30</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="spinPointSettle">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>30.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.050000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.200000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QDoubleSpinBox" name="spinAngleEnd">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>90.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QSpinBox" name="spinDetectorSamples">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="labelPointSettle">
+                  <property name="text">
+                   <string>Wartezeit / Punkt (s):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="labelDetectorSamples">
+                  <property name="text">
+                   <string>Detektor-Samples:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLabel" name="labelSaturationThreshold">
+                  <property name="text">
+                   <string>Sättigungsschwelle (V):</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="gridModeLayout">
+                <property name="spacing">
+                 <number>15</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="labelGridMode">
+                  <property name="text">
+                   <string>Winkelraster:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioLinearAngle">
+                  <property name="text">
+                   <string>Linear in θ</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioLinearCos2">
+                  <property name="text">
+                   <string>Linear in cos²(θ)</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Orientation::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="gainCheckboxLayout" stretch="0,0,0,0,0,0">
+                <property name="spacing">
+                 <number>15</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="labelGains">
+                  <property name="text">
+                   <string>Gain-Stufen:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkGain1">
+                  <property name="text">
+                   <string>1</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkGain2">
+                  <property name="text">
+                   <string>2</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkGain3">
+                  <property name="text">
+                   <string>3</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkGain4">
+                  <property name="text">
+                   <string>4</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Orientation::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="0">
             <layout class="QHBoxLayout" name="topControlsRow">
              <property name="spacing">
               <number>5</number>
@@ -693,6 +1136,9 @@
                 </property>
                 <item>
                  <layout class="QFormLayout" name="alignForm">
+                  <property name="fieldGrowthPolicy">
+                   <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+                  </property>
                   <property name="verticalSpacing">
                    <number>3</number>
                   </property>
@@ -881,6 +1327,9 @@
                 <string>Licht / Leistungsmessung</string>
                </property>
                <layout class="QFormLayout" name="beamForm">
+                <property name="fieldGrowthPolicy">
+                 <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+                </property>
                 <property name="verticalSpacing">
                  <number>3</number>
                 </property>
@@ -979,335 +1428,15 @@
              </item>
             </layout>
            </item>
-           <item>
-            <widget class="QGroupBox" name="groupSweep">
-             <property name="title">
-              <string>Sweep-Einstellungen</string>
-             </property>
-             <layout class="QVBoxLayout" name="sweepLayout">
-              <property name="spacing">
-               <number>3</number>
-              </property>
-              <item>
-               <layout class="QFormLayout" name="sweepForm">
-                <property name="verticalSpacing">
-                 <number>3</number>
-                </property>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="labelAngleStart">
-                  <property name="text">
-                   <string>Startwinkel (°):</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QDoubleSpinBox" name="spinAngleStart">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="decimals">
-                   <number>1</number>
-                  </property>
-                  <property name="minimum">
-                   <double>0.000000000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>360.000000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>0.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="labelAngleEnd">
-                  <property name="text">
-                   <string>Endwinkel (°):</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="spinAngleEnd">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="decimals">
-                   <number>1</number>
-                  </property>
-                  <property name="minimum">
-                   <double>0.000000000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>360.000000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>90.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="labelNPoints">
-                  <property name="text">
-                   <string>Anzahl Punkte:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QSpinBox" name="spinNPoints">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimum">
-                   <number>3</number>
-                  </property>
-                  <property name="maximum">
-                   <number>200</number>
-                  </property>
-                  <property name="value">
-                   <number>30</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="labelPointSettle">
-                  <property name="text">
-                   <string>Wartezeit / Punkt (s):</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QDoubleSpinBox" name="spinPointSettle">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="decimals">
-                   <number>2</number>
-                  </property>
-                  <property name="minimum">
-                   <double>0.000000000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>30.000000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.050000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>0.200000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0">
-                 <widget class="QLabel" name="labelGainSettle">
-                  <property name="text">
-                   <string>Wartezeit / Gain (s):</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <widget class="QDoubleSpinBox" name="spinGainSettle">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="decimals">
-                   <number>2</number>
-                  </property>
-                  <property name="minimum">
-                   <double>0.000000000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>10.000000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.100000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>0.500000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QLabel" name="labelDetectorSamples">
-                  <property name="text">
-                   <string>Detektor-Samples:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="1">
-                 <widget class="QSpinBox" name="spinDetectorSamples">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>100</number>
-                  </property>
-                  <property name="value">
-                   <number>5</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="0">
-                 <widget class="QLabel" name="labelSaturationThreshold">
-                  <property name="text">
-                   <string>Sättigungsschwelle (V):</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="1">
-                 <widget class="QDoubleSpinBox" name="spinSaturationThreshold">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>ADC-Spannung ab der ein Messpunkt als gesättigt gilt und nicht aufgezeichnet wird. Typisch ~2.35 V (ADS1220 Vollaussteuerung ≈2.4 V).</string>
-                  </property>
-                  <property name="decimals">
-                   <number>2</number>
-                  </property>
-                  <property name="minimum">
-                   <double>1.000000000000000</double>
-                  </property>
-                  <property name="maximum">
-                   <double>3.300000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.050000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>2.350000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="0" colspan="2">
-                 <widget class="QCheckBox" name="checkReturnPass">
-                  <property name="toolTip">
-                   <string>Misst nach dem Hin-Durchlauf jedes Gains dieselben Positionen in umgekehrter Reihenfolge noch einmal. Das Log vergleicht die angepassten W/V-Faktoren von Hin- und Rückfahrt (Hysterese/Drift); beide Durchläufe gehen ins Profil ein.</string>
-                  </property>
-                  <property name="text">
-                   <string>Rückfahrt (Rückwärts-Durchlauf)</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="gridModeLayout">
-                <property name="spacing">
-                 <number>6</number>
-                </property>
-                <item>
-                 <widget class="QLabel" name="labelGridMode">
-                  <property name="text">
-                   <string>Winkelraster:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QRadioButton" name="radioLinearAngle">
-                  <property name="text">
-                   <string>Linear in θ</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QRadioButton" name="radioLinearCos2">
-                  <property name="text">
-                   <string>Linear in cos²(θ)</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="gainCheckboxLayout">
-                <property name="spacing">
-                 <number>6</number>
-                </property>
-                <item>
-                 <widget class="QLabel" name="labelGains">
-                  <property name="text">
-                   <string>Gain-Stufen:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="checkGain1">
-                  <property name="text">
-                   <string>1</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="checkGain2">
-                  <property name="text">
-                   <string>2</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="checkGain3">
-                  <property name="text">
-                   <string>3</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="checkGain4">
-                  <property name="text">
-                   <string>4</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
+           <item row="3" column="0">
             <widget class="QGroupBox" name="groupPowerGrid">
              <property name="title">
               <string>Leistungsraster (nur ND-Filter)</string>
              </property>
              <layout class="QFormLayout" name="powerGridForm">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+              </property>
               <property name="verticalSpacing">
                <number>3</number>
               </property>
@@ -1413,61 +1542,43 @@
              </layout>
             </widget>
            </item>
-           <item>
-            <widget class="QGroupBox" name="groupProfile">
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="groupIntensitySource">
              <property name="title">
-              <string>Profil</string>
+              <string>Intensitätsquelle</string>
              </property>
-             <layout class="QFormLayout" name="profileForm">
-              <property name="verticalSpacing">
-               <number>3</number>
+             <layout class="QHBoxLayout" name="intensitySourceLayout">
+              <property name="spacing">
+               <number>6</number>
               </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="labelProfileName">
+              <item>
+               <widget class="QLabel" name="labelIntensitySource">
                 <property name="text">
-                 <string>Profilname:</string>
+                 <string>Quelle:</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="editProfileName">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="placeholderText">
-                 <string>z.B. Det-A_auto</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="2">
-               <widget class="QLabel" name="valueOutputPath">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>48</height>
-                 </size>
-                </property>
+              <item>
+               <widget class="QRadioButton" name="radioSourcePolariser">
                 <property name="text">
-                 <string>–</string>
+                 <string>Polarisator</string>
                 </property>
-                <property name="wordWrap">
+                <property name="checked">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioSourceND">
+                <property name="text">
+                 <string>ND-Filter</string>
                 </property>
                </widget>
               </item>
              </layout>
             </widget>
            </item>
-           <item>
+           <item row="5" column="0">
             <layout class="QHBoxLayout" name="controlLayout">
              <property name="spacing">
               <number>6</number>
@@ -1504,18 +1615,21 @@
              </item>
             </layout>
            </item>
-           <item>
-            <spacer name="tabCalibrationSpacer">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
+           <item row="0" column="1" rowspan="7">
+            <widget class="MultiGainCalibrationPlot" name="calibrationPlot" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>3</verstretch>
+              </sizepolicy>
              </property>
-             <property name="sizeHint" stdset="0">
+             <property name="minimumSize">
               <size>
-               <width>20</width>
-               <height>5</height>
+               <width>380</width>
+               <height>250</height>
               </size>
              </property>
-            </spacer>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1523,16 +1637,71 @@
           <attribute name="title">
            <string>ND-Bereich</string>
           </attribute>
-          <layout class="QVBoxLayout" name="tabNDRangeLayout">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
+          <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0" columnstretch="0,1">
+           <item row="2" column="0">
+            <widget class="QLabel" name="valueNDRange">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Bereich: –</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="ndScanButtonLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="buttonScanNDRange">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Bereichsscan starten</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="buttonAbortNDScan">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Abbrechen</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="0">
             <widget class="QGroupBox" name="groupNDScanParams">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="title">
               <string>Scan-Parameter</string>
              </property>
              <layout class="QFormLayout" name="ndScanForm">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+              </property>
               <property name="verticalSpacing">
                <number>3</number>
               </property>
@@ -1716,56 +1885,7 @@
              </layout>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="ndScanButtonLayout">
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="buttonScanNDRange">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Bereichsscan starten</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="buttonAbortNDScan">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Abbrechen</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="valueNDRange">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Bereich: –</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
+           <item row="0" column="1" rowspan="2">
             <widget class="NDTransmissionPlot" name="ndRangePlot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1787,11 +1907,83 @@
           <attribute name="title">
            <string>ND-Linearität</string>
           </attribute>
-          <layout class="QVBoxLayout" name="tabNDLinearityLayout">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
+          <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,1">
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="ndLinButtonLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="buttonScanNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Misst die konfigurierte Anzahl Scans und hängt sie an die vorhandenen an, damit mehrere Läufe (z. B. nach Umbau) verglichen werden können.</string>
+               </property>
+               <property name="text">
+                <string>Scans starten</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="buttonAbortNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Abbrechen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="buttonClearNDLin">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Scans verwerfen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="ndLinButtonSpacer">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="valueNDLinStatus">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Status: –</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
             <widget class="QGroupBox" name="groupNDLinParams">
              <property name="title">
               <string>Scan-Parameter</string>
@@ -1819,13 +2011,13 @@
                  <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>-360</double>
+                 <double>-360.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>360</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0</double>
+                 <double>0.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1877,13 +2069,13 @@
                  <number>1</number>
                 </property>
                 <property name="minimum">
-                 <double>-360</double>
+                 <double>-360.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>360</double>
+                 <double>360.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>360</double>
+                 <double>360.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1948,13 +2140,13 @@
                  <number>4</number>
                 </property>
                 <property name="minimum">
-                 <double>0</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>1000</double>
+                 <double>1000.000000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0</double>
+                 <double>0.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1977,16 +2169,16 @@
                  <number>2</number>
                 </property>
                 <property name="minimum">
-                 <double>0</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>10</double>
+                 <double>10.000000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>0.05</double>
+                 <double>0.050000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0.2</double>
+                 <double>0.200000000000000</double>
                 </property>
                </widget>
               </item>
@@ -2012,16 +2204,16 @@
                  <number>3</number>
                 </property>
                 <property name="minimum">
-                 <double>0.001</double>
+                 <double>0.001000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>5</double>
+                 <double>5.000000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>0.005</double>
+                 <double>0.005000000000000</double>
                 </property>
                 <property name="value">
-                 <double>0.05</double>
+                 <double>0.050000000000000</double>
                 </property>
                </widget>
               </item>
@@ -2054,98 +2246,7 @@
              </layout>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="ndLinButtonLayout">
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="buttonScanNDLin">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Misst die konfigurierte Anzahl Scans und hängt sie an die vorhandenen an, damit mehrere Läufe (z. B. nach Umbau) verglichen werden können.</string>
-               </property>
-               <property name="text">
-                <string>Scans starten</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="buttonAbortNDLin">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Abbrechen</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="buttonClearNDLin">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Scans verwerfen</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="ndLinButtonSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="NDLinearityPlot" name="ndLinearityPlot" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>3</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>200</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="valueNDLinStatus">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>34</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Status: –</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
+           <item row="4" column="0" colspan="2">
             <widget class="QPlainTextEdit" name="editNDLinReport">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
@@ -2165,14 +2266,30 @@
                <pointsize>10</pointsize>
               </font>
              </property>
+             <property name="lineWrapMode">
+              <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
+             </property>
              <property name="readOnly">
               <bool>true</bool>
              </property>
-             <property name="lineWrapMode">
-              <enum>QPlainTextEdit::NoWrap</enum>
-             </property>
              <property name="placeholderText">
               <string>Noch keine Scans. Der Bericht vergleicht Linearität, Streuung und Hysterese.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" rowspan="4">
+            <widget class="NDLinearityPlot" name="ndLinearityPlot" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>3</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>200</height>
+              </size>
              </property>
             </widget>
            </item>
@@ -2182,16 +2299,75 @@
           <attribute name="title">
            <string>Detektor-Vergleich</string>
           </attribute>
-          <layout class="QVBoxLayout" name="tabDetectorCompareLayout">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
+          <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,1">
+           <item row="2" column="0">
+            <widget class="QLabel" name="valueXCheckResult">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Ergebnis: –</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="xCheckButtonLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="buttonStartXCheck">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Vergleich starten</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="buttonAbortXCheck">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Abbrechen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="buttonSaveXCheck">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Ergebnis speichern</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="0">
             <widget class="QGroupBox" name="groupXCheckParams">
              <property name="title">
               <string>Vergleichs-Parameter</string>
              </property>
              <layout class="QFormLayout" name="xCheckForm">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+              </property>
               <property name="verticalSpacing">
                <number>3</number>
               </property>
@@ -2285,66 +2461,7 @@
              </layout>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="xCheckButtonLayout">
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="buttonStartXCheck">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Vergleich starten</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="buttonAbortXCheck">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Abbrechen</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="buttonSaveXCheck">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Ergebnis speichern</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="valueXCheckResult">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>48</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Ergebnis: –</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
+           <item row="0" column="1" rowspan="3">
             <widget class="DetectorComparisonPlot" name="xCheckPlot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -2366,16 +2483,16 @@
           <attribute name="title">
            <string>Gain-Prüfung</string>
           </attribute>
-          <layout class="QVBoxLayout" name="tabGainVerifyLayout">
-           <property name="spacing">
-            <number>5</number>
-           </property>
-           <item>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
             <widget class="QGroupBox" name="groupVerifyParams">
              <property name="title">
               <string>Prüf-Parameter</string>
              </property>
              <layout class="QFormLayout" name="verifyForm">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+              </property>
               <property name="verticalSpacing">
                <number>3</number>
               </property>
@@ -2482,7 +2599,7 @@
              </layout>
             </widget>
            </item>
-           <item>
+           <item row="1" column="0">
             <layout class="QHBoxLayout" name="verifyButtonLayout">
              <property name="spacing">
               <number>6</number>
@@ -2509,7 +2626,7 @@
              </item>
             </layout>
            </item>
-           <item>
+           <item row="2" column="0">
             <widget class="QTableWidget" name="tableGainVerify">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -2552,7 +2669,7 @@
              </column>
             </widget>
            </item>
-           <item>
+           <item row="3" column="0">
             <widget class="QLabel" name="valueVerifyResult">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
@@ -2609,52 +2726,29 @@
        </item>
       </layout>
      </item>
-     <item>
-      <layout class="QVBoxLayout" name="rightPanelLayout">
-       <property name="spacing">
-        <number>5</number>
-       </property>
-       <item>
-        <widget class="MultiGainCalibrationPlot" name="calibrationPlot" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>3</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>380</width>
-           <height>250</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPlainTextEdit" name="editLog">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>1</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>150</height>
-          </size>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-         <property name="placeholderText">
-          <string>Log-Ausgabe…</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="editLog">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>150</height>
+      </size>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>Log-Ausgabe…</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

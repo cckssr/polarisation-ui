@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'kdc_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -60,10 +60,11 @@ class Ui_KdcPanel(object):
     def setupUi(self, KdcPanel):
         if not KdcPanel.objectName():
             KdcPanel.setObjectName("KdcPanel")
+        KdcPanel.resize(301, 227)
         self.gridLayout = QGridLayout(KdcPanel)
+        self.gridLayout.setSpacing(6)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setHorizontalSpacing(6)
-        self.gridLayout.setVerticalSpacing(6)
+        self.gridLayout.setContentsMargins(5, 5, 5, 5)
         self.labelDevice = QLabel(KdcPanel)
         self.labelDevice.setObjectName("labelDevice")
 
@@ -181,12 +182,12 @@ class Ui_KdcPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonRefresh.setText(QCoreApplication.translate("KdcPanel", "...", None))
         # if QT_CONFIG(tooltip)
         self.buttonRefresh.setToolTip(
             QCoreApplication.translate("KdcPanel", "KDC101-Ger\u00e4teliste aktualisieren", None)
         )
         # endif // QT_CONFIG(tooltip)
+        self.buttonRefresh.setText(QCoreApplication.translate("KdcPanel", "...", None))
         self.labelStatus.setText(QCoreApplication.translate("KdcPanel", "Status", None))
         self.ledStatus.setStyleSheet(
             QCoreApplication.translate(
@@ -215,7 +216,6 @@ class Ui_KdcPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonConnect.setText(QCoreApplication.translate("KdcPanel", "Verbinden", None))
         # if QT_CONFIG(tooltip)
         self.buttonConnect.setToolTip(
             QCoreApplication.translate(
@@ -223,13 +223,13 @@ class Ui_KdcPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonHome.setText(QCoreApplication.translate("KdcPanel", "Home", None))
+        self.buttonConnect.setText(QCoreApplication.translate("KdcPanel", "Verbinden", None))
         # if QT_CONFIG(tooltip)
         self.buttonHome.setToolTip(
             QCoreApplication.translate("KdcPanel", "KDC101 auf Nullposition fahren (Home)", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonZero.setText(QCoreApplication.translate("KdcPanel", "Optik Nullen", None))
+        self.buttonHome.setText(QCoreApplication.translate("KdcPanel", "Home", None))
         # if QT_CONFIG(tooltip)
         self.buttonZero.setToolTip(
             QCoreApplication.translate(
@@ -239,16 +239,16 @@ class Ui_KdcPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonOffsetReset.setText(
-            QCoreApplication.translate("KdcPanel", "Offset zur\u00fccksetzen", None)
-        )
+        self.buttonZero.setText(QCoreApplication.translate("KdcPanel", "Optik Nullen", None))
         # if QT_CONFIG(tooltip)
         self.buttonOffsetReset.setToolTip(
             QCoreApplication.translate(
                 "KdcPanel", "Gespeicherten Nullpunkt-Offset auf 0\u00b0 zur\u00fccksetzen", None
             )
         )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonOffsetReset.setText(
+            QCoreApplication.translate("KdcPanel", "Offset zur\u00fccksetzen", None)
+        )
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

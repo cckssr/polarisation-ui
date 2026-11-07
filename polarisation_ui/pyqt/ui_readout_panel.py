@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'readout_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -58,8 +58,10 @@ class Ui_ReadoutPanel(object):
     def setupUi(self, ReadoutPanel):
         if not ReadoutPanel.objectName():
             ReadoutPanel.setObjectName("ReadoutPanel")
+        ReadoutPanel.resize(265, 401)
         self.verticalLayout = QVBoxLayout(ReadoutPanel)
         self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.labelSampleAngle = QLabel(ReadoutPanel)
         self.labelSampleAngle.setObjectName("labelSampleAngle")
 
@@ -144,39 +146,39 @@ class Ui_ReadoutPanel(object):
         self.buttonGroupGain.setObjectName("buttonGroupGain")
         self.buttonGroupGain.addButton(self.buttonGain1)
         self.buttonGain1.setObjectName("buttonGain1")
-        self.buttonGain1.setCheckable(True)
         self.buttonGain1.setMinimumSize(QSize(28, 0))
+        self.buttonGain1.setCheckable(True)
 
         self.gainLayout.addWidget(self.buttonGain1)
 
         self.buttonGain2 = QPushButton(ReadoutPanel)
         self.buttonGroupGain.addButton(self.buttonGain2)
         self.buttonGain2.setObjectName("buttonGain2")
-        self.buttonGain2.setCheckable(True)
         self.buttonGain2.setMinimumSize(QSize(28, 0))
+        self.buttonGain2.setCheckable(True)
 
         self.gainLayout.addWidget(self.buttonGain2)
 
         self.buttonGain3 = QPushButton(ReadoutPanel)
         self.buttonGroupGain.addButton(self.buttonGain3)
         self.buttonGain3.setObjectName("buttonGain3")
-        self.buttonGain3.setCheckable(True)
         self.buttonGain3.setMinimumSize(QSize(28, 0))
+        self.buttonGain3.setCheckable(True)
 
         self.gainLayout.addWidget(self.buttonGain3)
 
         self.buttonGain4 = QPushButton(ReadoutPanel)
         self.buttonGroupGain.addButton(self.buttonGain4)
         self.buttonGain4.setObjectName("buttonGain4")
-        self.buttonGain4.setCheckable(True)
         self.buttonGain4.setMinimumSize(QSize(28, 0))
+        self.buttonGain4.setCheckable(True)
 
         self.gainLayout.addWidget(self.buttonGain4)
 
         self.buttonGainAuto = QPushButton(ReadoutPanel)
         self.buttonGainAuto.setObjectName("buttonGainAuto")
-        self.buttonGainAuto.setCheckable(True)
         self.buttonGainAuto.setMinimumSize(QSize(28, 0))
+        self.buttonGainAuto.setCheckable(True)
 
         self.gainLayout.addWidget(self.buttonGainAuto)
 
@@ -233,7 +235,6 @@ class Ui_ReadoutPanel(object):
         self.labelGain.setText(
             QCoreApplication.translate("ReadoutPanel", "Detektor-Gainstufe", None)
         )
-        self.buttonGain1.setText(QCoreApplication.translate("ReadoutPanel", "1", None))
         # if QT_CONFIG(tooltip)
         self.buttonGain1.setToolTip(
             QCoreApplication.translate(
@@ -241,19 +242,19 @@ class Ui_ReadoutPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonGain2.setText(QCoreApplication.translate("ReadoutPanel", "2", None))
+        self.buttonGain1.setText(QCoreApplication.translate("ReadoutPanel", "1", None))
         # if QT_CONFIG(tooltip)
         self.buttonGain2.setToolTip(
             QCoreApplication.translate("ReadoutPanel", "PD-TIA Verst\u00e4rkungsstufe 2", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonGain3.setText(QCoreApplication.translate("ReadoutPanel", "3", None))
+        self.buttonGain2.setText(QCoreApplication.translate("ReadoutPanel", "2", None))
         # if QT_CONFIG(tooltip)
         self.buttonGain3.setToolTip(
             QCoreApplication.translate("ReadoutPanel", "PD-TIA Verst\u00e4rkungsstufe 3", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonGain4.setText(QCoreApplication.translate("ReadoutPanel", "4", None))
+        self.buttonGain3.setText(QCoreApplication.translate("ReadoutPanel", "3", None))
         # if QT_CONFIG(tooltip)
         self.buttonGain4.setToolTip(
             QCoreApplication.translate(
@@ -263,14 +264,14 @@ class Ui_ReadoutPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonGainAuto.setText(QCoreApplication.translate("ReadoutPanel", "AUTO", None))
+        self.buttonGain4.setText(QCoreApplication.translate("ReadoutPanel", "4", None))
         # if QT_CONFIG(tooltip)
         self.buttonGainAuto.setToolTip(
             QCoreApplication.translate(
                 "ReadoutPanel", "Automatische Wahl der PD-TIA Verst\u00e4rkungsstufe", None
             )
         )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonGainAuto.setText(QCoreApplication.translate("ReadoutPanel", "AUTO", None))
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1054</width>
-    <height>626</height>
+    <width>1088</width>
+    <height>788</height>
    </rect>
   </property>
   <layout class="QGridLayout" name="gridLayout" rowstretch="2,1" columnstretch="2,0">
@@ -74,6 +74,14 @@
       <bool>true</bool>
      </property>
      <widget class="QWidget" name="contentSide">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>223</width>
+        <height>778</height>
+       </rect>
+      </property>
       <layout class="QVBoxLayout" name="layoutSide">
        <property name="spacing">
         <number>6</number>

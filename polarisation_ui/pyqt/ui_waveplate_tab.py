@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'waveplate_tab.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -69,7 +69,7 @@ class Ui_WaveplateTab(object):
     def setupUi(self, WaveplateTab):
         if not WaveplateTab.objectName():
             WaveplateTab.setObjectName("WaveplateTab")
-        WaveplateTab.resize(1054, 626)
+        WaveplateTab.resize(1088, 788)
         self.gridLayout = QGridLayout(WaveplateTab)
         self.gridLayout.setObjectName("gridLayout")
         self.gridLayout.setContentsMargins(0, 10, 0, 0)
@@ -99,6 +99,7 @@ class Ui_WaveplateTab(object):
         self.scrollSide.setWidgetResizable(True)
         self.contentSide = QWidget()
         self.contentSide.setObjectName("contentSide")
+        self.contentSide.setGeometry(QRect(0, 0, 223, 778))
         self.layoutSide = QVBoxLayout(self.contentSide)
         self.layoutSide.setSpacing(6)
         self.layoutSide.setObjectName("layoutSide")

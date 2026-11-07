@@ -98,9 +98,17 @@
       <bool>true</bool>
      </property>
      <widget class="QWidget" name="contentSide">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>204</width>
+        <height>886</height>
+       </rect>
+      </property>
       <layout class="QVBoxLayout" name="layoutSide">
        <property name="spacing">
-        <number>6</number>
+        <number>10</number>
        </property>
        <property name="leftMargin">
         <number>4</number>
@@ -317,6 +325,9 @@
           </item>
           <item>
            <layout class="QFormLayout" name="formSweepParams">
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
+            </property>
             <property name="verticalSpacing">
              <number>3</number>
             </property>

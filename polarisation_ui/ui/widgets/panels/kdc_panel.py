@@ -53,8 +53,8 @@ class KdcPanel(QGroupBox):
         combo = self.ui.comboDevice
         current = combo.currentText()
         combo.clear()
-        for conn_id, description in devices:
-            combo.addItem(f"{conn_id} — {description}", userData=conn_id)
+        for conn_id, _ in devices:
+            combo.addItem(f"{conn_id}", userData=conn_id)
         if not devices:
             combo.addItem(self._t("text_no_device"))
         index = combo.findText(current) if current else -1

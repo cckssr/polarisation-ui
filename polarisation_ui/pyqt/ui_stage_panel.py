@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'stage_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -60,10 +60,11 @@ class Ui_StagePanel(object):
     def setupUi(self, StagePanel):
         if not StagePanel.objectName():
             StagePanel.setObjectName("StagePanel")
+        StagePanel.resize(347, 147)
         self.gridLayout = QGridLayout(StagePanel)
+        self.gridLayout.setSpacing(6)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setHorizontalSpacing(6)
-        self.gridLayout.setVerticalSpacing(6)
+        self.gridLayout.setContentsMargins(5, 5, 5, 5)
         self.labelStatus = QLabel(StagePanel)
         self.labelStatus.setObjectName("labelStatus")
 
@@ -150,9 +151,6 @@ class Ui_StagePanel(object):
         self.buttonZero.setText(
             QCoreApplication.translate("StagePanel", "Nullpunkt-Kalibrierung", None)
         )
-        self.button180.setText(
-            QCoreApplication.translate("StagePanel", "180\u00b0-Kalibrierung", None)
-        )
         # if QT_CONFIG(tooltip)
         self.button180.setToolTip(
             QCoreApplication.translate(
@@ -161,7 +159,9 @@ class Ui_StagePanel(object):
                 None,
             )
         )
+        # endif // QT_CONFIG(tooltip)
+        self.button180.setText(
+            QCoreApplication.translate("StagePanel", "180\u00b0-Kalibrierung", None)
+        )
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

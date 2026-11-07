@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>860</width>
-    <height>683</height>
+    <width>911</width>
+    <height>799</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="layoutRoot">
    <property name="spacing">
-    <number>6</number>
+    <number>15</number>
    </property>
    <item>
     <widget class="QGroupBox" name="groupConnection">
@@ -23,6 +23,18 @@
       <string>Arduino-Verbindung</string>
      </property>
      <layout class="QHBoxLayout" name="layoutConnection">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>5</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>5</number>
+      </property>
       <item>
        <widget class="QLabel" name="labelPort">
         <property name="text">
@@ -42,14 +54,14 @@
       </item>
       <item>
        <widget class="QToolButton" name="buttonRefreshPorts">
+        <property name="toolTip">
+         <string>Ports neu laden</string>
+        </property>
         <property name="text">
          <string>↻</string>
         </property>
         <property name="icon">
          <iconset theme="view-refresh"/>
-        </property>
-        <property name="toolTip">
-         <string>Ports neu laden</string>
         </property>
        </widget>
       </item>
@@ -95,6 +107,18 @@
       <string>Steuerung</string>
      </property>
      <layout class="QHBoxLayout" name="hlControl">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>5</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>5</number>
+      </property>
       <item>
        <widget class="QLabel" name="labelEncoderSelect">
         <property name="text">
@@ -211,13 +235,25 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="tabMeasurements">
       <attribute name="title">
        <string>Messwerte</string>
       </attribute>
       <layout class="QHBoxLayout" name="hlMeasurements">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QGroupBox" name="groupMeasA">
          <property name="title">
@@ -226,6 +262,18 @@
          <layout class="QFormLayout" name="formMeasA">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
+          </property>
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="labelConnA">
@@ -550,6 +598,18 @@
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
           </property>
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="labelConnB">
             <property name="text">
@@ -871,6 +931,18 @@
        <string>System</string>
       </attribute>
       <layout class="QVBoxLayout" name="vlSystem">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QGroupBox" name="groupSysInfo">
          <property name="title">
@@ -879,6 +951,18 @@
          <layout class="QFormLayout" name="formSysInfo">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
+          </property>
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="labelIdn">
@@ -966,6 +1050,18 @@
           <string>SCPI Fehler-Queue (SYST:ERR?)</string>
          </property>
          <layout class="QVBoxLayout" name="vlScpiErrors">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QTextEdit" name="editScpiErrors">
             <property name="toolTip">
@@ -1039,6 +1135,18 @@
        <string>SCPI Terminal</string>
       </attribute>
       <layout class="QVBoxLayout" name="vlTerminal">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QTextEdit" name="editTerminalLog">
          <property name="toolTip">
@@ -1093,12 +1201,33 @@
        <string>ADS1220</string>
       </attribute>
       <layout class="QVBoxLayout" name="vlAds">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QGroupBox" name="groupAdcLive">
          <property name="title">
           <string>Live-Messwerte</string>
          </property>
          <layout class="QFormLayout" name="formAdcLive">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="labelAdcPresent">
             <property name="text">
@@ -1194,6 +1323,15 @@
             <string>Register (DIAG:ADC?)</string>
            </property>
            <layout class="QFormLayout" name="formAdcRegisters">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
             <item row="0" column="0">
              <widget class="QLabel" name="labelReg0">
               <property name="text">
@@ -1288,6 +1426,15 @@
             <string>Konfiguration (CONF:ADC:*?)</string>
            </property>
            <layout class="QFormLayout" name="formAdcConfig">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
             <item row="0" column="0">
              <widget class="QLabel" name="labelMux">
               <property name="text">
@@ -1408,6 +1555,15 @@
           <string>PD-TIA Verstärkung (DIAG:PDTIA?)</string>
          </property>
          <layout class="QFormLayout" name="formPdtia">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="labelPdtiaStage">
             <property name="text">
@@ -1465,6 +1621,18 @@
        <string>Raw Stream</string>
       </attribute>
       <layout class="QVBoxLayout" name="vlRawStream">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QLabel" name="labelRawStreamNotice">
          <property name="text">
@@ -1478,19 +1646,19 @@
        </item>
        <item>
         <widget class="QPlainTextEdit" name="editRawStream">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="font">
           <font>
            <family>Monospace</family>
           </font>
          </property>
-         <property name="placeholderText">
-          <string>Warte auf Frames …</string>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
          <property name="maximumBlockCount">
           <number>500</number>
+         </property>
+         <property name="placeholderText">
+          <string>Warte auf Frames …</string>
          </property>
         </widget>
        </item>
@@ -1525,6 +1693,18 @@
        <string>Selbsttest</string>
       </attribute>
       <layout class="QVBoxLayout" name="vlSelfTest">
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
        <item>
         <widget class="QLabel" name="labelSelfTestInfo">
          <property name="text">
@@ -1545,13 +1725,13 @@ Jedes Subsystem meldet PASS oder FAIL.</string>
        </item>
        <item>
         <widget class="QPlainTextEdit" name="editSelfTest">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="font">
           <font>
            <family>Monospace</family>
           </font>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
          <property name="placeholderText">
           <string>Noch kein Test durchgeführt.</string>

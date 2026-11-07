@@ -65,6 +65,14 @@
       <bool>true</bool>
      </property>
      <widget class="QWidget" name="contentSide">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>152</width>
+        <height>829</height>
+       </rect>
+      </property>
       <layout class="QVBoxLayout" name="layoutSide">
        <property name="spacing">
         <number>8</number>
@@ -143,7 +151,7 @@
              <widget class="QLabel" name="labelScaleStart">
               <property name="font">
                <font>
-                <pointsize>7</pointsize>
+                <pointsize>10</pointsize>
                </font>
               </property>
               <property name="styleSheet">
@@ -161,7 +169,7 @@
              <widget class="QLabel" name="labelScaleEnd">
               <property name="font">
                <font>
-                <pointsize>7</pointsize>
+                <pointsize>10</pointsize>
                </font>
               </property>
               <property name="styleSheet">
@@ -316,7 +324,7 @@
         <widget class="QLabel" name="labelHint">
          <property name="font">
           <font>
-           <pointsize>8</pointsize>
+           <pointsize>10</pointsize>
           </font>
          </property>
          <property name="styleSheet">

@@ -1233,7 +1233,11 @@
       "name": "Praktikum",
       "hidden_tabs": [],
       "hidden_widgets": {
-        "main_window": ["actionEncoderDebug", "actionPowerCalibration", "actionAutoPowerCalibration"],
+        "main_window": [
+          "actionEncoderDebug",
+          "actionPowerCalibration",
+          "actionAutoPowerCalibration"
+        ],
         "detector_panel": ["buttonOpenCalibration"]
       },
       "overrides": {

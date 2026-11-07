@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'save_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -59,10 +59,11 @@ class Ui_SavePanel(object):
     def setupUi(self, SavePanel):
         if not SavePanel.objectName():
             SavePanel.setObjectName("SavePanel")
+        SavePanel.resize(339, 259)
         self.gridLayout = QGridLayout(SavePanel)
+        self.gridLayout.setSpacing(6)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setHorizontalSpacing(6)
-        self.gridLayout.setVerticalSpacing(6)
+        self.gridLayout.setContentsMargins(5, 5, 5, 5)
         self.labelHint = QLabel(SavePanel)
         self.labelHint.setObjectName("labelHint")
         self.labelHint.setWordWrap(True)
@@ -164,7 +165,7 @@ class Ui_SavePanel(object):
 
         self.gridLayout.addWidget(self.buttonSave, 7, 0, 1, 2)
 
-        self.gridLayout.setColumnStretch(1, 1)
+        self.gridLayout.setColumnStretch(1, 2)
 
         self.retranslateUi(SavePanel)
 
@@ -214,13 +215,6 @@ class Ui_SavePanel(object):
         self.labelFilename.setText(
             QCoreApplication.translate("SavePanel", "Aktueller Dateiname", None)
         )
-        self.labelDropbox.setText(
-            QCoreApplication.translate(
-                "SavePanel",
-                '<a href="https://openbis.physik.tu-berlin.de/doku/students/gp/automatic_upload.html">GP-Dropbox</a>',
-                None,
-            )
-        )
         # if QT_CONFIG(tooltip)
         self.labelDropbox.setToolTip(
             QCoreApplication.translate(
@@ -230,12 +224,18 @@ class Ui_SavePanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonSave.setText(QCoreApplication.translate("SavePanel", "Speichern", None))
+        self.labelDropbox.setText(
+            QCoreApplication.translate(
+                "SavePanel",
+                '<a href="https://openbis.physik.tu-berlin.de/doku/students/gp/automatic_upload.html">GP-Dropbox</a>',
+                None,
+            )
+        )
         # if QT_CONFIG(tooltip)
         self.buttonSave.setToolTip(
             QCoreApplication.translate("SavePanel", "Messung speichern (Dateidialog)", None)
         )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonSave.setText(QCoreApplication.translate("SavePanel", "Speichern", None))
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

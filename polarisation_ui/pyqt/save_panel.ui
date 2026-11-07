@@ -2,23 +2,40 @@
 <ui version="4.0">
  <class>SavePanel</class>
  <widget class="QGroupBox" name="SavePanel">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>339</width>
+    <height>259</height>
+   </rect>
+  </property>
   <property name="title">
    <string>Speicherung</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="0,1">
-   <property name="horizontalSpacing">
-    <number>6</number>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="0,2">
+   <property name="leftMargin">
+    <number>5</number>
    </property>
-   <property name="verticalSpacing">
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
+   <property name="spacing">
     <number>6</number>
    </property>
    <item row="0" column="0" colspan="2">
     <widget class="QLabel" name="labelHint">
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
      <property name="text">
       <string>Bitte vor Beginn der Messungen Gruppe auswählen und ggf. individuelle Team-Bezeichnung hinzufügen</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -177,14 +194,14 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
      <property name="toolTip">
       <string>Bezeichnung des spezifischen Teams einer Gruppe zur Identifizierung</string>
      </property>
      <property name="placeholderText">
       <string>Bspw. TimStruppi</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -203,11 +220,11 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="maxLength">
-      <number>20</number>
-     </property>
      <property name="toolTip">
       <string>Ein benutzerdefiniertes Suffix mit maximal 20 Zeichen</string>
+     </property>
+     <property name="maxLength">
+      <number>20</number>
      </property>
     </widget>
    </item>
@@ -230,27 +247,27 @@
    </item>
    <item row="6" column="0" colspan="2">
     <widget class="QLabel" name="labelDropbox">
+     <property name="toolTip">
+      <string>Die Dateien werden in einem speziell generierten Ordner abgelegt, welcher die Nutzung der GP-Dropbox für den automatischen Upload erleichtert.</string>
+     </property>
+     <property name="text">
+      <string>&lt;a href=&quot;https://openbis.physik.tu-berlin.de/doku/students/gp/automatic_upload.html&quot;&gt;GP-Dropbox&lt;/a&gt;</string>
+     </property>
      <property name="textFormat">
       <enum>Qt::TextFormat::RichText</enum>
      </property>
      <property name="openExternalLinks">
       <bool>true</bool>
      </property>
-     <property name="text">
-      <string>&lt;a href=&quot;https://openbis.physik.tu-berlin.de/doku/students/gp/automatic_upload.html&quot;&gt;GP-Dropbox&lt;/a&gt;</string>
-     </property>
-     <property name="toolTip">
-      <string>Die Dateien werden in einem speziell generierten Ordner abgelegt, welcher die Nutzung der GP-Dropbox für den automatischen Upload erleichtert.</string>
-     </property>
     </widget>
    </item>
    <item row="7" column="0" colspan="2">
     <widget class="QPushButton" name="buttonSave">
-     <property name="text">
-      <string>Speichern</string>
-     </property>
      <property name="toolTip">
       <string>Messung speichern (Dateidialog)</string>
+     </property>
+     <property name="text">
+      <string>Speichern</string>
      </property>
     </widget>
    </item>

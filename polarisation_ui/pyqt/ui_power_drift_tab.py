@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'power_drift_tab.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -98,6 +98,7 @@ class Ui_PowerDriftTab(object):
         self.scrollSide.setWidgetResizable(True)
         self.contentSide = QWidget()
         self.contentSide.setObjectName("contentSide")
+        self.contentSide.setGeometry(QRect(0, 0, 152, 829))
         self.layoutSide = QVBoxLayout(self.contentSide)
         self.layoutSide.setSpacing(8)
         self.layoutSide.setObjectName("layoutSide")
@@ -132,7 +133,7 @@ class Ui_PowerDriftTab(object):
         self.labelScaleStart = QLabel(self.groupRuntime)
         self.labelScaleStart.setObjectName("labelScaleStart")
         font1 = QFont()
-        font1.setPointSize(7)
+        font1.setPointSize(10)
         self.labelScaleStart.setFont(font1)
         self.labelScaleStart.setStyleSheet("color: palette(placeholder-text);")
         self.labelScaleStart.setAlignment(
@@ -237,9 +238,7 @@ class Ui_PowerDriftTab(object):
 
         self.labelHint = QLabel(self.contentSide)
         self.labelHint.setObjectName("labelHint")
-        font2 = QFont()
-        font2.setPointSize(8)
-        self.labelHint.setFont(font2)
+        self.labelHint.setFont(font1)
         self.labelHint.setStyleSheet("color: palette(placeholder-text);")
         self.labelHint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.labelHint.setWordWrap(True)

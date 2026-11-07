@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'acq_settings.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -62,7 +62,7 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName("Dialog")
-        Dialog.resize(433, 356)
+        Dialog.resize(263, 368)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -142,10 +142,10 @@ class Ui_Dialog(object):
 
         self.spinSpikeMaxDelta = QDoubleSpinBox(self.groupSpikeFilter)
         self.spinSpikeMaxDelta.setObjectName("spinSpikeMaxDelta")
+        self.spinSpikeMaxDelta.setDecimals(1)
         self.spinSpikeMaxDelta.setMinimum(1.000000000000000)
         self.spinSpikeMaxDelta.setMaximum(180.000000000000000)
         self.spinSpikeMaxDelta.setSingleStep(1.000000000000000)
-        self.spinSpikeMaxDelta.setDecimals(1)
 
         self.formSpikeFilter.setWidget(1, QFormLayout.ItemRole.FieldRole, self.spinSpikeMaxDelta)
 

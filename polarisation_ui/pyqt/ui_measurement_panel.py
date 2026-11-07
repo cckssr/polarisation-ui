@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'measurement_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -54,8 +54,10 @@ class Ui_MeasurementPanel(object):
     def setupUi(self, MeasurementPanel):
         if not MeasurementPanel.objectName():
             MeasurementPanel.setObjectName("MeasurementPanel")
+        MeasurementPanel.resize(241, 69)
         self.horizontalLayout = QHBoxLayout(MeasurementPanel)
         self.horizontalLayout.setObjectName("horizontalLayout")
+        self.horizontalLayout.setContentsMargins(5, 5, 5, 5)
         self.buttonStart = QPushButton(MeasurementPanel)
         self.buttonStart.setObjectName("buttonStart")
 
@@ -79,26 +81,25 @@ class Ui_MeasurementPanel(object):
 
     def retranslateUi(self, MeasurementPanel):
         MeasurementPanel.setTitle(QCoreApplication.translate("MeasurementPanel", "Messung", None))
-        self.buttonStart.setText(QCoreApplication.translate("MeasurementPanel", "Start", None))
         # if QT_CONFIG(tooltip)
         self.buttonStart.setToolTip(
             QCoreApplication.translate("MeasurementPanel", "Start der Messung", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonStop.setText(QCoreApplication.translate("MeasurementPanel", "Stop", None))
+        self.buttonStart.setText(QCoreApplication.translate("MeasurementPanel", "Start", None))
         # if QT_CONFIG(tooltip)
         self.buttonStop.setToolTip(
             QCoreApplication.translate("MeasurementPanel", "Aktuelle Messung stoppen", None)
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonReset.setText(QCoreApplication.translate("MeasurementPanel", "Reset", None))
+        self.buttonStop.setText(QCoreApplication.translate("MeasurementPanel", "Stop", None))
         # if QT_CONFIG(tooltip)
         self.buttonReset.setToolTip(
             QCoreApplication.translate(
                 "MeasurementPanel", "Alle gespeicherten Messpunkte verwerfen", None
             )
         )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonReset.setText(QCoreApplication.translate("MeasurementPanel", "Reset", None))
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

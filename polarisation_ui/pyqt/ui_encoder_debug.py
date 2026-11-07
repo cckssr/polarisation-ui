@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'encoder_debug.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -73,14 +73,15 @@ class Ui_EncoderDebugDialog(object):
     def setupUi(self, EncoderDebugDialog):
         if not EncoderDebugDialog.objectName():
             EncoderDebugDialog.setObjectName("EncoderDebugDialog")
-        EncoderDebugDialog.resize(860, 683)
+        EncoderDebugDialog.resize(911, 799)
         self.layoutRoot = QVBoxLayout(EncoderDebugDialog)
-        self.layoutRoot.setSpacing(6)
+        self.layoutRoot.setSpacing(15)
         self.layoutRoot.setObjectName("layoutRoot")
         self.groupConnection = QGroupBox(EncoderDebugDialog)
         self.groupConnection.setObjectName("groupConnection")
         self.layoutConnection = QHBoxLayout(self.groupConnection)
         self.layoutConnection.setObjectName("layoutConnection")
+        self.layoutConnection.setContentsMargins(5, 5, 5, 5)
         self.labelPort = QLabel(self.groupConnection)
         self.labelPort.setObjectName("labelPort")
 
@@ -122,6 +123,7 @@ class Ui_EncoderDebugDialog(object):
         self.groupControl.setObjectName("groupControl")
         self.hlControl = QHBoxLayout(self.groupControl)
         self.hlControl.setObjectName("hlControl")
+        self.hlControl.setContentsMargins(5, 5, 5, 5)
         self.labelEncoderSelect = QLabel(self.groupControl)
         self.labelEncoderSelect.setObjectName("labelEncoderSelect")
 
@@ -182,11 +184,13 @@ class Ui_EncoderDebugDialog(object):
         self.tabMeasurements.setObjectName("tabMeasurements")
         self.hlMeasurements = QHBoxLayout(self.tabMeasurements)
         self.hlMeasurements.setObjectName("hlMeasurements")
+        self.hlMeasurements.setContentsMargins(5, 5, 5, 10)
         self.groupMeasA = QGroupBox(self.tabMeasurements)
         self.groupMeasA.setObjectName("groupMeasA")
         self.formMeasA = QFormLayout(self.groupMeasA)
         self.formMeasA.setObjectName("formMeasA")
         self.formMeasA.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        self.formMeasA.setContentsMargins(5, 5, 5, 5)
         self.labelConnA = QLabel(self.groupMeasA)
         self.labelConnA.setObjectName("labelConnA")
 
@@ -346,6 +350,7 @@ class Ui_EncoderDebugDialog(object):
         self.formMeasB = QFormLayout(self.groupMeasB)
         self.formMeasB.setObjectName("formMeasB")
         self.formMeasB.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        self.formMeasB.setContentsMargins(5, 5, 5, 5)
         self.labelConnB = QLabel(self.groupMeasB)
         self.labelConnB.setObjectName("labelConnB")
 
@@ -505,11 +510,13 @@ class Ui_EncoderDebugDialog(object):
         self.tabSystem.setObjectName("tabSystem")
         self.vlSystem = QVBoxLayout(self.tabSystem)
         self.vlSystem.setObjectName("vlSystem")
+        self.vlSystem.setContentsMargins(5, 5, 5, 10)
         self.groupSysInfo = QGroupBox(self.tabSystem)
         self.groupSysInfo.setObjectName("groupSysInfo")
         self.formSysInfo = QFormLayout(self.groupSysInfo)
         self.formSysInfo.setObjectName("formSysInfo")
         self.formSysInfo.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        self.formSysInfo.setContentsMargins(5, 5, 5, 5)
         self.labelIdn = QLabel(self.groupSysInfo)
         self.labelIdn.setObjectName("labelIdn")
 
@@ -561,6 +568,7 @@ class Ui_EncoderDebugDialog(object):
         self.groupScpiErrors.setObjectName("groupScpiErrors")
         self.vlScpiErrors = QVBoxLayout(self.groupScpiErrors)
         self.vlScpiErrors.setObjectName("vlScpiErrors")
+        self.vlScpiErrors.setContentsMargins(5, 5, 5, 5)
         self.editScpiErrors = QTextEdit(self.groupScpiErrors)
         self.editScpiErrors.setObjectName("editScpiErrors")
         self.editScpiErrors.setReadOnly(True)
@@ -600,6 +608,7 @@ class Ui_EncoderDebugDialog(object):
         self.tabTerminal.setObjectName("tabTerminal")
         self.vlTerminal = QVBoxLayout(self.tabTerminal)
         self.vlTerminal.setObjectName("vlTerminal")
+        self.vlTerminal.setContentsMargins(5, 5, 5, 10)
         self.editTerminalLog = QTextEdit(self.tabTerminal)
         self.editTerminalLog.setObjectName("editTerminalLog")
         self.editTerminalLog.setReadOnly(True)
@@ -630,10 +639,12 @@ class Ui_EncoderDebugDialog(object):
         self.tabAds.setObjectName("tabAds")
         self.vlAds = QVBoxLayout(self.tabAds)
         self.vlAds.setObjectName("vlAds")
+        self.vlAds.setContentsMargins(5, 5, 5, 10)
         self.groupAdcLive = QGroupBox(self.tabAds)
         self.groupAdcLive.setObjectName("groupAdcLive")
         self.formAdcLive = QFormLayout(self.groupAdcLive)
         self.formAdcLive.setObjectName("formAdcLive")
+        self.formAdcLive.setContentsMargins(5, 5, -1, 5)
         self.labelAdcPresent = QLabel(self.groupAdcLive)
         self.labelAdcPresent.setObjectName("labelAdcPresent")
 
@@ -681,6 +692,7 @@ class Ui_EncoderDebugDialog(object):
         self.groupAdcRegisters.setObjectName("groupAdcRegisters")
         self.formAdcRegisters = QFormLayout(self.groupAdcRegisters)
         self.formAdcRegisters.setObjectName("formAdcRegisters")
+        self.formAdcRegisters.setContentsMargins(5, 5, -1, 5)
         self.labelReg0 = QLabel(self.groupAdcRegisters)
         self.labelReg0.setObjectName("labelReg0")
 
@@ -742,6 +754,7 @@ class Ui_EncoderDebugDialog(object):
         self.groupAdcConfig.setObjectName("groupAdcConfig")
         self.formAdcConfig = QFormLayout(self.groupAdcConfig)
         self.formAdcConfig.setObjectName("formAdcConfig")
+        self.formAdcConfig.setContentsMargins(5, 5, -1, 5)
         self.labelMux = QLabel(self.groupAdcConfig)
         self.labelMux.setObjectName("labelMux")
 
@@ -821,6 +834,7 @@ class Ui_EncoderDebugDialog(object):
         self.groupPdtia.setObjectName("groupPdtia")
         self.formPdtia = QFormLayout(self.groupPdtia)
         self.formPdtia.setObjectName("formPdtia")
+        self.formPdtia.setContentsMargins(5, 5, -1, 5)
         self.labelPdtiaStage = QLabel(self.groupPdtia)
         self.labelPdtiaStage.setObjectName("labelPdtiaStage")
 
@@ -856,6 +870,7 @@ class Ui_EncoderDebugDialog(object):
         self.tabRawStream.setObjectName("tabRawStream")
         self.vlRawStream = QVBoxLayout(self.tabRawStream)
         self.vlRawStream.setObjectName("vlRawStream")
+        self.vlRawStream.setContentsMargins(5, 5, 5, 10)
         self.labelRawStreamNotice = QLabel(self.tabRawStream)
         self.labelRawStreamNotice.setObjectName("labelRawStreamNotice")
         self.labelRawStreamNotice.setWordWrap(True)
@@ -864,10 +879,10 @@ class Ui_EncoderDebugDialog(object):
 
         self.editRawStream = QPlainTextEdit(self.tabRawStream)
         self.editRawStream.setObjectName("editRawStream")
-        self.editRawStream.setReadOnly(True)
         font = QFont()
         font.setFamilies(["Monospace"])
         self.editRawStream.setFont(font)
+        self.editRawStream.setReadOnly(True)
         self.editRawStream.setMaximumBlockCount(500)
 
         self.vlRawStream.addWidget(self.editRawStream)
@@ -892,6 +907,7 @@ class Ui_EncoderDebugDialog(object):
         self.tabSelfTest.setObjectName("tabSelfTest")
         self.vlSelfTest = QVBoxLayout(self.tabSelfTest)
         self.vlSelfTest.setObjectName("vlSelfTest")
+        self.vlSelfTest.setContentsMargins(5, 5, 5, 10)
         self.labelSelfTestInfo = QLabel(self.tabSelfTest)
         self.labelSelfTestInfo.setObjectName("labelSelfTestInfo")
         self.labelSelfTestInfo.setWordWrap(True)
@@ -905,8 +921,8 @@ class Ui_EncoderDebugDialog(object):
 
         self.editSelfTest = QPlainTextEdit(self.tabSelfTest)
         self.editSelfTest.setObjectName("editSelfTest")
-        self.editSelfTest.setReadOnly(True)
         self.editSelfTest.setFont(font)
+        self.editSelfTest.setReadOnly(True)
 
         self.vlSelfTest.addWidget(self.editSelfTest)
 
@@ -923,7 +939,7 @@ class Ui_EncoderDebugDialog(object):
         self.retranslateUi(EncoderDebugDialog)
         self.buttonBox.rejected.connect(EncoderDebugDialog.reject)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(5)
 
         QMetaObject.connectSlotsByName(EncoderDebugDialog)
 
@@ -937,14 +953,14 @@ class Ui_EncoderDebugDialog(object):
             QCoreApplication.translate("EncoderDebugDialog", "Arduino-Verbindung", None)
         )
         self.labelPort.setText(QCoreApplication.translate("EncoderDebugDialog", "Port:", None))
-        self.buttonRefreshPorts.setText(
-            QCoreApplication.translate("EncoderDebugDialog", "\u21bb", None)
-        )
         # if QT_CONFIG(tooltip)
         self.buttonRefreshPorts.setToolTip(
             QCoreApplication.translate("EncoderDebugDialog", "Ports neu laden", None)
         )
         # endif // QT_CONFIG(tooltip)
+        self.buttonRefreshPorts.setText(
+            QCoreApplication.translate("EncoderDebugDialog", "\u21bb", None)
+        )
         self.buttonConnect.setText(
             QCoreApplication.translate("EncoderDebugDialog", "Verbinden", None)
         )

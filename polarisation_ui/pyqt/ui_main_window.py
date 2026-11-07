@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -70,6 +70,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1071, 739)
         self.actionAcquisitionSettings = QAction(MainWindow)
         self.actionAcquisitionSettings.setObjectName("actionAcquisitionSettings")
         self.actionPowerCalibration = QAction(MainWindow)
@@ -138,6 +139,7 @@ class Ui_MainWindow(object):
         self.scrollControls.setWidgetResizable(True)
         self.contentControls = QWidget()
         self.contentControls.setObjectName("contentControls")
+        self.contentControls.setGeometry(QRect(0, 0, 75, 627))
         self.contentControlsLayout = QVBoxLayout(self.contentControls)
         self.contentControlsLayout.setSpacing(6)
         self.contentControlsLayout.setObjectName("contentControlsLayout")
@@ -200,6 +202,7 @@ class Ui_MainWindow(object):
         self.scrollMeasurement.setWidgetResizable(True)
         self.contentMeasurement = QWidget()
         self.contentMeasurement.setObjectName("contentMeasurement")
+        self.contentMeasurement.setGeometry(QRect(0, 0, 75, 627))
         self.contentMeasurementLayout = QVBoxLayout(self.contentMeasurement)
         self.contentMeasurementLayout.setSpacing(6)
         self.contentMeasurementLayout.setObjectName("contentMeasurementLayout")
@@ -361,9 +364,6 @@ class Ui_MainWindow(object):
             QCoreApplication.translate("MainWindow", "Ereignisprotokoll ein- oder ausblenden", None)
         )
         # endif // QT_CONFIG(tooltip)
-        # if QT_CONFIG(shortcut)
-        self.actionFullScreen.setShortcut(QCoreApplication.translate("MainWindow", "F11", None))
-        # endif // QT_CONFIG(shortcut)
         self.actionFullScreen.setText(QCoreApplication.translate("MainWindow", "Vollbild", None))
         # if QT_CONFIG(tooltip)
         self.actionFullScreen.setToolTip(
@@ -372,6 +372,9 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(shortcut)
+        self.actionFullScreen.setShortcut(QCoreApplication.translate("MainWindow", "F11", None))
+        # endif // QT_CONFIG(shortcut)
         self.actionSwitchProfile.setText(
             QCoreApplication.translate("MainWindow", "Profil wechseln", None)
         )
@@ -382,6 +385,10 @@ class Ui_MainWindow(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
+        self.tabWidget.setProperty(
+            "fieldGrowthPolicy",
+            QCoreApplication.translate("MainWindow", "AllNonFixedFieldsGrow", None),
+        )
         self.toolBar.setWindowTitle(
             QCoreApplication.translate("MainWindow", "Werkzeugleiste", None)
         )

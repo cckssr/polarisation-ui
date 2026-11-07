@@ -2,37 +2,57 @@
 <ui version="4.0">
  <class>MeasurementPanel</class>
  <widget class="QGroupBox" name="MeasurementPanel">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>241</width>
+    <height>69</height>
+   </rect>
+  </property>
   <property name="title">
    <string>Messung</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>5</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
    <item>
     <widget class="QPushButton" name="buttonStart">
-     <property name="text">
-      <string>Start</string>
-     </property>
      <property name="toolTip">
       <string>Start der Messung</string>
+     </property>
+     <property name="text">
+      <string>Start</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="buttonStop">
-     <property name="text">
-      <string>Stop</string>
-     </property>
      <property name="toolTip">
       <string>Aktuelle Messung stoppen</string>
+     </property>
+     <property name="text">
+      <string>Stop</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="buttonReset">
-     <property name="text">
-      <string>Reset</string>
-     </property>
      <property name="toolTip">
       <string>Alle gespeicherten Messpunkte verwerfen</string>
+     </property>
+     <property name="text">
+      <string>Reset</string>
      </property>
     </widget>
    </item>

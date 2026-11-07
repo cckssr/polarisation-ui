@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'arduino_panel.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -60,10 +60,10 @@ class Ui_ArduinoPanel(object):
     def setupUi(self, ArduinoPanel):
         if not ArduinoPanel.objectName():
             ArduinoPanel.setObjectName("ArduinoPanel")
+        ArduinoPanel.resize(247, 133)
         self.gridLayout = QGridLayout(ArduinoPanel)
+        self.gridLayout.setSpacing(6)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout.setHorizontalSpacing(6)
-        self.gridLayout.setVerticalSpacing(6)
         self.labelPort = QLabel(ArduinoPanel)
         self.labelPort.setObjectName("labelPort")
 
@@ -85,6 +85,8 @@ class Ui_ArduinoPanel(object):
 
         self.buttonRefreshPorts = QToolButton(ArduinoPanel)
         self.buttonRefreshPorts.setObjectName("buttonRefreshPorts")
+        icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.ViewRefresh))
+        self.buttonRefreshPorts.setIcon(icon)
 
         self.gridLayout.addWidget(self.buttonRefreshPorts, 0, 2, 1, 1)
 
@@ -138,7 +140,6 @@ class Ui_ArduinoPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
-        self.buttonRefreshPorts.setText(QCoreApplication.translate("ArduinoPanel", "...", None))
         # if QT_CONFIG(tooltip)
         self.buttonRefreshPorts.setToolTip(
             QCoreApplication.translate(
@@ -146,6 +147,7 @@ class Ui_ArduinoPanel(object):
             )
         )
         # endif // QT_CONFIG(tooltip)
+        self.buttonRefreshPorts.setText(QCoreApplication.translate("ArduinoPanel", "...", None))
         self.labelStatus.setText(QCoreApplication.translate("ArduinoPanel", "Status", None))
         self.ledStatus.setStyleSheet(
             QCoreApplication.translate(
@@ -154,7 +156,6 @@ class Ui_ArduinoPanel(object):
                 None,
             )
         )
-        self.buttonConnect.setText(QCoreApplication.translate("ArduinoPanel", "Verbinden", None))
         # if QT_CONFIG(tooltip)
         self.buttonConnect.setToolTip(
             QCoreApplication.translate(
@@ -163,7 +164,7 @@ class Ui_ArduinoPanel(object):
                 None,
             )
         )
+        # endif // QT_CONFIG(tooltip)
+        self.buttonConnect.setText(QCoreApplication.translate("ArduinoPanel", "Verbinden", None))
 
-
-# endif // QT_CONFIG(tooltip)
-# retranslateUi
+    # retranslateUi

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'malus_tab.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.12.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -118,8 +118,9 @@ class Ui_MalusTab(object):
         self.scrollSide.setWidgetResizable(True)
         self.contentSide = QWidget()
         self.contentSide.setObjectName("contentSide")
+        self.contentSide.setGeometry(QRect(0, 0, 204, 886))
         self.layoutSide = QVBoxLayout(self.contentSide)
-        self.layoutSide.setSpacing(6)
+        self.layoutSide.setSpacing(10)
         self.layoutSide.setObjectName("layoutSide")
         self.layoutSide.setContentsMargins(4, 0, 0, 0)
         self.groupLive = QGroupBox(self.contentSide)
@@ -218,6 +219,9 @@ class Ui_MalusTab(object):
 
         self.formSweepParams = QFormLayout()
         self.formSweepParams.setObjectName("formSweepParams")
+        self.formSweepParams.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
+        )
         self.formSweepParams.setVerticalSpacing(3)
         self.labelSweepStart = QLabel(self.groupSweep)
         self.labelSweepStart.setObjectName("labelSweepStart")
