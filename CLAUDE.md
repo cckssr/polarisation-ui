@@ -212,8 +212,10 @@ Branch naming: `feat/…`, `fix/…`, `refactor/…`, `docs/…`. Base branch: `
 
 Commits:
 
-- **Batch all changes from one work session into a single commit.** Do not split by file or by sub-step.
-- Style: `scope: imperative subject` (e.g. `scpi: bump to 2.0.0 and route ADS1220`), body explains the why.
+- **One commit per phase.** A phase is one self-contained step of a plan (or one logical change when there is no plan). Commit it as soon as it is done, without asking again, so phases never pile up uncommitted. Do not split a phase by file or sub-step, and do not run work across a phase boundary in parallel.
+- **Before every commit:** `.venv/bin/ruff format polarisation_ui tests`, `.venv/bin/ruff check polarisation_ui tests`, `prettier --write` on changed Markdown/JSON (never on generated `ui_*.py`), and `QT_QPA_PLATFORM=offscreen .venv/bin/pytest tests/` must pass.
+- **Conventional Commits:** `type(scope): imperative subject`, e.g. `fix(calibration): apply profiles to the raw voltage` or `feat(malus): add cos² fit overlay`. Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`. The scope is the area (`calibration`, `scpi`, `ui`, `nd`, `pm400`, `build`, …) and may be left out. Mark breaking changes with `!` (`feat(scpi)!: …`) and a `BREAKING CHANGE:` footer. The body explains the why.
+- Merging another branch in is its own phase; type the merge commit by its content (e.g. `fix(calibration): merge calibration_improvment …`).
 - Never `push --force` to `main`.
 - Never amend unless the user explicitly asks.
 - Never skip hooks (`--no-verify`) unless the user explicitly asks.

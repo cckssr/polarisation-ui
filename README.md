@@ -371,7 +371,7 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 5. Run the full test suite: `QT_QPA_PLATFORM=offscreen pytest tests/`
 6. Open a PR — the CI workflow runs automatically on push
 
-**Commit style:** `scope: imperative subject` — e.g. `malus: add cos² fit overlay`. One commit per work session (batch related changes).
+**Commits:** one commit per phase (a self-contained step, or one logical change), after `ruff format`, `ruff check`, `prettier` on changed Markdown/JSON and a passing test suite. Messages follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): imperative subject`, e.g. `feat(malus): add cos² fit overlay` or `fix(calibration): apply profiles to the raw voltage`. Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`; breaking changes get `!` and a `BREAKING CHANGE:` footer.
 
 **New experiments:** Follow the `New Feature Workflow` in `CLAUDE.md` — define a dataclass in `core/models.py`, add a service method, implement a `PlotTabBase` subclass in `ui/widgets/tabs/`, and register it in `TabRegistry`.
 
