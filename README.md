@@ -1,7 +1,7 @@
 # Polarisation-UI
 
 [![CI](https://github.com/cckssr/polarisation-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/cckssr/polarisation-ui/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
 Desktop application for polarisation experiments on a manual goniometer bench. The application reads two absolute magnetic encoder angles (sample stage and detector arm) and an ADS1220 photodiode intensity simultaneously over SCPI from an Arduino Nano ESP32. Angle changes are manual by default; an optional Thorlabs KDC101 + PRM1-Z8 motorised stage drives the automated wave-plate sweep and power-calibration workflows. The focus is on stable live display, reproducible point capture, and clean export.
@@ -379,6 +379,6 @@ Fill a cuvette of known path length `l` with a sugar solution of concentration `
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache License 2.0 — see [LICENSE](LICENSE). The vendored PM400 driver (`polarisation_ui/infrastructure/modules/pm400.py`, from PyMeasure) keeps its MIT notice.
 
 ---
